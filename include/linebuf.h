@@ -1,0 +1,15 @@
+#ifndef __INC_LINEBUF_H__
+#define __INC_LINEBUF_H__
+
+#define U_LINEBUF_SIZE 1024
+
+struct u_linebuf {
+	char buf[U_LINEBUF_SIZE];
+	unsigned pos;
+};
+
+extern void u_linebuf_init(); /* u_linebuf* */
+extern int u_linebuf_data(); /* u_linebuf*, char*, int */
+extern int u_linebuf_line(); /* u_linebuf*, char*, int */
+
+#endif

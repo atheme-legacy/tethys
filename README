@@ -1,0 +1,13 @@
+The Makefile is in src. A helper script called 'build' has
+been written to assist in interacting with the Makefile in
+the project root directory. It's very simple. Anybody familiar
+with shell syntax should have no problem deciphering it.
+
+The executable ircd-micro will be created in src. To install,
+place it somewhere in your $PATH. It is mostly standalone,
+however it needs to know where to find the relevant config
+files. It first looks for them in the directory called 'etc',
+relative to the current working directory. If the files are
+somewhere else, you may specify their location with the
+appropriate options. Invoke ircd-micro with -h to get a list
+of options.
