@@ -22,7 +22,7 @@
 #include "list.h"
 #include "io.h"
 #include "linebuf.h"
-#include "connection.h"
+#include "conn.h"
 #include "msg.h"
 #include "user.h"
 #include "server.h"

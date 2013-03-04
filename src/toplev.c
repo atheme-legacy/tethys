@@ -7,10 +7,10 @@ static void toplev_sync_s();
 void u_toplev_origin_cb(iofd)
 struct u_io_fd *iofd;
 {
-	struct u_connection *conn;
+	struct u_conn *conn;
 
 	conn = malloc(sizeof(*conn));
-	u_connection_init(conn);
+	u_conn_init(conn);
 	conn->sock = iofd;
 
 	iofd->priv = conn;
@@ -19,7 +19,7 @@ struct u_io_fd *iofd;
 }
 
 static int get_lines(conn)
-struct u_connection *conn;
+struct u_conn *conn;
 {
 	char buf[U_LINEBUF_SIZE];
 	int sz;
@@ -29,7 +29,7 @@ struct u_connection *conn;
 }
 
 static void do_recv(conn, data, invoke)
-struct u_connection *conn;
+struct u_conn *conn;
 void *data;
 void (*invoke)();
 {
@@ -79,7 +79,7 @@ struct u_io_fd *iofd;
 
 static void toplev_sync(iofd, conn, recvfn)
 struct u_io_fd *iofd;
-struct u_connection *conn;
+struct u_conn *conn;
 void (*recvfn)();
 {
 	iofd->recv = iofd->send = NULL;
@@ -92,7 +92,7 @@ void (*recvfn)();
 static void toplev_sync_c(iofd)
 struct u_io_fd *iofd;
 {
-	struct u_connection *conn = iofd->priv;
+	struct u_conn *conn = iofd->priv;
 	toplev_sync(iofd, conn, toplev_recv_c);
 }
 

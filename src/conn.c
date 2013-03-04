@@ -2,20 +2,20 @@
 
 static void origin_recv();
 
-void u_connection_init(conn)
-struct u_connection *conn;
+void u_conn_init(conn)
+struct u_conn *conn;
 {
 	conn->flags = 0;
 	conn->sock = NULL;
 	u_linebuf_init(&conn->ibuf);
-	conn->obuf = malloc(U_CONNECTION_OBUFSIZE);
+	conn->obuf = malloc(U_CONN_OBUFSIZE);
 	conn->obuflen = 0;
-	conn->obufsize = U_CONNECTION_OBUFSIZE;
+	conn->obufsize = U_CONN_OBUFSIZE;
 }
 
 /* sadfaec */
-void u_connection_obufsize(conn, obufsize)
-struct u_connection *conn;
+void u_conn_obufsize(conn, obufsize)
+struct u_conn *conn;
 int obufsize;
 {
 	char *buf;

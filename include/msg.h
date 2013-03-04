@@ -50,8 +50,8 @@ extern int u_msg_fmt(); /* char *dst, char *fmt, ... */
 
 struct u_cmd {
 	char name[MAXCOMMANDLEN+1];
-	/* cc=unregged connection, cs=server, cu=user */
-	void (*cc)(); /* u_connection* src, u_msg* */
+	/* cc=unregged conn, cs=server, cu=user */
+	void (*cc)(); /* u_conn* src, u_msg* */
 	int ncc;
 	void (*cu)(); /* u_user* src, u_msg* */
 	int ncu;
@@ -62,7 +62,7 @@ struct u_cmd {
 extern int u_cmds_reg(); /* struct u_cmd*, terminated with empty name */
 extern void u_cmds_unreg(); /* struct u_cmd*, terminated as above */
 
-extern void u_cmd_invoke_c(); /* u_connection*, u_msg* */
+extern void u_cmd_invoke_c(); /* u_conn*, u_msg* */
 extern void u_cmd_invoke_u(); /* u_user*, u_msg* */
 extern void u_cmd_invoke_s(); /* u_server*, u_msg* */
 

@@ -49,7 +49,7 @@ struct u_user *user;
 
 void u_user_local_init(user, conn)
 struct u_user_local *user;
-struct u_connection *conn;
+struct u_conn *conn;
 {
 	u_user_init(USER(user));
 

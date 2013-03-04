@@ -44,7 +44,7 @@ struct u_user {
 
 struct u_user_local {
 	struct u_user user;
-	struct u_connection *conn;
+	struct u_conn *conn;
 
 	unsigned flags;
 };
@@ -59,7 +59,7 @@ struct u_user_remote {
 extern struct u_umode_info *umodes;
 extern unsigned umode_default;
 
-extern void u_user_local_init(); /* u_user_local*, u_connection* */
+extern void u_user_local_init(); /* u_user_local*, u_conn* */
 extern void u_user_remote_init(); /* u_user_remote*, u_server* */
 
 #endif

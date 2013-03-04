@@ -1,7 +1,7 @@
 #include "ircd.h"
 
 void cc_nick(conn, msg)
-struct u_connection *conn;
+struct u_conn *conn;
 struct u_msg *msg;
 {
 	printf("NICK %s\n", msg->argv[0]);

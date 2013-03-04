@@ -1,7 +1,7 @@
 #include "ircd.h"
 
 void cc_user(conn, msg)
-struct u_connection *conn;
+struct u_conn *conn;
 struct u_msg *msg;
 {
 	printf("REGISTER USER %s %s\n", msg->argv[0], msg->argv[3]);

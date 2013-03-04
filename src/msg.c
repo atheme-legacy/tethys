@@ -92,7 +92,7 @@ struct u_cmd *cmds;
 }
 
 void u_cmd_invoke_c(conn, msg)
-struct u_connection *conn;
+struct u_conn *conn;
 struct u_msg *msg;
 {
 	struct u_cmd *cmd = find_command(msg->command);
