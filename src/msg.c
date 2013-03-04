@@ -129,4 +129,5 @@ struct u_msg *msg;
 	if (!cmd) return;
 	if (msg->argc < cmd->ncs) return;
 
-	cmd->cs(user, msg);
+	cmd->cs(serv, msg);
+}

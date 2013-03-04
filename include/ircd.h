@@ -6,7 +6,7 @@
 #include <sys/time.h>
 #include <string.h>
 #include <ctype.h>
-#include <varargs.h>
+//#include <varargs.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h>
@@ -25,5 +25,6 @@
 #include "connection.h"
 #include "msg.h"
 #include "user.h"
+#include "server.h"
 
 #endif

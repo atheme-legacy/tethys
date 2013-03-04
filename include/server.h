@@ -5,6 +5,7 @@
 #define MAXSERVDESC 80
 
 struct u_server {
+	struct u_connection *conn;
 	char sid[4];
 	char name[MAXSERVNAME+1];
 	char desc[MAXSERVDESC+1];

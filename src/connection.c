@@ -5,6 +5,7 @@ static void origin_recv();
 void u_connection_init(conn)
 struct u_connection *conn;
 {
+	conn->flags = 0;
 	conn->sock = NULL;
 	u_linebuf_init(&conn->ibuf);
 	conn->obuf = malloc(U_CONNECTION_OBUFSIZE);
@@ -87,7 +88,7 @@ struct u_io_fd *sock;
 	int addrlen;
 	int fd;
 
-	if ((fd = accept(orig->fd, &addr, &addrlen)) < 0)
+	if ((fd = accept(sock->fd, &addr, &addrlen)) < 0)
 		return;
 
 	if (!(iofd = u_io_add_fd(sock->io, fd)))

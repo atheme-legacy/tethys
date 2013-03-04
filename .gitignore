@@ -1,4 +1,4 @@
 *.swp
 *.o
-bin/ircd-micro
+src/ircd-micro
 test/

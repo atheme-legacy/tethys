@@ -3,7 +3,10 @@
 
 #define U_CONNECTION_OBUFSIZE 2048
 
+#define U_CONNECTION_CLOSING 0x0001
+
 struct u_connection {
+	unsigned flags;
 	struct u_io_fd *sock;
 	struct u_linebuf ibuf;
 	char *obuf;
