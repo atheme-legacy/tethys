@@ -1,8 +1,6 @@
 #include "ircd.h"
 
-static void toplev_sync_c();
-static void toplev_sync_u();
-static void toplev_sync_s();
+static void toplev_sync();
 
 void u_toplev_origin_cb(iofd)
 struct u_io_fd *iofd;
@@ -15,23 +13,11 @@ struct u_io_fd *iofd;
 
 	iofd->priv = conn;
 
-	toplev_sync_c(iofd);
+	toplev_sync(iofd);
 }
 
-static int get_lines(conn)
+static void toplev_recv(conn)
 struct u_conn *conn;
-{
-	char buf[U_LINEBUF_SIZE];
-	int sz;
-
-	sz = recv(conn->sock->fd, buf, U_LINEBUF_SIZE-conn->ibuf.pos, 0);
-	u_linebuf_data(&conn->ibuf, buf, sz);
-}
-
-static void do_recv(conn, data, invoke)
-struct u_conn *conn;
-void *data;
-void (*invoke)();
 {
 	char buf[1024];
 	int sz;
@@ -47,28 +33,8 @@ void (*invoke)();
 		if (strlen(buf) != sz) /* TODO: error */
 			break;
 		u_msg_parse(&msg, buf);
-		invoke(data, &msg);
+		conn->invoke(conn, &msg);
 	}
-}
-
-static void toplev_recv_c(iofd)
-struct u_io_fd *iofd;
-{
-	do_recv(iofd->priv, iofd->priv, u_cmd_invoke_c);
-}
-
-static void toplev_recv_u(iofd)
-struct u_io_fd *iofd;
-{
-	struct u_user_local *user = iofd->priv;
-	do_recv(user->conn, user, u_cmd_invoke_u);
-}
-
-static void toplev_recv_s(iofd)
-struct u_io_fd *iofd;
-{
-	struct u_server *serv = iofd->priv;
-	do_recv(serv->conn, serv, u_cmd_invoke_s);
 }
 
 static void toplev_send(iofd)
@@ -77,35 +43,13 @@ struct u_io_fd *iofd;
 	/* TODO: toplev send */
 }
 
-static void toplev_sync(iofd, conn, recvfn)
-struct u_io_fd *iofd;
-struct u_conn *conn;
-void (*recvfn)();
-{
-	iofd->recv = iofd->send = NULL;
-	if (!(conn->flags & U_CONNECTION_CLOSING))
-		iofd->recv = recvfn;
-	if (conn->obuflen > 0)
-		iofd->send = toplev_send;
-}
-
-static void toplev_sync_c(iofd)
+static void toplev_sync(iofd)
 struct u_io_fd *iofd;
 {
 	struct u_conn *conn = iofd->priv;
-	toplev_sync(iofd, conn, toplev_recv_c);
-}
-
-static void toplev_sync_u(iofd)
-struct u_io_fd *iofd;
-{
-	struct u_user_local *user = iofd->priv;
-	toplev_sync(iofd, user->conn, toplev_recv_u);
-}
-
-static void toplev_sync_s(iofd)
-struct u_io_fd *iofd;
-{
-	struct u_server *serv = iofd->priv;
-	toplev_sync(iofd, serv->conn, toplev_recv_s);
+	iofd->recv = iofd->send = NULL;
+	if (!(conn->flags & U_CONN_CLOSING))
+		iofd->recv = toplev_recv;
+	if (conn->obuflen > 0)
+		iofd->send = toplev_send;
 }

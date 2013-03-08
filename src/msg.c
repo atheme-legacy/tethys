@@ -91,6 +91,9 @@ struct u_cmd *cmds;
 		u_hash_del(&commands, cmds->name);
 }
 
+
+/* TODO: these are all starting to look the same... */
+
 void u_cmd_invoke_c(conn, msg)
 struct u_conn *conn;
 struct u_msg *msg;
@@ -106,8 +109,8 @@ struct u_msg *msg;
 	cmd->cc(conn, msg);
 }
 
-void u_cmd_invoke_u(user, msg)
-struct u_user *user;
+void u_cmd_invoke_u(conn, msg)
+struct u_conn *conn;
 struct u_msg *msg;
 {
 	struct u_cmd *cmd = find_command(msg->command);
@@ -116,11 +119,11 @@ struct u_msg *msg;
 	if (!cmd) return;
 	if (msg->argc < cmd->ncu) return;
 
-	cmd->cu(user, msg);
+	cmd->cu(conn, msg);
 }
 
-void u_cmd_invoke_s(serv, msg)
-struct u_server *serv;
+void u_cmd_invoke_s(conn, msg)
+struct u_conn *conn;
 struct u_msg *msg;
 {
 	struct u_cmd *cmd = find_command(msg->command);
@@ -129,5 +132,5 @@ struct u_msg *msg;
 	if (!cmd) return;
 	if (msg->argc < cmd->ncs) return;
 
-	cmd->cs(serv, msg);
+	cmd->cs(conn, msg);
 }

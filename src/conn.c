@@ -11,6 +11,7 @@ struct u_conn *conn;
 	conn->obuf = malloc(U_CONN_OBUFSIZE);
 	conn->obuflen = 0;
 	conn->obufsize = U_CONN_OBUFSIZE;
+	conn->invoke = u_cmd_invoke_c;
 }
 
 /* sadfaec */
@@ -50,7 +51,7 @@ void (*cb)();
 	sa.sin_port = port;
 	sa.sin_addr.s_addr = addr;
 
-	if (bind(fd, &sa, sizeof(sa)) < 0)
+	if (bind(fd, (struct sockaddr*)&sa, sizeof(sa)) < 0)
 		goto out;
 
 	if (listen(fd, 5) < 0)

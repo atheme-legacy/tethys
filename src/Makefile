@@ -5,8 +5,8 @@ OBJS = hash.o list.o io.o linebuf.o msg.o main.o string.o \
 
 INCLUDE = ../include
 CFLAGS = -g -I$(INCLUDE)
-CC = cc
-LD = cc
+CC = gcc
+LD = gcc
 
 default: $(OUTPUT)
 clean:
@@ -14,8 +14,6 @@ clean:
 	rm -f $(OUTPUT)
 
 $(OUTPUT): $(OBJS)
-	@echo '    LD  ' $@
-	@$(LD) -o $@ $(OBJS)
+	$(LD) -o $@ $(OBJS)
 .c.o:
-	@echo '    CC  ' $@
-	@$(CC) -c $(CFLAGS) -o $@ $<
+	$(CC) -c $(CFLAGS) -o $@ $<

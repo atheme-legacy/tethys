@@ -11,6 +11,8 @@ struct u_conn {
 	struct u_linebuf ibuf;
 	char *obuf;
 	int obuflen, obufsize;
+	void (*invoke)(); /* u_conn*, u_msg* */
+	void *priv;
 };
 
 struct u_conn_origin {
