@@ -1,12 +1,12 @@
 OUTPUT = ircd-micro
-OBJS = hash.o list.o io.o linebuf.o msg.o main.o string.o \
+OBJS = hash.o list.o io.o linebuf.o msg.o main.o util.o \
 	user.o toplev.o conn.o \
 	c_nick.o c_user.o
 
 INCLUDE = ../include
 CFLAGS = -g -I$(INCLUDE)
-CC = gcc
-LD = gcc
+CC = cc
+LD = cc
 
 default: $(OUTPUT)
 clean:
