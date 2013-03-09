@@ -13,7 +13,9 @@ struct u_heap *heap;
 	h->base = mmap(NULL, heap->step * heap->count, PROT_READ|PROT_WRITE,
 	               MAP_PRIVATE|MAP_ANON, -1, 0);
 
-	end = h->base + heap->step * heap->sz;
+	printf("NEW HEAP_E(%p): BASE=%p\n", h, h->base);
+
+	end = h->base + heap->step * heap->count;
 
 	for (cur=h->base; cur<end; cur+=heap->step)
 		*((unsigned*)cur) = 0;
@@ -31,6 +33,9 @@ unsigned sz, count;
 	heap->count = count;
 	heap->step = sizeof(unsigned) + heap->sz;
 	heap->start = heap_e_alloc(heap);
+
+	printf("NEW HEAP(%p): SZ=%xx STEP=%xx COUNT=%d SZ_E=%xx\n", heap,
+	       heap->sz, heap->step, heap->count, heap->step*heap->count);
 
 	return heap;
 }
