@@ -20,6 +20,14 @@
 #define offsetof(st, m) ((unsigned)(&((st *)0)->m))
 #define containerof(ptr, st, m) ((void*)((ptr) - offsetof(st, m)))
 
+#ifdef DEBUG
+#define u_debug(x...) printf(x)
+#define u_log(x...) printf(x)
+#else
+#define u_debug(x...)
+#define u_log(x...)
+#endif
+
 #include "heap.h"
 #include "hash.h"
 #include "list.h"
