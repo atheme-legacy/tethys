@@ -4,7 +4,7 @@ OBJS = hash.o list.o io.o linebuf.o msg.o main.o util.o \
 	c_nick.o c_user.o
 
 INCLUDE = ../include
-CFLAGS = -g -I$(INCLUDE)
+CFLAGS = -g -I$(INCLUDE) -DDEBUG
 CC = cc
 LD = cc
 
