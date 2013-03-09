@@ -83,7 +83,7 @@ void u_heap_free(heap, ptr)
 struct u_heap *heap;
 void *ptr;
 {
-	struct u_heap_e *cur = heap->start;
+	struct u_heap_e *h = heap->start;
 	unsigned sz, *p;
 
 	if (!ptr)
@@ -91,12 +91,12 @@ void *ptr;
 
 	sz = heap->step * heap->count;
 
-	for (; cur; cur = cur->next) {
-		if (ptr < cur->base || ptr >= cur->base + sz)
+	for (; h; h = h->next) {
+		if (ptr < h->base || ptr >= h->base + sz)
 			continue;
 		p = ptr;
 		if (p[-1] & U_HEAP_IN_USE)
-			cur->count--;
+			h->count--;
 		p[-1] &= ~U_HEAP_IN_USE;
 	}
 }
