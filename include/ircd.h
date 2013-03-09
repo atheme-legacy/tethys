@@ -8,6 +8,7 @@
 #include <ctype.h>
 //#include <varargs.h>
 #include <sys/socket.h>
+#include <sys/mman.h>
 #include <netinet/in.h>
 #include <netdb.h>
 #include <stdlib.h>
@@ -19,6 +20,7 @@
 #define offsetof(st, m) ((unsigned)(&((st *)0)->m))
 #define containerof(ptr, st, m) ((void*)((ptr) - offsetof(st, m)))
 
+#include "heap.h"
 #include "hash.h"
 #include "list.h"
 #include "io.h"

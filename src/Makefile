@@ -1,6 +1,6 @@
 OUTPUT = ircd-micro
 OBJS = hash.o list.o io.o linebuf.o msg.o main.o util.o \
-	user.o toplev.o conn.o \
+	user.o toplev.o conn.o heap.o \
 	c_nick.o c_user.o
 
 INCLUDE = ../include
