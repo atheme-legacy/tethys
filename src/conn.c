@@ -48,7 +48,7 @@ void (*cb)();
 		goto out;
 
 	sa.sin_family = AF_INET;
-	sa.sin_port = port;
+	sa.sin_port = htons(port);
 	sa.sin_addr.s_addr = addr;
 
 	if (bind(fd, (struct sockaddr*)&sa, sizeof(sa)) < 0)
