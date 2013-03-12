@@ -23,14 +23,32 @@ struct u_linebuf *lb;
 char *dest;
 int size;
 {
-	char *s;
+	/* s and p are just generic pointers whose meaning changes throughout
+	   the function. */
+	char *s, *p;
 	int sz;
+
 	s = (char*)memchr(lb->buf, '\n', lb->pos);
-	if (s == NULL) return 0;
-	if (s - lb->buf > size) return -1;
+	p = (char*)memchr(lb->buf, '\r', lb->pos);
+
+	if (!s && !p)
+		return;
+
+	if (p < s)
+		s = p;
+
+	p = s;
+	while (*p == '\n' || *p == '\r')
+		*p++;
+
+	if (s - lb->buf > size)
+		return -1;
+
 	sz = s - lb->buf;
 	memcpy(dest, lb->buf, sz);
-	u_memmove(lb->buf, s + 1, U_LINEBUF_SIZE - sz - 1);
-	lb->pos -= sz + 1;
+
+	u_memmove(lb->buf, p, lb->buf - p + U_LINEBUF_SIZE);
+	lb->pos -= p - lb->buf;
+
 	return sz;
 }
