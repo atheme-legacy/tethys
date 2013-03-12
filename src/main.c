@@ -13,6 +13,21 @@ usage(argv0, code)
 	exit(code);
 }
 
+#define INIT(fn) if ((err = (fn)()) < 0) return err
+#define COMMAND_DEF(cmds) extern struct u_cmd cmds[]
+#define COMMAND(cmds) if ((err = u_cmds_reg(cmds)) < 0) return err
+COMMAND_DEF(c_nick);
+COMMAND_DEF(c_user);
+int init()
+{
+	int err;
+
+	COMMAND(c_nick);
+	COMMAND(c_user);
+
+	return 0;
+}
+
 int main(argc, argv)
 int argc;
 char *argv[];
@@ -33,18 +48,23 @@ char *argv[];
 		}
 	}
 
-	u_io_init(&base_io);
-
-	if (!u_conn_origin_create(&base_io, INADDR_ANY, 6667, u_toplev_origin_cb)) {
-		printf("Could not create connection origin. Bailing\n");
+	if (init() < 0) {
+		u_log("Initialization failed\n");
 		return 1;
 	}
 
-	printf("Entering IO loop\n");
+	u_io_init(&base_io);
+
+	if (!u_conn_origin_create(&base_io, INADDR_ANY, 6667, u_toplev_origin_cb)) {
+		u_log("Could not create connection origin. Bailing\n");
+		return 1;
+	}
+
+	u_debug("Entering IO loop\n");
 
 	u_io_poll(&base_io);
 
-	printf("IO loop died. Bye bye!\n");
+	u_debug("IO loop died. Bye bye!\n");
 
 	return 0;
 }
