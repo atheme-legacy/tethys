@@ -38,7 +38,7 @@ char *id_next()
 void u_user_init(user)
 struct u_user *user;
 {
-	user->id[0] = '\0';
+	user->uid[0] = '\0';
 	user->nick[0] = '\0';
 	user->ident[0] = '\0';
 	user->host[0] = '\0';

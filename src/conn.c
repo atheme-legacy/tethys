@@ -11,6 +11,9 @@ struct u_conn *conn;
 	conn->obuf = malloc(U_CONN_OBUFSIZE);
 	conn->obuflen = 0;
 	conn->obufsize = U_CONN_OBUFSIZE;
+	conn->priv = NULL;
+	conn->pass = NULL;
+	conn->ctx = CTX_UNREG;
 }
 
 /* sadfaec */

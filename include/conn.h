@@ -9,7 +9,9 @@
 #define CTX_UNREG       0
 #define CTX_USER        1
 #define CTX_SERVER      2
-#define CTX_MAX         3
+#define CTX_U_REG       3
+#define CTX_S_REG       4
+#define CTX_MAX         5
 
 struct u_conn {
 	unsigned flags;
@@ -18,6 +20,7 @@ struct u_conn {
 	char *obuf;
 	int obuflen, obufsize;
 	void *priv;
+	char *pass;
 	int ctx;
 };
 
