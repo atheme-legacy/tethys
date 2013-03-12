@@ -16,14 +16,12 @@ usage(argv0, code)
 #define INIT(fn) if ((err = (fn)()) < 0) return err
 #define COMMAND_DEF(cmds) extern struct u_cmd cmds[]
 #define COMMAND(cmds) if ((err = u_cmds_reg(cmds)) < 0) return err
-COMMAND_DEF(c_nick);
-COMMAND_DEF(c_user);
+COMMAND_DEF(c_ureg);
 int init()
 {
 	int err;
 
-	COMMAND(c_nick);
-	COMMAND(c_user);
+	COMMAND(c_ureg);
 
 	return 0;
 }
