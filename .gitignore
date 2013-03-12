@@ -1,4 +1,5 @@
 *.swp
 *.o
+core*
 src/ircd-micro
 test/
