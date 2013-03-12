@@ -12,6 +12,7 @@
 #include <netinet/in.h>
 #include <netdb.h>
 #include <stdlib.h>
+#include <getopt.h>
 
 #ifndef NULL
 #define NULL ((void*)0)
@@ -37,5 +38,6 @@
 #include "msg.h"
 #include "user.h"
 #include "server.h"
+#include "toplev.h"
 
 #endif
