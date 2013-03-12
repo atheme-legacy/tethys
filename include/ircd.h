@@ -6,7 +6,6 @@
 #include <sys/time.h>
 #include <string.h>
 #include <ctype.h>
-//#include <varargs.h>
 #include <sys/socket.h>
 #include <sys/mman.h>
 #include <netinet/in.h>
@@ -27,6 +26,14 @@
 #else
 #define u_debug(x...)
 #define u_log(x...)
+#endif
+
+#ifdef __GNUC__
+#define STDARG
+#include <stdarg.h>
+#else
+#undef STDARG
+#include <varargs.h>
 #endif
 
 #include "heap.h"

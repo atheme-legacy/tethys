@@ -33,6 +33,51 @@ int obufsize;
 	conn->obufsize = obufsize;
 }
 
+void f_str(p, end, s)
+char **p, *end, *s;
+{
+	while (*p < end && *s)
+		*(*p)++ = *s++;
+}
+
+/* Some day I might write my own string formatter with my own special
+   formatting things for use in IRC... but today is not that day */
+void u_conn_vf(conn, fmt, va)
+struct u_conn *conn;
+char *fmt;
+va_list va;
+{
+	char buf[4096];
+	char *p, *end;
+
+	p = conn->obuf + conn->obuflen;
+	end = conn->obuf + conn->obufsize - 2; /* -2 for \r\n */
+
+	vsprintf(buf, fmt, va);
+
+	f_str(&p, end, buf);
+
+	*p++ = '\r';
+	*p++ = '\n';
+
+	conn->obuflen = p - conn->obuf;
+}
+
+#ifdef STDARG
+void u_conn_f(struct u_conn *conn, char *fmt, ...)
+#else
+void u_conn_f(conn, fmt, va_alist)
+struct u_conn *conn;
+char *fmt;
+va_dcl
+#endif
+{
+	va_list va;
+	va_start(va, fmt);
+	u_conn_vf(conn, fmt, va);
+	va_end(va);
+}
+
 struct u_conn_origin *u_conn_origin_create(io, addr, port, cb)
 struct u_io *io;
 u_long addr;
