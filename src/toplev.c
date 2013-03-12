@@ -16,14 +16,22 @@ struct u_io_fd *iofd;
 	toplev_sync(iofd);
 }
 
-static void toplev_recv(conn)
-struct u_conn *conn;
+static void toplev_recv(iofd)
+struct u_io_fd *iofd;
 {
+	struct u_conn *conn = iofd->priv;
 	char buf[1024];
 	int sz;
 	struct u_msg msg;
 
-	sz = recv(conn->sock->fd, buf, 1024-conn->ibuf.pos, 0);
+	sz = recv(iofd->fd, buf, 1024-conn->ibuf.pos, 0);
+
+	if (sz <= 0) {
+		perror("toplev_recv");
+		iofd->recv = NULL;
+		return;
+	}
+
 	u_linebuf_data(&conn->ibuf, buf, sz);
 
 	while ((sz = u_linebuf_line(&conn->ibuf, buf, 1024)) != 0) {
@@ -35,12 +43,30 @@ struct u_conn *conn;
 		u_msg_parse(&msg, buf);
 		conn->invoke(conn, &msg);
 	}
+
+	toplev_sync(iofd);
 }
 
 static void toplev_send(iofd)
 struct u_io_fd *iofd;
 {
-	/* TODO: toplev send */
+	struct u_conn *conn = iofd->priv;
+	int sz;
+
+	sz = send(iofd->fd, conn->obuf, conn->obuflen, 0);
+
+	if (sz < 0) {
+		perror("toplev_send");
+		iofd->send = NULL;
+		return;
+	}
+
+	if (sz > 0) {
+		u_memmove(conn->obuf, conn->obuf + sz, conn->obufsize - sz);
+		conn->obuflen -= sz;
+	}
+
+	toplev_sync(iofd);
 }
 
 static void toplev_sync(iofd)
