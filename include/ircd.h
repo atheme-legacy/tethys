@@ -32,6 +32,7 @@
 #include "heap.h"
 #include "hash.h"
 #include "list.h"
+#include "trie.h"
 #include "io.h"
 #include "linebuf.h"
 #include "conn.h"
