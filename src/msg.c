@@ -49,6 +49,9 @@ char *s;
 		s = ws_cut(s);
 	}
 
+	for (p=msg->command; *p; p++)
+		*p = toupper(*p);
+
 	return 0;
 }
 
