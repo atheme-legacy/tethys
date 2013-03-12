@@ -34,7 +34,7 @@ int size;
 	if (!s && !p)
 		return;
 
-	if (p < s)
+	if (p && p < s)
 		s = p;
 
 	p = s;
