@@ -5,14 +5,20 @@
 
 #define U_CONN_CLOSING 0x0001
 
+/* connection contexts. used for command processing */
+#define CTX_UNREG       0
+#define CTX_USER        1
+#define CTX_SERVER      2
+#define CTX_MAX         3
+
 struct u_conn {
 	unsigned flags;
 	struct u_io_fd *sock;
 	struct u_linebuf ibuf;
 	char *obuf;
 	int obuflen, obufsize;
-	void (*invoke)(); /* u_conn*, u_msg* */
 	void *priv;
+	int ctx;
 };
 
 struct u_conn_origin {

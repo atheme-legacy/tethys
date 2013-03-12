@@ -11,7 +11,6 @@ struct u_conn *conn;
 	conn->obuf = malloc(U_CONN_OBUFSIZE);
 	conn->obuflen = 0;
 	conn->obufsize = U_CONN_OBUFSIZE;
-	conn->invoke = u_cmd_invoke_c;
 }
 
 /* sadfaec */

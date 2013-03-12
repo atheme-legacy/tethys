@@ -41,7 +41,7 @@ struct u_io_fd *iofd;
 		if (strlen(buf) != sz) /* TODO: error */
 			break;
 		u_msg_parse(&msg, buf);
-		conn->invoke(conn, &msg);
+		u_cmd_invoke(conn, &msg);
 	}
 
 	toplev_sync(iofd);

@@ -48,22 +48,15 @@ extern int u_msg_fmt(); /* char *dst, char *fmt, ... */
 
 #define MAXCOMMANDLEN 16
 
+/* use -1 for ctx to invoke command in all contexes */
 struct u_cmd {
 	char name[MAXCOMMANDLEN+1];
-	/* cc=unregged conn, cs=server, cu=user */
-	void (*cc)(); /* u_conn* src, u_msg* */
-	int ncc;
-	void (*cu)(); /* u_user* src, u_msg* */
-	int ncu;
-	void (*cs)(); /* u_server* src, u_msg* */
-	int ncs;
+	int ctx;
+	void (*cb)(); /* u_conn* src, u_msg* */
+	int nargs;
 };
 
 extern int u_cmds_reg(); /* struct u_cmd*, terminated with empty name */
-extern void u_cmds_unreg(); /* struct u_cmd*, terminated as above */
-
-extern void u_cmd_invoke_c(); /* u_conn*, u_msg* */
-extern void u_cmd_invoke_u(); /* u_conn*, u_msg* */
-extern void u_cmd_invoke_s(); /* u_conn*, u_msg* */
+extern void u_cmd_invoke(); /* u_conn*, u_msg* */
 
 #endif

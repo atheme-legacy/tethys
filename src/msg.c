@@ -57,22 +57,32 @@ char *s;
 
 
 /* let bss initialize to zero */
-static struct u_hash commands;
+static struct u_hash commands[CTX_MAX];
 
-static struct u_cmd *find_command(name)
-char *name;
-{
-	/* TODO: uppercase name? */
-	return u_hash_get(&commands, name);
-}
-
-static int u_cmd_reg_one(cmd)
+int reg_one_real(cmd, ctx)
 struct u_cmd *cmd;
+int ctx;
 {
-	if (u_hash_get(&commands, cmd->name))
+	if (u_hash_get(&commands[ctx], cmd->name))
 		return -1;
 
-	u_hash_set(&commands, cmd->name, cmd);
+	u_hash_set(&commands[ctx], cmd->name, cmd);
+	return 0;
+}
+
+int reg_one(cmd)
+struct u_cmd *cmd;
+{
+	int i, err;
+
+	if (cmd->ctx >= 0)
+		return reg_one_real(cmd, cmd->ctx);
+
+	for (i=0; i<CTX_MAX; i++) {
+		if ((err = reg_one_real(cmd, i)) < 0)
+			return err;
+	}
+	return 0;
 }
 
 int u_cmds_reg(cmds)
@@ -80,60 +90,29 @@ struct u_cmd *cmds;
 {
 	int err;
 	for (; cmds->name[0]; cmds++) {
-		if ((err = u_cmd_reg_one(cmds)) < 0)
+		if ((err = reg_one(cmds)) < 0)
 			return err;
 	}
 	return 0;
 }
 
-void u_cmds_unreg(cmds)
-struct u_cmd *cmds;
-{
-	int err;
-	for (; cmds->name[0]; cmds++)
-		u_hash_del(&commands, cmds->name);
-}
-
-
 /* TODO: these are all starting to look the same... */
 
-void u_cmd_invoke_c(conn, msg)
+void u_cmd_invoke(conn, msg)
 struct u_conn *conn;
 struct u_msg *msg;
 {
-	struct u_cmd *cmd = find_command(msg->command);
+	struct u_cmd *cmd;
+
+	cmd = u_hash_get(&commands[conn->ctx], msg->command);
 
 	/* TODO: command not found */
-	if (!cmd) return;
+	if (!cmd)
+		return;
 
 	/* TODO: not enough args */
-	if (msg->argc < cmd->ncc) return;
+	if (msg->argc < cmd->nargs)
+		return;
 
-	cmd->cc(conn, msg);
-}
-
-void u_cmd_invoke_u(conn, msg)
-struct u_conn *conn;
-struct u_msg *msg;
-{
-	struct u_cmd *cmd = find_command(msg->command);
-
-	/* TODO: */
-	if (!cmd) return;
-	if (msg->argc < cmd->ncu) return;
-
-	cmd->cu(conn, msg);
-}
-
-void u_cmd_invoke_s(conn, msg)
-struct u_conn *conn;
-struct u_msg *msg;
-{
-	struct u_cmd *cmd = find_command(msg->command);
-
-	/* TODO: */
-	if (!cmd) return;
-	if (msg->argc < cmd->ncs) return;
-
-	cmd->cs(conn, msg);
+	cmd->cb(conn, msg);
 }
