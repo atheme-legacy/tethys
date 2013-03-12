@@ -33,7 +33,7 @@ struct u_umode_info {
 };
 
 struct u_user {
-	char id[7];
+	char uid[10];
 	char nick[MAXNICKLEN+1];
 	char ident[MAXIDENT+1];
 	char host[MAXHOST+1];
