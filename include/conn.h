@@ -46,11 +46,7 @@ extern void u_conn_obufsize(); /* u_conn*, int obufsize */
 extern void u_conn_out_clear(); /* u_conn* */
 
 extern void u_conn_vf(); /* u_conn*, char *fmt, va_list */
-extern void u_conn_f(
-#ifdef STDARG
-	struct u_conn *conn, char *fmt, ...
-#endif
-	);
+extern void u_conn_f(A(struct u_conn *conn, char *fmt, ...));
 
 extern void u_conn_event(); /* u_conn*, int */
 extern void u_conn_close(); /* u_conn* */

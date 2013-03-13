@@ -29,11 +29,13 @@
 #endif
 
 #ifdef __GNUC__
-#define STDARG
-#include <stdarg.h>
+# define STDARG
+# include <stdarg.h>
+# define A(x...) x
 #else
-#undef STDARG
-#include <varargs.h>
+# undef STDARG
+# include <varargs.h>
+# define A(x...)
 #endif
 
 #include "util.h"
