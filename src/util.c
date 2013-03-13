@@ -1,7 +1,13 @@
 #include "ircd.h"
 
-int match(mask, string)
-char *mask, *string;
+static char null_casemap[256];
+static char rfc1459_casemap[256];
+static char ascii_casemap[256];
+static int valid_nick_map[256];
+static int valid_ident_map[256];
+
+int matchmap(mask, string, casemap)
+char *mask, *string, *casemap;
 {
 	const char *m = mask, *s = string;
 	const char *m_bt = m, *s_bt = s;
@@ -28,12 +34,30 @@ char *mask, *string;
 		default:
 			if (!*s)
 				return 0;
-			if (*m != *s && *m != '?')
+			if (casemap[*m] != casemap[*s] && *m != '?')
 				goto backtrack;
 			m++;
 			s++;
 		}
 	}
+}
+
+int match(mask, string)
+char *mask, string;
+{
+	matchmap(mask, string, null_casemap);
+}
+
+int matchirc(mask, string)
+char *mask, string;
+{
+	matchmap(mask, string, rfc1459_casemap);
+}
+
+int matchcase(mask, string)
+char *mask, string;
+{
+	matchmap(mask, string, ascii_casemap);
 }
 
 void u_memmove_lower(dest, src, n)
@@ -81,15 +105,23 @@ int n;
 	dest[n] = '\0';
 }
 
-static char rfc1459_casemap[256];
-static int valid_nick_map[256];
-static int valid_ident_map[256];
+void null_canonize(s)
+char *s;
+{
+}
 
 void rfc1459_canonize(s)
 char *s;
 {
 	for (; *s; s++)
 		*s = rfc1459_casemap[*s];
+}
+
+void ascii_canonize(s)
+char *s;
+{
+	for (; *s; s++)
+		*s = ascii_casemap[*s];
 }
 
 int is_valid_nick(s)
@@ -118,8 +150,11 @@ int init_util()
 {
 	int i;
 
-	for (i=0; i<256; i++)
-		rfc1459_casemap[i] = toupper(i);
+	for (i=0; i<256; i++) {
+		null_casemap[i] = i;
+		rfc1459_casemap[i] = tolower(i);
+		ascii_casemap[i] = tolower(i);
+	}
 	rfc1459_casemap['{'] = '[';
 	rfc1459_casemap['}'] = ']';
 	rfc1459_casemap['|'] = '\\';

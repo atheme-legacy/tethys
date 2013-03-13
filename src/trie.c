@@ -3,7 +3,7 @@
 #define TRIE_E_HEAP_COUNT 128 /* needs to be tuned? */
 struct u_heap *e_heap = NULL;
 
-void null_canonize(s) { }
+static void __null_canonize(s) { }
 
 static struct u_trie_e *trie_e_new(up)
 struct u_trie_e *up;
@@ -36,7 +36,7 @@ void (*canonize)();
 	int i;
 
 	trie = malloc(sizeof(*trie));
-	trie->canonize = canonize ? canonize : null_canonize;
+	trie->canonize = canonize ? canonize : __null_canonize;
 
 	trie->n.val = NULL;
 	trie->n.up = NULL;
