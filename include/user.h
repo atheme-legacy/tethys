@@ -62,4 +62,6 @@ extern unsigned umode_default;
 extern void u_user_local_init(); /* u_user_local*, u_conn* */
 extern void u_user_remote_init(); /* u_user_remote*, u_server* */
 
+extern int init_user();
+
 #endif

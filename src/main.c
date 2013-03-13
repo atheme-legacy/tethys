@@ -21,6 +21,8 @@ int init()
 {
 	int err;
 
+	INIT(init_util);
+	INIT(init_user);
 	COMMAND(c_ureg);
 
 	return 0;

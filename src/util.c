@@ -44,3 +44,57 @@ int n;
 	memcpy(dest, src, n);
 	dest[n] = '\0';
 }
+
+static char rfc1459_casemap[256];
+static int valid_nick_map[256];
+static int valid_ident_map[256];
+
+void rfc1459_canonize(s)
+char *s;
+{
+	for (; *s; s++)
+		*s = rfc1459_casemap[*s];
+}
+
+int is_valid_nick(s)
+char *s;
+{
+	if (isdigit(*s))
+		return 0;
+	for (; *s; s++) {
+		if (!valid_nick_map[*s])
+			return 0;
+	}
+	return 1;
+}
+
+int is_valid_ident(s)
+char *s;
+{
+	for (; *s; s++) {
+		if (!valid_ident_map[*s])
+			return 0;
+	}
+	return 1;
+}
+
+int init_util()
+{
+	int i;
+
+	for (i=0; i<256; i++)
+		rfc1459_casemap[i] = toupper(i);
+	rfc1459_casemap['{'] = '[';
+	rfc1459_casemap['}'] = ']';
+	rfc1459_casemap['|'] = '\\';
+	rfc1459_casemap['^'] = '~';
+
+	for (i=0; i<256; i++)
+		valid_nick_map[i] = isalnum(i) || strchr("[]{}|\\^-_", i);
+
+	/* TODO: decide */
+	for (i=0; i<256; i++)
+		valid_ident_map[i] = isalnum(i) || strchr("[]{}-_", i);
+
+	return 0;
+}

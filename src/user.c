@@ -11,9 +11,8 @@ static struct u_umode_info __umodes[32] = {
 struct u_umode_info *umodes = __umodes;
 unsigned umode_default = UMODE_INVISIBLE;
 
-/* TODO: initialize these */
-struct u_hash users_by_nick;
-struct u_hash users_by_uid;
+struct u_trie *users_by_nick;
+struct u_trie *users_by_uid;
 
 char *id_map = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 int id_modulus = 36; /* just strlen(uid_map) */
@@ -65,4 +64,22 @@ struct u_server *server;
 	u_user_init(USER(user));
 
 	user->server = server;
+}
+
+struct u_user *u_user_by_nick(nick)
+{
+	return u_trie_get(users_by_nick, nick);
+}
+
+struct u_user *u_user_by_uid(uid)
+{
+	return u_trie_get(users_by_uid, uid);
+}
+
+int init_user()
+{
+	users_by_nick = u_trie_new();
+	users_by_uid = u_trie_new();
+
+	return (users_by_nick && users_by_uid) ? 0 : -1;
 }

@@ -41,14 +41,24 @@ struct u_conn *conn;
 struct u_msg *msg;
 {
 	struct u_user_local *u;
+	char buf[MAXNICKLEN+1];
 
 	make_ureg(conn);
 	u = conn->priv;
 
-	u_strlcpy(USER(u)->nick, msg->argv[0], MAXNICKLEN+1);
+	u_strlcpy(buf, msg->argv[0], MAXNICKLEN+1);
 
-	/* TODO: verify */
+	if (!is_valid_nick(buf)) {
+		u_conn_f(conn, "invalid nickname");
+		return;
+	}
 
+	if (u_user_by_nick(buf)) {
+		u_conn_f(conn, "nickname is in use");
+		return;
+	}
+
+	strcpy(USER(u)->nick, buf);
 	try_reg(conn);
 }
 
@@ -57,11 +67,17 @@ struct u_conn *conn;
 struct u_msg *msg;
 {
 	struct u_user_local *u;
+	char buf[MAXIDENT+1];
 
 	make_ureg(conn);
 	u = conn->priv;
 
-	u_strlcpy(USER(u)->ident, msg->argv[0], MAXIDENT+1);
+	u_strlcpy(buf, msg->argv[0], MAXIDENT+1);
+	if (!is_valid_ident(buf)) {
+		u_conn_f(conn, "invalid ident");
+		return;
+	}
+	strcpy(USER(u)->ident, buf);
 	u_strlcpy(USER(u)->gecos, msg->argv[3], MAXGECOS+1);
 
 	try_reg(conn);
