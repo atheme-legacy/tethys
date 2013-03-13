@@ -11,6 +11,7 @@
 #define EV_SEND_ERROR     3
 #define EV_SENDQ_FULL     4
 #define EV_RECVQ_FULL     5
+#define EV_DESTROYING     6
 
 /* connection contexts. used for command processing */
 #define CTX_UNREG       0
@@ -38,6 +39,7 @@ struct u_conn_origin {
 };
 
 extern void u_conn_init(); /* u_conn* */
+extern void u_conn_cleanup(); /* u_conn* */
 extern void u_conn_obufsize(); /* u_conn*, int obufsize */
 
 /* deletes all but up to one line of output */

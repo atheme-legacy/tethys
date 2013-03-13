@@ -16,6 +16,16 @@ struct u_io_fd *iofd;
 	toplev_sync(iofd);
 }
 
+void toplev_cleanup(iofd)
+struct u_io_fd *iofd;
+{
+	struct u_conn *conn = iofd->priv;
+	u_conn_event(conn, EV_DESTROYING);
+	u_conn_cleanup(conn);
+	close(iofd->fd);
+	free(conn);
+}
+
 static void toplev_recv(iofd)
 struct u_io_fd *iofd;
 {
@@ -88,5 +98,5 @@ struct u_io_fd *iofd;
 	if (conn->obuflen > 0)
 		iofd->send = toplev_send;
 	if (!iofd->recv && !iofd->send)
-		close(iofd->fd);
+		toplev_cleanup(iofd);
 }

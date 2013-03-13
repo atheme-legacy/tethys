@@ -17,6 +17,12 @@ struct u_conn *conn;
 	conn->ctx = CTX_UNREG;
 }
 
+void u_conn_cleanup(conn)
+struct u_conn *conn;
+{
+	free(conn->obuf);
+}
+
 /* sadfaec */
 void u_conn_obufsize(conn, obufsize)
 struct u_conn *conn;
