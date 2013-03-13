@@ -56,7 +56,7 @@ char *argv[];
 
 	u_io_init(&base_io);
 
-	if (!u_conn_origin_create(&base_io, INADDR_ANY, 6667, u_toplev_origin_cb)) {
+	if (!u_conn_origin_create(&base_io, INADDR_ANY, opt_port, u_toplev_origin_cb)) {
 		u_log("Could not create connection origin. Bailing\n");
 		return 1;
 	}

@@ -5,6 +5,13 @@
 
 #define U_CONN_CLOSING 0x0001
 
+/* events */
+#define EV_END_OF_STREAM  1
+#define EV_RECV_ERROR     2
+#define EV_SEND_ERROR     3
+#define EV_SENDQ_FULL     4
+#define EV_RECVQ_FULL     5
+
 /* connection contexts. used for command processing */
 #define CTX_UNREG       0
 #define CTX_USER        1
@@ -19,6 +26,7 @@ struct u_conn {
 	struct u_linebuf ibuf;
 	char *obuf;
 	int obuflen, obufsize;
+	void (*event)(); /* u_conn*, int event */
 	void *priv;
 	char *pass;
 	int ctx;
@@ -42,6 +50,7 @@ extern void u_conn_f(
 #endif
 	);
 
+extern void u_conn_event(); /* u_conn*, int */
 extern void u_conn_close(); /* u_conn* */
 
 /* u_io*, u_long addr, u_short port, void (*cb)(); */

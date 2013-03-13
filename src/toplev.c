@@ -27,19 +27,27 @@ struct u_io_fd *iofd;
 	sz = recv(iofd->fd, buf, 1024-conn->ibuf.pos, 0);
 
 	if (sz <= 0) {
-		perror("toplev_recv");
-		iofd->recv = NULL;
+		u_conn_event(conn, sz == 0 ? EV_END_OF_STREAM : EV_RECV_ERROR);
+		u_conn_close(conn);
+		toplev_sync(iofd);
 		return;
 	}
 
-	u_linebuf_data(&conn->ibuf, buf, sz);
+	if (u_linebuf_data(&conn->ibuf, buf, sz) < 0) {
+		u_conn_event(conn, EV_RECVQ_FULL);
+		u_conn_close(conn);
+		toplev_sync(iofd);
+		return;
+	}
 
 	while ((sz = u_linebuf_line(&conn->ibuf, buf, 1024)) != 0) {
-		if (sz < 0) /* TODO: error */
+		if (sz > 0)
+			buf[sz] = '\0';
+		if (sz < 0 || strlen(buf) != sz) {
+			u_conn_event(conn, EV_RECV_ERROR);
+			u_conn_close(conn);
 			break;
-		buf[sz] = '\0';
-		if (strlen(buf) != sz) /* TODO: error */
-			break;
+		}
 		u_msg_parse(&msg, buf);
 		u_cmd_invoke(conn, &msg);
 	}
@@ -56,8 +64,9 @@ struct u_io_fd *iofd;
 	sz = send(iofd->fd, conn->obuf, conn->obuflen, 0);
 
 	if (sz < 0) {
-		perror("toplev_send");
-		iofd->send = NULL;
+		u_conn_event(conn, EV_SEND_ERROR);
+		u_conn_close(conn);
+		toplev_sync(iofd);
 		return;
 	}
 
@@ -78,4 +87,6 @@ struct u_io_fd *iofd;
 		iofd->recv = toplev_recv;
 	if (conn->obuflen > 0)
 		iofd->send = toplev_send;
+	if (!iofd->recv && !iofd->send)
+		close(iofd->fd);
 }

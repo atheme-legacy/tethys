@@ -67,19 +67,21 @@ struct u_server *server;
 }
 
 struct u_user *u_user_by_nick(nick)
+char *nick;
 {
 	return u_trie_get(users_by_nick, nick);
 }
 
 struct u_user *u_user_by_uid(uid)
+char *uid;
 {
 	return u_trie_get(users_by_uid, uid);
 }
 
 int init_user()
 {
-	users_by_nick = u_trie_new();
-	users_by_uid = u_trie_new();
+	users_by_nick = u_trie_new(rfc1459_canonize);
+	users_by_uid = u_trie_new(ascii_canonize);
 
 	return (users_by_nick && users_by_uid) ? 0 : -1;
 }

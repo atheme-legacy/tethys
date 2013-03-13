@@ -46,8 +46,8 @@ void (*canonize)();
 	return trie;
 }
 
-static char nibble(s, i)
-char *s;
+static unsigned char nibble(s, i)
+unsigned char *s;
 {
 	return (i%2==0) ? s[i/2]>>4 : s[i/2]&0xf;
 }
@@ -58,7 +58,7 @@ char *key;
 int create;
 {
 	struct u_trie_e *n;
-	int c, nib = 0; /* even=high, odd=low */
+	unsigned int c, nib = 0; /* even=high, odd=low */
 
 	trie->canonize(key);
 
@@ -67,7 +67,7 @@ int create;
 
 	n = &trie->n;
 
-	for (; key[nib/2]; nib++) {
+	for (; n && key[nib/2]; nib++) {
 		c = nibble(key, nib);
 		if (n->n[c] == NULL) {
 			if (create)

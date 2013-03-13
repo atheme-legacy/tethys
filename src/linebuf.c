@@ -32,13 +32,13 @@ int size;
 	p = (char*)memchr(lb->buf, '\r', lb->pos);
 
 	if (!s && !p)
-		return;
+		return 0;
 
-	if (p && p < s)
+	if (!s || (p && p < s))
 		s = p;
 
 	p = s;
-	while (*p == '\n' || *p == '\r')
+	while (p - lb->buf < lb->pos && (*p == '\n' || *p == '\r'))
 		*p++;
 
 	if (s - lb->buf > size)

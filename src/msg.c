@@ -111,6 +111,8 @@ struct u_msg *msg;
 	if (msg->argc < cmd->nargs)
 		return;
 
+	printf("INVOKE %s [%p]\n", cmd->name, cmd->cb);
+
 	cmd->cb(conn, msg);
 }
 

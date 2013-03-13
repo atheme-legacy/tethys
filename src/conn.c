@@ -11,6 +11,7 @@ struct u_conn *conn;
 	conn->obuf = malloc(U_CONN_OBUFSIZE);
 	conn->obuflen = 0;
 	conn->obufsize = U_CONN_OBUFSIZE;
+	conn->event = NULL;
 	conn->priv = NULL;
 	conn->pass = NULL;
 	conn->ctx = CTX_UNREG;
@@ -78,6 +79,11 @@ va_list va;
 	*p++ = '\n';
 
 	conn->obuflen = p - conn->obuf;
+
+	if (conn->obuflen == conn->obufsize) {
+		u_conn_event(conn, EV_SENDQ_FULL);
+		u_conn_close(conn);
+	}
 }
 
 #ifdef STDARG
@@ -93,6 +99,16 @@ va_dcl
 	va_start(va, fmt);
 	u_conn_vf(conn, fmt, va);
 	va_end(va);
+}
+
+void u_conn_event(conn, ev)
+struct u_conn *conn;
+int ev;
+{
+	printf("CONN:EV: [%p] EV=%d\n", conn, ev);
+	if (!conn->event)
+		return;
+	conn->event(conn, ev);
 }
 
 void u_conn_close(conn)
@@ -153,11 +169,17 @@ struct u_io_fd *sock;
 	struct u_conn_origin *orig = sock->priv;
 	struct u_io_fd *iofd;
 	struct sockaddr addr;
-	int addrlen;
+	int addrlen = sizeof(addr);
 	int fd;
 
-	if ((fd = accept(sock->fd, &addr, &addrlen)) < 0)
+	printf("ORIGIN RECV: ON %d\n", sock->fd);
+
+	if ((fd = accept(sock->fd, &addr, &addrlen)) < 0) {
+		perror("origin_recv");
 		return;
+	}
+
+	printf("ORIGIN RECV: %d\n", fd);
 
 	if (!(iofd = u_io_add_fd(sock->io, fd)))
 		return; /* XXX */
