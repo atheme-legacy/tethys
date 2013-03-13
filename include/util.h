@@ -1,6 +1,8 @@
 #ifndef __INC_UTIL_H__
 #define __INC_UTIL_H__
 
+extern int match(); /* char *pattern, char *string */
+
 extern void u_memmove();
 extern void u_strlcpy();
 
