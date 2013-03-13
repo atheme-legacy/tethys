@@ -32,15 +32,17 @@ struct u_conn_origin {
 extern void u_conn_init(); /* u_conn* */
 extern void u_conn_obufsize(); /* u_conn*, int obufsize */
 
-/* See the definition of u_conn_f for more information on the format
-   strings. They are not just printf format strings!! */
-extern void u_conn_vf(); /* u_conn*, char *fmt, va_list */
+/* deletes all but up to one line of output */
+extern void u_conn_out_clear(); /* u_conn* */
 
+extern void u_conn_vf(); /* u_conn*, char *fmt, va_list */
 extern void u_conn_f(
 #ifdef STDARG
 	struct u_conn *conn, char *fmt, ...
 #endif
 	);
+
+extern void u_conn_close(); /* u_conn* */
 
 /* u_io*, u_long addr, u_short port, void (*cb)(); */
 extern struct u_conn_origin *u_conn_origin_create();

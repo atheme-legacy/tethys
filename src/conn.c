@@ -36,6 +36,20 @@ int obufsize;
 	conn->obufsize = obufsize;
 }
 
+void u_conn_out_clear(conn)
+struct u_conn *conn;
+{
+	char *s;
+
+	s = memchr(conn->obuf, '\r', conn->obuflen);
+	if (*++s != '\n')
+		s = conn->obuf;
+	else
+		s++;
+
+	conn->obuflen = s - conn->obuf;
+}
+
 void f_str(p, end, s)
 char **p, *end, *s;
 {
@@ -79,6 +93,12 @@ va_dcl
 	va_start(va, fmt);
 	u_conn_vf(conn, fmt, va);
 	va_end(va);
+}
+
+void u_conn_close(conn)
+struct u_conn *conn;
+{
+	conn->flags |= U_CONN_CLOSING;
 }
 
 struct u_conn_origin *u_conn_origin_create(io, addr, port, cb)
