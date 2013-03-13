@@ -49,7 +49,7 @@ struct u_conn *conn;
 	char *s;
 
 	s = memchr(conn->obuf, '\r', conn->obuflen);
-	if (*++s != '\n')
+	if (!s || *++s != '\n')
 		s = conn->obuf;
 	else
 		s++;

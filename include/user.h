@@ -59,8 +59,7 @@ struct u_user_remote {
 extern struct u_umode_info *umodes;
 extern unsigned umode_default;
 
-extern void u_user_local_init(); /* u_user_local*, u_conn* */
-extern void u_user_remote_init(); /* u_user_remote*, u_server* */
+extern void u_user_make_ureg(); /* u_conn* */
 
 extern struct u_user *u_user_by_nick(); /* char* */
 extern struct u_user *u_user_by_uid(); /* char* */

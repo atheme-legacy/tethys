@@ -10,18 +10,6 @@ struct u_msg *msg;
 	strcpy(conn->pass, msg->argv[0]);
 }
 
-static void make_ureg(conn)
-struct u_conn *conn;
-{
-	conn->ctx = CTX_UREG;
-
-	if (conn->priv == NULL) {
-		/* TODO: heap! */
-		conn->priv = malloc(sizeof(struct u_user_local));
-		u_user_local_init(conn->priv, conn);
-	}
-}
-
 static void try_reg(conn)
 struct u_conn *conn;
 {
@@ -43,7 +31,7 @@ struct u_msg *msg;
 	struct u_user_local *u;
 	char buf[MAXNICKLEN+1];
 
-	make_ureg(conn);
+	u_user_make_ureg(conn);
 	u = conn->priv;
 
 	u_strlcpy(buf, msg->argv[0], MAXNICKLEN+1);
@@ -69,7 +57,7 @@ struct u_msg *msg;
 	struct u_user_local *u;
 	char buf[MAXIDENT+1];
 
-	make_ureg(conn);
+	u_user_make_ureg(conn);
 	u = conn->priv;
 
 	u_strlcpy(buf, msg->argv[0], MAXIDENT+1);

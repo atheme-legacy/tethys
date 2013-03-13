@@ -34,36 +34,72 @@ char *id_next()
 	return id_buf;
 }
 
-void u_user_init(user)
-struct u_user *user;
+/* used to simplify user_local_event */
+void user_local_die(conn, msg)
+struct u_conn *conn;
+char *msg;
 {
-	user->uid[0] = '\0';
-	user->nick[0] = '\0';
-	user->ident[0] = '\0';
-	user->host[0] = '\0';
-	user->gecos[0] = '\0';
-
-	user->mode = umode_default | USER_REGISTERING;
+	struct u_user *u = conn->priv;
+	u_conn_out_clear(conn);
+	if (conn->ctx == CTX_USER) {
+		/* TODO */
+		u_conn_f(conn, ":%s!%s@%s QUIT :Error: %s",
+		         u->nick, u->ident, u->host, msg);
+	} else {
+		u_conn_f(conn, "ERROR :%s", msg);
+	}
 }
 
-void u_user_local_init(user, conn)
-struct u_user_local *user;
+void user_local_event(conn, event)
 struct u_conn *conn;
 {
-	u_user_init(USER(user));
+	switch (event) {
+	case EV_END_OF_STREAM:
+		user_local_die(conn, "end of stream");
+		break;
+	case EV_RECV_ERROR:
+		user_local_die(conn, "read error");
+		break;
+	case EV_SEND_ERROR:
+		user_local_die(conn, "send error");
+		break;
+	case EV_SENDQ_FULL:
+		user_local_die(conn, "sendq full");
+		break;
+	case EV_RECVQ_FULL:
+		user_local_die(conn, "recvq full");
+		break;
+	default:
+		user_local_die(conn, "unknown error");
+		break;
 
-	user->user.mode |= USER_IS_LOCAL;
-	user->conn = conn;
-	user->flags = 0;
+	case EV_DESTROYING:
+		free(conn->priv);
+	}
 }
 
-void u_user_server_init(user, server)
-struct u_user_remote *user;
-struct u_server *server;
+void u_user_make_ureg(conn)
+struct u_conn *conn;
 {
-	u_user_init(USER(user));
+	struct u_user_local *u;
 
-	user->server = server;
+	if (conn->ctx != CTX_UNREG && conn->ctx != CTX_UREG)
+		return;
+
+	conn->ctx = CTX_UREG;
+
+	if (conn->priv != NULL)
+		return;
+
+	/* TODO: heap! */
+	conn->priv = u = malloc(sizeof(*u));
+	memset(u, 0, sizeof(*u));
+
+	u->user.mode = umode_default | USER_REGISTERING | USER_IS_LOCAL;
+	u->conn = conn;
+	u->flags = 0;
+
+	conn->event = user_local_event;
 }
 
 struct u_user *u_user_by_nick(nick)
