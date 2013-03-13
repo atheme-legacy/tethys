@@ -10,7 +10,7 @@ LD = cc
 
 default: $(OUTPUT)
 clean:
-	rm -f $(OBJS)
+	rm -f *.o
 	rm -f $(OUTPUT)
 
 $(OUTPUT): $(OBJS)
