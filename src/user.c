@@ -95,6 +95,8 @@ struct u_conn *conn;
 	conn->priv = u = malloc(sizeof(*u));
 	memset(u, 0, sizeof(*u));
 
+	u_strlcpy(USER(u)->host, conn->ip, MAXHOST+1);
+
 	u->user.mode = umode_default | USER_REGISTERING | USER_IS_LOCAL;
 	u->conn = conn;
 	u->flags = 0;
