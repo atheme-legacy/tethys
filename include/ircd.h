@@ -38,7 +38,6 @@
 
 #include "util.h"
 #include "heap.h"
-#include "hash.h"
 #include "list.h"
 #include "trie.h"
 #include "io.h"

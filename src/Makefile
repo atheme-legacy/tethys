@@ -1,5 +1,5 @@
 OUTPUT = ircd-micro
-OBJS = hash.o list.o io.o linebuf.o msg.o main.o util.o \
+OBJS = list.o io.o linebuf.o msg.o main.o util.o \
 	user.o toplev.o conn.o heap.o trie.o \
 	c_ureg.o
 
