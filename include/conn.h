@@ -25,6 +25,7 @@ struct u_conn {
 	unsigned flags;
 	struct u_io_fd *sock;
 	struct u_linebuf ibuf;
+	char ip[INET_ADDRSTRLEN];
 	char *obuf;
 	int obuflen, obufsize;
 	void (*event)(); /* u_conn*, int event */

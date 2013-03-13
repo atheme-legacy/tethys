@@ -5,14 +5,6 @@ static void toplev_sync();
 void u_toplev_origin_cb(iofd)
 struct u_io_fd *iofd;
 {
-	struct u_conn *conn;
-
-	conn = malloc(sizeof(*conn));
-	u_conn_init(conn);
-	conn->sock = iofd;
-
-	iofd->priv = conn;
-
 	toplev_sync(iofd);
 }
 

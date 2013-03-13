@@ -111,7 +111,7 @@ void u_conn_event(conn, ev)
 struct u_conn *conn;
 int ev;
 {
-	printf("CONN:EV: [%p] EV=%d\n", conn, ev);
+	u_debug("CONN:EV: [%p] EV=%d\n", conn, ev);
 	if (!conn->event)
 		return;
 	conn->event(conn, ev);
@@ -174,24 +174,30 @@ struct u_io_fd *sock;
 {
 	struct u_conn_origin *orig = sock->priv;
 	struct u_io_fd *iofd;
-	struct sockaddr addr;
+	struct u_conn *conn;
+	struct sockaddr_in addr;
 	int addrlen = sizeof(addr);
 	int fd;
 
-	printf("ORIGIN RECV: ON %d\n", sock->fd);
-
-	if ((fd = accept(sock->fd, &addr, &addrlen)) < 0) {
+	if ((fd = accept(sock->fd, (struct sockaddr*)&addr, &addrlen)) < 0) {
 		perror("origin_recv");
 		return;
 	}
 
-	printf("ORIGIN RECV: %d\n", fd);
-
 	if (!(iofd = u_io_add_fd(sock->io, fd)))
 		return; /* XXX */
 
-	iofd->priv = NULL;
 	iofd->recv = NULL;
 	iofd->send = NULL;
+
+	conn = malloc(sizeof(*conn));
+	u_conn_init(conn);
+	conn->sock = iofd;
+	iofd->priv = conn;
+
+	inet_ntop(AF_INET, &addr.sin_addr, conn->ip, INET_ADDRSTRLEN);
+
 	orig->cb(iofd);
+
+	u_log("Connection from %s\n", conn->ip);
 }
