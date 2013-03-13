@@ -36,6 +36,7 @@
 #include <varargs.h>
 #endif
 
+#include "util.h"
 #include "heap.h"
 #include "hash.h"
 #include "list.h"
