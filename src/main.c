@@ -23,6 +23,7 @@ int init()
 
 	INIT(init_util);
 	INIT(init_user);
+	INIT(init_cmd);
 	COMMAND(c_ureg);
 
 	return 0;

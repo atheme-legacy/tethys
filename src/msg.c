@@ -56,17 +56,16 @@ char *s;
 }
 
 
-/* let bss initialize to zero */
-static struct u_hash commands[CTX_MAX];
+static struct u_trie *commands[CTX_MAX];
 
 int reg_one_real(cmd, ctx)
 struct u_cmd *cmd;
 int ctx;
 {
-	if (u_hash_get(&commands[ctx], cmd->name))
+	if (u_trie_get(commands[ctx], cmd->name))
 		return -1;
 
-	u_hash_set(&commands[ctx], cmd->name, cmd);
+	u_trie_set(commands[ctx], cmd->name, cmd);
 	return 0;
 }
 
@@ -96,15 +95,13 @@ struct u_cmd *cmds;
 	return 0;
 }
 
-/* TODO: these are all starting to look the same... */
-
 void u_cmd_invoke(conn, msg)
 struct u_conn *conn;
 struct u_msg *msg;
 {
 	struct u_cmd *cmd;
 
-	cmd = u_hash_get(&commands[conn->ctx], msg->command);
+	cmd = u_trie_get(commands[conn->ctx], msg->command);
 
 	/* TODO: command not found */
 	if (!cmd)
@@ -115,4 +112,16 @@ struct u_msg *msg;
 		return;
 
 	cmd->cb(conn, msg);
+}
+
+int init_cmd()
+{
+	int i;
+
+	for (i=0; i<CTX_MAX; i++) {
+		if ((commands[i] = u_trie_new(NULL)) == NULL)
+			return -1;
+	}
+
+	return 0;
 }
