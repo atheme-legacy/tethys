@@ -11,6 +11,8 @@ struct u_server {
 	char desc[MAXSERVDESC+1];
 };
 
-struct u_server me;
+extern struct u_server me;
+
+extern int init_server();
 
 #endif

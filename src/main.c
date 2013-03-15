@@ -22,11 +22,11 @@ int init()
 	int err;
 
 	signal(SIGPIPE, SIG_IGN);
-	u_strlcpy(me.name, "micro.irc", sizeof(me.name));
 
 	INIT(init_util);
 	INIT(init_user);
 	INIT(init_cmd);
+	INIT(init_server);
 	COMMAND(c_ureg);
 
 	return 0;
