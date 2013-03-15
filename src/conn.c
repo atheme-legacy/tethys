@@ -1,6 +1,7 @@
 #include "ircd.h"
 
 static void origin_recv();
+static void toplev_sync();
 
 void u_conn_init(conn)
 struct u_conn *conn;
@@ -123,11 +124,10 @@ struct u_conn *conn;
 	conn->flags |= U_CONN_CLOSING;
 }
 
-struct u_conn_origin *u_conn_origin_create(io, addr, port, cb)
+struct u_conn_origin *u_conn_origin_create(io, addr, port)
 struct u_io *io;
 u_long addr;
 u_short port;
-void (*cb)();
 {
 	struct sockaddr_in sa;
 	struct u_conn_origin *orig;
@@ -154,7 +154,6 @@ void (*cb)();
 	if (!(orig->sock = u_io_add_fd(io, fd)))
 		goto out_free;
 
-	orig->cb = cb;
 	orig->sock->recv = origin_recv;
 	orig->sock->send = NULL;
 	orig->sock->priv = orig;
@@ -197,7 +196,93 @@ struct u_io_fd *sock;
 
 	inet_ntop(AF_INET, &addr.sin_addr, conn->ip, INET_ADDRSTRLEN);
 
-	orig->cb(iofd);
+	toplev_sync(iofd);
 
 	u_log("Connection from %s\n", conn->ip);
+}
+
+static void toplev_cleanup(iofd)
+struct u_io_fd *iofd;
+{
+	struct u_conn *conn = iofd->priv;
+	u_conn_event(conn, EV_DESTROYING);
+	u_conn_cleanup(conn);
+	close(iofd->fd);
+	free(conn);
+}
+
+static void toplev_recv(iofd)
+struct u_io_fd *iofd;
+{
+	struct u_conn *conn = iofd->priv;
+	char buf[1024];
+	int sz;
+	struct u_msg msg;
+
+	sz = recv(iofd->fd, buf, 1024-conn->ibuf.pos, 0);
+
+	if (sz <= 0) {
+		u_conn_event(conn, sz == 0 ? EV_END_OF_STREAM : EV_RECV_ERROR);
+		u_conn_close(conn);
+		toplev_sync(iofd);
+		return;
+	}
+
+	if (u_linebuf_data(&conn->ibuf, buf, sz) < 0) {
+		u_conn_event(conn, EV_RECVQ_FULL);
+		u_conn_close(conn);
+		toplev_sync(iofd);
+		return;
+	}
+
+	while ((sz = u_linebuf_line(&conn->ibuf, buf, 1024)) != 0) {
+		if (sz > 0)
+			buf[sz] = '\0';
+		if (sz < 0 || strlen(buf) != sz) {
+			u_conn_event(conn, EV_RECV_ERROR);
+			u_conn_close(conn);
+			break;
+		}
+		u_msg_parse(&msg, buf);
+		u_cmd_invoke(conn, &msg);
+	}
+
+	toplev_sync(iofd);
+}
+
+static void toplev_send(iofd)
+struct u_io_fd *iofd;
+{
+	struct u_conn *conn = iofd->priv;
+	int sz;
+
+	sz = send(iofd->fd, conn->obuf, conn->obuflen, 0);
+
+	if (sz < 0) {
+		u_conn_event(conn, EV_SEND_ERROR);
+		u_conn_close(conn);
+		conn->obuflen = 0;
+		toplev_sync(iofd);
+		return;
+	}
+
+	if (sz > 0) {
+		u_memmove(conn->obuf, conn->obuf + sz, conn->obufsize - sz);
+		conn->obuflen -= sz;
+	}
+
+	toplev_sync(iofd);
+}
+
+static void toplev_sync(iofd)
+struct u_io_fd *iofd;
+{
+	struct u_conn *conn = iofd->priv;
+	iofd->recv = iofd->send = NULL;
+	if (!(conn->flags & U_CONN_CLOSING))
+		iofd->recv = toplev_recv;
+	if (conn->obuflen > 0)
+		iofd->send = toplev_send;
+	if (!iofd->recv && !iofd->send)
+		toplev_cleanup(iofd);
 }
