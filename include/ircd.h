@@ -18,6 +18,9 @@
 #define NULL ((void*)0)
 #endif
 
+/* size of string buffers allocated on the stack */
+#define BUFSIZE 4096
+
 #define offsetof(st, m) ((unsigned)(&((st *)0)->m))
 #define containerof(ptr, st, m) ((void*)((ptr) - offsetof(st, m)))
 

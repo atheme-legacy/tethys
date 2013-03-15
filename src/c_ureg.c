@@ -72,24 +72,84 @@ struct u_msg *msg;
 	try_reg(conn);
 }
 
+static char *cap_cut(p)
+char **p;
+{
+	char *s = *p;
+
+	if (s == NULL)
+		return NULL;
+
+	while (**p && !strchr(" \t", **p))
+		(*p)++;
+
+	if (!**p) {
+		*p = NULL;
+	} else {
+		*(*p)++ = '\0';
+		while (strchr(" \t", **p))
+			(*p)++;
+	}
+
+	return s;
+}
+
+static int cap_add(u, cap)
+struct u_user *u;
+char *cap;
+{
+	char *s;
+
+	for (s=cap; *s; s++)
+		*s = tolower(*s);
+
+	if (!strcmp(cap, "multi-prefix"))
+		u->flags |= CAP_MULTI_PREFIX;
+	else if (!strcmp(cap, "away-notify"))
+		u->flags |= CAP_AWAY_NOTIFY;
+	else
+		return 0;
+
+	return 1;
+}
+
 static void m_cap(conn, msg)
 struct u_conn *conn;
 struct u_msg *msg;
 {
+	char buf[BUFSIZE];
 	struct u_user_local *ul;
+	char *s, *p;
 
 	u_user_make_ureg(conn);
 	ul = conn->priv;
 	u_user_state(USER(ul), USER_CAP_NEGOTIATION);
 
 	ascii_canonize(msg->argv[0]);
+
 	if (!strcmp(msg->argv[0], "LS")) {
-		u_conn_f(conn, "list capabs");
+		u_conn_f(conn, ":%s CAP * LS :multi-prefix away-notify", me.name);
+
 	} else if (!strcmp(msg->argv[0], "REQ")) {
-		u_conn_f(conn, "cap ack");
+		if (msg->argc != 2) {
+			u_conn_f(conn, "Y U BAD ARGUMENTS");
+			return;
+		}
+
+		p = msg->argv[1];
+		buf[0] = buf[1] = '\0';
+		while ((s = cap_cut(&p)) != NULL) {
+			if (!cap_add(USER(ul), s))
+				continue;
+			u_strlcat(buf, " ", BUFSIZE);
+			u_strlcat(buf, s, BUFSIZE);
+		}
+
+		u_conn_f(conn, ":%s CAP * ACK :%s", me.name, buf+1);
+
 	} else if (!strcmp(msg->argv[0], "END")) {
-		u_conn_f(conn, "cap end");
 		u_user_state(USER(ul), USER_REGISTERING);
+
 	}
 
 	try_reg(conn);

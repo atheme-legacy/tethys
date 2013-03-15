@@ -22,6 +22,7 @@ int init()
 	int err;
 
 	signal(SIGPIPE, SIG_IGN);
+	u_strlcpy(me.name, "micro.irc", sizeof(me.name));
 
 	INIT(init_util);
 	INIT(init_user);
