@@ -72,28 +72,6 @@ struct u_msg *msg;
 	try_reg(conn);
 }
 
-static char *cap_cut(p)
-char **p;
-{
-	char *s = *p;
-
-	if (s == NULL)
-		return NULL;
-
-	while (**p && !strchr(" \t", **p))
-		(*p)++;
-
-	if (!**p) {
-		*p = NULL;
-	} else {
-		*(*p)++ = '\0';
-		while (strchr(" \t", **p))
-			(*p)++;
-	}
-
-	return s;
-}
-
 static int cap_add(u, cap)
 struct u_user *u;
 char *cap;
@@ -140,7 +118,7 @@ struct u_msg *msg;
 		p = msg->argv[1];
 		ackbuf[0] = ackbuf[1] = '\0';
 		nakbuf[0] = nakbuf[1] = '\0';
-		while ((s = cap_cut(&p)) != NULL) {
+		while ((s = cut(&p, " \t")) != NULL) {
 			q = ackbuf;
 			if (!cap_add(USER(ul), s))
 				q = nakbuf;

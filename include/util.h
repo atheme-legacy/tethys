@@ -10,6 +10,8 @@ extern void u_memmove();
 extern void u_strlcpy();
 extern void u_strlcat();
 
+extern char *cut(A(char **p, char *delim));
+
 extern void null_canonize();
 extern void rfc1459_canonize();
 extern void ascii_canonize();

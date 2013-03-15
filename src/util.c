@@ -113,6 +113,28 @@ int n;
 	u_strlcpy(dest+len, src, n-len);
 }
 
+char *cut(p, delim)
+char **p, *delim;
+{
+	char *s = *p;
+
+	if (s == NULL)
+		return NULL;
+
+	while (**p && !strchr(delim, **p))
+		(*p)++;
+
+	if (!**p) {
+		*p = NULL;
+	} else {
+		*(*p)++ = '\0';
+		while (strchr(delim, **p))
+			(*p)++;
+	}
+
+	return s;
+}
+
 void null_canonize(s)
 char *s;
 {
