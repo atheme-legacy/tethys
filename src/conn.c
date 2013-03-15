@@ -79,6 +79,7 @@ va_list va;
 	end = conn->obuf + conn->obufsize - 2; /* -2 for \r\n */
 
 	vsprintf(buf, fmt, va);
+	u_debug("[%p] <- %s\n", conn, buf);
 
 	f_str(&p, end, buf);
 
@@ -243,6 +244,7 @@ struct u_io_fd *iofd;
 			u_conn_close(conn);
 			break;
 		}
+		u_debug("[%p] -> %s\n", conn, buf);
 		u_msg_parse(&msg, buf);
 		u_cmd_invoke(conn, &msg);
 	}

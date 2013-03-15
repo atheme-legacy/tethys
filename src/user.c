@@ -125,8 +125,6 @@ unsigned state;
 		u->flags |= (state & USER_MASK_STATE);
 	}
 
-	u_debug("USER FLAGS: [%p] %08xx\n", u, u->flags);
-
 	return u->flags & USER_MASK_STATE;
 }
 
