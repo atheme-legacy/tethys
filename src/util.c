@@ -152,13 +152,13 @@ int init_util()
 
 	for (i=0; i<256; i++) {
 		null_casemap[i] = i;
-		rfc1459_casemap[i] = tolower(i);
-		ascii_casemap[i] = tolower(i);
+		rfc1459_casemap[i] = toupper(i);
+		ascii_casemap[i] = toupper(i);
 	}
-	rfc1459_casemap['{'] = '[';
-	rfc1459_casemap['}'] = ']';
-	rfc1459_casemap['|'] = '\\';
-	rfc1459_casemap['^'] = '~';
+	rfc1459_casemap['['] = '{';
+	rfc1459_casemap[']'] = '}';
+	rfc1459_casemap['\\'] = '|';
+	rfc1459_casemap['~'] = '^';
 
 	for (i=0; i<256; i++)
 		valid_nick_map[i] = isalnum(i) || strchr("[]{}|\\^-_", i);

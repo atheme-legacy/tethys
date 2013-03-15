@@ -83,11 +83,11 @@ struct u_msg *msg;
 	u_user_state(USER(u), USER_CAP_NEGOTIATION);
 
 	ascii_canonize(msg->argv[0]);
-	if (!strcmp(msg->argv[0], "ls")) {
+	if (!strcmp(msg->argv[0], "LS")) {
 		u_conn_f(conn, "list capabs");
-	} else if (!strcmp(msg->argv[0], "req")) {
+	} else if (!strcmp(msg->argv[0], "REQ")) {
 		u_conn_f(conn, "cap ack");
-	} else if (!strcmp(msg->argv[0], "end")) {
+	} else if (!strcmp(msg->argv[0], "END")) {
 		u_conn_f(conn, "cap end");
 		u_user_state(USER(u), USER_REGISTERING);
 	}
