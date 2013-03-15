@@ -46,6 +46,7 @@
 #include "heap.h"
 #include "list.h"
 #include "trie.h"
+#include "conf.h"
 #include "io.h"
 #include "linebuf.h"
 #include "conn.h"
