@@ -117,9 +117,10 @@ static void m_cap(conn, msg)
 struct u_conn *conn;
 struct u_msg *msg;
 {
-	char buf[BUFSIZE];
+	char ackbuf[BUFSIZE];
+	char nakbuf[BUFSIZE];
 	struct u_user_local *ul;
-	char *s, *p;
+	char *s, *p, *q;
 
 	u_user_make_ureg(conn);
 	ul = conn->priv;
@@ -137,15 +138,20 @@ struct u_msg *msg;
 		}
 
 		p = msg->argv[1];
-		buf[0] = buf[1] = '\0';
+		ackbuf[0] = ackbuf[1] = '\0';
+		nakbuf[0] = nakbuf[1] = '\0';
 		while ((s = cap_cut(&p)) != NULL) {
+			q = ackbuf;
 			if (!cap_add(USER(ul), s))
-				continue;
-			u_strlcat(buf, " ", BUFSIZE);
-			u_strlcat(buf, s, BUFSIZE);
+				q = nakbuf;
+			u_strlcat(q, " ", BUFSIZE);
+			u_strlcat(q, s, BUFSIZE);
 		}
 
-		u_conn_f(conn, ":%s CAP * ACK :%s", me.name, buf+1);
+		if (ackbuf[1])
+			u_conn_f(conn, ":%s CAP * ACK :%s", me.name, ackbuf+1);
+		if (nakbuf[1])
+			u_conn_f(conn, ":%s CAP * NAK :%s", me.name, nakbuf+1);
 
 	} else if (!strcmp(msg->argv[0], "END")) {
 		u_user_state(USER(ul), USER_REGISTERING);
