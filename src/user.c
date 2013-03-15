@@ -97,9 +97,9 @@ struct u_conn *conn;
 
 	u_strlcpy(USER(u)->host, conn->ip, MAXHOST+1);
 
-	u->user.mode = umode_default | USER_REGISTERING | USER_IS_LOCAL;
+	USER(u)->flags = umode_default | USER_IS_LOCAL;
 	u->conn = conn;
-	u->flags = 0;
+	u_user_state(u, USER_REGISTERING);
 
 	conn->event = user_local_event;
 }
@@ -114,6 +114,20 @@ struct u_user *u_user_by_uid(uid)
 char *uid;
 {
 	return u_trie_get(users_by_uid, uid);
+}
+
+unsigned u_user_state(u, state)
+struct u_user *u;
+unsigned state;
+{
+	if (state & USER_MASK_STATE) {
+		u->flags &= ~USER_MASK_STATE;
+		u->flags |= (state & USER_MASK_STATE);
+	}
+
+	u_debug("USER FLAGS: [%p] %8x\n", u, u->flags);
+
+	return u->flags & USER_MASK_STATE;
 }
 
 int init_user()

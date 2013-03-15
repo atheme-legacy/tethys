@@ -8,24 +8,26 @@
 #define MAXHOST 120
 #define MAXGECOS 40
 
-#define USER_MASK_UMODE        0x00ff
-#define USER_MASK_FLAGS        0x0f00
-#define USER_MASK_STATE        0xf000
+/* all users */
+#define USER_MASK_UMODE        0x000000ff
+#define UMODE_OPER             0x00000001
+#define UMODE_INVISIBLE        0x00000002
+#define UMODE_WALLOPS          0x00000004
+#define UMODE_CLOAKED          0x00000008
 
-#define UMODE_OPER             0x0001
-#define UMODE_INVISIBLE        0x0002
-#define UMODE_WALLOPS          0x0004
-#define UMODE_CLOAKED          0x0008
+#define USER_MASK_FLAGS        0x0000ff00
+#define USER_IS_LOCAL          0x00000100
 
-#define USER_IS_LOCAL          0x0100
+/* local */
+#define USER_MASK_CAP          0x00ff0000
+#define CAP_MULTI_PREFIX       0x00010000
+#define CAP_AWAY_NOTIFY        0x00020000
 
-#define USER_REGISTERING       0x1000
-#define USER_CAP_NEGOTIATION   0x2000
-#define USER_CONNECTED         0x3000
-#define USER_DISCONNECTED      0x4000
-
-#define CAP_MULTI_PREFIX       0x0001
-#define CAP_AWAY_NOTIFY        0x0002
+#define USER_MASK_STATE        0xff000000
+#define USER_REGISTERING       0x01000000
+#define USER_CAP_NEGOTIATION   0x02000000
+#define USER_CONNECTED         0x03000000
+#define USER_DISCONNECTED      0x04000000
 
 struct u_umode_info {
 	char ch;
@@ -39,14 +41,12 @@ struct u_user {
 	char host[MAXHOST+1];
 	char gecos[MAXGECOS+1];
 
-	unsigned mode;
+	unsigned flags;
 };
 
 struct u_user_local {
 	struct u_user user;
 	struct u_conn *conn;
-
-	unsigned flags;
 };
 
 struct u_user_remote {
@@ -63,6 +63,8 @@ extern void u_user_make_ureg(); /* u_conn* */
 
 extern struct u_user *u_user_by_nick(); /* char* */
 extern struct u_user *u_user_by_uid(); /* char* */
+
+extern unsigned u_user_state(A(struct u_user*, unsigned));
 
 extern int init_user();
 

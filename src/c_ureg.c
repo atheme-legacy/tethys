@@ -15,7 +15,8 @@ struct u_conn *conn;
 {
 	struct u_user *u = conn->priv;
 
-	if (!u->nick[0] || !u->ident[0] || !u->gecos[0])
+	if (u_user_state(u, 0) != USER_REGISTERING || !u->nick[0]
+			|| !u->ident[0] || !u->gecos[0])
 		return;
 
 	u_conn_f(conn, "Welcome!");
