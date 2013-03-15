@@ -81,7 +81,7 @@ struct u_conn *conn;
 void u_user_make_ureg(conn)
 struct u_conn *conn;
 {
-	struct u_user_local *u;
+	struct u_user_local *ul;
 
 	if (conn->ctx != CTX_UNREG && conn->ctx != CTX_UREG)
 		return;
@@ -92,14 +92,14 @@ struct u_conn *conn;
 		return;
 
 	/* TODO: heap! */
-	conn->priv = u = malloc(sizeof(*u));
-	memset(u, 0, sizeof(*u));
+	conn->priv = ul = malloc(sizeof(*ul));
+	memset(ul, 0, sizeof(*ul));
 
-	u_strlcpy(USER(u)->host, conn->ip, MAXHOST+1);
+	u_strlcpy(USER(ul)->host, conn->ip, MAXHOST+1);
 
-	USER(u)->flags = umode_default | USER_IS_LOCAL;
-	u_user_state(USER(u), USER_REGISTERING);
-	u->conn = conn;
+	USER(ul)->flags = umode_default | USER_IS_LOCAL;
+	u_user_state(USER(ul), USER_REGISTERING);
+	ul->conn = conn;
 
 	conn->event = user_local_event;
 }
