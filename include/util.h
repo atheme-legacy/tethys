@@ -8,6 +8,7 @@ extern int matchcase(); /* ascii casemapping */
 
 extern void u_memmove();
 extern void u_strlcpy();
+extern void u_strlcat();
 
 extern void null_canonize();
 extern void rfc1459_canonize();

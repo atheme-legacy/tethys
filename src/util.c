@@ -105,6 +105,14 @@ int n;
 	dest[n] = '\0';
 }
 
+void u_strlcat(dest, src, n)
+char *dest, *src;
+int n;
+{
+	int len = strlen(dest);
+	u_strlcpy(dest+len, src, n-len);
+}
+
 void null_canonize(s)
 char *s;
 {
