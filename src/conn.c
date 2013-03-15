@@ -79,7 +79,7 @@ va_list va;
 	end = conn->obuf + conn->obufsize - 2; /* -2 for \r\n */
 
 	vsprintf(buf, fmt, va);
-	u_debug("[%p] <- %s\n", conn, buf);
+	u_log(LG_DEBUG, "[%p] <- %s", conn, buf);
 
 	f_str(&p, end, buf);
 
@@ -113,7 +113,7 @@ void u_conn_event(conn, ev)
 struct u_conn *conn;
 int ev;
 {
-	u_debug("CONN:EV: [%p] EV=%d\n", conn, ev);
+	u_log(LG_DEBUG, "CONN:EV: [%p] EV=%d", conn, ev);
 	if (!conn->event)
 		return;
 	conn->event(conn, ev);
@@ -199,7 +199,7 @@ struct u_io_fd *sock;
 
 	toplev_sync(iofd);
 
-	u_log("Connection from %s\n", conn->ip);
+	u_log(LG_VERBOSE, "Connection from %s", conn->ip);
 }
 
 static void toplev_cleanup(iofd)
@@ -244,7 +244,7 @@ struct u_io_fd *iofd;
 			u_conn_close(conn);
 			break;
 		}
-		u_debug("[%p] -> %s\n", conn, buf);
+		u_log(LG_DEBUG, "[%p] -> %s", conn, buf);
 		u_msg_parse(&msg, buf);
 		u_cmd_invoke(conn, &msg);
 	}

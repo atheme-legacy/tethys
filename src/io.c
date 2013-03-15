@@ -26,7 +26,7 @@ int fd;
 		return NULL;
 	}
 
-	u_debug("IO: +++ FD=%3d [%p]\n", iofd->fd, iofd);
+	u_log(LG_DEBUG, "IO: +++ FD=%3d [%p]", iofd->fd, iofd);
 
 	return iofd;
 }
@@ -35,7 +35,7 @@ void u_io_del_fd(io, iofd)
 struct u_io *io;
 struct u_io_fd *iofd;
 {
-	u_debug("IO: --- FD=%3d [%p]\n", iofd->fd, iofd);
+	u_log(LG_DEBUG, "IO: --- FD=%3d [%p]", iofd->fd, iofd);
 	u_list_del_n(iofd->n);
 }
 

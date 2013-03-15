@@ -111,7 +111,7 @@ struct u_msg *msg;
 	if (msg->argc < cmd->nargs)
 		return;
 
-	u_debug("INVOKE %s [%p]\n", cmd->name, cmd->cb);
+	u_log(LG_DEBUG, "INVOKE %s [%p]", cmd->name, cmd->cb);
 
 	cmd->cb(conn, msg);
 }

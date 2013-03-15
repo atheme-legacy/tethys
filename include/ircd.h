@@ -24,14 +24,6 @@
 #define offsetof(st, m) ((unsigned)(&((st *)0)->m))
 #define containerof(ptr, st, m) ((void*)((ptr) - offsetof(st, m)))
 
-#ifdef DEBUG
-#define u_debug(x...) printf(x)
-#define u_log(x...) printf(x)
-#else
-#define u_debug(x...)
-#define u_log(x...)
-#endif
-
 #ifdef __GNUC__
 # define STDARG
 # include <stdarg.h>
@@ -43,6 +35,7 @@
 #endif
 
 #include "util.h"
+#include "log.h"
 #include "heap.h"
 #include "list.h"
 #include "trie.h"

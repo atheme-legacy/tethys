@@ -9,7 +9,7 @@ char *key, *val;
 
 	cb = u_trie_get(u_conf_handlers, key);
 	if (!cb) {
-		u_log("No config handler for %s=%s\n", key, val);
+		u_log(LG_WARN, "No config handler for %s=%s", key, val);
 		return;
 	}
 	cb(key, val);

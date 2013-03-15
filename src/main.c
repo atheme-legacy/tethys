@@ -33,7 +33,7 @@ int init()
 
 	f = fopen("etc/micro.conf", "r");
 	if (f == NULL) {
-		u_log("Could not find etc/micro.conf!\n");
+		u_log(LG_SEVERE, "Could not find etc/micro.conf!");
 		return -1;
 	}
 	u_conf_read(f);
@@ -47,6 +47,8 @@ int argc;
 char *argv[];
 {
 	int c;
+
+	u_log(LG_INFO, "ircd-micro starting...");
 
 	while ((c = getopt(argc, argv, "hp:")) != -1) {
 		switch(c) {
@@ -63,22 +65,22 @@ char *argv[];
 	}
 
 	if (init() < 0) {
-		u_log("Initialization failed\n");
+		u_log(LG_ERROR, "Initialization failed");
 		return 1;
 	}
 
 	u_io_init(&base_io);
 
 	if (!u_conn_origin_create(&base_io, INADDR_ANY, opt_port)) {
-		u_log("Could not create connection origin. Bailing\n");
+		u_log(LG_SEVERE, "Could not create connection origin. Bailing");
 		return 1;
 	}
 
-	u_debug("Entering IO loop\n");
+	u_log(LG_INFO, "Entering IO loop");
 
 	u_io_poll(&base_io);
 
-	u_debug("IO loop died. Bye bye!\n");
+	u_log(LG_VERBOSE, "IO loop died. Bye bye!");
 
 	return 0;
 }

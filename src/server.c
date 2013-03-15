@@ -6,22 +6,22 @@ void server_conf(key, val)
 char *key, *val;
 {
 	if (strlen(key) < 3 || memcmp(key, "me.", 3)!=0) {
-		u_log("server_conf: Can't use %s\n", key);
+		u_log(LG_WARN, "server_conf: Can't use %s", key);
 		return;
 	}
 	key += 3;
 
 	if (!strcmp(key, "name")) {
 		u_strlcpy(me.name, val, MAXSERVNAME+1);
-		u_debug("server_conf: me.name=%s\n", me.name);
+		u_log(LG_VERBOSE, "server_conf: me.name=%s", me.name);
 	} else if (!strcmp(key, "sid")) {
 		u_strlcpy(me.sid, val, 4);
-		u_debug("server_conf: me.sid=%s\n", me.sid);
+		u_log(LG_VERBOSE, "server_conf: me.sid=%s", me.sid);
 	} else if (!strcmp(key, "desc")) {
 		u_strlcpy(me.desc, val, MAXSERVDESC+1);
-		u_debug("server_conf: me.desc=%s\n", me.desc);
+		u_log(LG_VERBOSE, "server_conf: me.desc=%s", me.desc);
 	} else {
-		u_log("server_conf: Can't use %s\n", key-3);
+		u_log(LG_WARN, "server_conf: Can't use %s", key-3);
 	}
 }
 

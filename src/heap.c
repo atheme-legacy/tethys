@@ -13,7 +13,7 @@ struct u_heap *heap;
 	h->base = mmap(NULL, heap->step * heap->count, PROT_READ|PROT_WRITE,
 	               MAP_PRIVATE|MAP_ANON, -1, 0);
 
-	u_debug("NEW HEAP_E(%p): BASE=%p\n", h, h->base);
+	u_log(LG_DEBUG, "NEW HEAP_E(%p): BASE=%p", h, h->base);
 
 	end = h->base + heap->step * heap->count;
 
@@ -34,7 +34,7 @@ unsigned sz, count;
 	heap->step = sizeof(unsigned) + heap->sz;
 	heap->start = heap_e_alloc(heap);
 
-	u_debug("NEW HEAP(%p): SZ=%xx STEP=%xx COUNT=%d SZ_E=%xx\n", heap,
+	u_log(LG_DEBUG, "NEW HEAP(%p): SZ=%xx STEP=%xx COUNT=%d SZ_E=%xx", heap,
 	        heap->sz, heap->step, heap->count, heap->step*heap->count);
 
 	return heap;

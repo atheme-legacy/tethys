@@ -1,10 +1,10 @@
 OUTPUT = ircd-micro
-OBJS = list.o io.o linebuf.o msg.o main.o util.o \
+OBJS = list.o log.o io.o linebuf.o msg.o main.o util.o \
 	server.o conf.o user.o conn.o heap.o trie.o \
 	c_ureg.o
 
 INCLUDE = ../include
-CFLAGS = -g -I$(INCLUDE) -DDEBUG
+CFLAGS = -g -I$(INCLUDE)
 CC = cc
 LD = cc
 
