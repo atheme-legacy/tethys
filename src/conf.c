@@ -1,5 +1,20 @@
 #include "ircd.h"
 
+struct u_trie *u_conf_handlers = NULL;
+
+void do_cb(key, val)
+char *key, *val;
+{
+	void (*cb)();
+
+	cb = u_trie_get(u_conf_handlers, key);
+	if (!cb) {
+		u_log("No config handler for %s=%s\n", key, val);
+		return;
+	}
+	cb(key, val);
+}
+
 void skip_to_eol(f)
 FILE *f;
 {
@@ -88,10 +103,9 @@ top:
 	}
 }
 
-void conf_descend(key, value, f, cb)
+void conf_descend(key, value, f)
 char *key, *value;
 FILE *f;
-void (*cb)();
 {
 	int c, n = strlen(key);
 	char *p = key + n;
@@ -112,18 +126,17 @@ void (*cb)();
 			return;
 		} else if (c == '{') {
 			u_strlcat(key, ".", U_CONF_MAX_KEY);
-			conf_descend(key, value, f, cb);
+			conf_descend(key, value, f);
 		} else {
 			ungetc(c, f);
 			read_value(f, value, n);
-			cb(key, value);
+			do_cb(key, value);
 		}
 	}
 }
 
-void u_conf_read(f, cb)
+void u_conf_read(f)
 FILE *f;
-void (*cb)();
 {
 	char key[U_CONF_MAX_KEY];
 	char value[U_CONF_MAX_VALUE];
@@ -131,5 +144,11 @@ void (*cb)();
 	key[0] = value[0] = '\0';
 
 	skip_spaces(f);
-	conf_descend(key, value, f, cb);
+	conf_descend(key, value, f);
+}
+
+int init_conf()
+{
+	u_conf_handlers = u_trie_new(ascii_canonize);
+	return u_conf_handlers ? 0 : -1;
 }

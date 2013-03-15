@@ -20,14 +20,24 @@ COMMAND_DEF(c_ureg);
 int init()
 {
 	int err;
+	FILE *f;
 
 	signal(SIGPIPE, SIG_IGN);
 
 	INIT(init_util);
+	INIT(init_conf);
 	INIT(init_user);
 	INIT(init_cmd);
 	INIT(init_server);
 	COMMAND(c_ureg);
+
+	f = fopen("etc/micro.conf", "r");
+	if (f == NULL) {
+		u_log("Could not find etc/micro.conf!\n");
+		return -1;
+	}
+	u_conf_read(f);
+	fclose(f);
 
 	return 0;
 }

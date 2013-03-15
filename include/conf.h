@@ -5,10 +5,11 @@
 #define U_CONF_MAX_VALUE 512
 
 extern void u_conf_read();
-/* FILE *f, void (*cb)(char *key, char *value)
+/* FILE *f
 
    cb is called with key=>value pairs. The key is a dot-separated string
-   indicating the path to the value.
+   indicating the path to the value. The cb is loaded from u_conf_handlers
+   using the key as the key.
 
    The following config file:
       me {
@@ -49,5 +50,8 @@ extern void u_conf_read();
    quoted values will not be skipped.
 
    */
+
+extern struct u_trie *u_conf_handlers;
+extern int init_conf();
 
 #endif

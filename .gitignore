@@ -3,3 +3,4 @@
 core*
 src/ircd-micro
 test/
+etc/
