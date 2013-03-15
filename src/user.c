@@ -98,8 +98,8 @@ struct u_conn *conn;
 	u_strlcpy(USER(u)->host, conn->ip, MAXHOST+1);
 
 	USER(u)->flags = umode_default | USER_IS_LOCAL;
+	u_user_state(USER(u), USER_REGISTERING);
 	u->conn = conn;
-	u_user_state(u, USER_REGISTERING);
 
 	conn->event = user_local_event;
 }
@@ -125,7 +125,7 @@ unsigned state;
 		u->flags |= (state & USER_MASK_STATE);
 	}
 
-	u_debug("USER FLAGS: [%p] %8x\n", u, u->flags);
+	u_debug("USER FLAGS: [%p] %08xx\n", u, u->flags);
 
 	return u->flags & USER_MASK_STATE;
 }

@@ -72,6 +72,29 @@ struct u_msg *msg;
 	try_reg(conn);
 }
 
+static void m_cap(conn, msg)
+struct u_conn *conn;
+struct u_msg *msg;
+{
+	struct u_user_local *u;
+
+	u_user_make_ureg(conn);
+	u = conn->priv;
+	u_user_state(USER(u), USER_CAP_NEGOTIATION);
+
+	ascii_canonize(msg->argv[0]);
+	if (!strcmp(msg->argv[0], "ls")) {
+		u_conn_f(conn, "list capabs");
+	} else if (!strcmp(msg->argv[0], "req")) {
+		u_conn_f(conn, "cap ack");
+	} else if (!strcmp(msg->argv[0], "end")) {
+		u_conn_f(conn, "cap end");
+		u_user_state(USER(u), USER_REGISTERING);
+	}
+
+	try_reg(conn);
+}
+
 struct u_cmd c_ureg[] = {
 	{ "PASS", CTX_UNREG,  m_pass, 1 },
 	{ "PASS", CTX_UREG,   m_pass, 1 },
@@ -79,5 +102,7 @@ struct u_cmd c_ureg[] = {
 	{ "NICK", CTX_UREG,   m_nick, 1 },
 	{ "USER", CTX_UNREG,  m_user, 4 },
 	{ "USER", CTX_UREG,   m_user, 4 },
+	{ "CAP",  CTX_UNREG,  m_cap,  1 },
+	{ "CAP",  CTX_UREG,   m_cap,  1 },
 	{ "" }
 };
