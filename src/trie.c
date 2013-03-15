@@ -52,13 +52,16 @@ unsigned char *s;
 	return (i%2==0) ? s[i/2]>>4 : s[i/2]&0xf;
 }
 
-static struct u_trie_e *retrieval(trie, key, create)
+static struct u_trie_e *retrieval(trie, tkey, create)
 struct u_trie *trie;
-char *key;
+char *tkey;
 int create;
 {
 	struct u_trie_e *n;
+	char key[U_TRIE_KEY_MAX];
 	unsigned int c, nib = 0; /* even=high, odd=low */
+
+	u_strlcpy(key, tkey, U_TRIE_KEY_MAX);
 
 	trie->canonize(key);
 
