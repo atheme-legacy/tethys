@@ -6,6 +6,13 @@
 
 #include "ircd.h"
 
+static void err_already(conn, msg)
+struct u_conn *conn;
+struct u_msg *msg;
+{
+	u_conn_num(conn, ERR_ALREADYREGISTERED);
+}
+
 static void m_pass(conn, msg)
 struct u_conn *conn;
 struct u_msg *msg;
@@ -45,12 +52,12 @@ struct u_msg *msg;
 	u_strlcpy(buf, msg->argv[0], MAXNICKLEN+1);
 
 	if (!is_valid_nick(buf)) {
-		u_conn_f(conn, "invalid nickname");
+		u_conn_num(conn, ERR_ERRONEOUSNICKNAME, buf);
 		return;
 	}
 
 	if (u_user_by_nick(buf)) {
-		u_conn_f(conn, "nickname is in use");
+		u_conn_num(conn, ERR_NICKNAMEINUSE, buf);
 		return;
 	}
 
@@ -118,7 +125,7 @@ struct u_msg *msg;
 
 	} else if (!strcmp(msg->argv[0], "REQ")) {
 		if (msg->argc != 2) {
-			u_conn_f(conn, "Y U BAD ARGUMENTS");
+			u_conn_num(conn, ERR_NEEDMOREPARAMS, "CAP");
 			return;
 		}
 
@@ -149,11 +156,14 @@ struct u_msg *msg;
 struct u_cmd c_reg[] = {
 	{ "PASS", CTX_UNREG,  m_pass, 1 },
 	{ "PASS", CTX_UREG,   m_pass, 1 },
+	{ "PASS", CTX_USER,   err_already, 0 },
 	{ "NICK", CTX_UNREG,  m_nick, 1 },
 	{ "NICK", CTX_UREG,   m_nick, 1 },
 	{ "USER", CTX_UNREG,  m_user, 4 },
 	{ "USER", CTX_UREG,   m_user, 4 },
+	{ "USER", CTX_USER,   err_already, 0 },
 	{ "CAP",  CTX_UNREG,  m_cap,  1 },
 	{ "CAP",  CTX_UREG,   m_cap,  1 },
+	{ "CAP",  CTX_USER,   err_already, 0 },
 	{ "" }
 };
