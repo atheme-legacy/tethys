@@ -10,7 +10,7 @@
 #include <sys/mman.h>
 #include <netinet/in.h>
 #include <netdb.h>
-#include <stdlib.h>
+#include <signal.h>
 
 #ifndef NULL
 #define NULL ((void*)0)
@@ -33,7 +33,7 @@
 
 # include <stdarg.h>
 # include <getopt.h>
-# include <signal.h>
+# include <stdlib.h>
 
 # define A2(x,y) x,y
 # define A3(x,y,z) x,y,z

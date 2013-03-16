@@ -79,7 +79,7 @@ char *cap;
 	char *s;
 
 	for (s=cap; *s; s++)
-		*s = tolower(*s);
+		*s = isupper(*s) ? tolower(*s) : *s;
 
 	if (!strcmp(cap, "multi-prefix"))
 		u->flags |= CAP_MULTI_PREFIX;
