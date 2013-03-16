@@ -2,6 +2,7 @@
 *.o
 core*
 src/ircd-micro
+src/numeric.c
 src/numeric.h
 test/
 etc/

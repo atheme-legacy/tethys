@@ -1,5 +1,7 @@
 OUTPUT = ircd-micro
-OBJS = numeric.h \
+EXTRA = numeric.h \
+	numeric.c
+OBJS = numeric.o \
 	list.o \
 	log.o \
 	io.o \
@@ -21,12 +23,13 @@ LD = cc
 
 default: $(OUTPUT)
 clean:
+	rm -f $(EXTRA)
 	rm -f $(OBJS)
 	rm -f $(OUTPUT)
 
-$(OUTPUT): $(OBJS)
+$(OUTPUT): $(EXTRA) $(OBJS)
 	$(LD) -o $@ $(OBJS)
 .c.o:
 	$(CC) -c $(CFLAGS) -o $@ $<
-numeric.h: numeric.tab
-	awk -f numeric.awk < $< > $@
+numeric.h numeric.c: numeric.tab
+	awk -f numeric.awk < numeric.tab
