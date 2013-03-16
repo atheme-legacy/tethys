@@ -33,10 +33,41 @@ struct u_msg *msg;
 	u_user_send_motd(u);
 }
 
+static void m_message(conn, msg)
+struct u_conn *conn;
+struct u_msg *msg;
+{
+	struct u_user *src = conn->priv;
+	struct u_user *tgt;
+
+	if (msg->argv[0][0] == '#') {
+		u_user_num(src, ERR_GENERIC, "Can't send messages to channels yet");
+		return;
+	}
+
+	tgt = u_user_by_nick(msg->argv[0]);
+	if (tgt == NULL) {
+		u_user_num(src, ERR_NOSUCHNICK, msg->argv[0]);
+		return;
+	}
+
+	u_log(LG_DEBUG, "[%s -> %s] %s", src->nick, tgt->nick, msg->argv[1]);
+
+	if (tgt->flags & USER_IS_LOCAL) {
+		u_conn_f(((struct u_user_local*)tgt)->conn,
+		         ":%s!%s@%s %s %s :%s", src->nick, src->ident, src->host,
+		         msg->command, tgt->nick, msg->argv[1]);
+	} else {
+		u_user_num(src, ERR_GENERIC, "Can't send messages to remote users yet");
+	}
+}
+
 struct u_cmd c_user[] = {
 	{ "PING",    CTX_USER, m_ping,    1 },
 	{ "PONG",    CTX_USER, m_ping,    0 },
 	{ "VERSION", CTX_USER, m_version, 0 },
 	{ "MOTD",    CTX_USER, m_motd,    0 },
+	{ "PRIVMSG", CTX_USER, m_message, 2 },
+	{ "NOTICE",  CTX_USER, m_message, 2 },
 	{ "" },
 };

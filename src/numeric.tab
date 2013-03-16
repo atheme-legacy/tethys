@@ -114,6 +114,7 @@ RPL_USERS	393
 RPL_ENDOFUSERS	394
 RPL_NOUSERS	395
 
+ERR_GENERIC	400	":Error: %s"
 ERR_NOSUCHNICK	401	"%s :No such nick/channel"
 ERR_NOSUCHSERVER	402	"%s :No such server"
 ERR_NOSUCHCHANNEL	403	"%s :No such channel"

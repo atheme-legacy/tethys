@@ -146,7 +146,7 @@ char *nick;
 	if (u->nick[0])
 		u_trie_del(users_by_nick, u->nick);
 	u_strlcpy(u->nick, nick, MAXNICKLEN+1);
-	u_trie_set(users_by_nick, u->nick);
+	u_trie_set(users_by_nick, u->nick, u);
 }
 
 unsigned u_user_state(u, state)
