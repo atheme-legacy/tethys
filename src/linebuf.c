@@ -1,3 +1,9 @@
+/* ircd-micro, linebuf.c -- line buffering
+   Copyright (C) 2013 Alex Iadicicco
+
+   This file is protected under the terms contained
+   in the COPYING file in the project root */
+
 #include "ircd.h"
 
 void u_linebuf_init(lb)

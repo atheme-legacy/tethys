@@ -1,3 +1,9 @@
+/* ircd-micro, util.c -- various utilities
+   Copyright (C) 2013 Alex Iadicicco
+
+   This file is protected under the terms contained
+   in the COPYING file in the project root */
+
 #include "ircd.h"
 
 static char null_casemap[256];

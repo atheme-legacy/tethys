@@ -1,3 +1,9 @@
+/* ircd-micro, conf.h -- configuration parser
+   Copyright (C) 2013 Alex Iadicicco
+
+   This file is protected under the terms contained
+   in the COPYING file in the project root */
+
 #ifndef __INC_CONF_H__
 #define __INC_CONF_H__
 

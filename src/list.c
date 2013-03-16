@@ -1,3 +1,9 @@
+/* ircd-micro, list.c -- linked list
+   Copyright (C) 2013 Alex Iadicicco
+
+   This file is protected under the terms contained
+   in the COPYING file in the project root */
+
 #include "ircd.h"
 
 void u_list_init(list)

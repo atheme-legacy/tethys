@@ -1,3 +1,9 @@
+/* ircd-micro, msg.h -- IRC messages and commands
+   Copyright (C) 2013 Alex Iadicicco
+
+   This file is protected under the terms contained
+   in the COPYING file in the project root */
+
 #ifndef __INC_MSG_H__
 #define __INC_MSG_H__
 

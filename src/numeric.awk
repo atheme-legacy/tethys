@@ -1,5 +1,12 @@
 #!/bin/awk -f
 
+# ircd-micro, numeric.awk -- numeric.[hc] generator
+# Copyright (C) 2013 Alex Iadicicco
+#
+# This file is protected under the terms contained
+# in the COPYING file in the project root
+
+
 BEGIN {
   FS="\t";
   HDR="numeric.h";

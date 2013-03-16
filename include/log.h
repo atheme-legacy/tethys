@@ -1,3 +1,9 @@
+/* ircd-micro, log.h -- logging
+   Copyright (C) 2013 Alex Iadicicco
+
+   This file is protected under the terms contained
+   in the COPYING file in the project root */
+
 #ifndef __INC_LOG_H__
 #define __INC_LOG_H__
 

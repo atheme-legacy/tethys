@@ -1,3 +1,9 @@
+/* ircd-micro, msg.c -- IRC messages and commands
+   Copyright (C) 2013 Alex Iadicicco
+
+   This file is protected under the terms contained
+   in the COPYING file in the project root */
+
 #include "ircd.h"
 
 char *ws_skip(s)

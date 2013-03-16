@@ -1,3 +1,9 @@
+/* ircd-micro, c_ureg.c -- connection registration commands
+   Copyright (C) 2013 Alex Iadicicco
+
+   This file is protected under the terms contained
+   in the COPYING file in the project root */
+
 #include "ircd.h"
 
 static void m_pass(conn, msg)

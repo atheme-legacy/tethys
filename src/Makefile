@@ -1,3 +1,9 @@
+# ircd-micro, Makefile
+# Copyright (C) 2013 Alex Iadicicco
+#
+# This file is protected under the terms contained
+# in the COPYING file in the project root
+
 OUTPUT = ircd-micro
 EXTRA = numeric.h \
 	numeric.c

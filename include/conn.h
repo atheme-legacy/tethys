@@ -1,3 +1,9 @@
+/* ircd-micro, conn.h -- line-based connection management
+   Copyright (C) 2013 Alex Iadicicco
+
+   This file is protected under the terms contained
+   in the COPYING file in the project root */
+
 #ifndef __INC_CONN_H__
 #define __INC_CONN_H__
 

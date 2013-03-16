@@ -1,3 +1,9 @@
+/* ircd-micro, conf.c -- configuration parser
+   Copyright (C) 2013 Alex Iadicicco
+
+   This file is protected under the terms contained
+   in the COPYING file in the project root */
+
 #include "ircd.h"
 
 struct u_trie *u_conf_handlers = NULL;

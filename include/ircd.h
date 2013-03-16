@@ -1,3 +1,9 @@
+/* ircd-micro, ircd.h -- main IRCD include file
+   Copyright (C) 2013 Alex Iadicicco
+
+   This file is protected under the terms contained
+   in the COPYING file in the project root */
+
 #ifndef __INC_IRCD_H__
 #define __INC_IRCD_H__
 

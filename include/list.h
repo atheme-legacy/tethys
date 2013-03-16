@@ -1,3 +1,9 @@
+/* ircd-micro, list.h -- linked list
+   Copyright (C) 2013 Alex Iadicicco
+
+   This file is protected under the terms contained
+   in the COPYING file in the project root */
+
 #ifndef __INC_LIST_H__
 #define __INC_LIST_H__
 

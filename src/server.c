@@ -1,3 +1,9 @@
+/* ircd-micro, server.c -- server data
+   Copyright (C) 2013 Alex Iadicicco
+
+   This file is protected under the terms contained
+   in the COPYING file in the project root */
+
 #include "ircd.h"
 
 struct u_server me;

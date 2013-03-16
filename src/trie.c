@@ -1,3 +1,9 @@
+/* ircd-micro, trie.c -- radix trie
+   Copyright (C) 2013 Alex Iadicicco
+
+   This file is protected under the terms contained
+   in the COPYING file in the project root */
+
 #include "ircd.h"
 
 #define TRIE_E_HEAP_COUNT 128 /* needs to be tuned? */

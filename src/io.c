@@ -1,3 +1,9 @@
+/* ircd-micro, io.c -- async IO loop
+   Copyright (C) 2013 Alex Iadicicco
+
+   This file is protected under the terms contained
+   in the COPYING file in the project root */
+
 #include "ircd.h"
 
 long NOW = 0;
