@@ -1,6 +1,10 @@
 #ifndef __INC_IRCD_H__
 #define __INC_IRCD_H__
 
+#define PACKAGE_NAME "ircd-micro"
+#define PACKAGE_VERSION "0.1-dev"
+#define PACKAGE_FULLNAME "ircd-micro-0.1-dev"
+
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/time.h>

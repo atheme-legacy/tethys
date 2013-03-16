@@ -50,7 +50,7 @@ char *argv[];
 {
 	int c;
 
-	u_log(LG_INFO, "ircd-micro starting...");
+	u_log(LG_INFO, "%s starting...", PACKAGE_FULLNAME);
 
 	while ((c = getopt(argc, argv, "hp:")) != -1) {
 		switch(c) {
