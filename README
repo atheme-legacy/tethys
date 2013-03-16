@@ -1,13 +1,41 @@
-The Makefile is in src. A helper script called 'build' has
-been written to assist in interacting with the Makefile in
-the project root directory. It's very simple. Anybody familiar
-with shell syntax should have no problem deciphering it.
 
-The executable ircd-micro will be created in src. To install,
-place it somewhere in your $PATH. It is mostly standalone,
-however it needs to know where to find the relevant config
-files. It first looks for them in the directory called 'etc',
-relative to the current working directory. If the files are
-somewhere else, you may specify their location with the
-appropriate options. Invoke ircd-micro with -h to get a list
-of options.
+
+
+				 ircd-micro 0.1
+			       by Alex Iadicicco
+
+
+ABOUT
+  ircd-micro is an attempt to write an IRC daemon from scratch for the 4.3
+  BSD architecture. This was done more as a personal challenge rather than
+  as a real practical project.
+
+  The goal is to be fully compatible with most modern TS6 IRC daemons, in
+  particular charybdis ircd and atheme-services. This will allow a 4.3 BSD
+  system running ircd-micro to be linked into existing TS6 networks.
+
+
+COMPILING
+  The Makefile is in src. A helper script called 'build' has been written to
+  assist in interacting with the Makefile in the project root directory. It's
+  very simple. Anybody familiar with shell syntax should have no problem
+  deciphering it.
+
+  The executable ircd-micro will be created in src. To install, place it
+  somewhere in your $PATH. It is mostly standalone, however it needs to know
+  where to find the relevant config files. It first looks for them in the
+  directory called 'etc', relative to the current working directory. If
+  the files are somewhere else, you may specify their location with the
+  appropriate options. Invoke ircd-micro with -h to get a list of options.
+
+
+RUNNING
+  Configuration goes in etc/micro.conf. The following is an example
+  configuration file:
+
+    me {
+      name irc.ajitek.net       # name of the server
+      sid 22U                   # our SID
+      desc AJITEK               # description
+      motd etc/micro.motd       # file containing the MOTD
+    }
