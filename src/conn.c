@@ -168,7 +168,7 @@ void u_conn_event(conn, ev)
 struct u_conn *conn;
 int ev;
 {
-	u_log(LG_DEBUG, "CONN:EV: [%p] EV=%d", conn, ev);
+	u_log(LG_FINE, "CONN:EV: [%p] EV=%d", conn, ev);
 	if (!conn->event)
 		return;
 	conn->event(conn, ev);

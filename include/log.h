@@ -13,6 +13,7 @@
 #define LG_INFO     3
 #define LG_VERBOSE  4
 #define LG_DEBUG    5
+#define LG_FINE     6
 
 extern void (*u_log_handler)(); /* int level, char *line (no EOL) */
 extern int u_log_level;

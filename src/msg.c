@@ -122,7 +122,7 @@ struct u_msg *msg;
 		return;
 	}
 
-	u_log(LG_DEBUG, "INVOKE %s [%p]", cmd->name, cmd->cb);
+	u_log(LG_FINE, "INVOKE %s [%p]", cmd->name, cmd->cb);
 
 	cmd->cb(conn, msg);
 }
