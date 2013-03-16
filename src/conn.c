@@ -49,7 +49,7 @@ struct u_conn *conn;
 {
 	char *s;
 
-	s = memchr(conn->obuf, '\r', conn->obuflen);
+	s = (char*)memchr(conn->obuf, '\r', conn->obuflen);
 	if (!s || *++s != '\n')
 		s = conn->obuf;
 	else
@@ -104,7 +104,7 @@ va_dcl
 #endif
 {
 	va_list va;
-	va_start(va, fmt);
+	u_va_start(va, fmt);
 	u_conn_vf(conn, fmt, va);
 	va_end(va);
 }

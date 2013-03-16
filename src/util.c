@@ -9,8 +9,8 @@ static int valid_ident_map[256];
 int matchmap(mask, string, casemap)
 char *mask, *string, *casemap;
 {
-	const char *m = mask, *s = string;
-	const char *m_bt = m, *s_bt = s;
+	char *m = mask, *s = string;
+	char *m_bt = m, *s_bt = s;
  
 	for (;;) {
 		switch (*m) {

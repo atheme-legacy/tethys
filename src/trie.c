@@ -1,7 +1,6 @@
 #include "ircd.h"
 
 #define TRIE_E_HEAP_COUNT 128 /* needs to be tuned? */
-struct u_heap *e_heap = NULL;
 
 static void __null_canonize(s) { }
 
@@ -11,10 +10,7 @@ struct u_trie_e *up;
 	struct u_trie_e *e;
 	int i;
 
-	if (e_heap == NULL)
-		e_heap = u_heap_new(sizeof(*e), TRIE_E_HEAP_COUNT);
-
-	e = u_heap_alloc(e_heap);
+	e = malloc(sizeof(*e));
 	e->val = NULL;
 	e->up = up;
 	for (i=0; i<16; i++)
@@ -26,7 +22,7 @@ struct u_trie_e *up;
 static void trie_e_del(e)
 struct u_trie_e *e;
 {
-	u_heap_free(e_heap, e);
+	free(e);
 }
 
 struct u_trie *u_trie_new(canonize)

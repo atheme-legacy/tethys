@@ -156,7 +156,7 @@ va_dcl
 		return;
 	}
 
-	va_start(va, num);
+	u_va_start(va, num);
 	vsprintf(buf, fmt, va);
 	va_end(va);
 

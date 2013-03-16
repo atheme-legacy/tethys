@@ -31,7 +31,7 @@ char *fmt; va_dcl
 		return;
 
 	/* a tear is shed for our buffer overflow bug... */
-	va_start(va, fmt);
+	u_va_start(va, fmt);
 	vsprintf(buf, fmt, va);
 	va_end(va);
 

@@ -42,6 +42,8 @@ int init()
 	return 0;
 }
 
+extern char *optarg;
+
 int main(argc, argv)
 int argc;
 char *argv[];

@@ -18,6 +18,10 @@
 #define NULL ((void*)0)
 #endif
 
+#ifndef INET_ADDRSTRLEN
+#define INET_ADDRSTRLEN 16
+#endif
+
 /* size of string buffers allocated on the stack */
 #define BUFSIZE 4096
 
@@ -25,20 +29,24 @@
 #define containerof(ptr, st, m) ((void*)((ptr) - offsetof(st, m)))
 
 #ifdef __GNUC__
+# undef U_BSD
 # define STDARG
 # include <stdarg.h>
 # define A2(x,y) x,y
 # define A3(x,y,z) x,y,z
+# define u_va_start(va, arg) va_start(va, arg)
 #else
+# define U_BSD
 # undef STDARG
 # include <varargs.h>
 # define A2(x,y)
 # define A3(x,y,z)
+# define u_va_start(va, arg) va_start(va)
+extern void *malloc();
 #endif
 
 #include "util.h"
 #include "log.h"
-#include "heap.h"
 #include "list.h"
 #include "trie.h"
 #include "conf.h"

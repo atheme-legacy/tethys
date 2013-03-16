@@ -13,7 +13,6 @@ OBJS = numeric.o \
 	conf.o \
 	user.o \
 	conn.o \
-	heap.o \
 	trie.o \
 	c_ureg.o
 
