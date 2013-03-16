@@ -27,11 +27,13 @@
 #ifdef __GNUC__
 # define STDARG
 # include <stdarg.h>
-# define A(x...) x
+# define A2(x,y) x,y
+# define A3(x,y,z) x,y,z
 #else
 # undef STDARG
 # include <varargs.h>
-# define A(x...)
+# define A2(x,y)
+# define A3(x,y,z)
 #endif
 
 #include "util.h"

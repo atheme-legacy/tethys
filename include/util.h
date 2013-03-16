@@ -11,7 +11,7 @@ extern void u_strlcpy();
 extern void u_strlcat();
 extern char *u_strdup();
 
-extern char *cut(A(char **p, char *delim));
+extern char *cut(); /* char **p, char *delim */
 
 extern void null_canonize();
 extern void rfc1459_canonize();

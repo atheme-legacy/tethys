@@ -11,7 +11,7 @@
 extern void (*u_log_handler)(); /* int level, char *line (no EOL) */
 extern int u_log_level;
 
-extern void u_log(A(int level, char *fmt, ...));
+extern void u_log(A3(int level, char *fmt, ...));
 
 extern int init_log();
 
