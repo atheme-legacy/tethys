@@ -98,6 +98,8 @@ va_list va;
 		u_conn_event(conn, EV_SENDQ_FULL);
 		u_conn_close(conn);
 	}
+
+	toplev_sync(conn->sock);
 }
 
 #ifdef STDARG
