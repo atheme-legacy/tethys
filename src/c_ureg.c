@@ -19,8 +19,7 @@ struct u_conn *conn;
 			|| !u->ident[0] || !u->gecos[0])
 		return;
 
-	u_conn_f(conn, "Welcome!");
-	u_conn_f(conn, "nick=%s ident=%s gecos=%s", u->nick, u->ident, u->gecos);
+	u_user_num(u, RPL_WELCOME, me.name, u->nick);
 
 	conn->ctx = CTX_USER;
 }

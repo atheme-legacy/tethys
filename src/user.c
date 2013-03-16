@@ -128,6 +128,45 @@ unsigned state;
 	return u->flags & USER_MASK_STATE;
 }
 
+#ifdef STDARG
+void u_user_num(struct u_user *u, int num, ...)
+#else
+void u_user_num(u, num, va_alist)
+struct u_user *u;
+int num;
+va_dcl
+#endif
+{
+	char buf[4096];
+	char *fmt, *nick;
+	struct u_conn *conn;
+	va_list va; 
+
+	if (u->flags & USER_IS_LOCAL) {
+		conn = ((struct u_user_local*)u)->conn;
+	} else {
+		u_log(LG_SEVERE, "Can't send numerics to remote users yet!");
+		return;
+	}
+
+	fmt = u_numeric_fmt[num];
+
+	if (fmt == NULL) {
+		u_log(LG_SEVERE, "Attempted to use NULL numeric %d", num);
+		return;
+	}
+
+	va_start(va, num);
+	vsprintf(buf, fmt, va);
+	va_end(va);
+
+	nick = u->nick;
+	if (!*nick)
+		nick = "*";
+
+	u_conn_f(conn, ":%s %03d %s %s", me.name, num, nick, buf);
+}
+
 int init_user()
 {
 	users_by_nick = u_trie_new(rfc1459_canonize);

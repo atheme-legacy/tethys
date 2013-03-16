@@ -66,6 +66,8 @@ extern struct u_user *u_user_by_uid(); /* char* */
 
 extern unsigned u_user_state(A(struct u_user*, unsigned));
 
+extern void u_user_num(A(struct u_user *u, int num, ...));
+
 extern int init_user();
 
 #endif
