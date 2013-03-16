@@ -11,8 +11,6 @@
 #include <netinet/in.h>
 #include <netdb.h>
 #include <stdlib.h>
-#include <getopt.h>
-#include <signal.h>
 
 #ifndef NULL
 #define NULL ((void*)0)
@@ -29,20 +27,31 @@
 #define containerof(ptr, st, m) ((void*)((ptr) - offsetof(st, m)))
 
 #ifdef __GNUC__
+
 # undef U_BSD
 # define STDARG
+
 # include <stdarg.h>
+# include <getopt.h>
+# include <signal.h>
+
 # define A2(x,y) x,y
 # define A3(x,y,z) x,y,z
 # define u_va_start(va, arg) va_start(va, arg)
+
 #else
+
 # define U_BSD
 # undef STDARG
+
 # include <varargs.h>
+
 # define A2(x,y)
 # define A3(x,y,z)
 # define u_va_start(va, arg) va_start(va)
+
 extern void *malloc();
+
 #endif
 
 #include "util.h"
