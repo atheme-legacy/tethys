@@ -42,6 +42,7 @@
 #include "conf.h"
 #include "io.h"
 #include "linebuf.h"
+#include "numeric.h"
 #include "conn.h"
 #include "msg.h"
 #include "user.h"
