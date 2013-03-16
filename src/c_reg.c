@@ -1,4 +1,4 @@
-/* ircd-micro, c_ureg.c -- connection registration commands
+/* ircd-micro, c_reg.c -- connection registration commands
    Copyright (C) 2013 Alex Iadicicco
 
    This file is protected under the terms contained
@@ -146,7 +146,7 @@ struct u_msg *msg;
 	try_reg(conn);
 }
 
-struct u_cmd c_ureg[] = {
+struct u_cmd c_reg[] = {
 	{ "PASS", CTX_UNREG,  m_pass, 1 },
 	{ "PASS", CTX_UREG,   m_pass, 1 },
 	{ "NICK", CTX_UNREG,  m_nick, 1 },

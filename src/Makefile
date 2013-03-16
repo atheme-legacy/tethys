@@ -20,7 +20,8 @@ OBJS = numeric.o \
 	user.o \
 	conn.o \
 	trie.o \
-	c_ureg.o
+	c_reg.o \
+	c_user.o
 
 CFLAGS = -g -I. -I../include
 CC = cc

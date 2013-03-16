@@ -22,7 +22,8 @@ usage(argv0, code)
 #define INIT(fn) if ((err = (fn)()) < 0) return err
 #define COMMAND_DEF(cmds) extern struct u_cmd cmds[]
 #define COMMAND(cmds) if ((err = u_cmds_reg(cmds)) < 0) return err
-COMMAND_DEF(c_ureg);
+COMMAND_DEF(c_reg);
+COMMAND_DEF(c_user);
 int init()
 {
 	int err;
@@ -35,7 +36,8 @@ int init()
 	INIT(init_user);
 	INIT(init_cmd);
 	INIT(init_server);
-	COMMAND(c_ureg);
+	COMMAND(c_reg);
+	COMMAND(c_user);
 
 	f = fopen("etc/micro.conf", "r");
 	if (f == NULL) {
