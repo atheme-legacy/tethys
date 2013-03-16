@@ -19,8 +19,8 @@ void *data;
 		return NULL;
 
 	n->data = data;
-	n->next = list->next;
-	n->prev = list;
+	n->next = list;
+	n->prev = list->prev;
 	n->next->prev = n;
 	n->prev->next = n;
 
