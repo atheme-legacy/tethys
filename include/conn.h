@@ -54,6 +54,9 @@ extern void u_conn_out_clear(); /* u_conn* */
 extern void u_conn_vf(); /* u_conn*, char *fmt, va_list */
 extern void u_conn_f(A3(struct u_conn *conn, char *fmt, ...));
 
+extern void u_conn_vnum(); /* u_conn*, char *nick, int num, va_list */
+extern void u_conn_num(A3(struct u_conn *conn, int num, ...));
+
 extern void u_conn_event(); /* u_conn*, int */
 extern void u_conn_close(); /* u_conn* */
 

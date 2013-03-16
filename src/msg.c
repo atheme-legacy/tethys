@@ -113,15 +113,12 @@ struct u_msg *msg;
 	cmd = u_trie_get(commands[conn->ctx], msg->command);
 
 	if (!cmd) {
-		if (u != NULL)
-			u_user_num(u, ERR_UNKNOWNCOMMAND, msg->command);
+		u_conn_num(conn, ERR_UNKNOWNCOMMAND, msg->command);
 		return;
 	}
 
-	/* TODO: not enough args */
 	if (msg->argc < cmd->nargs) {
-		if (u != NULL)
-			u_user_num(u, ERR_NEEDMOREPARAMS, msg->command);
+		u_conn_num(conn, ERR_NEEDMOREPARAMS, msg->command);
 		return;
 	}
 

@@ -72,7 +72,8 @@ extern struct u_user *u_user_by_uid(); /* char* */
 
 extern unsigned u_user_state(); /* struct u_user*, unsigned */
 
-extern void u_user_num(A3(struct u_user *u, int num, ...));
+extern void u_user_vnum(); /* u_user*, int, va_list */
+extern void u_user_num(A3(struct u_user*, int num, ...));
 
 extern void u_user_send_motd(); /* u_user_local* */
 

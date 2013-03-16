@@ -115,6 +115,53 @@ va_dcl
 	va_end(va);
 }
 
+void u_conn_vnum(conn, nick, num, va)
+struct u_conn *conn;
+char *nick;
+int num;
+va_list va;
+{
+	char buf[4096];
+	char *fmt;
+
+	fmt = u_numeric_fmt[num];
+
+	if (fmt == NULL) {
+		u_log(LG_SEVERE, "Attempted to use NULL numeric %d", num);
+		return;
+	}
+
+	vsprintf(buf, fmt, va);
+
+	u_conn_f(conn, ":%s %03d %s %s", me.name, num, nick, buf);
+}
+
+#ifdef STDARG
+void u_conn_num(struct u_conn *conn, int num, ...)
+#else
+void u_conn_num(conn, num, va_alist)
+void u_conn *conn;
+int num;
+va_dcl
+#endif
+{
+	va_list va;
+
+	u_va_start(va, num);
+	switch (conn->ctx) {
+	case CTX_UNREG:
+		u_conn_vnum(conn, "*", num, va);
+		break;
+	case CTX_UREG:
+	case CTX_USER:
+		u_user_vnum(conn->priv, num, va);
+		break;
+	default:
+		u_log(LG_SEVERE, "Can't use u_conn_num on context %d!", conn->ctx);
+	}
+	va_end(va);
+}
+
 void u_conn_event(conn, ev)
 struct u_conn *conn;
 int ev;
