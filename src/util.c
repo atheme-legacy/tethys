@@ -200,8 +200,8 @@ int init_util()
 
 	for (i=0; i<256; i++) {
 		null_casemap[i] = i;
-		rfc1459_casemap[i] = toupper(i);
-		ascii_casemap[i] = toupper(i);
+		rfc1459_casemap[i] = islower(i) ? toupper(i) : i;
+		ascii_casemap[i] = islower(i) ? toupper(i) : i;
 	}
 	rfc1459_casemap['['] = '{';
 	rfc1459_casemap[']'] = '}';

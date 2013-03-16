@@ -49,8 +49,7 @@ char *s;
 		s = ws_cut(s);
 	}
 
-	for (p=msg->command; *p; p++)
-		*p = toupper(*p);
+	ascii_canonize(msg->command);
 
 	return 0;
 }
