@@ -32,11 +32,7 @@ struct u_conn *conn;
 			|| !u->ident[0] || !u->gecos[0])
 		return;
 
-	u_user_num(u, RPL_WELCOME, me.name, u->nick);
-	u_user_num(u, RPL_YOURHOST, me.name, PACKAGE_FULLNAME);
-	u_user_send_motd((struct u_user_local*)u);
-
-	conn->ctx = CTX_USER;
+	u_user_welcome(u);
 }
 
 static void m_nick(conn, msg)
@@ -61,7 +57,8 @@ struct u_msg *msg;
 		return;
 	}
 
-	strcpy(USER(ul)->nick, buf);
+	u_user_set_nick(USER(ul), buf);
+
 	try_reg(conn);
 }
 

@@ -92,6 +92,7 @@ char *key;
 void *val;
 {
 	struct u_trie_e *n = retrieval(trie, key, 1);
+	u_log(LG_DEBUG, "TRIE:SET: [%p] %s", trie, key);
 	n->val = val;
 }
 
@@ -115,6 +116,8 @@ char *key;
 
 	if (cur == NULL)
 		return NULL;
+
+	u_log(LG_DEBUG, "TRIE:DEL: [%p] %s", trie, key);
 
 	val = cur->val;
 

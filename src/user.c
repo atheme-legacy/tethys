@@ -40,6 +40,14 @@ char *id_next()
 	return id_buf;
 }
 
+void user_unreg(u)
+struct u_user *u;
+{
+	if (u->nick[0])
+		u_trie_del(users_by_nick, u->nick);
+	u_trie_del(users_by_uid, u->uid);
+}
+
 /* used to simplify user_local_event */
 void user_local_die(conn, msg)
 struct u_conn *conn;
@@ -54,6 +62,7 @@ char *msg;
 	} else {
 		u_conn_f(conn, "ERROR :%s", msg);
 	}
+	user_unreg(u);
 }
 
 void user_local_event(conn, event)
@@ -88,6 +97,7 @@ void u_user_make_ureg(conn)
 struct u_conn *conn;
 {
 	struct u_user_local *ul;
+	struct u_user *u;
 
 	if (conn->ctx != CTX_UNREG && conn->ctx != CTX_UREG)
 		return;
@@ -97,17 +107,24 @@ struct u_conn *conn;
 	if (conn->priv != NULL)
 		return;
 
-	/* TODO: heap! */
 	conn->priv = ul = malloc(sizeof(*ul));
 	memset(ul, 0, sizeof(*ul));
 
-	u_strlcpy(USER(ul)->host, conn->ip, MAXHOST+1);
+	u = USER(ul);
 
-	USER(ul)->flags = umode_default | USER_IS_LOCAL;
-	u_user_state(USER(ul), USER_REGISTERING);
+	u_strlcpy(u->uid, me.sid, 4);
+	u_strlcpy(u->uid + 3, id_next(), 7);
+	u_trie_set(users_by_uid, u->uid, u);
+
+	u_strlcpy(u->host, conn->ip, MAXHOST+1);
+
+	u->flags = umode_default | USER_IS_LOCAL;
+	u_user_state(u, USER_REGISTERING);
 	ul->conn = conn;
 
 	conn->event = user_local_event;
+
+	u_log(LG_DEBUG, "New user uid=%s host=%s", u->uid, u->host);
 }
 
 struct u_user *u_user_by_nick(nick)
@@ -120,6 +137,16 @@ struct u_user *u_user_by_uid(uid)
 char *uid;
 {
 	return u_trie_get(users_by_uid, uid);
+}
+
+void u_user_set_nick(u, nick)
+struct u_user *u;
+char *nick;
+{
+	if (u->nick[0])
+		u_trie_del(users_by_nick, u->nick);
+	u_strlcpy(u->nick, nick, MAXNICKLEN+1);
+	u_trie_set(users_by_nick, u->nick);
 }
 
 unsigned u_user_state(u, state)
@@ -167,6 +194,19 @@ va_dcl
 	u_va_start(va, num);
 	u_user_vnum(u, num, va);
 	va_end(va);
+}
+
+void u_user_welcome(ul)
+struct u_user_local *ul;
+{
+	struct u_user *u = USER(ul);
+
+	u_user_state(u, USER_CONNECTED);
+	ul->conn->ctx = CTX_USER;
+
+	u_user_num(u, RPL_WELCOME, me.name, u->nick);
+	u_user_num(u, RPL_YOURHOST, me.name, PACKAGE_FULLNAME);
+	u_user_send_motd((struct u_user_local*)u);
 }
 
 void u_user_send_motd(ul)
