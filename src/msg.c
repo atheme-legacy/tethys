@@ -100,16 +100,25 @@ struct u_conn *conn;
 struct u_msg *msg;
 {
 	struct u_cmd *cmd;
+	struct u_user *u = NULL;
+
+	if (conn->ctx == CTX_USER)
+		u = conn->priv;
 
 	cmd = u_trie_get(commands[conn->ctx], msg->command);
 
-	/* TODO: command not found */
-	if (!cmd)
+	if (!cmd) {
+		if (u != NULL)
+			u_user_num(u, ERR_UNKNOWNCOMMAND, msg->command);
 		return;
+	}
 
 	/* TODO: not enough args */
-	if (msg->argc < cmd->nargs)
+	if (msg->argc < cmd->nargs) {
+		if (u != NULL)
+			u_user_num(u, ERR_NEEDMOREPARAMS, msg->command);
 		return;
+	}
 
 	u_log(LG_DEBUG, "INVOKE %s [%p]", cmd->name, cmd->cb);
 
