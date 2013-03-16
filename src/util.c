@@ -122,6 +122,15 @@ char *s;
 	return p;
 }
 
+void u_ntop(in, s)
+struct in_addr *in;
+char *s;
+{
+	/* MAJOR HAX, relies on in being big-endian */
+	char *a = (char*)in;
+	sprintf(s, "%d.%d.%d.%d", a[0], a[1], a[2], a[3]);
+}
+
 char *cut(p, delim)
 char **p, *delim;
 {

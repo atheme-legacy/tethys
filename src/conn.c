@@ -195,7 +195,7 @@ struct u_io_fd *sock;
 	conn->sock = iofd;
 	iofd->priv = conn;
 
-	inet_ntop(AF_INET, &addr.sin_addr, conn->ip, INET_ADDRSTRLEN);
+	u_ntop(&addr.sin_addr, conn->ip);
 
 	toplev_sync(iofd);
 

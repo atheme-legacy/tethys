@@ -10,6 +10,7 @@ extern void u_memmove();
 extern void u_strlcpy();
 extern void u_strlcat();
 extern char *u_strdup();
+extern void u_ntop(); /* in_addr*, char* */
 
 extern char *cut(); /* char **p, char *delim */
 
