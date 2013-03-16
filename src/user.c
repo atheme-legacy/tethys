@@ -167,6 +167,23 @@ va_dcl
 	u_conn_f(conn, ":%s %03d %s %s", me.name, num, nick, buf);
 }
 
+void u_user_send_motd(ul)
+struct u_user_local *ul;
+{
+	struct u_list *n;
+	struct u_user *u = USER(ul);
+
+	if (u_list_is_empty(&my_motd)) {
+		u_user_num(u, ERR_NOMOTD);
+		return;
+	}
+
+	u_user_num(u, RPL_MOTDSTART, me.name);
+	U_LIST_EACH(n, &my_motd)
+		u_user_num(u, RPL_MOTD, n->data);
+	u_user_num(u, RPL_ENDOFMOTD);
+}
+
 int init_user()
 {
 	users_by_nick = u_trie_new(rfc1459_canonize);

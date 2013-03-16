@@ -41,6 +41,12 @@ void *data;
 	return NULL;
 }
 
+int u_list_is_empty(list)
+struct u_list *list;
+{
+	return list->next == list;
+}
+
 void *u_list_del_n(n)
 struct u_list *n;
 {

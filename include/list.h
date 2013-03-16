@@ -16,6 +16,7 @@ struct u_list {
 extern void u_list_init(); /* struct u_list* */
 extern struct u_list *u_list_add(); /* struct u_list*, void* */
 extern struct u_list *u_list_contains(); /* struct u_list*, void* */
+extern int u_list_is_empty(); /* struct u_list* */
 extern void *u_list_del_n(); /* struct u_list *node */
 
 #endif

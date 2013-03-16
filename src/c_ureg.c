@@ -20,6 +20,7 @@ struct u_conn *conn;
 		return;
 
 	u_user_num(u, RPL_WELCOME, me.name, u->nick);
+	u_user_send_motd((struct u_user_local*)u);
 
 	conn->ctx = CTX_USER;
 }

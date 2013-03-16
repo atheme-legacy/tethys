@@ -68,6 +68,8 @@ extern unsigned u_user_state(A(struct u_user*, unsigned));
 
 extern void u_user_num(A(struct u_user *u, int num, ...));
 
+extern void u_user_send_motd(); /* u_user_local* */
+
 extern int init_user();
 
 #endif
