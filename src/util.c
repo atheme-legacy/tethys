@@ -113,6 +113,15 @@ int n;
 	u_strlcpy(dest+len, src, n-len);
 }
 
+char *u_strdup(s)
+char *s;
+{
+	int len = strlen(s) + 1;
+	char *p = malloc(len);
+	memcpy(p, s, len);
+	return p;
+}
+
 char *cut(p, delim)
 char **p, *delim;
 {

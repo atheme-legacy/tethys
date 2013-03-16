@@ -1,6 +1,7 @@
 #include "ircd.h"
 
 struct u_server me;
+struct u_list my_motd;
 
 void server_conf(key, val)
 char *key, *val;
@@ -25,8 +26,37 @@ char *key, *val;
 	}
 }
 
+void load_motd(key, val)
+char *key, *val;
+{
+	char *s, *p, buf[BUFSIZE];
+	FILE *f;
+
+	u_log(LG_INFO, "Loading MOTD from %s", val);
+
+	f = fopen(val, "r");
+	if (f == NULL) {
+		u_log(LG_ERROR, "Could not open MOTD file %s", val);
+		return;
+	}
+
+	while (!feof(f)) {
+		s = fgets(buf, BUFSIZE, f);
+		if (s == NULL)
+			break;
+		p = strchr(s, '\n');
+		if (p) *p = '\0';
+		u_log(LG_DEBUG, ":- %s", s);
+		u_list_add(&my_motd, u_strdup(s));
+	}
+
+	fclose(f);
+}
+
 int init_server()
 {
+	u_list_init(&my_motd);
+
 	/* default settings! */
 	me.conn = NULL;
 	strcpy(me.sid, "22U");
@@ -36,6 +66,7 @@ int init_server()
 	u_trie_set(u_conf_handlers, "me.name", server_conf);
 	u_trie_set(u_conf_handlers, "me.sid", server_conf);
 	u_trie_set(u_conf_handlers, "me.desc", server_conf);
+	u_trie_set(u_conf_handlers, "me.motd", load_motd);
 
 	return 1;
 }

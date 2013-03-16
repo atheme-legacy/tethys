@@ -12,6 +12,7 @@ struct u_server {
 };
 
 extern struct u_server me;
+extern struct u_list my_motd;
 
 extern int init_server();
 
