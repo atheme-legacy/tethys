@@ -70,6 +70,7 @@ extern void *malloc();
 #include "trie.h"
 #include "conf.h"
 #include "io.h"
+#include "cookie.h"
 #include "linebuf.h"
 #include "numeric.h"
 #include "conn.h"
