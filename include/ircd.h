@@ -36,6 +36,9 @@
 #define offsetof(st, m) ((unsigned)(&((st *)0)->m))
 #define containerof(ptr, st, m) ((void*)((ptr) - offsetof(st, m)))
 
+#define memberp(base, offs) ((void*)((int)(base) + (int)(offs)))
+#define member(mtype, base, offs) (*((mtype*)memberp(base, offs)))
+
 #ifdef __GNUC__
 
 # undef U_BSD
@@ -77,5 +80,6 @@ extern void *malloc();
 #include "msg.h"
 #include "user.h"
 #include "server.h"
+#include "chan.h"
 
 #endif
