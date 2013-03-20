@@ -11,6 +11,7 @@ OBJS = numeric.o \
 	list.o \
 	log.o \
 	io.o \
+	dns.o \
 	cookie.o \
 	linebuf.o \
 	msg.o \
