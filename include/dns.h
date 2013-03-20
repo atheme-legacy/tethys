@@ -13,6 +13,7 @@
 #define DNS_TIMEOUT   2   /* request timed out */
 #define DNS_INVALID   3   /* invalid request */
 #define DNS_TOOLONG   4   /* request too long */
+#define DNS_OTHER     5   /* some other error */
 
 extern void u_dns_use_io(); /* struct u_io* */
 

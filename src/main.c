@@ -32,12 +32,16 @@ int init()
 	signal(SIGPIPE, SIG_IGN);
 
 	INIT(init_util);
+	INIT(init_dns);
 	INIT(init_conf);
 	INIT(init_user);
 	INIT(init_cmd);
 	INIT(init_server);
 	COMMAND(c_reg);
 	COMMAND(c_user);
+
+	u_io_init(&base_io);
+	u_dns_use_io(&base_io);
 
 	f = fopen("etc/micro.conf", "r");
 	if (f == NULL) {
@@ -48,6 +52,36 @@ int init()
 	fclose(f);
 
 	return 0;
+}
+
+void test_cb(status, res, priv)
+int status;
+char *res;
+void *priv;
+{
+	char *error = NULL;
+	switch (status) {
+	case DNS_OKAY:
+		u_log(LG_DEBUG, "DNS okay: %s", res);
+		break;
+	case DNS_NXDOMAIN:
+		error = "NXDOMAIN";
+		break;
+	case DNS_TIMEOUT:
+		error = "TIMEOUT";
+		break;
+	case DNS_INVALID:
+		error = "INVALID";
+		break;
+	case DNS_TOOLONG:
+		error = "TOOLONG";
+		break;
+	case DNS_OTHER:
+		error = "OTHER";
+		break;
+	}
+	if (error != NULL)
+		u_log(LG_DEBUG, "DNS error: %s", error);
 }
 
 extern char *optarg;
@@ -79,7 +113,7 @@ char *argv[];
 		return 1;
 	}
 
-	u_io_init(&base_io);
+	u_dns("general.asu.edu", test_cb, NULL);
 
 	if (!u_conn_origin_create(&base_io, INADDR_ANY, opt_port)) {
 		u_log(LG_SEVERE, "Could not create connection origin. Bailing");
