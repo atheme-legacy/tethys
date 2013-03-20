@@ -113,7 +113,7 @@ char *argv[];
 		return 1;
 	}
 
-	u_dns("general.asu.edu", test_cb, NULL);
+	u_rdns("129.219.10.241", test_cb, NULL);
 
 	if (!u_conn_origin_create(&base_io, INADDR_ANY, opt_port)) {
 		u_log(LG_SEVERE, "Could not create connection origin. Bailing");

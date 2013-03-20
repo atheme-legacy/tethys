@@ -184,7 +184,6 @@ struct dns_rr *rr;
 	char *s, *p;
 
 	get_name(rr->name);
-	puts(rr->name);
 
 	rr->type = msg_get16();
 	rr->class = msg_get16();
@@ -213,7 +212,7 @@ short sh;
 }
 
 void msg_puts(str, n)
-char *str;
+unsigned char *str;
 int n;
 {
 	if (n < 0)
@@ -225,6 +224,14 @@ int n;
 	msg[msgtail++] = 0xff & ((unsigned)n);
 	for (; n>0; n--)
 		msg[msgtail++] = *str++;
+}
+
+void msg_putd(d)
+unsigned char d;
+{
+	char buf[4];
+	sprintf(buf, "%d", d);
+	msg_puts(buf, strlen(buf));
 }
 
 void msg_puthdr(hdr)
@@ -285,6 +292,7 @@ struct u_io_fd *iofd;
 	struct dns_req *req;
 	struct dns_rr rr;
 	struct in_addr in;
+	char *p, rdata[DNSBUFSIZE];
 
 	u_log(LG_DEBUG, "dns: receiving message");
 
@@ -316,14 +324,30 @@ struct u_io_fd *iofd;
 		goto req_del;
 	}
 
+	u_log(LG_DEBUG, "qd=%d an=%d ns=%d ar=%d",
+	      hdr.qdcount, hdr.ancount, hdr.nscount, hdr.arcount);
+
 	for (; hdr.qdcount>0; hdr.qdcount--)
 		skip_question();
 
 	for (; hdr.ancount>0; hdr.ancount--) {
 		msg_getrr(&rr);
-		in.s_addr = *((unsigned int*)rr.rdata);
-		u_log(LG_DEBUG, "rr: name=%s type=%d class=%d ttl=%d addr=%s",
-		      rr.name, rr.type, rr.class, rr.ttl, inet_ntoa(in));
+		switch (rr.type) {
+		case DNS_TYPE_A:
+			in.s_addr = *((unsigned int*)rr.rdata);
+			strcpy(rdata, (char*)inet_ntoa(in));
+			break;
+		case DNS_TYPE_CNAME:
+		case DNS_TYPE_PTR:
+			p = rr.rdata;
+			get_name_real(rdata, &p);
+			break;
+		default:
+			strcpy(rdata, "?");
+			break;
+		}
+		u_log(LG_DEBUG, "rr: name=%s type=%d class=%d ttl=%d rdata=%s",
+		      rr.name, rr.type, rr.class, rr.ttl, rdata);
 	}
 
 req_del:
@@ -388,8 +412,11 @@ void (*cb)();
 void *priv;
 {
 	struct in_addr in;
+	struct dns_hdr hdr;
+	struct dns_req *req;
+	char *p;
 
-	if (inet_aton(name, &in)) {
+	if (!inet_aton(name, &in)) {
 		/* XXX: we should not call the callback from within the same
 		   stack context as u_rdns! we should instead set a timer
 		   for 0 seconds and call the callback from there so as to
@@ -399,8 +426,37 @@ void *priv;
 		return;
 	}
 
+	p = (char*)&(in.s_addr);
+
 	msg_reset();
-	/* TODO: make message */
+
+	hdr.id = make_id();
+	hdr.flags = DNS_OP_QUERY | DNS_FLAG_RD;
+	hdr.qdcount = 1;
+	hdr.ancount = 0;
+	hdr.nscount = 0;
+	hdr.arcount = 0;
+
+	msg_puthdr(&hdr);
+
+	msg_putd(p[3]);
+	msg_putd(p[2]);
+	msg_putd(p[1]);
+	msg_putd(p[0]);
+	msg_puts("in-addr", 7);
+	msg_puts("arpa", 4);
+	msg_puts("", 0);
+	msg_put16(DNS_TYPE_PTR);
+	msg_put16(DNS_CLASS_IN);
+
+	req = malloc(sizeof(*req));
+	req->id = hdr.id;
+	req->timeout = NULL; /* TODO */
+	req->cb = cb;
+	req->priv = priv;
+	u_list_add(&reqs, req);
+
+	send_msg();
 }
 
 int init_dns()
