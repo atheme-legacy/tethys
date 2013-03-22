@@ -63,10 +63,102 @@ struct u_io_fd *sock = NULL;
 unsigned char msg[DNSBUFSIZE];
 int msghead, msgtail;
 
-unsigned short make_id()
+/* not sure if there's a better way... */
+unsigned int id_nfree_total = 65536;
+unsigned char id_nfree[512];
+unsigned int id_bitvec[2048];
+
+/* brief break from style conventions here for compactness */
+void id_bitvec_set(i) unsigned short i; {
+	id_bitvec[i>>5] = id_bitvec[i>>5] | (1<<(i&0x1f)); }
+void id_bitvec_reset(i) unsigned short i; {
+	id_bitvec[i>>5] = id_bitvec[i>>5] & ~(1<<(i&0x1f)); }
+unsigned char id_bitvec_get(i) unsigned short i; {
+	return ((id_bitvec[i>>5]) & (1<<(i&0x1f))) != 0; }
+
+int counts[33];
+
+unsigned char num_set_bits(n)
+unsigned long n;
 {
-	/* XXX */
-	return rand();
+	unsigned char i, c = 0;
+	/* http://graphics.stanford.edu/~seander/bithacks.html */
+	/*
+	n = n - ((n >> 1) & 0x55555555);
+	n = (n & 0x33333333) + ((n >> 2) & 0x33333333);
+	return ((n + (n >> 4) & 0x0f0f0f0f) * 0x01010101) >> 24;
+	*/
+	for (i=0; i<32; i++) {
+		if ((n>>i)&1)
+			c++;
+	}
+	counts[c]++;
+	return c;
+}
+
+unsigned short id_alloc()
+{
+	unsigned short origoffs, offs, id;
+	unsigned char t;
+
+	if (id_nfree_total == 0) {
+		u_log(LG_SEVERE, "Cannot allocate a new DNS request id!");
+		return 0; /* XXX */
+	}
+
+	origoffs = offs = (unsigned)(rand()) % id_nfree_total;
+
+	if (id_nfree_total == 65536) {
+		/* likely, for quiet servers */
+		id = offs;
+	} else {
+		id = 0;
+
+		for (;; id += 128) {
+			if (offs <= id_nfree[id>>7])
+				break;
+			offs -= id_nfree[id>>7];
+		}
+
+		for (;; id += 32) {
+			t = 32 - num_set_bits(id_bitvec[id>>5]);
+			if (offs <= t)
+				break;
+			offs -= t;
+		}
+
+		for (;; id ++) {
+			if (!id_bitvec_get(id)) {
+				if (offs == 0)
+					break;
+				offs--;
+			}
+		}
+	}
+
+	/*u_log(LG_FINE, "id_alloc: id=%d", id);*/
+
+	if (id_bitvec_get(id)) {
+		u_log(LG_SEVERE, "Generated duplicate id %d (offs=%d, nfree=%d)!",
+		      id, origoffs, id_nfree_total);
+		return;
+	}
+
+	id_bitvec_set(id);
+	id_nfree_total--;
+	id_nfree[id>>7]--;
+
+	return id;
+}
+
+void id_free(id)
+unsigned short id;
+{
+	if (id_bitvec_get(id) == 0)
+		return;
+	id_bitvec_reset(id);
+	id_nfree_total++;
+	id_nfree[id>>7]++;
 }
 
 struct u_list *find_req(id)
@@ -351,6 +443,7 @@ struct u_io_fd *iofd;
 	}
 
 req_del:
+	id_free(req->id);
 	u_list_del_n(reqn);
 	free(req);
 }
@@ -382,7 +475,7 @@ void *priv;
 
 	msg_reset();
 
-	hdr.id = make_id();
+	hdr.id = id_alloc();
 	hdr.flags = DNS_OP_QUERY | DNS_FLAG_RD;
 	hdr.qdcount = 1;
 	hdr.ancount = 0;
@@ -430,7 +523,7 @@ void *priv;
 
 	msg_reset();
 
-	hdr.id = make_id();
+	hdr.id = id_alloc();
 	hdr.flags = DNS_OP_QUERY | DNS_FLAG_RD;
 	hdr.qdcount = 1;
 	hdr.ancount = 0;
@@ -461,6 +554,13 @@ void *priv;
 
 int init_dns()
 {
+	int i;
+
+	for (i=0; i<512; i++)
+		id_nfree[i] = 128;
+	for (i=0; i<2048; i++)
+		id_bitvec[i] = 0;
+
 	dnsfd = socket(AF_INET, SOCK_DGRAM, 0);
 	if (dnsfd < 0)
 		return -1;
