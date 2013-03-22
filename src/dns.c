@@ -76,8 +76,6 @@ void id_bitvec_reset(i) unsigned short i; {
 unsigned char id_bitvec_get(i) unsigned short i; {
 	return ((id_bitvec[i>>5]) & (1<<(i&0x1f))) != 0; }
 
-int counts[33];
-
 unsigned char num_set_bits(n)
 unsigned long n;
 {
