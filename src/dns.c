@@ -81,17 +81,9 @@ unsigned long n;
 {
 	unsigned char i, c = 0;
 	/* http://graphics.stanford.edu/~seander/bithacks.html */
-	/*
 	n = n - ((n >> 1) & 0x55555555);
 	n = (n & 0x33333333) + ((n >> 2) & 0x33333333);
 	return ((n + (n >> 4) & 0x0f0f0f0f) * 0x01010101) >> 24;
-	*/
-	for (i=0; i<32; i++) {
-		if ((n>>i)&1)
-			c++;
-	}
-	counts[c]++;
-	return c;
 }
 
 unsigned short id_alloc()
