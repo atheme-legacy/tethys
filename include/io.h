@@ -27,16 +27,17 @@ struct u_io_fd {
 struct u_io_timer {
 	struct u_io *io;
 	struct u_list *n;
-	/* accepts struct u_io_timer as sole arg */
-	long time;
-	void (*fire)();
+	struct timeval time;
+	/* u_io_timer* */
+	void (*cb)();
+	void *priv;
 };
 
-extern long NOW;
+extern struct timeval NOW;
 
 extern void u_io_init(); /* struct u_io* */
 extern struct u_io_fd *u_io_add_fd(); /* struct u_io*, int */
-extern struct u_io_timer *u_io_add_timer(); /* struct u_io*, long */
+extern struct u_io_timer *u_io_add_timer(); /* struct u_io*, sec, usec, cb, priv */
 extern void u_io_del_timer(); /* u_io*, u_io_timer* */
 
 extern void u_io_poll_once(); /* struct u_io* */

@@ -15,12 +15,12 @@ struct u_cookie *ck;
 void u_cookie_inc(ck)
 struct u_cookie *ck;
 {
-	if (ck->high == NOW) {
+	if (ck->high == NOW.tv_sec) {
 		ck->low ++;
 		return;
 	}
 
-	ck->high = NOW;
+	ck->high = NOW.tv_sec;
 	ck->low = 0;
 }
 

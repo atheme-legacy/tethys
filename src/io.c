@@ -6,7 +6,82 @@
 
 #include "ircd.h"
 
-long NOW = 0;
+/* I got tired of writing this out all the time */
+#define MILLION 1000000
+
+struct timeval NOW;
+
+void tv_cpy(res, a) /* res = a */
+struct timeval *res, *a;
+{
+	res->tv_sec = a->tv_sec;
+	res->tv_usec = a->tv_usec;
+}
+
+void tv_norm(tv)
+struct timeval *tv;
+{
+	if (tv->tv_usec >= MILLION) {
+		tv->tv_sec += (int)(tv->tv_usec / MILLION);
+		tv->tv_usec %= MILLION;
+	} else if (tv->tv_usec < 0) {
+		/* XXX XXX XXX */
+		while (tv->tv_usec < 0) {
+			tv->tv_usec += MILLION;
+			tv->tv_sec --;
+		}
+	}
+}
+
+void tv_add(a, b, res) /* res = a + b */
+struct timeval *a, *b, *res;
+{
+	res->tv_sec = a->tv_sec + b->tv_sec;
+	res->tv_usec = a->tv_usec + b->tv_sec;
+	if (res->tv_usec >= 1000000) {
+		res->tv_usec -= 1000000;
+		res->tv_sec ++;
+	}
+}
+
+void tv_sub(a, b, res) /* res = a - b */
+struct timeval *a, *b, *res;
+{
+	res->tv_sec = a->tv_sec - b->tv_sec;
+	res->tv_usec = a->tv_usec - b->tv_usec;
+	if (res->tv_usec < 0) {
+		res->tv_usec += 1000000;
+		res->tv_sec --;
+	}
+}
+
+void tv_clear(tv)
+struct timeval *tv;
+{
+	tv->tv_sec = 0;
+	tv->tv_usec = 0;
+}
+
+int tv_isset(tv)
+struct timeval *tv;
+{
+	return tv->tv_sec != 0 || tv->tv_usec != 0;
+}
+
+int tv_cmp(a, b)
+struct timeval *a, *b;
+{
+	long x, y;
+	x = a->tv_sec;
+	y = b->tv_sec;
+	if (x == y) {
+		x = a->tv_usec;
+		y = b->tv_usec;
+	}
+	if (x == y)
+		return 0;
+	return x < y ? -1 : 1;
+}
 
 void u_io_init(io)
 struct u_io *io;
@@ -14,6 +89,7 @@ struct u_io *io;
 	io->running = 0;
 	u_list_init(&io->fds);
 	u_list_init(&io->timers);
+	gettimeofday(&NOW, NULL);
 }
 
 struct u_io_fd *u_io_add_fd(io, fd)
@@ -45,14 +121,15 @@ struct u_io_fd *iofd;
 	u_list_del_n(iofd->n);
 }
 
-struct u_io_timer *u_io_add_timer(io, time)
+struct u_io_timer *u_io_add_timer(io, sec, usec, cb, priv)
 struct u_io *io;
-long time;
+unsigned long sec, usec;
+void (*cb)();
+void *priv;
 {
 	struct u_io_timer *iot;
 
 	iot = (struct u_io_timer*)malloc(sizeof(*iot));
-	iot->time = time;
 
 	iot->n = u_list_add(&io->timers, iot);
 	if (iot->n == NULL) {
@@ -61,6 +138,11 @@ long time;
 	}
 
 	iot->io = io;
+	iot->cb = cb;
+	iot->priv = priv;
+	iot->time.tv_sec = NOW.tv_sec + sec;
+	iot->time.tv_usec = NOW.tv_usec + usec;
+	tv_norm(&iot->time);
 
 	return iot;
 }
@@ -77,26 +159,25 @@ struct u_io *io;
 {
 	fd_set r, w;
 	int nfds;
-	long next;
 	struct u_list *n, *tn;
 	struct u_io_timer *iot;
 	struct u_io_fd *iofd;
-	struct timeval _tv, *tv;
+	struct timeval tv, *tvp;
 
 	FD_ZERO(&r);
 	FD_ZERO(&w);
 
-	NOW = time(0);
+	gettimeofday(&NOW, NULL);
 
-	next = -1;
+	tv_clear(&tv);
 	U_LIST_EACH(n, &io->timers) {
 		iot = n->data;
-		if (iot->time <= NOW) {
-			next = NOW;
+		if (tv_cmp(&iot->time, &NOW) <= 0) {
+			tv_cpy(&tv, &NOW);
 			break;
 		}
-		if (next == -1 || iot->time < next)
-			next = iot->time;
+		if (!tv_isset(&tv) || tv_cmp(&iot->time, &tv) < 0)
+			tv_cpy(&tv, &iot->time);
 	}
 
 	nfds = 0;
@@ -110,18 +191,20 @@ struct u_io *io;
 			FD_SET(iofd->fd, &w);
 	}
 
-	_tv.tv_sec = next - NOW;
-	_tv.tv_usec = 0;
-	tv = (next == -1) ? NULL : &_tv;
+	tvp = NULL;
+	if (tv_isset(&tv)) {
+		tv_sub(&tv, &NOW, &tv);
+		tvp = &tv;
+	}
 
-	nfds = select(nfds+1, &r, &w, NULL, tv);
+	nfds = select(nfds+1, &r, &w, NULL, tvp);
 
-	NOW = time(0);
+	gettimeofday(&NOW, NULL);
 
 	U_LIST_EACH_SAFE(n, tn, &io->timers) {
 		iot = n->data;
-		if (iot->time <= NOW) {
-			iot->fire(iot);
+		if (tv_cmp(&iot->time, &NOW) < 0) {
+			iot->cb(iot);
 			u_io_del_timer(io, iot);
 		}
 	}

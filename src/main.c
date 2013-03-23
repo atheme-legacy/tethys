@@ -54,36 +54,6 @@ int init()
 	return 0;
 }
 
-void test_cb(status, res, priv)
-int status;
-char *res;
-void *priv;
-{
-	char *error = NULL;
-	switch (status) {
-	case DNS_OKAY:
-		u_log(LG_DEBUG, "DNS okay: %s", res);
-		break;
-	case DNS_NXDOMAIN:
-		error = "NXDOMAIN";
-		break;
-	case DNS_TIMEOUT:
-		error = "TIMEOUT";
-		break;
-	case DNS_INVALID:
-		error = "INVALID";
-		break;
-	case DNS_TOOLONG:
-		error = "TOOLONG";
-		break;
-	case DNS_OTHER:
-		error = "OTHER";
-		break;
-	}
-	if (error != NULL)
-		u_log(LG_DEBUG, "DNS error: %s", error);
-}
-
 extern char *optarg;
 
 int main(argc, argv)
@@ -112,8 +82,6 @@ char *argv[];
 		u_log(LG_ERROR, "Initialization failed");
 		return 1;
 	}
-
-	u_rdns("129.219.10.241", test_cb, NULL);
 
 	if (!u_conn_origin_create(&base_io, INADDR_ANY, opt_port)) {
 		u_log(LG_SEVERE, "Could not create connection origin. Bailing");
