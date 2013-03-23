@@ -30,6 +30,7 @@
 #define DNS_CLASS_IN            1
 
 #define DNSBUFSIZE            512
+#define DNSNAMESIZE           256
 
 struct dns_hdr {
 	unsigned short id;
@@ -43,17 +44,19 @@ struct dns_hdr {
 struct dns_req {
 	unsigned short id;
 	struct u_io_timer *timeout;
+	char name[DNSNAMESIZE];
+	int type; /* A = u_dns, PTR = u_rdns, for this */
 	void (*cb)();
 	void *priv;
 };
 
 struct dns_rr {
-	char name[DNSBUFSIZE];
+	char name[DNSNAMESIZE];
 	unsigned short type;
 	unsigned short class;
 	unsigned int ttl;
 	unsigned short rdlength;
-	char rdata[DNSBUFSIZE];
+	char rdata[DNSNAMESIZE];
 };
 
 struct u_list reqs;
@@ -228,6 +231,7 @@ unsigned char *s, **p;
 	unsigned char len, *q;
 
 	if ((**p & 0xc0) != 0) {
+		/* XXX don't blindly follow pointers */
 		q = msg + (msg_get16_real(p) & 0x3fff);
 		get_name_real(s, &q);
 		return;
@@ -331,6 +335,10 @@ void put_name(name)
 char *name;
 {
 	char *s, *p;
+	char buf[DNSNAMESIZE];
+
+	u_strlcpy(buf, name, DNSNAMESIZE);
+	p = buf;
 
 	s = name;
 	while (p) {
@@ -363,6 +371,29 @@ void send_msg()
 
 	msg_dump();
 } 
+
+void send_req(req)
+struct dns_req *req;
+{
+	struct dns_hdr hdr;
+
+	msg_reset();
+
+	hdr.id = req->id;
+	hdr.flags = DNS_OP_QUERY | DNS_FLAG_RD;
+	hdr.qdcount = 1;
+	hdr.ancount = 0;
+	hdr.nscount = 0;
+	hdr.arcount = 0;
+
+	msg_puthdr(&hdr);
+
+	put_name(req->name);
+	msg_put16(req->type);
+	msg_put16(DNS_CLASS_IN);
+
+	send_msg();
+}
 
 void dns_recv(iofd)
 struct u_io_fd *iofd;
@@ -459,34 +490,19 @@ char *name;
 void (*cb)();
 void *priv;
 {
-	struct dns_hdr hdr;
 	struct dns_req *req;
-	char buf[BUFSIZE];
-
-	msg_reset();
-
-	hdr.id = id_alloc();
-	hdr.flags = DNS_OP_QUERY | DNS_FLAG_RD;
-	hdr.qdcount = 1;
-	hdr.ancount = 0;
-	hdr.nscount = 0;
-	hdr.arcount = 0;
-
-	msg_puthdr(&hdr);
-
-	sprintf(buf, "%s.", name);
-	put_name(buf);
-	msg_put16(DNS_TYPE_A);
-	msg_put16(DNS_CLASS_IN);
 
 	req = malloc(sizeof(*req));
-	req->id = hdr.id;
+	req->id = id_alloc();
 	req->timeout = NULL; /* TODO */
+	req->type = DNS_TYPE_A;
 	req->cb = cb;
 	req->priv = priv;
 	u_list_add(&reqs, req);
 
-	send_msg();
+	sprintf(req->name, "%s.", name);
+
+	send_req(req);
 }
 
 void u_rdns(name, cb, priv)
@@ -495,9 +511,8 @@ void (*cb)();
 void *priv;
 {
 	struct in_addr in;
-	struct dns_hdr hdr;
 	struct dns_req *req;
-	char *p;
+	unsigned char *p;
 
 	if (!inet_aton(name, &in)) {
 		/* XXX: we should not call the callback from within the same
@@ -509,37 +524,20 @@ void *priv;
 		return;
 	}
 
-	p = (char*)&(in.s_addr);
-
-	msg_reset();
-
-	hdr.id = id_alloc();
-	hdr.flags = DNS_OP_QUERY | DNS_FLAG_RD;
-	hdr.qdcount = 1;
-	hdr.ancount = 0;
-	hdr.nscount = 0;
-	hdr.arcount = 0;
-
-	msg_puthdr(&hdr);
-
-	msg_putd(p[3]);
-	msg_putd(p[2]);
-	msg_putd(p[1]);
-	msg_putd(p[0]);
-	msg_puts("in-addr", 7);
-	msg_puts("arpa", 4);
-	msg_puts("", 0);
-	msg_put16(DNS_TYPE_PTR);
-	msg_put16(DNS_CLASS_IN);
+	p = (unsigned char*)&(in.s_addr);
 
 	req = malloc(sizeof(*req));
-	req->id = hdr.id;
+	req->id = id_alloc();
 	req->timeout = NULL; /* TODO */
+	req->type = DNS_TYPE_PTR;
 	req->cb = cb;
 	req->priv = priv;
 	u_list_add(&reqs, req);
 
-	send_msg();
+	sprintf(req->name, "%u.%u.%u.%u.in-addr.arpa.",
+	        p[3], p[2], p[1], p[0]);
+
+	send_req(req);
 }
 
 int init_dns()
