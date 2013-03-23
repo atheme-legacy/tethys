@@ -186,13 +186,11 @@ unsigned short id;
 	return NULL;
 }
 
-void req_del(req, timing_out)
+void req_del(req)
 struct dns_req *req;
-int timing_out;
 {
 	id_free(req->id);
-	if (!timing_out)
-		u_io_del_timer(req->timeout);
+	u_io_del_timer(req->timeout);
 	u_list_del_n(req->n);
 	free(req);
 }
@@ -461,7 +459,7 @@ struct u_io_timer *timer;
 
 	u_log(LG_DEBUG, "dns: request timed out");
 	req->cb(DNS_TIMEOUT, NULL, req->priv);
-	req_del(req, 1);
+	req_del(req);
 }
 
 void dns_recv(iofd)
@@ -501,7 +499,7 @@ struct u_io_fd *iofd;
 		if ((hdr.flags & DNS_MASK_RCODE) == DNS_RCODE_NAMEERR)
 			err = DNS_NXDOMAIN;
 		req->cb(err, NULL, req->priv);
-		req_del(req, 0);
+		req_del(req);
 		return;
 	}
 
@@ -542,7 +540,7 @@ struct u_io_fd *iofd;
 		req->cb(DNS_NXDOMAIN, NULL, req->priv);
 	}
 
-	req_del(req, 0);
+	req_del(req);
 }
 
 void u_dns_use_io(io)

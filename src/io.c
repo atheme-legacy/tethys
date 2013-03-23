@@ -150,8 +150,7 @@ void *priv;
 void u_io_del_timer(iot)
 struct u_io_timer *iot;
 {
-	u_list_del_n(iot->n);
-	free(iot);
+	tv_clear(&iot->time);
 }
 
 void u_io_poll_once(io)
@@ -203,10 +202,8 @@ struct u_io *io;
 
 	U_LIST_EACH_SAFE(n, tn, &io->timers) {
 		iot = n->data;
-		if (tv_cmp(&iot->time, &NOW) < 0) {
+		if (tv_cmp(&iot->time, &NOW) < 0)
 			iot->cb(iot);
-			u_io_del_timer(iot);
-		}
 	}
 
 	U_LIST_EACH_SAFE(n, tn, &io->fds) {
@@ -217,6 +214,14 @@ struct u_io *io;
 			iofd->send(iofd);
 		if (!iofd->recv && !iofd->send)
 			u_io_del_fd(io, iofd);
+	}
+
+	U_LIST_EACH_SAFE(n, tn, &io->timers) {
+		iot = n->data;
+		if (!tv_isset(&iot->time)) {
+			u_list_del_n(n);
+			free(iot);
+		}
 	}
 }
 
@@ -231,7 +236,6 @@ struct u_io *io;
 {
 	io->running = 1;
 
-	while (io->running) {
+	while (io->running)
 		u_io_poll_once(io);
-	}
 }
