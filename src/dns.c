@@ -43,6 +43,7 @@ struct dns_hdr {
 
 struct dns_req {
 	unsigned short id;
+	struct u_list *n;
 	struct u_io_timer *timeout;
 	char name[DNSNAMESIZE];
 	int type; /* A = u_dns, PTR = u_rdns, for this */
@@ -61,7 +62,8 @@ struct dns_rr {
 
 struct u_list reqs;
 int dnsfd;
-struct u_io_fd *sock = NULL;
+struct u_io *dnsio = NULL;
+struct u_io_fd *dnssock = NULL;
 
 unsigned char msg[DNSBUFSIZE];
 int msghead, msgtail;
@@ -154,7 +156,24 @@ unsigned short id;
 	id_nfree[id>>7]++;
 }
 
-struct u_list *find_req(id)
+struct dns_req *req_make(type, cb, priv, timeout)
+int type;
+void (*cb)();
+void *priv;
+void (*timeout)();
+{
+	struct dns_req *req;
+	req = malloc(sizeof(*req));
+	req->id = id_alloc();
+	req->n = u_list_add(&reqs, req);
+	req->timeout = u_io_add_timer(dnsio, 1, 0, timeout, req);
+	req->type = type;
+	req->cb = cb;
+	req->priv = priv;
+	return req;
+}
+
+struct dns_req *req_find(id)
 unsigned short id;
 {
 	struct u_list *n;
@@ -162,9 +181,20 @@ unsigned short id;
 	U_LIST_EACH(n, &reqs) {
 		req = n->data;
 		if (req->id == id)
-			return n;
+			return req;
 	}
 	return NULL;
+}
+
+void req_del(req, timing_out)
+struct dns_req *req;
+int timing_out;
+{
+	id_free(req->id);
+	if (!timing_out)
+		u_io_del_timer(req->timeout);
+	u_list_del_n(req->n);
+	free(req);
 }
 
 void msg_reset()
@@ -424,13 +454,22 @@ int type;
 	return "other";
 }
 
+void dns_timeout(timer)
+struct u_io_timer *timer;
+{
+	struct dns_req *req = timer->priv;
+
+	u_log(LG_DEBUG, "dns: request timed out");
+	req->cb(DNS_TIMEOUT, NULL, req->priv);
+	req_del(req, 1);
+}
+
 void dns_recv(iofd)
 struct u_io_fd *iofd;
 {
 	struct sockaddr addr;
 	int addrlen, err;
 	struct dns_hdr hdr;
-	struct u_list *reqn;
 	struct dns_req *req;
 	struct dns_rr rr;
 	struct in_addr in;
@@ -449,12 +488,11 @@ struct u_io_fd *iofd;
 	msg_dump();
 
 	msg_gethdr(&hdr);
-	reqn = find_req(hdr.id);
+	req = req_find(hdr.id);
 	if (req == NULL) {
 		u_log(LG_ERROR, "dns_recv: no request with id %d!", (int)hdr.id);
 		return;
 	}
-	req = reqn->data;
 
 	if ((hdr.flags & DNS_MASK_RCODE) != DNS_RCODE_OK) {
 		u_log(LG_ERROR, "dns_recv: response has RCODE 0x%x",
@@ -463,7 +501,8 @@ struct u_io_fd *iofd;
 		if ((hdr.flags & DNS_MASK_RCODE) == DNS_RCODE_NAMEERR)
 			err = DNS_NXDOMAIN;
 		req->cb(err, NULL, req->priv);
-		goto req_del;
+		req_del(req, 0);
+		return;
 	}
 
 	for (; hdr.qdcount>0; hdr.qdcount--)
@@ -503,26 +542,25 @@ struct u_io_fd *iofd;
 		req->cb(DNS_NXDOMAIN, NULL, req->priv);
 	}
 
-req_del:
-	id_free(req->id);
-	u_list_del_n(reqn);
-	free(req);
+	req_del(req, 0);
 }
 
 void u_dns_use_io(io)
 struct u_io *io;
 {
-	if (sock != NULL) {
+	dnsio = io;
+
+	if (dnssock != NULL) {
 		u_log(LG_WARN, "u_dns_use_io called more than once!");
-		sock->recv = NULL;
-		sock->send = NULL;
-		sock = NULL;
+		dnssock->recv = NULL;
+		dnssock->send = NULL;
+		dnssock = NULL;
 		/* io will delete it for us */
 	}
 
-	sock = u_io_add_fd(io, dnsfd);
-	sock->recv = dns_recv;
-	sock->send = NULL;
+	dnssock = u_io_add_fd(io, dnsfd);
+	dnssock->recv = dns_recv;
+	dnssock->send = NULL;
 }
 
 void u_dns(name, cb, priv)
@@ -537,15 +575,11 @@ void *priv;
 		return;
 	}
 
-	req = malloc(sizeof(*req));
-	req->id = id_alloc();
-	req->timeout = NULL; /* TODO */
-	req->type = DNS_TYPE_A;
-	req->cb = cb;
-	req->priv = priv;
-	u_list_add(&reqs, req);
+	req = req_make(DNS_TYPE_A, cb, priv, dns_timeout);
 
 	sprintf(req->name, "%s.", name);
+
+	u_log(LG_DEBUG, "dns: forward dns for %s", name);
 
 	send_req(req);
 }
@@ -576,16 +610,12 @@ void *priv;
 
 	p = (unsigned char*)&(in.s_addr);
 
-	req = malloc(sizeof(*req));
-	req->id = id_alloc();
-	req->timeout = NULL; /* TODO */
-	req->type = DNS_TYPE_PTR;
-	req->cb = cb;
-	req->priv = priv;
-	u_list_add(&reqs, req);
+	req = req_make(DNS_TYPE_PTR, cb, priv, dns_timeout);
 
 	sprintf(req->name, "%u.%u.%u.%u.in-addr.arpa.",
 	        p[3], p[2], p[1], p[0]);
+
+	u_log(LG_DEBUG, "dns: reverse dns for %s", name);
 
 	send_req(req);
 }

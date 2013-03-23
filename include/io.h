@@ -38,7 +38,7 @@ extern struct timeval NOW;
 extern void u_io_init(); /* struct u_io* */
 extern struct u_io_fd *u_io_add_fd(); /* struct u_io*, int */
 extern struct u_io_timer *u_io_add_timer(); /* struct u_io*, sec, usec, cb, priv */
-extern void u_io_del_timer(); /* u_io*, u_io_timer* */
+extern void u_io_del_timer(); /* u_io_timer* */
 
 extern void u_io_poll_once(); /* struct u_io* */
 extern void u_io_poll_break(); /* struct u_io* */

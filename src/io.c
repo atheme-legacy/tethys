@@ -147,11 +147,11 @@ void *priv;
 	return iot;
 }
 
-void u_io_del_timer(io, iot)
-struct u_io *io;
+void u_io_del_timer(iot)
 struct u_io_timer *iot;
 {
 	u_list_del_n(iot->n);
+	free(iot);
 }
 
 void u_io_poll_once(io)
@@ -205,7 +205,7 @@ struct u_io *io;
 		iot = n->data;
 		if (tv_cmp(&iot->time, &NOW) < 0) {
 			iot->cb(iot);
-			u_io_del_timer(io, iot);
+			u_io_del_timer(iot);
 		}
 	}
 
