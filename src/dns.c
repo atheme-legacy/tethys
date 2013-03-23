@@ -225,30 +225,43 @@ struct dns_hdr *hdr;
 	hdr->arcount = msg_get16();
 }
 
-void get_name_real(s, p)
+void get_name_real(s, p, depth)
 unsigned char *s, **p;
+int depth;
 {
 	unsigned char len, *q;
 
-	if ((**p & 0xc0) != 0) {
-		/* XXX don't blindly follow pointers */
-		q = msg + (msg_get16_real(p) & 0x3fff);
-		get_name_real(s, &q);
-		return;
+	for (;;) {
+		/* goto used to reduce indentation levels */
+		if ((**p & 0xc0) != 0)
+			goto ptr;
+
+		/* first octet is length */
+		len = *(*p)++;
+		if (len == 0) {
+			*s = '\0';
+			return;
+		}
+
+		/* remaining octets are name */
+		q = s;
+		for (; len>0; len--)
+			*s++ = *(*p)++;
+		*s++ = '.';
 	}
 
-	len = *(*p)++;
-	if (len == 0) {
-		*s = '\0';
+	return;
+
+ptr:
+	/* is a pointer. follow pointer */
+	q = msg + (msg_get16_real(p) & 0x3fff);
+	if (q > msg + msgtail || depth > 16) {
+		/* XXX find a real way to complain */
+		u_log(LG_ERROR, "Bad or malicious name in"
+		      "DNS reply!");
 		return;
 	}
-
-	q = s;
-	for (; len>0; len--)
-		*s++ = *(*p)++;
-	*s++ = '.';
-
-	get_name_real(s, p);
+	get_name_real(s, &q, depth + 1);
 }
 
 void get_name(s)
@@ -259,7 +272,7 @@ unsigned char *s;
 	start = msg + msghead;
 	p = start;
 
-	get_name_real(s, &p);
+	get_name_real(s, &p, 1);
 
 	msghead += p - start;
 }
