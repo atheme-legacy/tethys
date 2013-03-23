@@ -174,6 +174,7 @@ void msg_reset()
 
 void msg_dump()
 {
+	/*
 	unsigned char *p = msg+msghead;
 	int i, len = msgtail-msghead;
 	for (i=0; i<len; i++) {
@@ -187,6 +188,7 @@ void msg_dump()
 			putchar(' ');
 	}
 	putchar('\n');
+	*/
 }
 
 unsigned short msg_get16_real(p)
@@ -250,6 +252,7 @@ int depth;
 		*s++ = '.';
 	}
 
+	/* not reached, but return anyway <_< */
 	return;
 
 ptr:
@@ -257,9 +260,9 @@ ptr:
 	q = msg + (msg_get16_real(p) & 0x3fff);
 	if (q > msg + msgtail || depth > 16) {
 		/* XXX find a real way to complain */
-		u_log(LG_ERROR, "Bad or malicious name in"
+		u_log(LG_ERROR, "Bad or malicious name in "
 		      "DNS reply!");
-		return;
+		*s = '\0';
 	}
 	get_name_real(s, &q, depth + 1);
 }
@@ -379,7 +382,7 @@ void send_msg()
 	p = msg+msghead;
 	len = msgtail-msghead;
 		
-	u_log(LG_DEBUG, "sendto=%d",
+	u_log(LG_FINE, "sendto=%d",
 	      sendto(dnsfd, p, len, 0, sa, sizeof(addr)));
 
 	msg_dump();
@@ -406,6 +409,19 @@ struct dns_req *req;
 	msg_put16(DNS_CLASS_IN);
 
 	send_msg();
+}
+
+char *type_to_str(type)
+int type;
+{
+	switch (type) {
+	case DNS_TYPE_A:     return "    A";
+	case DNS_TYPE_NS:    return "   NS";
+	case DNS_TYPE_CNAME: return "CNAME";
+	case DNS_TYPE_PTR:   return "  PTR";
+	case DNS_TYPE_TXT:   return "  TXT";
+	}
+	return "other";
 }
 
 void dns_recv(iofd)
@@ -450,14 +466,13 @@ struct u_io_fd *iofd;
 		goto req_del;
 	}
 
-	u_log(LG_DEBUG, "qd=%d an=%d ns=%d ar=%d",
-	      hdr.qdcount, hdr.ancount, hdr.nscount, hdr.arcount);
-
 	for (; hdr.qdcount>0; hdr.qdcount--)
 		skip_question();
 
+	err = -1;
 	for (; hdr.ancount>0; hdr.ancount--) {
 		msg_getrr(&rr);
+
 		switch (rr.type) {
 		case DNS_TYPE_A:
 			in.s_addr = *((unsigned int*)rr.rdata);
@@ -466,14 +481,26 @@ struct u_io_fd *iofd;
 		case DNS_TYPE_CNAME:
 		case DNS_TYPE_PTR:
 			p = rr.rdata;
-			get_name_real(rdata, &p);
+			get_name_real(rdata, &p, 1);
 			break;
 		default:
 			strcpy(rdata, "?");
 			break;
 		}
-		u_log(LG_DEBUG, "rr: name=%s type=%d class=%d ttl=%d rdata=%s",
-		      rr.name, rr.type, rr.class, rr.ttl, rdata);
+
+		u_log(LG_DEBUG, "%40s %s %8d %s",
+		      rr.name, type_to_str(rr.type), rr.ttl, rdata);
+
+		if (rr.type == req->type && err == -1) {
+			err = DNS_OKAY;
+			if (req->cb)
+				req->cb(err, rdata, req->priv);
+		}
+	}
+
+	if (err == -1 && req->cb) {
+		u_log(LG_WARN, "dns_recv: didn't get record we wanted :(");
+		req->cb(DNS_NXDOMAIN, NULL, req->priv);
 	}
 
 req_del:
@@ -505,6 +532,11 @@ void *priv;
 {
 	struct dns_req *req;
 
+	if (!cb) {
+		u_log(LG_WARN, "u_dns: ignoring DNS request with null callback");
+		return;
+	}
+
 	req = malloc(sizeof(*req));
 	req->id = id_alloc();
 	req->timeout = NULL; /* TODO */
@@ -526,6 +558,11 @@ void *priv;
 	struct in_addr in;
 	struct dns_req *req;
 	unsigned char *p;
+
+	if (!cb) {
+		u_log(LG_WARN, "u_rdns: ignoring DNS request with null callback");
+		return;
+	}
 
 	if (!inet_aton(name, &in)) {
 		/* XXX: we should not call the callback from within the same
