@@ -288,8 +288,7 @@ ptr:
 	q = msg + (msg_get16_real(p) & 0x3fff);
 	if (q > msg + msgtail || depth > 16) {
 		/* XXX find a real way to complain */
-		u_log(LG_ERROR, "Bad or malicious name in "
-		      "DNS reply!");
+		u_log(LG_ERROR, "Bad or malicious name in DNS reply!");
 		*s = '\0';
 	}
 	get_name_real(s, &q, depth + 1);

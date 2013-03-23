@@ -8,6 +8,7 @@
 #define __INC_CONN_H__
 
 #define U_CONN_OBUFSIZE 2048
+#define U_CONN_HOSTSIZE 256
 
 #define U_CONN_CLOSING 0x0001
 
@@ -32,6 +33,7 @@ struct u_conn {
 	struct u_io_fd *sock;
 	struct u_linebuf ibuf;
 	char ip[INET_ADDRSTRLEN];
+	char host[U_CONN_HOSTSIZE];
 	char *obuf;
 	int obuflen, obufsize;
 	void (*event)(); /* u_conn*, int event */

@@ -15,6 +15,8 @@ struct u_conn *conn;
 	conn->flags = 0;
 	conn->sock = NULL;
 	u_linebuf_init(&conn->ibuf);
+	conn->ip[0] = '\0';
+	conn->host[0] = '\0';
 	conn->obuf = malloc(U_CONN_OBUFSIZE);
 	conn->obuflen = 0;
 	conn->obufsize = U_CONN_OBUFSIZE;
@@ -224,6 +226,29 @@ out:
 	return NULL;
 }
 
+static void origin_rdns(status, name, priv)
+int status;
+char *name;
+void *priv;
+{
+	struct u_conn *conn = priv;
+	int len;
+
+	switch (status) {
+	case DNS_OKAY:
+		len = strlen(name);
+		u_strlcpy(conn->host, name, U_CONN_HOSTSIZE);
+		conn->host[len-1] = '\0'; /* TODO: move to dns? */
+		u_conn_f(conn, ":%s NOTICE * :*** Found your hostname. Hi there %s",
+		         me.name, conn->host);
+		break;
+
+	default:
+		u_strlcpy(conn->host, conn->ip, U_CONN_HOSTSIZE);
+		u_conn_f(conn, ":%s NOTICE * :*** Couldn't find your hostname. Using your ip %s", me.name, conn->host);
+	}
+}
+
 static void origin_recv(sock)
 struct u_io_fd *sock;
 {
@@ -251,6 +276,9 @@ struct u_io_fd *sock;
 	iofd->priv = conn;
 
 	u_ntop(&addr.sin_addr, conn->ip);
+
+	u_conn_f(conn, ":%s NOTICE * :*** Looking up your hostname", me.name);
+	u_rdns(conn->ip, origin_rdns, conn);
 
 	toplev_sync(iofd);
 
