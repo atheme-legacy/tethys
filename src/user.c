@@ -116,7 +116,7 @@ struct u_conn *conn;
 	u_strlcpy(u->uid + 3, id_next(), 7);
 	u_trie_set(users_by_uid, u->uid, u);
 
-	u_strlcpy(u->host, conn->ip, MAXHOST+1);
+	u_strlcpy(u->host, conn->host, MAXHOST+1);
 
 	u->flags = umode_default | USER_IS_LOCAL;
 	u_user_state(u, USER_REGISTERING);
