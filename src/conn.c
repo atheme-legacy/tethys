@@ -87,6 +87,7 @@ va_list va;
 	end = conn->obuf + conn->obufsize - 2; /* -2 for \r\n */
 
 	vsprintf(buf, fmt, va);
+	buf[512] = '\0'; /* i guess it works... */
 	u_log(LG_DEBUG, "[%p] <- %s", conn, buf);
 
 	f_str(&p, end, buf);
