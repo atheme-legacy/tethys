@@ -226,6 +226,29 @@ out:
 	return NULL;
 }
 
+static void dispatch_lines(conn)
+struct u_conn *conn;
+{
+	char buf[BUFSIZE];
+	struct u_msg msg;
+	int sz;
+
+	while ((sz = u_linebuf_line(&conn->ibuf, buf, BUFSIZE)) != 0) {
+		if (sz > 0)
+			buf[sz] = '\0';
+		if (sz < 0 || strlen(buf) != sz) {
+			u_conn_event(conn, EV_RECV_ERROR);
+			u_conn_close(conn);
+			break;
+		}
+		u_log(LG_DEBUG, "[%p] -> %s", conn, buf);
+		u_msg_parse(&msg, buf);
+		u_cmd_invoke(conn, &msg);
+	}
+
+	toplev_sync(conn->sock);
+}
+
 static void origin_rdns(status, name, priv)
 int status;
 char *name;
@@ -247,6 +270,8 @@ void *priv;
 		u_strlcpy(conn->host, conn->ip, U_CONN_HOSTSIZE);
 		u_conn_f(conn, ":%s NOTICE * :*** Couldn't find your hostname. Using your ip %s", me.name, conn->host);
 	}
+
+	dispatch_lines(conn);
 }
 
 static void origin_recv(sock)
@@ -301,7 +326,6 @@ struct u_io_fd *iofd;
 	struct u_conn *conn = iofd->priv;
 	char buf[1024];
 	int sz;
-	struct u_msg msg;
 
 	sz = recv(iofd->fd, buf, 1024-conn->ibuf.pos, 0);
 
@@ -319,20 +343,8 @@ struct u_io_fd *iofd;
 		return;
 	}
 
-	while ((sz = u_linebuf_line(&conn->ibuf, buf, 1024)) != 0) {
-		if (sz > 0)
-			buf[sz] = '\0';
-		if (sz < 0 || strlen(buf) != sz) {
-			u_conn_event(conn, EV_RECV_ERROR);
-			u_conn_close(conn);
-			break;
-		}
-		u_log(LG_DEBUG, "[%p] -> %s", conn, buf);
-		u_msg_parse(&msg, buf);
-		u_cmd_invoke(conn, &msg);
-	}
-
-	toplev_sync(iofd);
+	if (conn->host[0])
+		dispatch_lines(conn);
 }
 
 static void toplev_send(iofd)
