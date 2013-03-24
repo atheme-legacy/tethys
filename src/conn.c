@@ -66,13 +66,6 @@ struct u_conn *conn;
 	conn->obuflen = s - conn->obuf;
 }
 
-void f_str(p, end, s)
-char **p, *end, *s;
-{
-	while (*p < end && *s)
-		*(*p)++ = *s++;
-}
-
 /* Some day I might write my own string formatter with my own special
    formatting things for use in IRC... but today is not that day */
 void u_conn_vf(conn, fmt, va)
@@ -81,7 +74,7 @@ char *fmt;
 va_list va;
 {
 	char buf[4096];
-	char *p, *end;
+	char *p, *s, *end;
 
 	p = conn->obuf + conn->obuflen;
 	end = conn->obuf + conn->obufsize - 2; /* -2 for \r\n */
@@ -90,7 +83,8 @@ va_list va;
 	buf[512] = '\0'; /* i guess it works... */
 	u_log(LG_DEBUG, "[%p] <- %s", conn, buf);
 
-	f_str(&p, end, buf);
+	for (s=buf; p<end && *s;)
+		*p++ = *s++;
 
 	*p++ = '\r';
 	*p++ = '\n';
