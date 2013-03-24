@@ -120,6 +120,8 @@ char *(*getarg)();
 		cu->flags |= info->data;
 	else
 		cu->flags &= ~info->data;
+
+	return 0;
 }
 
 struct u_chanuser *u_chan_user(c, u)

@@ -24,7 +24,7 @@ struct u_cookie *ck;
 	ck->low = 0;
 }
 
-static norm(x)
+static int norm(x)
 {
 	if (x < 0) return -1;
 	if (x > 0) return 1;

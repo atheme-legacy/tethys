@@ -10,7 +10,8 @@ struct u_io base_io;
 
 short opt_port = 6667;
 
-usage(argv0, code)
+int usage(argv0, code)
+char *argv0;
 {
 	printf("Usage: %s [OPTIONS]\n", argv0);
 	printf("Options:\n");

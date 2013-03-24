@@ -21,6 +21,7 @@
 #include <netinet/in.h>
 #include <netdb.h>
 #include <signal.h>
+#include <arpa/inet.h>
 
 #ifndef NULL
 #define NULL ((void*)0)
@@ -47,6 +48,7 @@
 # include <stdarg.h>
 # include <getopt.h>
 # include <stdlib.h>
+# include <unistd.h>
 
 # define A2(x,y) x,y
 # define A3(x,y,z) x,y,z

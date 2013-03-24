@@ -40,7 +40,8 @@ char *mask, *string, *casemap;
 		default:
 			if (!*s)
 				return 0;
-			if (casemap[*m] != casemap[*s] && *m != '?')
+			if (casemap[(unsigned char)*m] != casemap[(unsigned char)*s]
+			    && *m != '?')
 				goto backtrack;
 			m++;
 			s++;
@@ -51,19 +52,19 @@ char *mask, *string, *casemap;
 int match(mask, string)
 char *mask, string;
 {
-	matchmap(mask, string, null_casemap);
+	return matchmap(mask, string, null_casemap);
 }
 
 int matchirc(mask, string)
 char *mask, string;
 {
-	matchmap(mask, string, rfc1459_casemap);
+	return matchmap(mask, string, rfc1459_casemap);
 }
 
 int matchcase(mask, string)
 char *mask, string;
 {
-	matchmap(mask, string, ascii_casemap);
+	return matchmap(mask, string, ascii_casemap);
 }
 
 void u_memmove_lower(dest, src, n)
@@ -173,14 +174,14 @@ void rfc1459_canonize(s)
 char *s;
 {
 	for (; *s; s++)
-		*s = rfc1459_casemap[*s];
+		*s = rfc1459_casemap[(unsigned char)*s];
 }
 
 void ascii_canonize(s)
 char *s;
 {
 	for (; *s; s++)
-		*s = ascii_casemap[*s];
+		*s = ascii_casemap[(unsigned char)*s];
 }
 
 int is_valid_nick(s)
@@ -189,7 +190,7 @@ char *s;
 	if (isdigit(*s))
 		return 0;
 	for (; *s; s++) {
-		if (!valid_nick_map[*s])
+		if (!valid_nick_map[(unsigned char)*s])
 			return 0;
 	}
 	return 1;
@@ -199,7 +200,7 @@ int is_valid_ident(s)
 char *s;
 {
 	for (; *s; s++) {
-		if (!valid_ident_map[*s])
+		if (!valid_ident_map[(unsigned char)*s])
 			return 0;
 	}
 	return 1;

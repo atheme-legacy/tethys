@@ -24,7 +24,6 @@ char *key, *val;
 void skip_to_eol(f)
 FILE *f;
 {
-	int c;
 	while (!feof(f) && getc(f) != '\n');
 }
 

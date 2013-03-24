@@ -28,9 +28,6 @@ int u_msg_parse(msg, s)
 struct u_msg *msg;
 char *s;
 {
-	int i;
-	char *p;
-
 	s = ws_skip(s);
 	if (!*s) return -1;
 
@@ -105,10 +102,6 @@ struct u_conn *conn;
 struct u_msg *msg;
 {
 	struct u_cmd *cmd;
-	struct u_user *u = NULL;
-
-	if (conn->ctx == CTX_USER)
-		u = conn->priv;
 
 	cmd = u_trie_get(commands[conn->ctx], msg->command);
 

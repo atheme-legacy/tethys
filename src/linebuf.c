@@ -45,7 +45,7 @@ int size;
 
 	p = s;
 	while (p - lb->buf < lb->pos && (*p == '\n' || *p == '\r'))
-		*p++;
+		p++;
 
 	if (s - lb->buf > size)
 		return -1;

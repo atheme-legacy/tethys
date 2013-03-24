@@ -84,11 +84,10 @@ unsigned char id_bitvec_get(i) unsigned short i; {
 unsigned char num_set_bits(n)
 unsigned long n;
 {
-	unsigned char i, c = 0;
 	/* http://graphics.stanford.edu/~seander/bithacks.html */
 	n = n - ((n >> 1) & 0x55555555);
 	n = (n & 0x33333333) + ((n >> 2) & 0x33333333);
-	return ((n + (n >> 4) & 0x0f0f0f0f) * 0x01010101) >> 24;
+	return (((n + (n >> 4)) & 0x0f0f0f0f) * 0x01010101) >> 24;
 }
 
 unsigned short id_alloc()
@@ -136,7 +135,7 @@ unsigned short id_alloc()
 	if (id_bitvec_get(id)) {
 		u_log(LG_SEVERE, "Generated duplicate id %d (offs=%d, nfree=%d)!",
 		      id, origoffs, id_nfree_total);
-		return;
+		return 0;
 	}
 
 	id_bitvec_set(id);
@@ -307,8 +306,6 @@ unsigned char *s;
 void msg_getrr(rr)
 struct dns_rr *rr;
 {
-	char *s, *p;
-
 	get_name(rr->name);
 
 	rr->type = msg_get16();
@@ -322,7 +319,6 @@ struct dns_rr *rr;
 
 void skip_question()
 {
-	unsigned char n;
 	char buf[DNSBUFSIZE];
 	get_name(buf);
 	msghead += 4; /* QTYPE, QCLASS */
@@ -342,7 +338,7 @@ unsigned char *str;
 int n;
 {
 	if (n < 0)
-		n = strlen(str);
+		n = strlen((char*)str);
 	if (n > 255)
 		return; /* XXX */
 	if (msgtail - msghead + 1 + n > DNSBUFSIZE)
@@ -462,7 +458,8 @@ void dns_recv(iofd)
 struct u_io_fd *iofd;
 {
 	struct sockaddr addr;
-	int addrlen, err;
+	unsigned addrlen;
+	int err;
 	struct dns_hdr hdr;
 	struct dns_req *req;
 	struct dns_rr rr;
@@ -592,15 +589,7 @@ void *priv;
 		return;
 	}
 
-	if (!u_aton(name, &in)) {
-		/* XXX: we should not call the callback from within the same
-		   stack context as u_rdns! we should instead set a timer
-		   for 0 seconds and call the callback from there so as to
-		   prevent strange bugs with cb modifying priv in a way that
-		   the caller does not expect */
-		cb(DNS_INVALID, NULL, priv);
-		return;
-	}
+	u_aton(name, &in);
 
 	p = (unsigned char*)&(in.s_addr);
 

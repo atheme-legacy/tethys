@@ -26,7 +26,7 @@ OBJS = numeric.o \
 	c_reg.o \
 	c_user.o
 
-CFLAGS = -g -I. -I../include
+CFLAGS = -Wall -g -I. -I../include
 CC = cc
 LD = cc
 

@@ -15,6 +15,12 @@ ABOUT
   system running ircd-micro to be linked into existing TS6 networks.
 
 
+CONTACT
+  The official ircd-micro channel is #micro on irc.interlinked.me. I will
+  be using one of many nicknames, but will definitely have +o. Users
+  with +o are contributors.
+
+
 COMPILING
   The Makefile is in src. A helper script called 'build' has been written to
   assist in interacting with the Makefile in the project root directory. It's
@@ -39,3 +45,4 @@ RUNNING
       desc AJITEK               # description
       motd etc/micro.motd       # file containing the MOTD
     }
+

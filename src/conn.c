@@ -277,11 +277,10 @@ void *priv;
 static void origin_recv(sock)
 struct u_io_fd *sock;
 {
-	struct u_conn_origin *orig = sock->priv;
 	struct u_io_fd *iofd;
 	struct u_conn *conn;
 	struct sockaddr_in addr;
-	int addrlen = sizeof(addr);
+	unsigned addrlen = sizeof(addr);
 	int fd;
 
 	if ((fd = accept(sock->fd, (struct sockaddr*)&addr, &addrlen)) < 0) {
