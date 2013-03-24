@@ -7,6 +7,8 @@
 #ifndef __INC_CHAN_H__
 #define __INC_CHAN_H__
 
+#define MAXCHANNAME 50
+
 /* channel modes */
 #define CMODE_PRIVATE      0x00000001  /* +p */
 #define CMODE_SECRET       0x00000002  /* +s */
@@ -35,6 +37,7 @@ struct u_cmode_info {
 };
 
 struct u_chan {
+	char name[MAXCHANNAME+1];
 	unsigned mode;
 	struct u_cookie ck_flags;
 	struct u_list members;
@@ -47,11 +50,20 @@ struct u_chanuser {
 	struct u_cookie ck_flags;
 	struct u_chan *c;
 	struct u_user *u;
+	struct u_list *n;
 };
 
 extern struct u_cmode_info *cmodes;
 extern unsigned cmode_default;
 
-extern struct u_chanuser *u_chan_user(); /* u_chan*, u_user* */
+extern struct u_chan *u_chan_get(); /* char* */
+extern struct u_chan *u_chan_get_or_create(); /* char* */
+extern void u_chan_drop(); /* struct u_chan* */
+
+extern struct u_chanuser *u_chan_user_add(); /* u_chan*, u_user* */
+extern void u_chan_user_del(); /* u_chanuser* */
+extern struct u_chanuser *u_chan_user_find(); /* u_chan*, u_user* */
+
+extern int init_chan();
 
 #endif

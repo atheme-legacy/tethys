@@ -38,6 +38,7 @@ int init()
 	INIT(init_user);
 	INIT(init_cmd);
 	INIT(init_server);
+	INIT(init_chan);
 	COMMAND(c_reg);
 	COMMAND(c_user);
 
