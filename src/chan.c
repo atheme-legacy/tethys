@@ -31,7 +31,7 @@ static struct u_cmode_info __cmodes[32] = {
 	{ 'v', cb_prefix, CU_PFX_VOICE                      },
 };
 
-int cb_flag(info, c, on, getarg)
+static int cb_flag(info, c, on, getarg)
 struct u_cmode_info *info;
 struct u_chan *c;
 char *(*getarg)();
@@ -44,7 +44,7 @@ char *(*getarg)();
 	return 0;
 }
 
-int cb_list(info, c, on, getarg)
+static int cb_list(info, c, on, getarg)
 struct u_cmode_info *info;
 struct u_chan *c;
 char *(*getarg)();
@@ -72,7 +72,7 @@ char *(*getarg)();
 	return 0;
 }
 
-int cb_string(info, c, on, getarg)
+static int cb_string(info, c, on, getarg)
 struct u_cmode_info *info;
 struct u_chan *c;
 char *(*getarg)();
@@ -96,7 +96,7 @@ char *(*getarg)();
 	return 0;
 }
 
-int cb_prefix(info, c, on, getarg)
+static int cb_prefix(info, c, on, getarg)
 struct u_cmode_info *info;
 struct u_chan *c;
 char *(*getarg)();

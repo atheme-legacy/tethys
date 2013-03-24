@@ -135,6 +135,13 @@ char *s;
 	u_strlcpy(s, inet_ntoa(*in), INET_ADDRSTRLEN);
 }
 
+void u_aton(s, in)
+char *s;
+struct in_addr *in;
+{
+	in->s_addr = inet_addr(s);
+}
+
 char *cut(p, delim)
 char **p, *delim;
 {

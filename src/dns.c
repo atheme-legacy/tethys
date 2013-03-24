@@ -280,9 +280,6 @@ int depth;
 		*s++ = '.';
 	}
 
-	/* not reached, but return anyway <_< */
-	return;
-
 ptr:
 	/* is a pointer. follow pointer */
 	q = msg + (msg_get16_real(p) & 0x3fff);
@@ -397,17 +394,17 @@ void send_msg()
 {
 	struct sockaddr_in addr;
 	struct sockaddr *sa = (struct sockaddr*)&addr;
-	char *p;
+	unsigned char *p;
 	int len;
 
 	u_log(LG_DEBUG, "dns: sending message");
 
 	addr.sin_family = AF_INET;
 	addr.sin_port = htons(53);
-	inet_aton("8.8.8.8", &addr.sin_addr);
+	u_aton("8.8.8.8", &addr.sin_addr);
 
-	p = msg+msghead;
-	len = msgtail-msghead;
+	p = msg + msghead;
+	len = msgtail - msghead;
 		
 	u_log(LG_FINE, "sendto=%d",
 	      sendto(dnsfd, p, len, 0, sa, sizeof(addr)));
@@ -595,7 +592,7 @@ void *priv;
 		return;
 	}
 
-	if (!inet_aton(name, &in)) {
+	if (!u_aton(name, &in)) {
 		/* XXX: we should not call the callback from within the same
 		   stack context as u_rdns! we should instead set a timer
 		   for 0 seconds and call the callback from there so as to

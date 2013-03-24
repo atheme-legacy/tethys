@@ -144,7 +144,7 @@ va_list va;
 void u_conn_num(struct u_conn *conn, int num, ...)
 #else
 void u_conn_num(conn, num, va_alist)
-void u_conn *conn;
+struct u_conn *conn;
 int num;
 va_dcl
 #endif
