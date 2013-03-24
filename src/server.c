@@ -8,6 +8,7 @@
 
 struct u_server me;
 struct u_list my_motd;
+char my_net_name[MAXNETNAME+1];
 
 void server_conf(key, val)
 char *key, *val;
@@ -21,6 +22,9 @@ char *key, *val;
 	if (!strcmp(key, "name")) {
 		u_strlcpy(me.name, val, MAXSERVNAME+1);
 		u_log(LG_VERBOSE, "server_conf: me.name=%s", me.name);
+	} else if (!strcmp(key, "net")) {
+		u_strlcpy(my_net_name, val, MAXNETNAME+1);
+		u_log(LG_VERBOSE, "server_conf: me.net=%s", my_net_name);
 	} else if (!strcmp(key, "sid")) {
 		u_strlcpy(me.sid, val, 4);
 		u_log(LG_VERBOSE, "server_conf: me.sid=%s", me.sid);
@@ -68,8 +72,10 @@ int init_server()
 	strcpy(me.sid, "22U");
 	u_strlcpy(me.name, "micro.irc", MAXSERVNAME+1);
 	u_strlcpy(me.desc, "The Tiny IRC Server", MAXSERVDESC+1);
+	u_strlcpy(my_net_name, "MicroIRC", MAXNETNAME+1);
 
 	u_trie_set(u_conf_handlers, "me.name", server_conf);
+	u_trie_set(u_conf_handlers, "me.net", server_conf);
 	u_trie_set(u_conf_handlers, "me.sid", server_conf);
 	u_trie_set(u_conf_handlers, "me.desc", server_conf);
 	u_trie_set(u_conf_handlers, "me.motd", load_motd);

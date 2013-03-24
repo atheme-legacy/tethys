@@ -204,7 +204,7 @@ struct u_user_local *ul;
 	u_user_state(u, USER_CONNECTED);
 	ul->conn->ctx = CTX_USER;
 
-	u_user_num(u, RPL_WELCOME, me.name, u->nick);
+	u_user_num(u, RPL_WELCOME, my_net_name, u->nick);
 	u_user_num(u, RPL_YOURHOST, me.name, PACKAGE_FULLNAME);
 	u_user_send_motd((struct u_user_local*)u);
 }

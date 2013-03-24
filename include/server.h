@@ -9,6 +9,7 @@
 
 #define MAXSERVNAME 40
 #define MAXSERVDESC 80
+#define MAXNETNAME 30
 
 struct u_server {
 	struct u_conn *conn;
@@ -19,6 +20,7 @@ struct u_server {
 
 extern struct u_server me;
 extern struct u_list my_motd;
+extern char my_net_name[MAXNETNAME+1];
 
 extern int init_server();
 
