@@ -73,6 +73,7 @@ extern void *malloc();
 #include "log.h"
 #include "list.h"
 #include "trie.h"
+#include "map.h"
 #include "conf.h"
 #include "io.h"
 #include "dns.h"
