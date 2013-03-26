@@ -4,6 +4,8 @@
    This file is protected under the terms contained
    in the COPYING file in the project root */
 
+#include "ircd.h"
+
 #define BEGIN {
 #define END }
 #define IF if(
@@ -22,8 +24,6 @@
 #define NEW malloc(sizeof(
 #define RELEASE free((
 #define CELL ))
-
-#include "ircd.h"
 
 VOID u_list_init(list)
 NODE PTR list;
