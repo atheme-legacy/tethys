@@ -148,7 +148,7 @@ char *name;
 	u_strlcpy(chan->name, name, MAXCHANNAME+1);
 	chan->mode = cmode_default;
 	u_cookie_inc(&chan->ck_flags);
-	u_list_init(&chan->members);
+	chan->members = u_map_new();
 	u_list_init(&chan->ban);
 	u_list_init(&chan->quiet);
 	u_list_init(&chan->banex);
@@ -183,7 +183,8 @@ char **p;
 void u_chan_drop(chan)
 struct u_chan *chan;
 {
-	drop_list(&chan->members);
+	/* TODO: u_map_free callback! */
+	u_map_free(chan->members);
 	drop_list(&chan->ban);
 	drop_list(&chan->quiet);
 	drop_list(&chan->banex);
@@ -207,7 +208,8 @@ struct u_user *u;
 	u_cookie_reset(&cu->ck_flags);
 	cu->c = c;
 	cu->u = u;
-	cu->n = u_list_add(&c->members, cu);
+
+	u_map_set(c->members, u, cu);
 
 	return cu;
 }
@@ -215,7 +217,7 @@ struct u_user *u;
 void u_chan_user_del(cu)
 struct u_chanuser *cu;
 {
-	u_list_del_n(cu->n);
+	u_map_del(cu->c->members, cu->u);
 	free(cu);
 }
 
@@ -223,15 +225,7 @@ struct u_chanuser *u_chan_user_find(c, u)
 struct u_chan *c;
 struct u_user *u;
 {
-	struct u_list *n;
-	struct u_chanuser *cu;
-	/* woo, more linear search! */
-	U_LIST_EACH(n, &c->members) {
-		cu = n->data;
-		if (cu->u == u)
-			return cu;
-	}
-	return NULL;
+	return u_map_get(c->members, u);
 }
 
 int init_chan()

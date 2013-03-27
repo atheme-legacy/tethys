@@ -40,7 +40,7 @@ struct u_chan {
 	char name[MAXCHANNAME+1];
 	unsigned mode;
 	struct u_cookie ck_flags;
-	struct u_list members;
+	struct u_map *members;
 	struct u_list ban, quiet, banex, invex;
 	char *forward, *key;
 };
@@ -50,7 +50,6 @@ struct u_chanuser {
 	struct u_cookie ck_flags;
 	struct u_chan *c;
 	struct u_user *u;
-	struct u_list *n;
 };
 
 extern struct u_cmode_info *cmodes;
