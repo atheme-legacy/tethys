@@ -45,6 +45,32 @@ struct u_map *u_map_new()
 	return map;
 }
 
+void u_map_free(map)
+struct u_map *map;
+{
+	struct u_map_n *n, *tn;
+
+	for (n=map->root; n; ) {
+		if (n->child[LEFT]) {
+			n = n->child[LEFT];
+			continue;
+		}
+
+		if (n->child[RIGHT]) {
+			n = n->child[RIGHT];
+			continue;
+		}
+
+		tn = n->parent;
+		if (tn != NULL)
+			tn->child[n == tn->child[LEFT] ? LEFT : RIGHT] = NULL;
+		u_map_n_del(n);
+		n = tn;
+	}
+
+	free(map);
+}
+
 /* dumb functions are just standard binary search tree operations that
    don't pay attention to the colors of the nodes */
 
