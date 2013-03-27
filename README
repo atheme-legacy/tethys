@@ -40,9 +40,10 @@ RUNNING
   configuration file:
 
     me {
-      name irc.ajitek.net       # name of the server
-      sid 22U                   # our SID
-      desc AJITEK               # description
-      motd etc/micro.motd       # file containing the MOTD
+      name irc.ajitek.net           # name of the server
+      sid 22U                       # our SID
+      desc "Tomorrow's Tech Today"  # server description
+      net AJITEK                    # network name
+      motd etc/micro.motd           # file containing the MOTD
     }
 
