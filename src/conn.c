@@ -30,6 +30,8 @@ struct u_conn *conn;
 void u_conn_cleanup(conn)
 struct u_conn *conn;
 {
+	if (conn->dns_id)
+		u_dns_cancel(conn->dns_id);
 	free(conn->obuf);
 }
 
@@ -253,6 +255,8 @@ void *priv;
 	struct u_conn *conn = priv;
 	int len;
 
+	conn->dns_id = 0;
+
 	switch (status) {
 	case DNS_OKAY:
 		len = strlen(name);
@@ -298,7 +302,7 @@ struct u_io_fd *sock;
 	u_ntop(&addr.sin_addr, conn->ip);
 
 	u_conn_f(conn, ":%s NOTICE * :*** Looking up your hostname", me.name);
-	u_rdns(conn->ip, origin_rdns, conn);
+	conn->dns_id = u_rdns(conn->ip, origin_rdns, conn);
 
 	toplev_sync(iofd);
 

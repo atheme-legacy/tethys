@@ -34,6 +34,7 @@ struct u_conn {
 	struct u_linebuf ibuf;
 	char ip[INET_ADDRSTRLEN];
 	char host[U_CONN_HOSTSIZE];
+	unsigned short dns_id;
 	char *obuf;
 	int obuflen, obufsize;
 	void (*event)(); /* u_conn*, int event */

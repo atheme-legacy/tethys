@@ -18,8 +18,10 @@
 extern void u_dns_use_io(); /* struct u_io* */
 
 /* cb(status, res, priv) */
-extern void u_dns(); /* char*, void (*cb)(), void *priv */
-extern void u_rdns(); /* char*, void (*cb)(), void *priv */
+extern unsigned short u_dns(); /* char*, void (*cb)(), void *priv */
+extern unsigned short u_rdns(); /* char*, void (*cb)(), void *priv */
+
+extern void u_dns_cancel(); /* unsigned short */
 
 extern int init_dns();
 

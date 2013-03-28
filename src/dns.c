@@ -69,7 +69,7 @@ unsigned char msg[DNSBUFSIZE];
 int msghead, msgtail;
 
 /* not sure if there's a better way... */
-unsigned int id_nfree_total = 65536;
+unsigned int id_nfree_total = 65535;
 unsigned char id_nfree[512];
 unsigned int id_bitvec[2048];
 
@@ -100,7 +100,7 @@ unsigned short id_alloc()
 		return 0; /* XXX */
 	}
 
-	origoffs = offs = (unsigned)(rand()) % id_nfree_total;
+	origoffs = offs = ((unsigned)(rand()) % id_nfree_total) + 1;
 
 	if (id_nfree_total == 65536) {
 		/* likely, for quiet servers */
@@ -554,7 +554,7 @@ struct u_io *io;
 	dnssock->send = NULL;
 }
 
-void u_dns(name, cb, priv)
+unsigned short u_dns(name, cb, priv)
 char *name;
 void (*cb)();
 void *priv;
@@ -563,7 +563,7 @@ void *priv;
 
 	if (!cb) {
 		u_log(LG_WARN, "u_dns: ignoring DNS request with null callback");
-		return;
+		return 0;
 	}
 
 	req = req_make(DNS_TYPE_A, cb, priv, dns_timeout);
@@ -573,9 +573,11 @@ void *priv;
 	u_log(LG_DEBUG, "dns: forward dns for %s", name);
 
 	send_req(req);
+
+	return req->id;
 }
 
-void u_rdns(name, cb, priv)
+unsigned short u_rdns(name, cb, priv)
 char *name;
 void (*cb)();
 void *priv;
@@ -586,7 +588,7 @@ void *priv;
 
 	if (!cb) {
 		u_log(LG_WARN, "u_rdns: ignoring DNS request with null callback");
-		return;
+		return 0;
 	}
 
 	u_aton(name, &in);
@@ -601,6 +603,16 @@ void *priv;
 	u_log(LG_DEBUG, "dns: reverse dns for %s", name);
 
 	send_req(req);
+
+	return req->id;
+}
+
+void u_dns_cancel(id)
+unsigned short id;
+{
+	struct dns_req *req = req_find(id);
+	if (req != NULL)
+		req_del(req);
 }
 
 int init_dns()
