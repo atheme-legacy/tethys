@@ -24,6 +24,12 @@ struct u_cookie *ck;
 	ck->low = 0;
 }
 
+void u_cookie_cpy(A, B)
+struct u_cookie *A, *B;
+{
+	memcpy(A, B, sizeof(*A));
+}
+
 static int norm(x)
 {
 	if (x < 0) return -1;

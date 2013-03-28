@@ -17,7 +17,7 @@ static void exclude(conn)
 struct u_conn *conn;
 {
 	if (u_cookie_cmp(&conn->ck_sendto, &ck_sendto) < 0)
-		u_cookie_inc(&conn->ck_sendto);
+		u_cookie_cpy(&conn->ck_sendto, &ck_sendto);
 }
 
 static void sendto_chan_cb(map, u, cu, buf)
@@ -32,7 +32,7 @@ char *buf;
 		return;
 
 	u_conn_f(conn, "%s", buf);
-	u_cookie_inc(&conn->ck_sendto);
+	u_cookie_cpy(&conn->ck_sendto, &ck_sendto);
 }
 
 #ifdef STDARG
