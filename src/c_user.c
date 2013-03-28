@@ -62,6 +62,39 @@ struct u_msg *msg;
 	}
 }
 
+static void m_join(conn, msg)
+struct u_conn *conn;
+struct u_msg *msg;
+{
+	char buf[BUFSIZE];
+	struct u_user *u = conn->priv;
+	struct u_chan *c;
+	struct u_chanuser *cu;
+
+	c = u_chan_get_or_create(msg->argv[0]);
+
+	if (c == NULL) {
+		u_user_num(u, ERR_GENERIC, "Can't get or create channel!");
+		return;
+	}
+
+	/* TODO: verify entry */
+
+	cu = u_chan_user_add(c, u);
+
+	if (c->members->size == 1)
+		cu->flags |= CU_PFX_OP;
+
+	/* TODO: send to all members */
+
+	u_conn_f(conn, ":%s!%s@%s JOIN %s", u->nick, u->ident, u->host, c->name);
+	u_conn_f(conn, ":%s MODE %s %s", me.name, c->name, "+nt");
+
+	sprintf(buf, "@%s", u->nick);
+	u_conn_num(conn, RPL_NAMREPLY, c->name, buf);
+	u_conn_num(conn, RPL_ENDOFNAMES);
+}
+
 struct u_cmd c_user[] = {
 	{ "PING",    CTX_USER, m_ping,    1 },
 	{ "PONG",    CTX_USER, m_ping,    0 },
@@ -69,5 +102,6 @@ struct u_cmd c_user[] = {
 	{ "MOTD",    CTX_USER, m_motd,    0 },
 	{ "PRIVMSG", CTX_USER, m_message, 2 },
 	{ "NOTICE",  CTX_USER, m_message, 2 },
+	{ "JOIN",    CTX_USER, m_join,    1 },
 	{ "" },
 };
