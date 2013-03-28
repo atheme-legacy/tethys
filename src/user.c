@@ -43,6 +43,7 @@ char *id_next()
 void user_unreg(u)
 struct u_user *u;
 {
+	u_map_del(u->channels);
 	if (u->nick[0])
 		u_trie_del(users_by_nick, u->nick);
 	u_trie_del(users_by_uid, u->uid);
@@ -120,6 +121,8 @@ struct u_conn *conn;
 
 	u->flags = umode_default | USER_IS_LOCAL;
 	u_user_state(u, USER_REGISTERING);
+	u->channels = u_map_new();
+
 	ul->conn = conn;
 
 	conn->event = user_local_event;

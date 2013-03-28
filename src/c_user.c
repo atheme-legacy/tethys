@@ -110,6 +110,8 @@ struct u_msg *msg;
 	if (c->members->size == 1)
 		cu->flags |= CU_PFX_OP;
 
+	u_map_set(u->channels, c, cu);
+
 	u_sendto_chan(c, NULL, ":%s!%s@%s JOIN %s", u->nick, u->ident, u->host, c->name);
 	u_conn_f(conn, ":%s MODE %s %s", me.name, c->name, "+nt");
 

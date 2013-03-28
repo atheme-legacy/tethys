@@ -48,6 +48,7 @@ struct u_user {
 	char gecos[MAXGECOS+1];
 
 	unsigned flags;
+	struct u_map *channels;
 };
 
 struct u_user_local {
