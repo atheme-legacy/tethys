@@ -33,17 +33,31 @@ struct u_msg *msg;
 	u_user_send_motd(u);
 }
 
-static void m_message(conn, msg)
+static void m_message_chan(conn, msg)
+struct u_conn *conn;
+struct u_msg *msg;
+{
+	struct u_user *src = conn->priv;
+	struct u_chan *tgt;
+
+	tgt = u_chan_get(msg->argv[0]);
+	if (tgt == NULL) {
+		u_user_num(src, ERR_NOSUCHCHANNEL, msg->argv[0]);
+		return;
+	}
+
+	u_log(LG_DEBUG, "[%s -> %s] %s", src->nick, tgt->name, msg->argv[1]);
+
+	u_sendto_chan(tgt, conn, ":%s!%s@%s %s %s :%s", src->nick, src->ident,
+	              src->host, msg->command, tgt->name, msg->argv[1]);
+}
+
+static void m_message_user(conn, msg)
 struct u_conn *conn;
 struct u_msg *msg;
 {
 	struct u_user *src = conn->priv;
 	struct u_user *tgt;
-
-	if (msg->argv[0][0] == '#') {
-		u_user_num(src, ERR_GENERIC, "Can't send messages to channels yet");
-		return;
-	}
 
 	tgt = u_user_by_nick(msg->argv[0]);
 	if (tgt == NULL) {
@@ -60,6 +74,17 @@ struct u_msg *msg;
 	} else {
 		u_user_num(src, ERR_GENERIC, "Can't send messages to remote users yet");
 	}
+}
+
+static void m_message(conn, msg)
+struct u_conn *conn;
+struct u_msg *msg;
+{
+
+	if (msg->argv[0][0] == '#')
+		m_message_chan(conn, msg);
+	else
+		m_message_user(conn, msg);
 }
 
 static void m_join(conn, msg)
