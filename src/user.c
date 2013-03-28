@@ -57,7 +57,8 @@ char *msg;
 	struct u_user *u = conn->priv;
 	u_conn_out_clear(conn);
 	if (conn->ctx == CTX_USER) {
-		/* TODO */
+		u_sendto_visible(u, ":%s!%s@%s QUIT :Error: %s",
+		                 u->nick, u->ident, u->host, msg);
 		u_conn_f(conn, ":%s!%s@%s QUIT :Error: %s",
 		         u->nick, u->ident, u->host, msg);
 	} else {

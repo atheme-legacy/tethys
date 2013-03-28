@@ -60,6 +60,37 @@ va_dcl
 	u_map_each(c->members, sendto_chan_cb, buf);
 }
 
+static void sendto_visible_cb(map, c, cu, buf)
+struct u_map *map;
+struct u_chan *c;
+struct u_chanuser *cu;
+char *buf;
+{
+	u_map_each(c->members, sendto_chan_cb, buf);
+}
+
+#ifdef STDARG
+void u_sendto_visible(struct u_user *u, char *fmt, ...)
+#else
+void u_sendto_visible(u, fmt, va_alist)
+struct u_user *u;
+char *fmt;
+va_dcl
+#endif
+{
+	char buf[4096];
+	va_list va;
+
+	start();
+	exclude(u_user_conn(u));
+
+	u_va_start(va, fmt);
+	vsprintf(buf, fmt, va);
+	va_end(va);
+
+	u_map_each(u->channels, sendto_visible_cb, buf);
+}
+
 int init_sendto()
 {
 	u_cookie_reset(&ck_sendto);
