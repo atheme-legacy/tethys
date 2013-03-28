@@ -13,16 +13,16 @@ static int cb_list();
 static int cb_string();
 static int cb_prefix();
 
-static struct u_cmode_info __cmodes[32] = {
-	{ 'p', cb_flag,   CMODE_PRIVATE                     },
-	{ 's', cb_flag,   CMODE_SECRET                      },
-	{ 'i', cb_flag,   CMODE_INVITEONLY                  },
-	{ 't', cb_flag,   CMODE_TOPIC                       },
-	{ 'n', cb_flag,   CMODE_NOEXTERNAL                  },
-	{ 'm', cb_flag,   CMODE_MODERATED                   },
-	{ 'z', cb_flag,   CMODE_OPMOD                       },
+static struct u_cmode_info __cmodes[] = {
 	{ 'c', cb_flag,   CMODE_NOCOLOR                     },
 	{ 'g', cb_flag,   CMODE_FREEINVITE                  },
+	{ 'i', cb_flag,   CMODE_INVITEONLY                  },
+	{ 'm', cb_flag,   CMODE_MODERATED                   },
+	{ 'n', cb_flag,   CMODE_NOEXTERNAL                  },
+	{ 'p', cb_flag,   CMODE_PRIVATE                     },
+	{ 's', cb_flag,   CMODE_SECRET                      },
+	{ 't', cb_flag,   CMODE_TOPIC                       },
+	{ 'z', cb_flag,   CMODE_OPMOD                       },
 	{ 'f', cb_string, offsetof(struct u_chan, forward)  },
 	{ 'k', cb_string, offsetof(struct u_chan, key)      },
 	{ 'b', cb_list,   offsetof(struct u_chan, ban)      },
@@ -31,6 +31,7 @@ static struct u_cmode_info __cmodes[32] = {
 	{ 'I', cb_list,   offsetof(struct u_chan, invex)    },
 	{ 'o', cb_prefix, CU_PFX_OP                         },
 	{ 'v', cb_prefix, CU_PFX_VOICE                      },
+	{ 0 }
 };
 
 struct u_cmode_info *cmodes = __cmodes;
@@ -195,6 +196,24 @@ struct u_chan *chan;
 	u_trie_del(all_chans, chan->name);
 	free(chan);
 }
+
+char *u_chan_modes(c)
+struct u_chan *c;
+{
+	static char buf[64];
+	struct u_cmode_info *info;
+	char *s = buf;
+
+	*s++ = '+';
+	for (info=cmodes; info->ch; info++) {
+		if (info->cb == cb_flag && (c->mode & info->data))
+			*s++ = info->ch;
+	}
+	*s = '\0';
+
+	return buf;
+}
+
 
 /* XXX: assumes the chanuser doesn't already exist */
 struct u_chanuser *u_chan_user_add(c, u)

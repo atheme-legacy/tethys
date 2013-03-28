@@ -59,6 +59,8 @@ extern struct u_chan *u_chan_get(); /* char* */
 extern struct u_chan *u_chan_get_or_create(); /* char* */
 extern void u_chan_drop(); /* struct u_chan* */
 
+extern char *u_chan_modes(); /* struct u_chan* */
+
 extern struct u_chanuser *u_chan_user_add(); /* u_chan*, u_user* */
 extern void u_chan_user_del(); /* u_chanuser* */
 extern struct u_chanuser *u_chan_user_find(); /* u_chan*, u_user* */

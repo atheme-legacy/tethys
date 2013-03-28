@@ -113,7 +113,7 @@ struct u_msg *msg;
 	u_map_set(u->channels, c, cu);
 
 	u_sendto_chan(c, NULL, ":%s!%s@%s JOIN %s", u->nick, u->ident, u->host, c->name);
-	u_conn_f(conn, ":%s MODE %s %s", me.name, c->name, "+nt");
+	u_conn_f(conn, ":%s MODE %s %s", me.name, c->name, u_chan_modes(c));
 
 	sprintf(buf, "@%s", u->nick);
 	u_conn_num(conn, RPL_NAMREPLY, c->name, buf);
