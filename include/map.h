@@ -17,6 +17,8 @@ struct u_map {
 
 extern struct u_map *u_map_new();
 extern void u_map_free(); /* u_map* */
+/* u_map*, void (*cb)(u_map*, void *k, void *v, void*), void* */
+extern void u_map_each();
 extern void *u_map_get(); /* u_map*, void *key */
 extern void u_map_set(); /* u_map*, void *key, void *data */
 extern void *u_map_del(); /* u_map*, void *key */

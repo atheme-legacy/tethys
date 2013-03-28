@@ -71,6 +71,48 @@ struct u_map *map;
 	free(map);
 }
 
+/* I'm inclined to claim this tree traversal algorithm won't complain
+   if you try to delete the node you're currently visiting (or any
+   other node, for that matter). */
+void u_map_each(map, cb, priv)
+struct u_map *map;
+void (*cb)();
+void *priv;
+{
+	struct u_map_n *cur, *child, cpy;
+	int idx;
+
+	if ((cur = map->root) == NULL)
+		return;
+
+try_left:
+	if (cur->child[LEFT] != NULL) {
+		cur = cur->child[LEFT];
+		goto try_left;
+	}
+
+loop_top:
+	/* we copy the current node in case it is deleted */
+	memcpy(&cpy, cur, sizeof(cpy));
+	cb(map, cur->key, cur->data, priv);
+	child = cur;
+	cur = &cpy;
+
+	if (cur->child[RIGHT] != NULL) {
+		cur = cur->child[RIGHT];
+		goto try_left;
+	}
+
+	for (;;) {
+		if (cur->parent == NULL)
+			break;
+		idx = cur->parent->child[LEFT] == child ? LEFT : RIGHT;
+		child = cur = cur->parent;
+		if (idx == LEFT)
+			goto loop_top;
+	}
+}
+
 /* dumb functions are just standard binary search tree operations that
    don't pay attention to the colors of the nodes */
 
