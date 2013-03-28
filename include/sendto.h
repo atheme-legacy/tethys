@@ -8,7 +8,7 @@
 #define __INC_SENDTO_H__
 
 /* second argument is excluded from message */
-extern void u_sendto_chan(A4(struct u_chan*, struct u_user*, char*, ...));
+extern void u_sendto_chan(A4(struct u_chan*, struct u_conn*, char*, ...));
 
 /* sends to all connections a user is visible to */
 extern void u_sendto_visible(A3(struct u_user*, char*, ...));

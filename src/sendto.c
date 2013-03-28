@@ -36,11 +36,11 @@ char *buf;
 }
 
 #ifdef STDARG
-void u_sendto_chan(struct u_chan *c, struct u_user *u, char *fmt, ...)
+void u_sendto_chan(struct u_chan *c, struct u_conn *conn, char *fmt, ...)
 #else
-void u_sendto_chan(c, u, fmt, va_alist)
+void u_sendto_chan(c, conn, fmt, va_alist)
 struct u_chan *c;
-struct u_user *u;
+struct u_conn *conn;
 char *fmt;
 va_dcl
 #endif
@@ -50,8 +50,8 @@ va_dcl
 
 	start();
 
-	if (u != NULL)
-		exclude(u_user_conn(u));
+	if (conn != NULL)
+		exclude(conn);
 
 	u_va_start(va, fmt);
 	vsprintf(buf, fmt, va);
