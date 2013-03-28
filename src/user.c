@@ -127,6 +127,16 @@ struct u_conn *conn;
 	u_log(LG_DEBUG, "New user uid=%s host=%s", u->uid, u->host);
 }
 
+struct u_conn *u_user_conn(u)
+struct u_user *u;
+{
+	if (u->flags & USER_IS_LOCAL) {
+		return ((struct u_user_local*)u)->conn;
+	} else {
+		return ((struct u_user_remote*)u)->server->conn;
+	}
+}
+
 struct u_user *u_user_by_nick(nick)
 char *nick;
 {

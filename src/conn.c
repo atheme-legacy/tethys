@@ -24,6 +24,7 @@ struct u_conn *conn;
 	conn->priv = NULL;
 	conn->pass = NULL;
 	conn->ctx = CTX_UNREG;
+	u_cookie_reset(&conn->ck_sendto);
 }
 
 void u_conn_cleanup(conn)

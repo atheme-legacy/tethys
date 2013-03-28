@@ -67,6 +67,8 @@ extern unsigned umode_default;
 
 extern void u_user_make_ureg(); /* u_conn* */
 
+extern struct u_conn *u_user_conn(); /* u_user* */
+
 extern struct u_user *u_user_by_nick(); /* char* */
 extern struct u_user *u_user_by_uid(); /* char* */
 

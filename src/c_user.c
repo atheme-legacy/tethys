@@ -85,9 +85,7 @@ struct u_msg *msg;
 	if (c->members->size == 1)
 		cu->flags |= CU_PFX_OP;
 
-	/* TODO: send to all members */
-
-	u_conn_f(conn, ":%s!%s@%s JOIN %s", u->nick, u->ident, u->host, c->name);
+	u_sendto_chan(c, NULL, ":%s!%s@%s JOIN %s", u->nick, u->ident, u->host, c->name);
 	u_conn_f(conn, ":%s MODE %s %s", me.name, c->name, "+nt");
 
 	sprintf(buf, "@%s", u->nick);

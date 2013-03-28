@@ -52,6 +52,7 @@
 
 # define A2(x,y) x,y
 # define A3(x,y,z) x,y,z
+# define A4(w,x,y,z) w,x,y,z
 # define u_va_start(va, arg) va_start(va, arg)
 
 #else
@@ -63,6 +64,7 @@
 
 # define A2(x,y)
 # define A3(x,y,z)
+# define A4(w,x,y,z)
 # define u_va_start(va, arg) va_start(va)
 
 extern void *malloc();
@@ -85,5 +87,6 @@ extern void *malloc();
 #include "user.h"
 #include "server.h"
 #include "chan.h"
+#include "sendto.h"
 
 #endif

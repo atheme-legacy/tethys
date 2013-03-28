@@ -40,6 +40,7 @@ struct u_conn {
 	void *priv;
 	char *pass;
 	int ctx;
+	struct u_cookie ck_sendto;
 };
 
 struct u_conn_origin {
