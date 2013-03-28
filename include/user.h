@@ -67,6 +67,7 @@ extern struct u_umode_info *umodes;
 extern unsigned umode_default;
 
 extern void u_user_make_ureg(); /* u_conn* */
+extern void u_user_quit(); /* u_user*, char* */
 
 extern struct u_conn *u_user_conn(); /* u_user* */
 

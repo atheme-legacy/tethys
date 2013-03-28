@@ -40,15 +40,6 @@ char *id_next()
 	return id_buf;
 }
 
-void user_unreg(u)
-struct u_user *u;
-{
-	u_map_del(u->channels);
-	if (u->nick[0])
-		u_trie_del(users_by_nick, u->nick);
-	u_trie_del(users_by_uid, u->uid);
-}
-
 /* used to simplify user_local_event */
 void user_local_die(conn, msg)
 struct u_conn *conn;
@@ -56,15 +47,7 @@ char *msg;
 {
 	struct u_user *u = conn->priv;
 	u_conn_out_clear(conn);
-	if (conn->ctx == CTX_USER) {
-		u_sendto_visible(u, ":%s!%s@%s QUIT :Error: %s",
-		                 u->nick, u->ident, u->host, msg);
-		u_conn_f(conn, ":%s!%s@%s QUIT :Error: %s",
-		         u->nick, u->ident, u->host, msg);
-	} else {
-		u_conn_f(conn, "ERROR :%s", msg);
-	}
-	user_unreg(u);
+	u_user_quit(u, msg);
 }
 
 void user_local_event(conn, event)
@@ -129,6 +112,40 @@ struct u_conn *conn;
 	conn->event = user_local_event;
 
 	u_log(LG_DEBUG, "New user uid=%s host=%s", u->uid, u->host);
+}
+
+void user_quit_cb(map, c, cu, priv)
+struct u_map *map;
+struct u_chan *c;
+struct u_chanuser *cu;
+void *priv;
+{
+	u_chan_user_del(cu);
+	u_map_del(map, c);
+}
+
+void u_user_quit(u, msg)
+struct u_user *u;
+char *msg;
+{
+	struct u_conn *conn = u_user_conn(u);
+
+	if (conn->ctx == CTX_USER) {
+		u_sendto_visible(u, ":%s!%s@%s QUIT :%s",
+		                 u->nick, u->ident, u->host, msg);
+		u_conn_f(conn, ":%s!%s@%s QUIT :%s",
+		         u->nick, u->ident, u->host, msg);
+	} else {
+		u_conn_f(conn, "ERROR :%s", msg);
+	}
+
+	/* part from all channels */
+	u_map_each(u->channels, user_quit_cb, NULL);
+	u_map_free(u->channels);
+
+	if (u->nick[0])
+		u_trie_del(users_by_nick, u->nick);
+	u_trie_del(users_by_uid, u->uid);
 }
 
 struct u_conn *u_user_conn(u)
