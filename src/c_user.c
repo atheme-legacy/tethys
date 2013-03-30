@@ -113,11 +113,40 @@ struct u_msg *msg;
 	u_map_set(u->channels, c, cu);
 
 	u_sendto_chan(c, NULL, ":%s!%s@%s JOIN %s", u->nick, u->ident, u->host, c->name);
+	u_chan_send_topic(c, u);
 	u_conn_f(conn, ":%s MODE %s %s", me.name, c->name, u_chan_modes(c));
 
 	sprintf(buf, "@%s", u->nick);
 	u_conn_num(conn, RPL_NAMREPLY, c->name, buf);
 	u_conn_num(conn, RPL_ENDOFNAMES);
+}
+
+static void m_topic(conn, msg)
+struct u_conn *conn;
+struct u_msg *msg;
+{
+	struct u_user *u = conn->priv;
+	struct u_chan *c;
+
+	c = u_chan_get(msg->argv[0]);
+	if (c == NULL) {
+		u_user_num(u, ERR_NOSUCHCHANNEL, msg->argv[0]);
+		return;
+	}
+
+	if (msg->argc == 1) {
+		u_chan_send_topic(c, u);
+		return;
+	}
+
+	/* TODO: access checks */
+
+	u_strlcpy(c->topic, msg->argv[1], MAXTOPICLEN+1);
+	u_strlcpy(c->topic_setter, u->nick, MAXNICKLEN+1);
+	c->topic_time = NOW.tv_sec;
+
+	u_sendto_chan(c, NULL, ":%s!%s@%s TOPIC %s :%s", u->nick, u->ident,
+	              u->host, c->name, c->topic);
 }
 
 struct u_cmd c_user[] = {
@@ -128,5 +157,6 @@ struct u_cmd c_user[] = {
 	{ "PRIVMSG", CTX_USER, m_message, 2 },
 	{ "NOTICE",  CTX_USER, m_message, 2 },
 	{ "JOIN",    CTX_USER, m_join,    1 },
+	{ "TOPIC",   CTX_USER, m_topic,   1 },
 	{ "" },
 };

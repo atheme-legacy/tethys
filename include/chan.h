@@ -8,6 +8,7 @@
 #define __INC_CHAN_H__
 
 #define MAXCHANNAME 50
+#define MAXTOPICLEN 250
 
 /* channel modes */
 #define CMODE_PRIVATE      0x00000001  /* +p */
@@ -38,6 +39,9 @@ struct u_cmode_info {
 
 struct u_chan {
 	char name[MAXCHANNAME+1];
+	char topic[MAXTOPICLEN+1];
+	char topic_setter[MAXNICKLEN+1];
+	u_ts_t topic_time;
 	unsigned mode;
 	struct u_cookie ck_flags;
 	struct u_map *members;
@@ -60,6 +64,8 @@ extern struct u_chan *u_chan_get_or_create(); /* char* */
 extern void u_chan_drop(); /* struct u_chan* */
 
 extern char *u_chan_modes(); /* struct u_chan* */
+
+extern void u_chan_send_topic(); /* u_chan*, u_user* */
 
 extern struct u_chanuser *u_chan_user_add(); /* u_chan*, u_user* */
 extern void u_chan_user_del(); /* u_chanuser* */

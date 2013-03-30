@@ -71,6 +71,8 @@ extern void *malloc();
 
 #endif
 
+typedef unsigned long u_ts_t;
+
 #include "util.h"
 #include "log.h"
 #include "list.h"

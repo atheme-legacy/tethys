@@ -147,6 +147,9 @@ char *name;
 
 	chan = malloc(sizeof(*chan));
 	u_strlcpy(chan->name, name, MAXCHANNAME+1);
+	chan->topic[0] = '\0';
+	chan->topic_setter[0] = '\0';
+	chan->topic_time = 0;
 	chan->mode = cmode_default;
 	u_cookie_inc(&chan->ck_flags);
 	chan->members = u_map_new();
@@ -214,6 +217,18 @@ struct u_chan *c;
 	return buf;
 }
 
+void u_chan_send_topic(c, u)
+struct u_chan *c;
+struct u_user *u;
+{
+	if (c->topic[0]) {
+		u_user_num(u, RPL_TOPIC, c->name, c->topic);
+		u_user_num(u, RPL_TOPICWHOTIME, c->name, c->topic_setter,
+		           c->topic_time);
+	} else {
+		u_user_num(u, RPL_NOTOPIC, c->name);
+	}
+}
 
 /* XXX: assumes the chanuser doesn't already exist */
 struct u_chanuser *u_chan_user_add(c, u)
