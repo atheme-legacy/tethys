@@ -40,7 +40,7 @@ struct u_map *u_map_new()
 		return NULL;
 
 	map->root = NULL;
-	map->size++;
+	map->size = 0;
 
 	return map;
 }
