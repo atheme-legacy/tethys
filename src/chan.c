@@ -230,6 +230,54 @@ struct u_user *u;
 	}
 }
 
+struct send_names_priv {
+	struct u_chan *c;
+	struct u_user *u;
+	char pfx, *s, buf[512];
+	unsigned w;
+};
+
+void send_names_cb(map, u, cu, priv)
+struct u_map *map;
+struct u_user *u;
+struct u_chanuser *cu;
+struct send_names_priv *priv;
+{
+	char *p, nbuf[MAXNICKLEN+3];
+	p = nbuf;
+	/* TODO: multi-prefix */
+	if (cu->flags & CU_PFX_OP)
+		*p++ = '@';
+	else if (cu->flags & CU_PFX_VOICE)
+		*p++ = '+';
+	strcpy(p, u->nick);
+	if (!wrap(priv->buf, &priv->s, priv->w, nbuf)) {
+		u_user_num(priv->u, RPL_NAMREPLY, priv->pfx, priv->c->name, priv->buf);
+		if (!wrap(priv->buf, &priv->s, priv->w, nbuf))
+			u_log(LG_SEVERE, "Can't fit %s into RPL_NAMREPLY!", nbuf);
+	}
+}
+
+/* :my.name 353 nick = #chan :...
+   *       *****    ***     **  = 11 */
+void u_chan_send_names(c, u)
+struct u_chan *c;
+struct u_user *u;
+{
+	struct send_names_priv priv;
+
+	priv.c = c;
+	priv.u = u;
+	priv.pfx = (c->mode&CMODE_PRIVATE)?'*':((c->mode&CMODE_SECRET)?'@':'=');
+	priv.s = priv.buf;
+	priv.w = 512 - (strlen(me.name) + strlen(u->nick) + strlen(c->name) + 11);
+
+	u_map_each(c->members, send_names_cb, &priv);
+	if (priv.s != priv.buf)
+		u_user_num(u, RPL_NAMREPLY, priv.pfx, c->name, priv.buf);
+	u_user_num(u, RPL_ENDOFNAMES, c->name);
+}
+
 /* XXX: assumes the chanuser doesn't already exist */
 struct u_chanuser *u_chan_user_add(c, u)
 struct u_chan *c;
