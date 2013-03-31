@@ -84,7 +84,7 @@ va_list va;
 
 	vsprintf(buf, fmt, va);
 	buf[512] = '\0'; /* i guess it works... */
-	u_log(LG_DEBUG, "[%p] <- %s", conn, buf);
+	u_log(LG_FINE, "[%p] <- %s", conn, buf);
 
 	for (s=buf; p<end && *s;)
 		*p++ = *s++;
@@ -239,7 +239,7 @@ struct u_conn *conn;
 			u_conn_close(conn);
 			break;
 		}
-		u_log(LG_DEBUG, "[%p] -> %s", conn, buf);
+		u_log(LG_FINE, "[%p] -> %s", conn, buf);
 		u_msg_parse(&msg, buf);
 		u_cmd_invoke(conn, &msg);
 	}
