@@ -121,7 +121,6 @@ struct u_chanuser *cu;
 void *priv;
 {
 	u_chan_user_del(cu);
-	u_map_del(map, c);
 }
 
 void u_user_quit(u, msg)
@@ -129,6 +128,11 @@ struct u_user *u;
 char *msg;
 {
 	struct u_conn *conn = u_user_conn(u);
+
+	if (u_user_state(u, 0) == USER_DISCONNECTED)
+		return;
+
+	u_user_state(u, USER_DISCONNECTED);
 
 	if (conn->ctx == CTX_USER) {
 		u_sendto_visible(u, ":%s!%s@%s QUIT :%s",

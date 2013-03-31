@@ -121,9 +121,10 @@ char *key;
 
 	val = cur->val;
 
-	prev = cur;
-	cur = cur->up;
+	cur->val = NULL;
+	prev = NULL;
 	while (cur) {
+		nempty = 0;
 		for (i=0; i<16; i++) {
 			if (cur->n[i] == prev)
 				cur->n[i] = NULL;
@@ -131,7 +132,7 @@ char *key;
 				nempty++;
 		}
 		prev = cur;
-		if (nempty != 16 || cur->val)
+		if (nempty != 16 || cur->val || cur == &trie->n)
 			break;
 		cur = cur->up;
 		trie_e_del(prev);

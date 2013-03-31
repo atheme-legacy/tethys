@@ -119,6 +119,7 @@ struct u_io_fd *iofd;
 {
 	u_log(LG_FINE, "IO: --- FD=%3d [%p]", iofd->fd, iofd);
 	u_list_del_n(iofd->n);
+	free(iofd);
 }
 
 struct u_io_timer *u_io_add_timer(io, sec, usec, cb, priv)

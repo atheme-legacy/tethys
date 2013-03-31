@@ -23,7 +23,7 @@ char *line;
 }
 
 void (*u_log_handler)() = default_handler;
-int u_log_level = LG_DEBUG;
+int u_log_level = LG_FINE;
 
 #ifdef STDARG
 void u_log(int level, char *fmt, ...)

@@ -151,7 +151,7 @@ char *name;
 	chan->topic_setter[0] = '\0';
 	chan->topic_time = 0;
 	chan->mode = cmode_default;
-	u_cookie_inc(&chan->ck_flags);
+	u_cookie_reset(&chan->ck_flags);
 	chan->members = u_map_new();
 	u_list_init(&chan->ban);
 	u_list_init(&chan->quiet);
