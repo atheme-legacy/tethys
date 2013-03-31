@@ -7,7 +7,7 @@
 #ifndef __INC_CONN_H__
 #define __INC_CONN_H__
 
-#define U_CONN_OBUFSIZE 2048
+#define U_CONN_OBUFSIZE 8192
 #define U_CONN_HOSTSIZE 256
 
 #define U_CONN_CLOSING 0x0001
