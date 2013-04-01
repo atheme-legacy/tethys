@@ -64,6 +64,7 @@ struct dns_rr {
 
 struct dns_cache_ent {
 	char req[DNSNAMESIZE];
+	int status;
 	char res[DNSNAMESIZE];
 	unsigned long expires;
 	struct u_list *n;
@@ -73,7 +74,7 @@ struct u_list reqs;
 
 struct u_list cache_by_recent;
 struct u_trie *cache_by_name;
-int cache_size;
+int cache_size = 0;
 
 int dnsfd;
 struct u_io *dnsio = NULL;
@@ -169,8 +170,9 @@ unsigned short id;
 	id_nfree[id>>7]++;
 }
 
-void cache_add(req, res, expires)
+void cache_add(req, status, res, expires)
 char *req, *res;
+int status;
 unsigned long expires;
 {
 	struct dns_cache_ent *cached;
@@ -184,15 +186,16 @@ unsigned long expires;
 	cache_size++;
 
 	u_strlcpy(cached->req, req, DNSNAMESIZE);
+	cached->status = status;
 	u_strlcpy(cached->res, res, DNSNAMESIZE);
-	cached->expires = cached->expires;
+	cached->expires = expires;
 
 	u_trie_set(cache_by_name, req, cached);
 
 	if (cache_size > DNS_CACHE_SIZE) {
 		cached = u_list_del_n(cache_by_recent.next);
 		if (cached != NULL) {
-			u_log(LG_FINE, "DNS:CACHE: dropping %s=>%s",
+			u_log(LG_FINE, "DNS:CACHE: (full) dropping %s=>%s",
 			      cached->req, cached->res);
 			u_trie_del(cache_by_name, cached->req);
 			free(cached);
@@ -200,14 +203,14 @@ unsigned long expires;
 		cache_size--;
 	}
 
-	u_log(LG_FINE, "DNS:CACHE: adding %s=>%s", req, res);
+	u_log(LG_FINE, "DNS:CACHE: adding %s=>%s, status %d", req, res, status);
 
 	return;
 
 fail:
 	if (cached != NULL)
 		free(cached);
-	u_log(LG_ERROR, "dns: Failed to cache %s=>%s", req, res);
+	u_log(LG_ERROR, "dns: Failed to cache %s=>%s status %d", req, res, status);
 	return;
 }
 
@@ -221,20 +224,23 @@ char *req, *res;
 	cached = u_trie_get(cache_by_name, req);
 	if (cached == NULL) {
 		u_log(LG_FINE, "DNS:CACHE: cache miss on %s", req);
-		return 0;
+		return -1;
 	}
 
 	if (cached->expires < NOW.tv_sec) {
-		u_log(LG_FINE, "DNS:CACHE: dropping %s=>%s", cached->req, cached->res);
+		u_log(LG_FINE, "DNS:CACHE: (expiry) dropping %s=>%s, status %d",
+		      cached->req, cached->res, cached->status);
 		u_list_del_n(cached->n);
 		u_trie_del(cache_by_name, cached->req);
 		free(cached);
-		return 0;
+		cache_size--;
+		return -1;
 	}
 
-	u_log(LG_FINE, "DNS:CACHE: cache hit %s=>%s", cached->req, cached->res);
+	u_log(LG_FINE, "DNS:CACHE: cache hit %s=>%s, status %d",
+	      cached->req, cached->res, cached->status);
 	u_strlcpy(res, cached->res, DNSNAMESIZE);
-	return 1;
+	return cached->status;
 }
 
 struct dns_req *req_make(type, cb, priv, timeout)
@@ -458,7 +464,7 @@ char *name;
 	u_strlcpy(buf, name, DNSNAMESIZE);
 	p = buf;
 
-	s = name;
+	s = buf;
 	while (p) {
 		p = strchr(s, '.');
 		if (p != NULL)
@@ -573,6 +579,7 @@ struct u_io_fd *iofd;
 		err = DNS_OTHER;
 		if ((hdr.flags & DNS_MASK_RCODE) == DNS_RCODE_NAMEERR)
 			err = DNS_NXDOMAIN;
+		cache_add(req->name, err, "", NOW.tv_sec + 60);
 		req->cb(err, NULL, req->priv);
 		req_del(req);
 		return;
@@ -605,6 +612,7 @@ struct u_io_fd *iofd;
 
 		if (rr.type == req->type && err == -1) {
 			err = DNS_OKAY;
+			cache_add(req->name, err, rdata, NOW.tv_sec + rr.ttl);
 			if (req->cb)
 				req->cb(err, rdata, req->priv);
 		}
@@ -612,6 +620,7 @@ struct u_io_fd *iofd;
 
 	if (err == -1 && req->cb) {
 		u_log(LG_WARN, "dns_recv: didn't get record we wanted :(");
+		cache_add(req->name, DNS_NXDOMAIN, "", NOW.tv_sec + 60);
 		req->cb(DNS_NXDOMAIN, NULL, req->priv);
 	}
 
@@ -641,18 +650,27 @@ char *name;
 void (*cb)();
 void *priv;
 {
+	char buf[DNSNAMESIZE];
+	char res[DNSNAMESIZE];
 	struct dns_req *req;
+	int status;
 
 	if (!cb) {
 		u_log(LG_WARN, "u_dns: ignoring DNS request with null callback");
 		return 0;
 	}
 
-	req = req_make(DNS_TYPE_A, cb, priv, dns_timeout);
-
-	sprintf(req->name, "%s.", name);
-
 	u_log(LG_DEBUG, "dns: forward dns for %s", name);
+	sprintf(buf, "%s.", name);
+
+	if ((status = cache_find(buf, res)) >= 0) {
+		/* XXX: don't do callback right here */
+		cb(status, res, priv);
+		return 0;
+	}
+
+	req = req_make(DNS_TYPE_A, cb, priv, dns_timeout);
+	u_strlcpy(req->name, buf, DNSNAMESIZE);
 
 	send_req(req);
 
@@ -664,25 +682,32 @@ char *name;
 void (*cb)();
 void *priv;
 {
+	char buf[DNSNAMESIZE];
+	char res[DNSNAMESIZE];
 	struct in_addr in;
 	struct dns_req *req;
 	unsigned char *p;
+	int status;
 
 	if (!cb) {
 		u_log(LG_WARN, "u_rdns: ignoring DNS request with null callback");
 		return 0;
 	}
 
+	u_log(LG_DEBUG, "dns: reverse dns for %s", name);
 	u_aton(name, &in);
-
 	p = (unsigned char*)&(in.s_addr);
-
-	req = req_make(DNS_TYPE_PTR, cb, priv, dns_timeout);
-
-	sprintf(req->name, "%u.%u.%u.%u.in-addr.arpa.",
+	sprintf(buf, "%u.%u.%u.%u.in-addr.arpa.",
 	        p[3], p[2], p[1], p[0]);
 
-	u_log(LG_DEBUG, "dns: reverse dns for %s", name);
+	if ((status = cache_find(buf, res)) >= 0) {
+		/* XXX: don't do callback right here */
+		cb(status, res, priv);
+		return 0;
+	}
+
+	req = req_make(DNS_TYPE_PTR, cb, priv, dns_timeout);
+	u_strlcpy(req->name, buf, DNSNAMESIZE);
 
 	send_req(req);
 
