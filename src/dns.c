@@ -1,5 +1,7 @@
 #include "ircd.h"
 
+#define DNS_CACHE_SIZE        100
+
 #define DNS_OP_QUERY       0x0000
 #define DNS_OP_IQUERY      0x0800
 #define DNS_OP_STATUS      0x1000
@@ -60,7 +62,19 @@ struct dns_rr {
 	char rdata[DNSNAMESIZE];
 };
 
+struct dns_cache_ent {
+	char req[DNSNAMESIZE];
+	char res[DNSNAMESIZE];
+	unsigned long expires;
+	struct u_list *n;
+};
+
 struct u_list reqs;
+
+struct u_list cache_by_recent;
+struct u_trie *cache_by_name;
+int cache_size;
+
 int dnsfd;
 struct u_io *dnsio = NULL;
 struct u_io_fd *dnssock = NULL;
@@ -153,6 +167,74 @@ unsigned short id;
 	id_bitvec_reset(id);
 	id_nfree_total++;
 	id_nfree[id>>7]++;
+}
+
+void cache_add(req, res, expires)
+char *req, *res;
+unsigned long expires;
+{
+	struct dns_cache_ent *cached;
+
+	cached = malloc(sizeof(*cached));
+	if (cached == NULL)
+		goto fail;
+	cached->n = u_list_add(&cache_by_recent, cached);
+	if (cached->n == NULL)
+		goto fail;
+	cache_size++;
+
+	u_strlcpy(cached->req, req, DNSNAMESIZE);
+	u_strlcpy(cached->res, res, DNSNAMESIZE);
+	cached->expires = cached->expires;
+
+	u_trie_set(cache_by_name, req, cached);
+
+	if (cache_size > DNS_CACHE_SIZE) {
+		cached = u_list_del_n(cache_by_recent.next);
+		if (cached != NULL) {
+			u_log(LG_FINE, "DNS:CACHE: dropping %s=>%s",
+			      cached->req, cached->res);
+			u_trie_del(cache_by_name, cached->req);
+			free(cached);
+		}
+		cache_size--;
+	}
+
+	u_log(LG_FINE, "DNS:CACHE: adding %s=>%s", req, res);
+
+	return;
+
+fail:
+	if (cached != NULL)
+		free(cached);
+	u_log(LG_ERROR, "dns: Failed to cache %s=>%s", req, res);
+	return;
+}
+
+int cache_find(req, res)
+char *req, *res;
+{
+	struct dns_cache_ent *cached;
+
+	*res = '\0';
+
+	cached = u_trie_get(cache_by_name, req);
+	if (cached == NULL) {
+		u_log(LG_FINE, "DNS:CACHE: cache miss on %s", req);
+		return 0;
+	}
+
+	if (cached->expires < NOW.tv_sec) {
+		u_log(LG_FINE, "DNS:CACHE: dropping %s=>%s", cached->req, cached->res);
+		u_list_del_n(cached->n);
+		u_trie_del(cache_by_name, cached->req);
+		free(cached);
+		return 0;
+	}
+
+	u_log(LG_FINE, "DNS:CACHE: cache hit %s=>%s", cached->req, cached->res);
+	u_strlcpy(res, cached->res, DNSNAMESIZE);
+	return 1;
 }
 
 struct dns_req *req_make(type, cb, priv, timeout)
@@ -623,6 +705,9 @@ int init_dns()
 		id_nfree[i] = 128;
 	for (i=0; i<2048; i++)
 		id_bitvec[i] = 0;
+
+	u_list_init(&cache_by_recent);
+	cache_by_name = u_trie_new(ascii_canonize);
 
 	dnsfd = socket(AF_INET, SOCK_DGRAM, 0);
 	if (dnsfd < 0)
