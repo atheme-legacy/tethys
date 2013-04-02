@@ -39,6 +39,7 @@ struct u_map *u_map_new()
 	if (map == NULL)
 		return NULL;
 
+	map->traversing = 0;
 	map->root = NULL;
 	map->size = 0;
 
@@ -85,6 +86,8 @@ void *priv;
 	if ((cur = map->root) == NULL)
 		return;
 
+	map->traversing = 1;
+
 try_left:
 	if (cur->child[LEFT] != NULL) {
 		cur = cur->child[LEFT];
@@ -111,6 +114,8 @@ loop_top:
 		if (idx == LEFT)
 			goto loop_top;
 	}
+
+	map->traversing = 0;
 }
 
 /* dumb functions are just standard binary search tree operations that
@@ -246,6 +251,9 @@ void *key;
 
 	if (n == NULL)
 		return NULL;
+
+	if (map->traversing)
+		abort();
 
 	map->size--;
 

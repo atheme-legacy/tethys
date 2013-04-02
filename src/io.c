@@ -213,8 +213,14 @@ struct u_io *io;
 			iofd->recv(iofd);
 		if (FD_ISSET(iofd->fd, &w) && iofd->send)
 			iofd->send(iofd);
-		if (!iofd->recv && !iofd->send)
-			u_io_del_fd(io, iofd);
+	}
+
+	U_LIST_EACH_SAFE(n, tn, &io->fds) {
+		iofd = n->data;
+		if (iofd->post) {
+			if (iofd->post(iofd) < 0)
+				u_io_del_fd(io, iofd);
+		}
 	}
 
 	U_LIST_EACH_SAFE(n, tn, &io->timers) {

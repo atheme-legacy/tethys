@@ -11,6 +11,7 @@
 struct u_map_n;
 
 struct u_map {
+	int traversing;
 	struct u_map_n *root;
 	unsigned size;
 };

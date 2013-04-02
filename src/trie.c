@@ -6,8 +6,6 @@
 
 #include "ircd.h"
 
-#define TRIE_E_HEAP_COUNT 128 /* needs to be tuned? */
-
 static void __null_canonize(s) { }
 
 static struct u_trie_e *trie_e_new(up)

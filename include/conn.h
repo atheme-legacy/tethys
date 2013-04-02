@@ -13,12 +13,8 @@
 #define U_CONN_CLOSING 0x0001
 
 /* events */
-#define EV_END_OF_STREAM  1
-#define EV_RECV_ERROR     2
-#define EV_SEND_ERROR     3
-#define EV_SENDQ_FULL     4
-#define EV_RECVQ_FULL     5
-#define EV_DESTROYING     6
+#define EV_ERROR          1
+#define EV_DESTROYING     2
 
 /* connection contexts. used for command processing */
 #define CTX_UNREG       0
@@ -30,18 +26,24 @@
 
 struct u_conn {
 	unsigned flags;
+	int ctx;
+
 	struct u_io_fd *sock;
-	struct u_linebuf ibuf;
 	char ip[INET_ADDRSTRLEN];
 	char host[U_CONN_HOSTSIZE];
 	unsigned short dns_id;
+
+	struct u_linebuf ibuf;
+
 	char *obuf;
 	int obuflen, obufsize;
+	struct u_cookie ck_sendto;
+
 	void (*event)(); /* u_conn*, int event */
+	char *error;
+
 	void *priv;
 	char *pass;
-	int ctx;
-	struct u_cookie ck_sendto;
 };
 
 struct u_conn_origin {
@@ -52,17 +54,13 @@ extern void u_conn_init(); /* u_conn* */
 extern void u_conn_cleanup(); /* u_conn* */
 extern void u_conn_obufsize(); /* u_conn*, int obufsize */
 
-/* deletes all but up to one line of output */
-extern void u_conn_out_clear(); /* u_conn* */
-
 extern void u_conn_vf(); /* u_conn*, char *fmt, va_list */
 extern void u_conn_f(A3(struct u_conn *conn, char *fmt, ...));
 
 extern void u_conn_vnum(); /* u_conn*, char *nick, int num, va_list */
 extern void u_conn_num(A3(struct u_conn *conn, int num, ...));
 
-extern void u_conn_event(); /* u_conn*, int */
-extern void u_conn_close(); /* u_conn* */
+extern void u_conn_error(); /* u_conn*, char* */
 
 /* u_io*, u_long addr, u_short port */
 extern struct u_conn_origin *u_conn_origin_create();

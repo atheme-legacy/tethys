@@ -46,7 +46,6 @@ struct u_conn *conn;
 char *msg;
 {
 	struct u_user *u = conn->priv;
-	u_conn_out_clear(conn);
 	u_user_quit(u, msg);
 }
 
@@ -54,20 +53,8 @@ void user_local_event(conn, event)
 struct u_conn *conn;
 {
 	switch (event) {
-	case EV_END_OF_STREAM:
-		user_local_die(conn, "end of stream");
-		break;
-	case EV_RECV_ERROR:
-		user_local_die(conn, "read error");
-		break;
-	case EV_SEND_ERROR:
-		user_local_die(conn, "send error");
-		break;
-	case EV_SENDQ_FULL:
-		user_local_die(conn, "sendq full");
-		break;
-	case EV_RECVQ_FULL:
-		user_local_die(conn, "recvq full");
+	case EV_ERROR:
+		user_local_die(conn, conn->error);
 		break;
 	default:
 		user_local_die(conn, "unknown error");

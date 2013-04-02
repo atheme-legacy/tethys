@@ -177,20 +177,29 @@ unsigned long expires;
 {
 	struct dns_cache_ent *cached;
 
-	cached = malloc(sizeof(*cached));
-	if (cached == NULL)
-		goto fail;
+	cached = u_trie_get(cache_by_name, req);
+	if (cached == NULL) {
+		u_log(LG_FINE, "+++++ ALLOCATING CACHE ENT");
+		cached = malloc(sizeof(*cached));
+		if (cached == NULL)
+			goto fail;
+		u_trie_set(cache_by_name, req, cached);
+		cache_size++;
+	} else {
+		u_log(LG_FINE, "***** REUSING CACHE ENT");
+		u_list_del_n(cached->n);
+	}
+
 	cached->n = u_list_add(&cache_by_recent, cached);
-	if (cached->n == NULL)
+	if (cached->n == NULL) {
+		u_trie_del(cache_by_name, req);
 		goto fail;
-	cache_size++;
+	}
 
 	u_strlcpy(cached->req, req, DNSNAMESIZE);
 	cached->status = status;
 	u_strlcpy(cached->res, res, DNSNAMESIZE);
 	cached->expires = expires;
-
-	u_trie_set(cache_by_name, req, cached);
 
 	if (cache_size > DNS_CACHE_SIZE) {
 		cached = u_list_del_n(cache_by_recent.next);
@@ -208,8 +217,6 @@ unsigned long expires;
 	return;
 
 fail:
-	if (cached != NULL)
-		free(cached);
 	u_log(LG_ERROR, "dns: Failed to cache %s=>%s status %d", req, res, status);
 	return;
 }
@@ -485,7 +492,7 @@ void send_msg()
 
 	addr.sin_family = AF_INET;
 	addr.sin_port = htons(53);
-	u_aton("8.8.8.8", &addr.sin_addr);
+	u_aton("127.0.0.1", &addr.sin_addr);
 
 	p = msg + msghead;
 	len = msgtail - msghead;
@@ -538,6 +545,7 @@ struct u_io_timer *timer;
 	struct dns_req *req = timer->priv;
 
 	u_log(LG_DEBUG, "dns: request timed out");
+	cache_add(req->name, DNS_TIMEOUT, "", NOW.tv_sec + 60);
 	req->cb(DNS_TIMEOUT, NULL, req->priv);
 	req_del(req);
 }

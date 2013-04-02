@@ -16,8 +16,8 @@ char *line;
 		  "=!= | ",
 		  " -- | ",
 		  "    | ",
-		  "    |    ",
-		  "    |          "
+		  "    |   ",
+		  "    |     "
 	};
 	printf("%s%s\n", prefix[level], line);
 }

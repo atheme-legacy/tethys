@@ -18,10 +18,11 @@ struct u_io_fd {
 	struct u_list *n;
 	int fd;
 	void *priv;
-	/* both accept struct u_io_fd as the sole arg. if both are NULL,
-	   the iofd is deleted */
+	/* all accept struct u_io_fd as the sole arg. if post returns <
+	   0, the iofd is deleted */
 	void (*recv)();
 	void (*send)();
+	int (*post)();
 };
 
 struct u_io_timer {
