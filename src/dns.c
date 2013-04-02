@@ -488,11 +488,11 @@ void send_msg()
 	unsigned char *p;
 	int len;
 
-	u_log(LG_DEBUG, "dns: sending message");
+	u_log(LG_FINE, "dns: sending message");
 
 	addr.sin_family = AF_INET;
 	addr.sin_port = htons(53);
-	u_aton("127.0.0.1", &addr.sin_addr);
+	u_aton("8.8.8.8", &addr.sin_addr);
 
 	p = msg + msghead;
 	len = msgtail - msghead;
