@@ -24,20 +24,23 @@
 #define CTX_SREG        4
 #define CTX_MAX         5
 
+typedef struct u_conn u_conn;
+typedef struct u_conn_origin u_conn_origin;
+
 struct u_conn {
 	unsigned flags;
 	int ctx;
 
-	struct u_io_fd *sock;
+	u_io_fd *sock;
 	char ip[INET_ADDRSTRLEN];
 	char host[U_CONN_HOSTSIZE];
 	unsigned short dns_id;
 
-	struct u_linebuf ibuf;
+	u_linebuf ibuf;
 
 	char *obuf;
 	int obuflen, obufsize;
-	struct u_cookie ck_sendto;
+	u_cookie ck_sendto;
 
 	void (*event)(); /* u_conn*, int event */
 	char *error;
@@ -47,7 +50,7 @@ struct u_conn {
 };
 
 struct u_conn_origin {
-	struct u_io_fd *sock;
+	u_io_fd *sock;
 };
 
 extern void u_conn_init(); /* u_conn* */
@@ -55,14 +58,14 @@ extern void u_conn_cleanup(); /* u_conn* */
 extern void u_conn_obufsize(); /* u_conn*, int obufsize */
 
 extern void u_conn_vf(); /* u_conn*, char *fmt, va_list */
-extern void u_conn_f(A3(struct u_conn *conn, char *fmt, ...));
+extern void u_conn_f(A3(u_conn *conn, char *fmt, ...));
 
 extern void u_conn_vnum(); /* u_conn*, char *nick, int num, va_list */
-extern void u_conn_num(A3(struct u_conn *conn, int num, ...));
+extern void u_conn_num(A3(u_conn *conn, int num, ...));
 
 extern void u_conn_error(); /* u_conn*, char* */
 
 /* u_io*, u_long addr, u_short port */
-extern struct u_conn_origin *u_conn_origin_create();
+extern u_conn_origin *u_conn_origin_create();
 
 #endif

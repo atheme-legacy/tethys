@@ -34,6 +34,11 @@
 #define DNSBUFSIZE            512
 #define DNSNAMESIZE           256
 
+typedef struct dns_hdr dns_hdr_t;
+typedef struct dns_req dns_req_t;
+typedef struct dns_rr dns_rr_t;
+typedef struct dns_cache_ent dns_cache_ent_t;
+
 struct dns_hdr {
 	unsigned short id;
 	unsigned short flags;
@@ -45,8 +50,8 @@ struct dns_hdr {
 
 struct dns_req {
 	unsigned short id;
-	struct u_list *n;
-	struct u_io_timer *timeout;
+	u_list *n;
+	u_io_timer *timeout;
 	char name[DNSNAMESIZE];
 	int type; /* A = u_dns, PTR = u_rdns, for this */
 	void (*cb)();
@@ -67,18 +72,18 @@ struct dns_cache_ent {
 	int status;
 	char res[DNSNAMESIZE];
 	unsigned long expires;
-	struct u_list *n;
+	u_list *n;
 };
 
-struct u_list reqs;
+u_list reqs;
 
-struct u_list cache_by_recent;
-struct u_trie *cache_by_name;
+u_list cache_by_recent;
+u_trie *cache_by_name;
 int cache_size = 0;
 
 int dnsfd;
-struct u_io *dnsio = NULL;
-struct u_io_fd *dnssock = NULL;
+u_io *dnsio = NULL;
+u_io_fd *dnssock = NULL;
 
 unsigned char msg[DNSBUFSIZE];
 int msghead, msgtail;
@@ -175,7 +180,7 @@ char *req, *res;
 int status;
 unsigned long expires;
 {
-	struct dns_cache_ent *cached;
+	dns_cache_ent_t *cached;
 
 	cached = u_trie_get(cache_by_name, req);
 	if (cached == NULL) {
@@ -224,7 +229,7 @@ fail:
 int cache_find(req, res)
 char *req, *res;
 {
-	struct dns_cache_ent *cached;
+	dns_cache_ent_t *cached;
 
 	*res = '\0';
 
@@ -250,13 +255,13 @@ char *req, *res;
 	return cached->status;
 }
 
-struct dns_req *req_make(type, cb, priv, timeout)
+dns_req_t *req_make(type, cb, priv, timeout)
 int type;
 void (*cb)();
 void *priv;
 void (*timeout)();
 {
-	struct dns_req *req;
+	dns_req_t *req;
 	req = malloc(sizeof(*req));
 	req->id = id_alloc();
 	req->n = u_list_add(&reqs, req);
@@ -267,11 +272,11 @@ void (*timeout)();
 	return req;
 }
 
-struct dns_req *req_find(id)
+dns_req_t *req_find(id)
 unsigned short id;
 {
-	struct u_list *n;
-	struct dns_req *req;
+	u_list *n;
+	dns_req_t *req;
 	U_LIST_EACH(n, &reqs) {
 		req = n->data;
 		if (req->id == id)
@@ -281,7 +286,7 @@ unsigned short id;
 }
 
 void req_del(req)
-struct dns_req *req;
+dns_req_t *req;
 {
 	id_free(req->id);
 	u_io_del_timer(req->timeout);
@@ -339,7 +344,7 @@ unsigned int msg_get32()
 }
 
 void msg_gethdr(hdr)
-struct dns_hdr *hdr;
+dns_hdr_t *hdr;
 {
 	hdr->id = msg_get16();
 	hdr->flags = msg_get16();
@@ -399,7 +404,7 @@ unsigned char *s;
 }
 
 void msg_getrr(rr)
-struct dns_rr *rr;
+dns_rr_t *rr;
 {
 	get_name(rr->name);
 
@@ -452,7 +457,7 @@ unsigned char d;
 }
 
 void msg_puthdr(hdr)
-struct dns_hdr *hdr;
+dns_hdr_t *hdr;
 {
 	msg_put16(hdr->id);
 	msg_put16(hdr->flags);
@@ -504,9 +509,9 @@ void send_msg()
 } 
 
 void send_req(req)
-struct dns_req *req;
+dns_req_t *req;
 {
-	struct dns_hdr hdr;
+	dns_hdr_t hdr;
 
 	msg_reset();
 
@@ -540,9 +545,9 @@ int type;
 }
 
 void dns_timeout(timer)
-struct u_io_timer *timer;
+u_io_timer *timer;
 {
-	struct dns_req *req = timer->priv;
+	dns_req_t *req = timer->priv;
 
 	u_log(LG_DEBUG, "dns: request timed out");
 	cache_add(req->name, DNS_TIMEOUT, "", NOW.tv_sec + 60);
@@ -551,14 +556,14 @@ struct u_io_timer *timer;
 }
 
 void dns_recv(iofd)
-struct u_io_fd *iofd;
+u_io_fd *iofd;
 {
 	struct sockaddr addr;
 	unsigned addrlen;
 	int err;
-	struct dns_hdr hdr;
-	struct dns_req *req;
-	struct dns_rr rr;
+	dns_hdr_t hdr;
+	dns_req_t *req;
+	dns_rr_t rr;
 	struct in_addr in;
 	char *p, rdata[DNSBUFSIZE];
 
@@ -636,7 +641,7 @@ struct u_io_fd *iofd;
 }
 
 void u_dns_use_io(io)
-struct u_io *io;
+u_io *io;
 {
 	dnsio = io;
 
@@ -660,7 +665,7 @@ void *priv;
 {
 	char buf[DNSNAMESIZE];
 	char res[DNSNAMESIZE];
-	struct dns_req *req;
+	dns_req_t *req;
 	int status;
 
 	if (!cb) {
@@ -693,7 +698,7 @@ void *priv;
 	char buf[DNSNAMESIZE];
 	char res[DNSNAMESIZE];
 	struct in_addr in;
-	struct dns_req *req;
+	dns_req_t *req;
 	unsigned char *p;
 	int status;
 
@@ -725,7 +730,7 @@ void *priv;
 void u_dns_cancel(id)
 unsigned short id;
 {
-	struct dns_req *req = req_find(id);
+	dns_req_t *req = req_find(id);
 	if (req != NULL)
 		req_del(req);
 }

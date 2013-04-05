@@ -86,8 +86,8 @@ typedef unsigned long u_ts_t;
 #include "numeric.h"
 #include "conn.h"
 #include "msg.h"
-#include "user.h"
 #include "server.h"
+#include "user.h"
 #include "chan.h"
 #include "sendto.h"
 

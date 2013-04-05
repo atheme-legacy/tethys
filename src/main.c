@@ -6,7 +6,7 @@
 
 #include "ircd.h"
 
-struct u_io base_io;
+u_io base_io;
 
 short opt_port = 6667;
 
@@ -21,7 +21,7 @@ char *argv0;
 }
 
 #define INIT(fn) if ((err = (fn)()) < 0) return err
-#define COMMAND_DEF(cmds) extern struct u_cmd cmds[]
+#define COMMAND_DEF(cmds) extern u_cmd cmds[]
 #define COMMAND(cmds) if ((err = u_cmds_reg(cmds)) < 0) return err
 COMMAND_DEF(c_reg);
 COMMAND_DEF(c_user);

@@ -6,14 +6,14 @@
 
 #include "ircd.h"
 
-static struct u_trie *all_chans;
+static u_trie *all_chans;
 
 static int cb_flag();
 static int cb_list();
 static int cb_string();
 static int cb_prefix();
 
-static struct u_cmode_info __cmodes[] = {
+static u_cmode_info __cmodes[] = {
 	{ 'c', cb_flag,   CMODE_NOCOLOR                     },
 	{ 'g', cb_flag,   CMODE_FREEINVITE                  },
 	{ 'i', cb_flag,   CMODE_INVITEONLY                  },
@@ -23,23 +23,23 @@ static struct u_cmode_info __cmodes[] = {
 	{ 's', cb_flag,   CMODE_SECRET                      },
 	{ 't', cb_flag,   CMODE_TOPIC                       },
 	{ 'z', cb_flag,   CMODE_OPMOD                       },
-	{ 'f', cb_string, offsetof(struct u_chan, forward)  },
-	{ 'k', cb_string, offsetof(struct u_chan, key)      },
-	{ 'b', cb_list,   offsetof(struct u_chan, ban)      },
-	{ 'q', cb_list,   offsetof(struct u_chan, quiet)    },
-	{ 'e', cb_list,   offsetof(struct u_chan, banex)    },
-	{ 'I', cb_list,   offsetof(struct u_chan, invex)    },
+	{ 'f', cb_string, offsetof(u_chan, forward)  },
+	{ 'k', cb_string, offsetof(u_chan, key)      },
+	{ 'b', cb_list,   offsetof(u_chan, ban)      },
+	{ 'q', cb_list,   offsetof(u_chan, quiet)    },
+	{ 'e', cb_list,   offsetof(u_chan, banex)    },
+	{ 'I', cb_list,   offsetof(u_chan, invex)    },
 	{ 'o', cb_prefix, CU_PFX_OP                         },
 	{ 'v', cb_prefix, CU_PFX_VOICE                      },
 	{ 0 }
 };
 
-struct u_cmode_info *cmodes = __cmodes;
+u_cmode_info *cmodes = __cmodes;
 unsigned cmode_default = CMODE_TOPIC | CMODE_NOEXTERNAL;
 
 static int cb_flag(info, c, on, getarg)
-struct u_cmode_info *info;
-struct u_chan *c;
+u_cmode_info *info;
+u_chan *c;
 char *(*getarg)();
 {
 	if (on)
@@ -51,17 +51,17 @@ char *(*getarg)();
 }
 
 static int cb_list(info, c, on, getarg)
-struct u_cmode_info *info;
-struct u_chan *c;
+u_cmode_info *info;
+u_chan *c;
 char *(*getarg)();
 {
-	struct u_list *list, *n;
+	u_list *list, *n;
 	char *ban, *arg = getarg();
 
 	if (arg == NULL)
 		return -1;
 
-	list = member(struct u_list*, c, info->data);
+	list = member(u_list*, c, info->data);
 
 	U_LIST_EACH(n, list) {
 		ban = n->data;
@@ -79,8 +79,8 @@ char *(*getarg)();
 }
 
 static int cb_string(info, c, on, getarg)
-struct u_cmode_info *info;
-struct u_chan *c;
+u_cmode_info *info;
+u_chan *c;
 char *(*getarg)();
 {
 	char *arg, **val;
@@ -103,12 +103,12 @@ char *(*getarg)();
 }
 
 static int cb_prefix(info, c, on, getarg)
-struct u_cmode_info *info;
-struct u_chan *c;
+u_cmode_info *info;
+u_chan *c;
 char *(*getarg)();
 {
-	struct u_chanuser *cu;
-	struct u_user *u;
+	u_chanuser *cu;
+	u_user *u;
 	char *arg = getarg();
 
 	if (arg == NULL)
@@ -130,16 +130,16 @@ char *(*getarg)();
 	return 0;
 }
 
-struct u_chan *u_chan_get(name)
+u_chan *u_chan_get(name)
 char *name;
 {
 	return u_trie_get(all_chans, name);
 }
 
-struct u_chan *u_chan_get_or_create(name)
+u_chan *u_chan_get_or_create(name)
 char *name;
 {
-	struct u_chan *chan;
+	u_chan *chan;
 
 	chan = u_chan_get(name);
 	if (chan != NULL)
@@ -166,9 +166,9 @@ char *name;
 }
 
 static void drop_list(list)
-struct u_list *list;
+u_list *list;
 {
-	struct u_list *n, *tn;
+	u_list *n, *tn;
 
 	U_LIST_EACH_SAFE(n, tn, list) {
 		free(n->data);
@@ -185,7 +185,7 @@ char **p;
 }
 
 void u_chan_drop(chan)
-struct u_chan *chan;
+u_chan *chan;
 {
 	/* TODO: u_map_free callback! */
 	u_map_free(chan->members);
@@ -201,10 +201,10 @@ struct u_chan *chan;
 }
 
 char *u_chan_modes(c)
-struct u_chan *c;
+u_chan *c;
 {
 	static char buf[64];
-	struct u_cmode_info *info;
+	u_cmode_info *info;
 	char *s = buf;
 
 	*s++ = '+';
@@ -218,8 +218,8 @@ struct u_chan *c;
 }
 
 void u_chan_send_topic(c, u)
-struct u_chan *c;
-struct u_user *u;
+u_chan *c;
+u_user *u;
 {
 	if (c->topic[0]) {
 		u_user_num(u, RPL_TOPIC, c->name, c->topic);
@@ -231,16 +231,16 @@ struct u_user *u;
 }
 
 struct send_names_priv {
-	struct u_chan *c;
-	struct u_user *u;
+	u_chan *c;
+	u_user *u;
 	char pfx, *s, buf[512];
 	unsigned w;
 };
 
 void send_names_cb(map, u, cu, priv)
-struct u_map *map;
-struct u_user *u;
-struct u_chanuser *cu;
+u_map *map;
+u_user *u;
+u_chanuser *cu;
 struct send_names_priv *priv;
 {
 	char *p, nbuf[MAXNICKLEN+3];
@@ -261,8 +261,8 @@ struct send_names_priv *priv;
 /* :my.name 353 nick = #chan :...
    *       *****    ***     **  = 11 */
 void u_chan_send_names(c, u)
-struct u_chan *c;
-struct u_user *u;
+u_chan *c;
+u_user *u;
 {
 	struct send_names_priv priv;
 
@@ -279,11 +279,11 @@ struct u_user *u;
 }
 
 /* XXX: assumes the chanuser doesn't already exist */
-struct u_chanuser *u_chan_user_add(c, u)
-struct u_chan *c;
-struct u_user *u;
+u_chanuser *u_chan_user_add(c, u)
+u_chan *c;
+u_user *u;
 {
-	struct u_chanuser *cu;
+	u_chanuser *cu;
 
 	cu = malloc(sizeof(*cu));
 	cu->flags = 0;
@@ -297,15 +297,15 @@ struct u_user *u;
 }
 
 void u_chan_user_del(cu)
-struct u_chanuser *cu;
+u_chanuser *cu;
 {
 	u_map_del(cu->c->members, cu->u);
 	free(cu);
 }
 
-struct u_chanuser *u_chan_user_find(c, u)
-struct u_chan *c;
-struct u_user *u;
+u_chanuser *u_chan_user_find(c, u)
+u_chan *c;
+u_user *u;
 {
 	return u_map_get(c->members, u);
 }

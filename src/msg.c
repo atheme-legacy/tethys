@@ -25,7 +25,7 @@ char *s;
 }
 
 int u_msg_parse(msg, s)
-struct u_msg *msg;
+u_msg *msg;
 char *s;
 {
 	s = ws_skip(s);
@@ -58,10 +58,10 @@ char *s;
 }
 
 
-static struct u_trie *commands[CTX_MAX];
+static u_trie *commands[CTX_MAX];
 
 int reg_one_real(cmd, ctx)
-struct u_cmd *cmd;
+u_cmd *cmd;
 int ctx;
 {
 	if (u_trie_get(commands[ctx], cmd->name))
@@ -72,7 +72,7 @@ int ctx;
 }
 
 int reg_one(cmd)
-struct u_cmd *cmd;
+u_cmd *cmd;
 {
 	int i, err;
 
@@ -87,7 +87,7 @@ struct u_cmd *cmd;
 }
 
 int u_cmds_reg(cmds)
-struct u_cmd *cmds;
+u_cmd *cmds;
 {
 	int err;
 	for (; cmds->name[0]; cmds++) {
@@ -98,10 +98,10 @@ struct u_cmd *cmds;
 }
 
 void u_cmd_invoke(conn, msg)
-struct u_conn *conn;
-struct u_msg *msg;
+u_conn *conn;
+u_msg *msg;
 {
-	struct u_cmd *cmd;
+	u_cmd *cmd;
 
 	cmd = u_trie_get(commands[conn->ctx], msg->command);
 

@@ -8,8 +8,8 @@
 
 /* XXX this is wrong */
 static void m_ping(conn, msg)
-struct u_conn *conn;
-struct u_msg *msg;
+u_conn *conn;
+u_msg *msg;
 {
 	if (msg->command[1] == 'O') /* PONG */
 		return;
@@ -18,27 +18,27 @@ struct u_msg *msg;
 }
 
 static void m_version(conn, msg)
-struct u_conn *conn;
-struct u_msg *msg;
+u_conn *conn;
+u_msg *msg;
 {
-	struct u_user *u = conn->priv;
+	u_user *u = conn->priv;
 	u_user_num(u, RPL_VERSION, PACKAGE_FULLNAME, me.name, "hi");
 }
 
 static void m_motd(conn, msg)
-struct u_conn *conn;
-struct u_msg *msg;
+u_conn *conn;
+u_msg *msg;
 {
-	struct u_user *u = conn->priv;
+	u_user *u = conn->priv;
 	u_user_send_motd(u);
 }
 
 static void m_message_chan(conn, msg)
-struct u_conn *conn;
-struct u_msg *msg;
+u_conn *conn;
+u_msg *msg;
 {
-	struct u_user *src = conn->priv;
-	struct u_chan *tgt;
+	u_user *src = conn->priv;
+	u_chan *tgt;
 
 	tgt = u_chan_get(msg->argv[0]);
 	if (tgt == NULL) {
@@ -53,11 +53,11 @@ struct u_msg *msg;
 }
 
 static void m_message_user(conn, msg)
-struct u_conn *conn;
-struct u_msg *msg;
+u_conn *conn;
+u_msg *msg;
 {
-	struct u_user *src = conn->priv;
-	struct u_user *tgt;
+	u_user *src = conn->priv;
+	u_user *tgt;
 
 	tgt = u_user_by_nick(msg->argv[0]);
 	if (tgt == NULL) {
@@ -68,7 +68,7 @@ struct u_msg *msg;
 	u_log(LG_DEBUG, "[%s -> %s] %s", src->nick, tgt->nick, msg->argv[1]);
 
 	if (tgt->flags & USER_IS_LOCAL) {
-		u_conn_f(((struct u_user_local*)tgt)->conn,
+		u_conn_f(((u_user_local*)tgt)->conn,
 		         ":%s!%s@%s %s %s :%s", src->nick, src->ident, src->host,
 		         msg->command, tgt->nick, msg->argv[1]);
 	} else {
@@ -77,8 +77,8 @@ struct u_msg *msg;
 }
 
 static void m_message(conn, msg)
-struct u_conn *conn;
-struct u_msg *msg;
+u_conn *conn;
+u_msg *msg;
 {
 
 	if (msg->argv[0][0] == '#')
@@ -88,12 +88,12 @@ struct u_msg *msg;
 }
 
 static void m_join(conn, msg)
-struct u_conn *conn;
-struct u_msg *msg;
+u_conn *conn;
+u_msg *msg;
 {
-	struct u_user *u = conn->priv;
-	struct u_chan *c;
-	struct u_chanuser *cu;
+	u_user *u = conn->priv;
+	u_chan *c;
+	u_chanuser *cu;
 
 	c = u_chan_get_or_create(msg->argv[0]);
 
@@ -120,11 +120,11 @@ struct u_msg *msg;
 }
 
 static void m_topic(conn, msg)
-struct u_conn *conn;
-struct u_msg *msg;
+u_conn *conn;
+u_msg *msg;
 {
-	struct u_user *u = conn->priv;
-	struct u_chan *c;
+	u_user *u = conn->priv;
+	u_chan *c;
 
 	c = u_chan_get(msg->argv[0]);
 	if (c == NULL) {
@@ -148,11 +148,11 @@ struct u_msg *msg;
 }
 
 static void m_names(conn, msg)
-struct u_conn *conn;
-struct u_msg *msg;
+u_conn *conn;
+u_msg *msg;
 {
-	struct u_user *u = conn->priv;
-	struct u_chan *c;
+	u_user *u = conn->priv;
+	u_chan *c;
 
 	/* TODO: no arguments version */
 	if (msg->argc == 0)
@@ -167,7 +167,7 @@ struct u_msg *msg;
 	u_chan_send_names(c, u);
 }
 
-struct u_cmd c_user[] = {
+u_cmd c_user[] = {
 	{ "PING",    CTX_USER, m_ping,    1 },
 	{ "PONG",    CTX_USER, m_ping,    0 },
 	{ "VERSION", CTX_USER, m_version, 0 },

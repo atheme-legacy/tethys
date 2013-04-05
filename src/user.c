@@ -6,7 +6,7 @@
 
 #include "ircd.h"
 
-static struct u_umode_info __umodes[32] = {
+static u_umode_info __umodes[32] = {
 	{ 'o', UMODE_OPER },
 	{ 'i', UMODE_INVISIBLE },
 	{ 'w', UMODE_WALLOPS },
@@ -14,11 +14,11 @@ static struct u_umode_info __umodes[32] = {
 	{ 0, 0 }
 };
 
-struct u_umode_info *umodes = __umodes;
+u_umode_info *umodes = __umodes;
 unsigned umode_default = UMODE_INVISIBLE;
 
-struct u_trie *users_by_nick;
-struct u_trie *users_by_uid;
+u_trie *users_by_nick;
+u_trie *users_by_uid;
 
 char *id_map = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 int id_modulus = 36; /* just strlen(uid_map) */
@@ -42,15 +42,15 @@ char *id_next()
 
 /* used to simplify user_local_event */
 void user_local_die(conn, msg)
-struct u_conn *conn;
+u_conn *conn;
 char *msg;
 {
-	struct u_user *u = conn->priv;
+	u_user *u = conn->priv;
 	u_user_quit(u, msg);
 }
 
 void user_local_event(conn, event)
-struct u_conn *conn;
+u_conn *conn;
 {
 	switch (event) {
 	case EV_ERROR:
@@ -66,10 +66,10 @@ struct u_conn *conn;
 }
 
 void u_user_make_ureg(conn)
-struct u_conn *conn;
+u_conn *conn;
 {
-	struct u_user_local *ul;
-	struct u_user *u;
+	u_user_local *ul;
+	u_user *u;
 
 	if (conn->ctx != CTX_UNREG && conn->ctx != CTX_UREG)
 		return;
@@ -102,19 +102,19 @@ struct u_conn *conn;
 }
 
 void user_quit_cb(map, c, cu, priv)
-struct u_map *map;
-struct u_chan *c;
-struct u_chanuser *cu;
+u_map *map;
+u_chan *c;
+u_chanuser *cu;
 void *priv;
 {
 	u_chan_user_del(cu);
 }
 
 void u_user_quit(u, msg)
-struct u_user *u;
+u_user *u;
 char *msg;
 {
-	struct u_conn *conn = u_user_conn(u);
+	u_conn *conn = u_user_conn(u);
 
 	if (u_user_state(u, 0) == USER_DISCONNECTED)
 		return;
@@ -139,30 +139,30 @@ char *msg;
 	u_trie_del(users_by_uid, u->uid);
 }
 
-struct u_conn *u_user_conn(u)
-struct u_user *u;
+u_conn *u_user_conn(u)
+u_user *u;
 {
 	if (u->flags & USER_IS_LOCAL) {
-		return ((struct u_user_local*)u)->conn;
+		return ((u_user_local*)u)->conn;
 	} else {
-		return ((struct u_user_remote*)u)->server->conn;
+		return ((u_user_remote*)u)->server->conn;
 	}
 }
 
-struct u_user *u_user_by_nick(nick)
+u_user *u_user_by_nick(nick)
 char *nick;
 {
 	return u_trie_get(users_by_nick, nick);
 }
 
-struct u_user *u_user_by_uid(uid)
+u_user *u_user_by_uid(uid)
 char *uid;
 {
 	return u_trie_get(users_by_uid, uid);
 }
 
 void u_user_set_nick(u, nick)
-struct u_user *u;
+u_user *u;
 char *nick;
 {
 	if (u->nick[0])
@@ -172,7 +172,7 @@ char *nick;
 }
 
 unsigned u_user_state(u, state)
-struct u_user *u;
+u_user *u;
 unsigned state;
 {
 	if (state & USER_MASK_STATE) {
@@ -184,17 +184,17 @@ unsigned state;
 }
 
 void u_user_vnum(u, num, va)
-struct u_user *u;
+u_user *u;
 int num;
 va_list va;
 {
-	struct u_conn *conn;
+	u_conn *conn;
 	char *nick = u->nick;
 	if (!*nick)
 		nick = "*";
 
 	if (u->flags & USER_IS_LOCAL) {
-		conn = ((struct u_user_local*)u)->conn;
+		conn = ((u_user_local*)u)->conn;
 	} else {
 		u_log(LG_SEVERE, "Can't send numerics to remote users yet!");
 		return;
@@ -204,10 +204,10 @@ va_list va;
 }
 
 #ifdef STDARG
-void u_user_num(struct u_user *u, int num, ...)
+void u_user_num(u_user *u, int num, ...)
 #else
 void u_user_num(u, num, va_alist)
-struct u_user *u;
+u_user *u;
 int num;
 va_dcl
 #endif
@@ -219,23 +219,23 @@ va_dcl
 }
 
 void u_user_welcome(ul)
-struct u_user_local *ul;
+u_user_local *ul;
 {
-	struct u_user *u = USER(ul);
+	u_user *u = USER(ul);
 
 	u_user_state(u, USER_CONNECTED);
 	ul->conn->ctx = CTX_USER;
 
 	u_user_num(u, RPL_WELCOME, my_net_name, u->nick);
 	u_user_num(u, RPL_YOURHOST, me.name, PACKAGE_FULLNAME);
-	u_user_send_motd((struct u_user_local*)u);
+	u_user_send_motd((u_user_local*)u);
 }
 
 void u_user_send_motd(ul)
-struct u_user_local *ul;
+u_user_local *ul;
 {
-	struct u_list *n;
-	struct u_user *u = USER(ul);
+	u_list *n;
+	u_user *u = USER(ul);
 
 	if (u_list_is_empty(&my_motd)) {
 		u_user_num(u, ERR_NOMOTD);

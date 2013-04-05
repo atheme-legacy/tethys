@@ -6,7 +6,7 @@
 
 #include "ircd.h"
 
-static struct u_cookie ck_sendto;
+static u_cookie ck_sendto;
 
 static void start()
 {
@@ -14,19 +14,19 @@ static void start()
 }
 
 static void exclude(conn)
-struct u_conn *conn;
+u_conn *conn;
 {
 	if (u_cookie_cmp(&conn->ck_sendto, &ck_sendto) < 0)
 		u_cookie_cpy(&conn->ck_sendto, &ck_sendto);
 }
 
 static void sendto_chan_cb(map, u, cu, buf)
-struct u_map *map;
-struct u_user *u;
-struct u_chanuser *cu;
+u_map *map;
+u_user *u;
+u_chanuser *cu;
 char *buf;
 {
-	struct u_conn *conn = u_user_conn(u);
+	u_conn *conn = u_user_conn(u);
 
 	if (!u_cookie_cmp(&conn->ck_sendto, &ck_sendto))
 		return;
@@ -36,11 +36,11 @@ char *buf;
 }
 
 #ifdef STDARG
-void u_sendto_chan(struct u_chan *c, struct u_conn *conn, char *fmt, ...)
+void u_sendto_chan(u_chan *c, u_conn *conn, char *fmt, ...)
 #else
 void u_sendto_chan(c, conn, fmt, va_alist)
-struct u_chan *c;
-struct u_conn *conn;
+u_chan *c;
+u_conn *conn;
 char *fmt;
 va_dcl
 #endif
@@ -61,19 +61,19 @@ va_dcl
 }
 
 static void sendto_visible_cb(map, c, cu, buf)
-struct u_map *map;
-struct u_chan *c;
-struct u_chanuser *cu;
+u_map *map;
+u_chan *c;
+u_chanuser *cu;
 char *buf;
 {
 	u_map_each(c->members, sendto_chan_cb, buf);
 }
 
 #ifdef STDARG
-void u_sendto_visible(struct u_user *u, char *fmt, ...)
+void u_sendto_visible(u_user *u, char *fmt, ...)
 #else
 void u_sendto_visible(u, fmt, va_alist)
-struct u_user *u;
+u_user *u;
 char *fmt;
 va_dcl
 #endif

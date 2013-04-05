@@ -9,6 +9,8 @@
 
 #define U_LINEBUF_SIZE 1024
 
+typedef struct u_linebuf u_linebuf;
+
 struct u_linebuf {
 	char buf[U_LINEBUF_SIZE];
 	unsigned pos;

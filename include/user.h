@@ -35,6 +35,11 @@
 #define USER_CONNECTED         0x03000000
 #define USER_DISCONNECTED      0x04000000
 
+typedef struct u_umode_info u_umode_info;
+typedef struct u_user u_user;
+typedef struct u_user_local u_user_local;
+typedef struct u_user_remote u_user_remote;
+
 struct u_umode_info {
 	char ch;
 	unsigned mask;
@@ -48,37 +53,37 @@ struct u_user {
 	char gecos[MAXGECOS+1];
 
 	unsigned flags;
-	struct u_map *channels;
+	u_map *channels;
 };
 
 struct u_user_local {
-	struct u_user user;
-	struct u_conn *conn;
+	u_user user;
+	u_conn *conn;
 };
 
 struct u_user_remote {
-	struct u_user user;
-	struct u_server *server;
+	u_user user;
+	u_server *server;
 };
 
-#define USER(U) ((struct u_user*)(U))
+#define USER(U) ((u_user*)(U))
 
-extern struct u_umode_info *umodes;
+extern u_umode_info *umodes;
 extern unsigned umode_default;
 
 extern void u_user_make_ureg(); /* u_conn* */
 extern void u_user_quit(); /* u_user*, char* */
 
-extern struct u_conn *u_user_conn(); /* u_user* */
+extern u_conn *u_user_conn(); /* u_user* */
 
-extern struct u_user *u_user_by_nick(); /* char* */
-extern struct u_user *u_user_by_uid(); /* char* */
+extern u_user *u_user_by_nick(); /* char* */
+extern u_user *u_user_by_uid(); /* char* */
 
-extern void u_user_set_nick(); /* struct u_user*, char* */
-extern unsigned u_user_state(); /* struct u_user*, unsigned */
+extern void u_user_set_nick(); /* u_user*, char* */
+extern unsigned u_user_state(); /* u_user*, unsigned */
 
 extern void u_user_vnum(); /* u_user*, int, va_list */
-extern void u_user_num(A3(struct u_user*, int num, ...));
+extern void u_user_num(A3(u_user*, int num, ...));
 
 extern void u_user_welcome(); /* u_user_local* */
 extern void u_user_send_motd(); /* u_user_local* */

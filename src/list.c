@@ -14,7 +14,7 @@
 #define YIELD return
 #define RETURN return
 #define FAILURE return NULL
-#define NODE struct u_list
+#define NODE u_list
 #define PTR *
 #define REF void*
 #define FIELD ->

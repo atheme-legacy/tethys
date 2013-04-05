@@ -8,10 +8,10 @@
 
 static void __null_canonize(s) { }
 
-static struct u_trie_e *trie_e_new(up)
-struct u_trie_e *up;
+static u_trie_e *trie_e_new(up)
+u_trie_e *up;
 {
-	struct u_trie_e *e;
+	u_trie_e *e;
 	int i;
 
 	e = malloc(sizeof(*e));
@@ -24,15 +24,15 @@ struct u_trie_e *up;
 }
 
 static void trie_e_del(e)
-struct u_trie_e *e;
+u_trie_e *e;
 {
 	free(e);
 }
 
-struct u_trie *u_trie_new(canonize)
+u_trie *u_trie_new(canonize)
 void (*canonize)();
 {
-	struct u_trie *trie;
+	u_trie *trie;
 	int i;
 
 	trie = malloc(sizeof(*trie));
@@ -52,12 +52,12 @@ unsigned char *s;
 	return (i%2==0) ? s[i/2]>>4 : s[i/2]&0xf;
 }
 
-static struct u_trie_e *retrieval(trie, tkey, create)
-struct u_trie *trie;
+static u_trie_e *retrieval(trie, tkey, create)
+u_trie *trie;
 char *tkey;
 int create;
 {
-	struct u_trie_e *n;
+	u_trie_e *n;
 	char key[U_TRIE_KEY_MAX];
 	unsigned int c, nib = 0; /* even=high, odd=low */
 
@@ -85,28 +85,28 @@ int create;
 }
 
 void u_trie_set(trie, key, val)
-struct u_trie *trie;
+u_trie *trie;
 char *key;
 void *val;
 {
-	struct u_trie_e *n = retrieval(trie, key, 1);
+	u_trie_e *n = retrieval(trie, key, 1);
 	u_log(LG_FINE, "TRIE:SET: [%p] %s", trie, key);
 	n->val = val;
 }
 
 void *u_trie_get(trie, key)
-struct u_trie *trie;
+u_trie *trie;
 char *key;
 {
-	struct u_trie_e *n = retrieval(trie, key, 0);
+	u_trie_e *n = retrieval(trie, key, 0);
 	return n ? n->val : NULL;
 }
 
 void *u_trie_del(trie, key)
-struct u_trie *trie;
+u_trie *trie;
 char *key;
 {
-	struct u_trie_e *prev, *cur;
+	u_trie_e *prev, *cur;
 	void *val;
 	int i, nempty;
 

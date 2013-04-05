@@ -6,13 +6,13 @@
 struct u_map_n {
 	void *key, *data;
 	enum u_map_color { RED, BLACK } color;
-	struct u_map_n *parent, *child[2];
+	u_map_n *parent, *child[2];
 };
 
-static struct u_map_n *u_map_n_new(key, data, color)
+static u_map_n *u_map_n_new(key, data, color)
 void *key, *data;
 {
-	struct u_map_n *n;
+	u_map_n *n;
 
 	n = malloc(sizeof(*n));
 	n->key = key;
@@ -26,14 +26,14 @@ void *key, *data;
 }
 
 static void u_map_n_del(n)
-struct u_map_n *n;
+u_map_n *n;
 {
 	free(n);
 }
 
-struct u_map *u_map_new()
+u_map *u_map_new()
 {
-	struct u_map *map;
+	u_map *map;
 
 	map = malloc(sizeof(*map));
 	if (map == NULL)
@@ -47,9 +47,9 @@ struct u_map *u_map_new()
 }
 
 void u_map_free(map)
-struct u_map *map;
+u_map *map;
 {
-	struct u_map_n *n, *tn;
+	u_map_n *n, *tn;
 
 	for (n=map->root; n; ) {
 		if (n->child[LEFT]) {
@@ -76,11 +76,11 @@ struct u_map *map;
    if you try to delete the node you're currently visiting (or any
    other node, for that matter). */
 void u_map_each(map, cb, priv)
-struct u_map *map;
+u_map *map;
 void (*cb)();
 void *priv;
 {
-	struct u_map_n *cur, *child, cpy;
+	u_map_n *cur, *child, cpy;
 	int idx;
 
 	if ((cur = map->root) == NULL)
@@ -121,11 +121,11 @@ loop_top:
 /* dumb functions are just standard binary search tree operations that
    don't pay attention to the colors of the nodes */
 
-static struct u_map_n *dumb_fetch(map, key)
-struct u_map *map;
+static u_map_n *dumb_fetch(map, key)
+u_map *map;
 void *key;
 {
-	struct u_map_n *n = map->root;
+	u_map_n *n = map->root;
 
 	while (n != NULL) {
 		if (n->key == key)
@@ -137,10 +137,10 @@ void *key;
 }
 
 static void dumb_insert(map, n)
-struct u_map *map;
-struct u_map_n *n;
+u_map *map;
+u_map_n *n;
 {
-	struct u_map_n *cur;
+	u_map_n *cur;
 	int idx;
 
 	if (map->root == NULL) {
@@ -162,20 +162,20 @@ struct u_map_n *n;
 	}
 }
 
-static struct u_map_n *leftmost_subchild(n)
-struct u_map_n *n;
+static u_map_n *leftmost_subchild(n)
+u_map_n *n;
 {
 	while (n && n->child[LEFT])
 		n = n->child[LEFT];
 	return n;
 }
 
-static struct u_map_n *dumb_delete(map, n)
-struct u_map *map;
-struct u_map_n *n;
+static u_map_n *dumb_delete(map, n)
+u_map *map;
+u_map_n *n;
 {
 	int idx;
-	struct u_map_n *tgt;
+	u_map_n *tgt;
 
 	if (n->child[LEFT] == NULL && n->child[RIGHT] == NULL) {
 		if (n->parent == NULL) {
@@ -216,18 +216,18 @@ struct u_map_n *n;
 }
 
 void *u_map_get(map, key)
-struct u_map *map;
+u_map *map;
 void *key;
 {
-	struct u_map_n *n = dumb_fetch(map, key);
+	u_map_n *n = dumb_fetch(map, key);
 	return n == NULL ? NULL : n->data;
 }
 
 void u_map_set(map, key, data)
-struct u_map *map;
+u_map *map;
 void *key, *data;
 {
-	struct u_map_n *n = dumb_fetch(map, key);
+	u_map_n *n = dumb_fetch(map, key);
 
 	if (n != NULL) {
 		n->data = data;
@@ -243,10 +243,10 @@ void *key, *data;
 }
 
 void *u_map_del(map, key)
-struct u_map *map;
+u_map *map;
 void *key;
 {
-	struct u_map_n *s, *n = dumb_fetch(map, key);
+	u_map_n *s, *n = dumb_fetch(map, key);
 	void *data;
 
 	if (n == NULL)
@@ -273,7 +273,7 @@ static void indent(depth)
 }
 
 static void map_dump_real(n, depth)
-struct u_map_n *n;
+u_map_n *n;
 int depth;
 {
 	if (n == NULL) {
@@ -297,7 +297,7 @@ int depth;
 }
 
 void u_map_dump(map)
-struct u_map *map;
+u_map *map;
 {
 	map_dump_real(map->root, 1);
 	printf("\n\n");

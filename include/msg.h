@@ -10,6 +10,8 @@
 /* from jilles' ts6.txt */
 #define U_MSG_MAXARGS 15
 
+typedef struct u_msg u_msg;
+
 struct u_msg {
 	char *source;
 	char *command;
@@ -22,6 +24,8 @@ extern int u_msg_parse(); /* u_msg*, char* */
 
 #define MAXCOMMANDLEN 16
 
+typedef struct u_cmd u_cmd;
+
 /* use -1 for ctx to invoke command in all contexes */
 struct u_cmd {
 	char name[MAXCOMMANDLEN+1];
@@ -30,7 +34,7 @@ struct u_cmd {
 	int nargs;
 };
 
-extern int u_cmds_reg(); /* struct u_cmd*, terminated with empty name */
+extern int u_cmds_reg(); /* u_cmd*, terminated with empty name */
 extern void u_cmd_invoke(); /* u_conn*, u_msg* */
 
 extern int init_cmd();

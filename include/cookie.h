@@ -7,6 +7,8 @@
 #ifndef __INC_COOKIE_H__
 #define __INC_COOKIE_H__
 
+typedef struct u_cookie u_cookie;
+
 struct u_cookie {
 	unsigned long high, low;
 };

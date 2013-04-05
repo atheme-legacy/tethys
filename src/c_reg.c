@@ -7,15 +7,15 @@
 #include "ircd.h"
 
 static void err_already(conn, msg)
-struct u_conn *conn;
-struct u_msg *msg;
+u_conn *conn;
+u_msg *msg;
 {
 	u_conn_num(conn, ERR_ALREADYREGISTERED);
 }
 
 static void m_pass(conn, msg)
-struct u_conn *conn;
-struct u_msg *msg;
+u_conn *conn;
+u_msg *msg;
 {
 	if (conn->pass != NULL)
 		free(conn->pass);
@@ -24,9 +24,9 @@ struct u_msg *msg;
 }
 
 static void try_reg(conn)
-struct u_conn *conn;
+u_conn *conn;
 {
-	struct u_user *u = conn->priv;
+	u_user *u = conn->priv;
 
 	if (u_user_state(u, 0) != USER_REGISTERING || !u->nick[0]
 			|| !u->ident[0] || !u->gecos[0])
@@ -36,10 +36,10 @@ struct u_conn *conn;
 }
 
 static void m_nick(conn, msg)
-struct u_conn *conn;
-struct u_msg *msg;
+u_conn *conn;
+u_msg *msg;
 {
-	struct u_user_local *ul;
+	u_user_local *ul;
 	char buf[MAXNICKLEN+1];
 
 	u_user_make_ureg(conn);
@@ -63,10 +63,10 @@ struct u_msg *msg;
 }
 
 static void m_user(conn, msg)
-struct u_conn *conn;
-struct u_msg *msg;
+u_conn *conn;
+u_msg *msg;
 {
-	struct u_user_local *ul;
+	u_user_local *ul;
 	char buf[MAXIDENT+1];
 
 	u_user_make_ureg(conn);
@@ -84,7 +84,7 @@ struct u_msg *msg;
 }
 
 static int cap_add(u, cap)
-struct u_user *u;
+u_user *u;
 char *cap;
 {
 	char *s;
@@ -103,12 +103,12 @@ char *cap;
 }
 
 static void m_cap(conn, msg)
-struct u_conn *conn;
-struct u_msg *msg;
+u_conn *conn;
+u_msg *msg;
 {
 	char ackbuf[BUFSIZE];
 	char nakbuf[BUFSIZE];
-	struct u_user_local *ul;
+	u_user_local *ul;
 	char *s, *p, *q;
 
 	u_user_make_ureg(conn);
@@ -150,7 +150,7 @@ struct u_msg *msg;
 	try_reg(conn);
 }
 
-struct u_cmd c_reg[] = {
+u_cmd c_reg[] = {
 	{ "PASS", CTX_UNREG,  m_pass, 1 },
 	{ "PASS", CTX_UREG,   m_pass, 1 },
 	{ "PASS", CTX_USER,   err_already, 0 },

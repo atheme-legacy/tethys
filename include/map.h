@@ -7,16 +7,17 @@
 #ifndef __INC_MAP_H__
 #define __INC_MAP_H__
 
+typedef struct u_map u_map;
 /* defined internally */
-struct u_map_n;
+typedef struct u_map_n u_map_n;
 
 struct u_map {
 	int traversing;
-	struct u_map_n *root;
+	u_map_n *root;
 	unsigned size;
 };
 
-extern struct u_map *u_map_new();
+extern u_map *u_map_new();
 extern void u_map_free(); /* u_map* */
 /* u_map*, void (*cb)(u_map*, void *k, void *v, void*), void* */
 extern void u_map_each();

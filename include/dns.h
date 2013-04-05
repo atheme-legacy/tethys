@@ -15,7 +15,7 @@
 #define DNS_TOOLONG   4   /* request too long */
 #define DNS_OTHER     5   /* some other error */
 
-extern void u_dns_use_io(); /* struct u_io* */
+extern void u_dns_use_io(); /* u_io* */
 
 /* cb(status, res, priv) */
 extern unsigned short u_dns(); /* char*, void (*cb)(), void *priv */

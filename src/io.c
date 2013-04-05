@@ -84,7 +84,7 @@ struct timeval *a, *b;
 }
 
 void u_io_init(io)
-struct u_io *io;
+u_io *io;
 {
 	io->running = 0;
 	u_list_init(&io->fds);
@@ -92,13 +92,13 @@ struct u_io *io;
 	gettimeofday(&NOW, NULL);
 }
 
-struct u_io_fd *u_io_add_fd(io, fd)
-struct u_io *io;
+u_io_fd *u_io_add_fd(io, fd)
+u_io *io;
 int fd;
 {
-	struct u_io_fd *iofd;
+	u_io_fd *iofd;
 
-	iofd = (struct u_io_fd*)malloc(sizeof(*iofd));
+	iofd = (u_io_fd*)malloc(sizeof(*iofd));
 	iofd->io = io;
 	iofd->fd = fd;
 
@@ -114,23 +114,23 @@ int fd;
 }
 
 void u_io_del_fd(io, iofd)
-struct u_io *io;
-struct u_io_fd *iofd;
+u_io *io;
+u_io_fd *iofd;
 {
 	u_log(LG_FINE, "IO: --- FD=%3d [%p]", iofd->fd, iofd);
 	u_list_del_n(iofd->n);
 	free(iofd);
 }
 
-struct u_io_timer *u_io_add_timer(io, sec, usec, cb, priv)
-struct u_io *io;
+u_io_timer *u_io_add_timer(io, sec, usec, cb, priv)
+u_io *io;
 unsigned long sec, usec;
 void (*cb)();
 void *priv;
 {
-	struct u_io_timer *iot;
+	u_io_timer *iot;
 
-	iot = (struct u_io_timer*)malloc(sizeof(*iot));
+	iot = (u_io_timer*)malloc(sizeof(*iot));
 
 	iot->n = u_list_add(&io->timers, iot);
 	if (iot->n == NULL) {
@@ -149,19 +149,19 @@ void *priv;
 }
 
 void u_io_del_timer(iot)
-struct u_io_timer *iot;
+u_io_timer *iot;
 {
 	tv_clear(&iot->time);
 }
 
 void u_io_poll_once(io)
-struct u_io *io;
+u_io *io;
 {
 	fd_set r, w;
 	int nfds;
-	struct u_list *n, *tn;
-	struct u_io_timer *iot;
-	struct u_io_fd *iofd;
+	u_list *n, *tn;
+	u_io_timer *iot;
+	u_io_fd *iofd;
 	struct timeval tv, *tvp;
 
 	FD_ZERO(&r);
@@ -233,13 +233,13 @@ struct u_io *io;
 }
 
 void u_io_poll_break(io)
-struct u_io *io;
+u_io *io;
 {
 	io->running = 0;
 }
 
 void u_io_poll(io)
-struct u_io *io;
+u_io *io;
 {
 	io->running = 1;
 

@@ -7,13 +7,13 @@
 #include "ircd.h"
 
 void u_linebuf_init(lb)
-struct u_linebuf *lb;
+u_linebuf *lb;
 {
 	lb->pos = 0;
 }
 
 int u_linebuf_data(lb, data, size)
-struct u_linebuf *lb;
+u_linebuf *lb;
 char *data;
 int size;
 {
@@ -25,7 +25,7 @@ int size;
 }
 
 int u_linebuf_line(lb, dest, size)
-struct u_linebuf *lb;
+u_linebuf *lb;
 char *dest;
 int size;
 {

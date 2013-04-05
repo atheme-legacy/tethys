@@ -57,7 +57,7 @@ extern void u_conf_read();
 
    */
 
-extern struct u_trie *u_conf_handlers;
+extern u_trie *u_conf_handlers;
 extern int init_conf();
 
 #endif

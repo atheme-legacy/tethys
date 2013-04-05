@@ -6,7 +6,7 @@
 
 #include "ircd.h"
 
-struct u_trie *u_conf_handlers = NULL;
+u_trie *u_conf_handlers = NULL;
 
 void do_cb(key, val)
 char *key, *val;

@@ -6,8 +6,8 @@
 
 #include "ircd.h"
 
-struct u_server me;
-struct u_list my_motd;
+u_server me;
+u_list my_motd;
 char my_net_name[MAXNETNAME+1];
 
 void server_conf(key, val)

@@ -7,15 +7,19 @@
 #ifndef __INC_IO_H__
 #define __INC_IO_H__
 
+typedef struct u_io u_io;
+typedef struct u_io_fd u_io_fd;
+typedef struct u_io_timer u_io_timer;
+
 struct u_io {
 	int running;
-	struct u_list fds;
-	struct u_list timers;
+	u_list fds;
+	u_list timers;
 };
 
 struct u_io_fd {
-	struct u_io *io;
-	struct u_list *n;
+	u_io *io;
+	u_list *n;
 	int fd;
 	void *priv;
 	/* all accept struct u_io_fd as the sole arg. if post returns <
@@ -26,8 +30,8 @@ struct u_io_fd {
 };
 
 struct u_io_timer {
-	struct u_io *io;
-	struct u_list *n;
+	u_io *io;
+	u_list *n;
 	struct timeval time;
 	/* u_io_timer* */
 	void (*cb)();
@@ -36,13 +40,13 @@ struct u_io_timer {
 
 extern struct timeval NOW;
 
-extern void u_io_init(); /* struct u_io* */
-extern struct u_io_fd *u_io_add_fd(); /* struct u_io*, int */
-extern struct u_io_timer *u_io_add_timer(); /* struct u_io*, sec, usec, cb, priv */
+extern void u_io_init(); /* u_io* */
+extern u_io_fd *u_io_add_fd(); /* u_io*, int */
+extern u_io_timer *u_io_add_timer(); /* u_io*, sec, usec, cb, priv */
 extern void u_io_del_timer(); /* u_io_timer* */
 
-extern void u_io_poll_once(); /* struct u_io* */
-extern void u_io_poll_break(); /* struct u_io* */
-extern void u_io_poll(); /* struct u_io* */
+extern void u_io_poll_once(); /* u_io* */
+extern void u_io_poll_break(); /* u_io* */
+extern void u_io_poll(); /* u_io* */
 
 #endif

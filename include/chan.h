@@ -27,6 +27,10 @@
 
 #define CU_MUTED           0x00010000
 
+typedef struct u_cmode_info u_cmode_info;
+typedef struct u_chan u_chan;
+typedef struct u_chanuser u_chanuser;
+
 struct u_cmode_info {
 	char ch;
 	/* int cb(u_cmode_info*, u_chan*, on, char *(*getarg)())
@@ -43,34 +47,34 @@ struct u_chan {
 	char topic_setter[MAXNICKLEN+1];
 	u_ts_t topic_time;
 	unsigned mode;
-	struct u_cookie ck_flags;
-	struct u_map *members;
-	struct u_list ban, quiet, banex, invex;
+	u_cookie ck_flags;
+	u_map *members;
+	u_list ban, quiet, banex, invex;
 	char *forward, *key;
 };
 
 struct u_chanuser {
 	unsigned flags;
-	struct u_cookie ck_flags;
-	struct u_chan *c;
-	struct u_user *u;
+	u_cookie ck_flags;
+	u_chan *c;
+	u_user *u;
 };
 
-extern struct u_cmode_info *cmodes;
+extern u_cmode_info *cmodes;
 extern unsigned cmode_default;
 
-extern struct u_chan *u_chan_get(); /* char* */
-extern struct u_chan *u_chan_get_or_create(); /* char* */
-extern void u_chan_drop(); /* struct u_chan* */
+extern u_chan *u_chan_get(); /* char* */
+extern u_chan *u_chan_get_or_create(); /* char* */
+extern void u_chan_drop(); /* u_chan* */
 
-extern char *u_chan_modes(); /* struct u_chan* */
+extern char *u_chan_modes(); /* u_chan* */
 
 extern void u_chan_send_topic(); /* u_chan*, u_user* */
 extern void u_chan_send_names(); /* u_chan*, u_user* */
 
-extern struct u_chanuser *u_chan_user_add(); /* u_chan*, u_user* */
+extern u_chanuser *u_chan_user_add(); /* u_chan*, u_user* */
 extern void u_chan_user_del(); /* u_chanuser* */
-extern struct u_chanuser *u_chan_user_find(); /* u_chan*, u_user* */
+extern u_chanuser *u_chan_user_find(); /* u_chan*, u_user* */
 
 extern int init_chan();
 
