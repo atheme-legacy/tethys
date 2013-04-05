@@ -8,8 +8,7 @@
 
 static void __null_canonize(s) { }
 
-static u_trie_e *trie_e_new(up)
-u_trie_e *up;
+static u_trie_e *trie_e_new(up) u_trie_e *up;
 {
 	u_trie_e *e;
 	int i;
@@ -23,14 +22,12 @@ u_trie_e *up;
 	return e;
 }
 
-static void trie_e_del(e)
-u_trie_e *e;
+static void trie_e_del(e) u_trie_e *e;
 {
 	free(e);
 }
 
-u_trie *u_trie_new(canonize)
-void (*canonize)();
+u_trie *u_trie_new(canonize) void (*canonize)();
 {
 	u_trie *trie;
 	int i;
@@ -46,16 +43,12 @@ void (*canonize)();
 	return trie;
 }
 
-static unsigned char nibble(s, i)
-unsigned char *s;
+static unsigned char nibble(s, i) unsigned char *s;
 {
 	return (i%2==0) ? s[i/2]>>4 : s[i/2]&0xf;
 }
 
-static u_trie_e *retrieval(trie, tkey, create)
-u_trie *trie;
-char *tkey;
-int create;
+static u_trie_e *retrieval(trie, tkey, create) u_trie *trie; char *tkey;
 {
 	u_trie_e *n;
 	char key[U_TRIE_KEY_MAX];
@@ -84,27 +77,20 @@ int create;
 	return n;
 }
 
-void u_trie_set(trie, key, val)
-u_trie *trie;
-char *key;
-void *val;
+void u_trie_set(trie, key, val) u_trie *trie; char *key; void *val;
 {
 	u_trie_e *n = retrieval(trie, key, 1);
 	u_log(LG_FINE, "TRIE:SET: [%p] %s", trie, key);
 	n->val = val;
 }
 
-void *u_trie_get(trie, key)
-u_trie *trie;
-char *key;
+void *u_trie_get(trie, key) u_trie *trie; char *key;
 {
 	u_trie_e *n = retrieval(trie, key, 0);
 	return n ? n->val : NULL;
 }
 
-void *u_trie_del(trie, key)
-u_trie *trie;
-char *key;
+void *u_trie_del(trie, key) u_trie *trie; char *key;
 {
 	u_trie_e *prev, *cur;
 	void *val;

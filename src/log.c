@@ -6,9 +6,7 @@
 
 #include "ircd.h"
 
-void default_handler(level, line)
-int level;
-char *line;
+void default_handler(level, line) char *line;
 {
 	static char *prefix[] =
 		{ "=!= | SEVERE: ",
@@ -28,8 +26,7 @@ int u_log_level = LG_DEBUG;
 #ifdef STDARG
 void u_log(int level, char *fmt, ...)
 #else
-void u_log(level, fmt, va_alist)
-char *fmt; va_dcl
+void u_log(level, fmt, va_alist) char *fmt; va_dcl
 #endif
 {
 	char buf[BUFSIZE];

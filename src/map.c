@@ -9,8 +9,7 @@ struct u_map_n {
 	u_map_n *parent, *child[2];
 };
 
-static u_map_n *u_map_n_new(key, data, color)
-void *key, *data;
+static u_map_n *u_map_n_new(key, data, color) void *key, *data;
 {
 	u_map_n *n;
 
@@ -25,8 +24,7 @@ void *key, *data;
 	return n;
 }
 
-static void u_map_n_del(n)
-u_map_n *n;
+static void u_map_n_del(n) u_map_n *n;
 {
 	free(n);
 }
@@ -46,8 +44,7 @@ u_map *u_map_new()
 	return map;
 }
 
-void u_map_free(map)
-u_map *map;
+void u_map_free(map) u_map *map;
 {
 	u_map_n *n, *tn;
 
@@ -75,10 +72,7 @@ u_map *map;
 /* I'm inclined to claim this tree traversal algorithm won't complain
    if you try to delete the node you're currently visiting (or any
    other node, for that matter). */
-void u_map_each(map, cb, priv)
-u_map *map;
-void (*cb)();
-void *priv;
+void u_map_each(map, cb, priv) u_map *map; void (*cb)(); void *priv;
 {
 	u_map_n *cur, *child, cpy;
 	int idx;
@@ -121,9 +115,7 @@ loop_top:
 /* dumb functions are just standard binary search tree operations that
    don't pay attention to the colors of the nodes */
 
-static u_map_n *dumb_fetch(map, key)
-u_map *map;
-void *key;
+static u_map_n *dumb_fetch(map, key) u_map *map; void *key;
 {
 	u_map_n *n = map->root;
 
@@ -136,9 +128,7 @@ void *key;
 	return n;
 }
 
-static void dumb_insert(map, n)
-u_map *map;
-u_map_n *n;
+static void dumb_insert(map, n) u_map *map; u_map_n *n;
 {
 	u_map_n *cur;
 	int idx;
@@ -162,17 +152,14 @@ u_map_n *n;
 	}
 }
 
-static u_map_n *leftmost_subchild(n)
-u_map_n *n;
+static u_map_n *leftmost_subchild(n) u_map_n *n;
 {
 	while (n && n->child[LEFT])
 		n = n->child[LEFT];
 	return n;
 }
 
-static u_map_n *dumb_delete(map, n)
-u_map *map;
-u_map_n *n;
+static u_map_n *dumb_delete(map, n) u_map *map; u_map_n *n;
 {
 	int idx;
 	u_map_n *tgt;
@@ -215,17 +202,13 @@ u_map_n *n;
 	return dumb_delete(map, tgt);
 }
 
-void *u_map_get(map, key)
-u_map *map;
-void *key;
+void *u_map_get(map, key) u_map *map; void *key;
 {
 	u_map_n *n = dumb_fetch(map, key);
 	return n == NULL ? NULL : n->data;
 }
 
-void u_map_set(map, key, data)
-u_map *map;
-void *key, *data;
+void u_map_set(map, key, data) u_map *map; void *key, *data;
 {
 	u_map_n *n = dumb_fetch(map, key);
 
@@ -242,9 +225,7 @@ void *key, *data;
 	/* TODO: rb cases */
 }
 
-void *u_map_del(map, key)
-u_map *map;
-void *key;
+void *u_map_del(map, key) u_map *map; void *key;
 {
 	u_map_n *s, *n = dumb_fetch(map, key);
 	void *data;
@@ -272,9 +253,7 @@ static void indent(depth)
 		printf("  ");
 }
 
-static void map_dump_real(n, depth)
-u_map_n *n;
-int depth;
+static void map_dump_real(n, depth) u_map_n *n;
 {
 	if (n == NULL) {
 		printf("*");
@@ -296,8 +275,7 @@ int depth;
 	printf("]");
 }
 
-void u_map_dump(map)
-u_map *map;
+void u_map_dump(map) u_map *map;
 {
 	map_dump_real(map->root, 1);
 	printf("\n\n");

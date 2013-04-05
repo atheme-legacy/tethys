@@ -9,8 +9,7 @@
 static void origin_recv();
 static int toplev_post();
 
-void u_conn_init(conn)
-u_conn *conn;
+void u_conn_init(conn) u_conn *conn;
 {
 	conn->flags = 0;
 	conn->ctx = CTX_UNREG;
@@ -37,8 +36,7 @@ u_conn *conn;
 	conn->pass = NULL;
 }
 
-void u_conn_cleanup(conn)
-u_conn *conn;
+void u_conn_cleanup(conn) u_conn *conn;
 {
 	if (conn->dns_id)
 		u_dns_cancel(conn->dns_id);
@@ -48,9 +46,7 @@ u_conn *conn;
 }
 
 /* sadfaec */
-void u_conn_obufsize(conn, obufsize)
-u_conn *conn;
-int obufsize;
+void u_conn_obufsize(conn, obufsize) u_conn *conn;
 {
 	char *buf;
 
@@ -67,8 +63,7 @@ int obufsize;
 	conn->obufsize = obufsize;
 }
 
-void conn_out_clear(conn)
-u_conn *conn;
+void conn_out_clear(conn) u_conn *conn;
 {
 	char *s;
 
@@ -83,10 +78,7 @@ u_conn *conn;
 
 /* Some day I might write my own string formatter with my own special
    formatting things for use in IRC... but today is not that day */
-void u_conn_vf(conn, fmt, va)
-u_conn *conn;
-char *fmt;
-va_list va;
+void u_conn_vf(conn, fmt, va) u_conn *conn; char *fmt; va_list va;
 {
 	char buf[4096];
 	char *p, *s, *end;
@@ -118,10 +110,7 @@ va_list va;
 #ifdef STDARG
 void u_conn_f(u_conn *conn, char *fmt, ...)
 #else
-void u_conn_f(conn, fmt, va_alist)
-u_conn *conn;
-char *fmt;
-va_dcl
+void u_conn_f(conn, fmt, va_alist) u_conn *conn; char *fmt; va_dcl
 #endif
 {
 	va_list va;
@@ -130,11 +119,7 @@ va_dcl
 	va_end(va);
 }
 
-void u_conn_vnum(conn, nick, num, va)
-u_conn *conn;
-char *nick;
-int num;
-va_list va;
+void u_conn_vnum(conn, nick, num, va) u_conn *conn; char *nick; va_list va;
 {
 	char buf[4096];
 	char *fmt;
@@ -154,10 +139,7 @@ va_list va;
 #ifdef STDARG
 void u_conn_num(u_conn *conn, int num, ...)
 #else
-void u_conn_num(conn, num, va_alist)
-u_conn *conn;
-int num;
-va_dcl
+void u_conn_num(conn, num, va_alist) u_conn *conn; va_dcl
 #endif
 {
 	va_list va;
@@ -177,9 +159,7 @@ va_dcl
 	va_end(va);
 }
 
-void u_conn_error(conn, error)
-u_conn *conn;
-char *error;
+void u_conn_error(conn, error) u_conn *conn; char *error;
 {
 	if (conn->flags & U_CONN_CLOSING)
 		return;
@@ -190,9 +170,7 @@ char *error;
 }
 
 u_conn_origin *u_conn_origin_create(io, addr, port)
-u_io *io;
-u_long addr;
-u_short port;
+u_io *io; u_long addr; u_short port;
 {
 	struct sockaddr_in sa;
 	u_conn_origin *orig;
@@ -234,8 +212,7 @@ out:
 	return NULL;
 }
 
-static void dispatch_lines(conn)
-u_conn *conn;
+static void dispatch_lines(conn) u_conn *conn;
 {
 	char buf[BUFSIZE];
 	u_msg msg;
@@ -254,10 +231,7 @@ u_conn *conn;
 	}
 }
 
-static void origin_rdns(status, name, priv)
-int status;
-char *name;
-void *priv;
+static void origin_rdns(status, name, priv) char *name; void *priv;
 {
 	u_conn *conn = priv;
 	int len;
@@ -281,8 +255,7 @@ void *priv;
 	dispatch_lines(conn);
 }
 
-static void origin_recv(sock)
-u_io_fd *sock;
+static void origin_recv(sock) u_io_fd *sock;
 {
 	u_io_fd *iofd;
 	u_conn *conn;
@@ -315,8 +288,7 @@ u_io_fd *sock;
 	u_log(LG_VERBOSE, "Connection from %s", conn->ip);
 }
 
-static void toplev_cleanup(iofd)
-u_io_fd *iofd;
+static void toplev_cleanup(iofd) u_io_fd *iofd;
 {
 	u_conn *conn = iofd->priv;
 	u_log(LG_VERBOSE, "%s disconnecting", conn->host);
@@ -327,8 +299,7 @@ u_io_fd *iofd;
 	free(conn);
 }
 
-static void toplev_recv(iofd)
-u_io_fd *iofd;
+static void toplev_recv(iofd) u_io_fd *iofd;
 {
 	u_conn *conn = iofd->priv;
 	char buf[1024];
@@ -350,8 +321,7 @@ u_io_fd *iofd;
 		dispatch_lines(conn);
 }
 
-static void toplev_send(iofd)
-u_io_fd *iofd;
+static void toplev_send(iofd) u_io_fd *iofd;
 {
 	u_conn *conn = iofd->priv;
 	int sz;
@@ -370,8 +340,7 @@ u_io_fd *iofd;
 	}
 }
 
-static int toplev_post(iofd)
-u_io_fd *iofd;
+static int toplev_post(iofd) u_io_fd *iofd;
 {
 	u_conn *conn = iofd->priv;
 

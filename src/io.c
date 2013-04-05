@@ -11,15 +11,14 @@
 
 struct timeval NOW;
 
-void tv_cpy(res, a) /* res = a */
-struct timeval *res, *a;
+/* res = a */
+void tv_cpy(res, a) struct timeval *res, *a;
 {
 	res->tv_sec = a->tv_sec;
 	res->tv_usec = a->tv_usec;
 }
 
-void tv_norm(tv)
-struct timeval *tv;
+void tv_norm(tv) struct timeval *tv;
 {
 	if (tv->tv_usec >= MILLION) {
 		tv->tv_sec += (int)(tv->tv_usec / MILLION);
@@ -33,8 +32,8 @@ struct timeval *tv;
 	}
 }
 
-void tv_add(a, b, res) /* res = a + b */
-struct timeval *a, *b, *res;
+/* res = a + b */
+void tv_add(a, b, res) struct timeval *a, *b, *res;
 {
 	res->tv_sec = a->tv_sec + b->tv_sec;
 	res->tv_usec = a->tv_usec + b->tv_sec;
@@ -44,8 +43,8 @@ struct timeval *a, *b, *res;
 	}
 }
 
-void tv_sub(a, b, res) /* res = a - b */
-struct timeval *a, *b, *res;
+/* res = a - b */
+void tv_sub(a, b, res) struct timeval *a, *b, *res;
 {
 	res->tv_sec = a->tv_sec - b->tv_sec;
 	res->tv_usec = a->tv_usec - b->tv_usec;
@@ -55,21 +54,18 @@ struct timeval *a, *b, *res;
 	}
 }
 
-void tv_clear(tv)
-struct timeval *tv;
+void tv_clear(tv) struct timeval *tv;
 {
 	tv->tv_sec = 0;
 	tv->tv_usec = 0;
 }
 
-int tv_isset(tv)
-struct timeval *tv;
+int tv_isset(tv) struct timeval *tv;
 {
 	return tv->tv_sec != 0 || tv->tv_usec != 0;
 }
 
-int tv_cmp(a, b)
-struct timeval *a, *b;
+int tv_cmp(a, b) struct timeval *a, *b;
 {
 	long x, y;
 	x = a->tv_sec;
@@ -83,8 +79,7 @@ struct timeval *a, *b;
 	return x < y ? -1 : 1;
 }
 
-void u_io_init(io)
-u_io *io;
+void u_io_init(io) u_io *io;
 {
 	io->running = 0;
 	u_list_init(&io->fds);
@@ -92,9 +87,7 @@ u_io *io;
 	gettimeofday(&NOW, NULL);
 }
 
-u_io_fd *u_io_add_fd(io, fd)
-u_io *io;
-int fd;
+u_io_fd *u_io_add_fd(io, fd) u_io *io;
 {
 	u_io_fd *iofd;
 
@@ -113,9 +106,7 @@ int fd;
 	return iofd;
 }
 
-void u_io_del_fd(io, iofd)
-u_io *io;
-u_io_fd *iofd;
+void u_io_del_fd(io, iofd) u_io *io; u_io_fd *iofd;
 {
 	u_log(LG_FINE, "IO: --- FD=%3d [%p]", iofd->fd, iofd);
 	u_list_del_n(iofd->n);
@@ -123,10 +114,7 @@ u_io_fd *iofd;
 }
 
 u_io_timer *u_io_add_timer(io, sec, usec, cb, priv)
-u_io *io;
-unsigned long sec, usec;
-void (*cb)();
-void *priv;
+u_io *io; unsigned long sec, usec; void (*cb)(); void *priv;
 {
 	u_io_timer *iot;
 
@@ -148,14 +136,12 @@ void *priv;
 	return iot;
 }
 
-void u_io_del_timer(iot)
-u_io_timer *iot;
+void u_io_del_timer(iot) u_io_timer *iot;
 {
 	tv_clear(&iot->time);
 }
 
-void u_io_poll_once(io)
-u_io *io;
+void u_io_poll_once(io) u_io *io;
 {
 	fd_set r, w;
 	int nfds;
@@ -232,14 +218,12 @@ u_io *io;
 	}
 }
 
-void u_io_poll_break(io)
-u_io *io;
+void u_io_poll_break(io) u_io *io;
 {
 	io->running = 0;
 }
 
-void u_io_poll(io)
-u_io *io;
+void u_io_poll(io) u_io *io;
 {
 	io->running = 1;
 

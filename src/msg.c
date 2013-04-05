@@ -6,16 +6,14 @@
 
 #include "ircd.h"
 
-char *ws_skip(s)
-char *s;
+char *ws_skip(s) char *s;
 {
 	while (*s && isspace(*s))
 		s++;
 	return s;
 }
 
-char *ws_cut(s)
-char *s;
+char *ws_cut(s) char *s;
 {
 	while (*s && !isspace(*s))
 		s++;
@@ -24,9 +22,7 @@ char *s;
 	return ws_skip(s);
 }
 
-int u_msg_parse(msg, s)
-u_msg *msg;
-char *s;
+int u_msg_parse(msg, s) u_msg *msg; char *s;
 {
 	s = ws_skip(s);
 	if (!*s) return -1;
@@ -60,9 +56,7 @@ char *s;
 
 static u_trie *commands[CTX_MAX];
 
-int reg_one_real(cmd, ctx)
-u_cmd *cmd;
-int ctx;
+int reg_one_real(cmd, ctx) u_cmd *cmd;
 {
 	if (u_trie_get(commands[ctx], cmd->name))
 		return -1;
@@ -71,8 +65,7 @@ int ctx;
 	return 0;
 }
 
-int reg_one(cmd)
-u_cmd *cmd;
+int reg_one(cmd) u_cmd *cmd;
 {
 	int i, err;
 
@@ -86,8 +79,7 @@ u_cmd *cmd;
 	return 0;
 }
 
-int u_cmds_reg(cmds)
-u_cmd *cmds;
+int u_cmds_reg(cmds) u_cmd *cmds;
 {
 	int err;
 	for (; cmds->name[0]; cmds++) {
@@ -97,9 +89,7 @@ u_cmd *cmds;
 	return 0;
 }
 
-void u_cmd_invoke(conn, msg)
-u_conn *conn;
-u_msg *msg;
+void u_cmd_invoke(conn, msg) u_conn *conn; u_msg *msg;
 {
 	u_cmd *cmd;
 

@@ -7,9 +7,7 @@
 #include "ircd.h"
 
 /* XXX this is wrong */
-static void m_ping(conn, msg)
-u_conn *conn;
-u_msg *msg;
+static void m_ping(conn, msg) u_conn *conn; u_msg *msg;
 {
 	if (msg->command[1] == 'O') /* PONG */
 		return;
@@ -17,25 +15,19 @@ u_msg *msg;
 	u_conn_f(conn, ":%s PONG %s :%s", me.name, me.name, msg->argv[0]);
 }
 
-static void m_version(conn, msg)
-u_conn *conn;
-u_msg *msg;
+static void m_version(conn, msg) u_conn *conn; u_msg *msg;
 {
 	u_user *u = conn->priv;
 	u_user_num(u, RPL_VERSION, PACKAGE_FULLNAME, me.name, "hi");
 }
 
-static void m_motd(conn, msg)
-u_conn *conn;
-u_msg *msg;
+static void m_motd(conn, msg) u_conn *conn; u_msg *msg;
 {
 	u_user *u = conn->priv;
 	u_user_send_motd(u);
 }
 
-static void m_message_chan(conn, msg)
-u_conn *conn;
-u_msg *msg;
+static void m_message_chan(conn, msg) u_conn *conn; u_msg *msg;
 {
 	u_user *src = conn->priv;
 	u_chan *tgt;
@@ -52,9 +44,7 @@ u_msg *msg;
 	              src->host, msg->command, tgt->name, msg->argv[1]);
 }
 
-static void m_message_user(conn, msg)
-u_conn *conn;
-u_msg *msg;
+static void m_message_user(conn, msg) u_conn *conn; u_msg *msg;
 {
 	u_user *src = conn->priv;
 	u_user *tgt;
@@ -76,9 +66,7 @@ u_msg *msg;
 	}
 }
 
-static void m_message(conn, msg)
-u_conn *conn;
-u_msg *msg;
+static void m_message(conn, msg) u_conn *conn; u_msg *msg;
 {
 
 	if (msg->argv[0][0] == '#')
@@ -87,9 +75,7 @@ u_msg *msg;
 		m_message_user(conn, msg);
 }
 
-static void m_join(conn, msg)
-u_conn *conn;
-u_msg *msg;
+static void m_join(conn, msg) u_conn *conn; u_msg *msg;
 {
 	u_user *u = conn->priv;
 	u_chan *c;
@@ -119,9 +105,7 @@ u_msg *msg;
 	u_chan_send_names(c, u);
 }
 
-static void m_topic(conn, msg)
-u_conn *conn;
-u_msg *msg;
+static void m_topic(conn, msg) u_conn *conn; u_msg *msg;
 {
 	u_user *u = conn->priv;
 	u_chan *c;
@@ -147,9 +131,7 @@ u_msg *msg;
 	              u->host, c->name, c->topic);
 }
 
-static void m_names(conn, msg)
-u_conn *conn;
-u_msg *msg;
+static void m_names(conn, msg) u_conn *conn; u_msg *msg;
 {
 	u_user *u = conn->priv;
 	u_chan *c;

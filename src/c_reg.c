@@ -6,16 +6,12 @@
 
 #include "ircd.h"
 
-static void err_already(conn, msg)
-u_conn *conn;
-u_msg *msg;
+static void err_already(conn, msg) u_conn *conn; u_msg *msg;
 {
 	u_conn_num(conn, ERR_ALREADYREGISTERED);
 }
 
-static void m_pass(conn, msg)
-u_conn *conn;
-u_msg *msg;
+static void m_pass(conn, msg) u_conn *conn; u_msg *msg;
 {
 	if (conn->pass != NULL)
 		free(conn->pass);
@@ -23,8 +19,7 @@ u_msg *msg;
 	strcpy(conn->pass, msg->argv[0]);
 }
 
-static void try_reg(conn)
-u_conn *conn;
+static void try_reg(conn) u_conn *conn;
 {
 	u_user *u = conn->priv;
 
@@ -35,9 +30,7 @@ u_conn *conn;
 	u_user_welcome(u);
 }
 
-static void m_nick(conn, msg)
-u_conn *conn;
-u_msg *msg;
+static void m_nick(conn, msg) u_conn *conn; u_msg *msg;
 {
 	u_user_local *ul;
 	char buf[MAXNICKLEN+1];
@@ -62,9 +55,7 @@ u_msg *msg;
 	try_reg(conn);
 }
 
-static void m_user(conn, msg)
-u_conn *conn;
-u_msg *msg;
+static void m_user(conn, msg) u_conn *conn; u_msg *msg;
 {
 	u_user_local *ul;
 	char buf[MAXIDENT+1];
@@ -83,9 +74,7 @@ u_msg *msg;
 	try_reg(conn);
 }
 
-static int cap_add(u, cap)
-u_user *u;
-char *cap;
+static int cap_add(u, cap) u_user *u; char *cap;
 {
 	char *s;
 
@@ -102,9 +91,7 @@ char *cap;
 	return 1;
 }
 
-static void m_cap(conn, msg)
-u_conn *conn;
-u_msg *msg;
+static void m_cap(conn, msg) u_conn *conn; u_msg *msg;
 {
 	char ackbuf[BUFSIZE];
 	char nakbuf[BUFSIZE];

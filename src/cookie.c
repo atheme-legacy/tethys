@@ -6,14 +6,12 @@
 
 #include "ircd.h"
 
-void u_cookie_reset(ck)
-u_cookie *ck;
+void u_cookie_reset(ck) u_cookie *ck;
 {
 	ck->high = ck->low = 0;
 }
 
-void u_cookie_inc(ck)
-u_cookie *ck;
+void u_cookie_inc(ck) u_cookie *ck;
 {
 	if (ck->high == NOW.tv_sec) {
 		ck->low ++;
@@ -24,8 +22,7 @@ u_cookie *ck;
 	ck->low = 0;
 }
 
-void u_cookie_cpy(A, B)
-u_cookie *A, *B;
+void u_cookie_cpy(A, B) u_cookie *A, *B;
 {
 	memcpy(A, B, sizeof(*A));
 }
@@ -37,8 +34,7 @@ static int norm(x)
 	return 0;
 }
 
-int u_cookie_cmp(a, b)
-u_cookie *a, *b;
+int u_cookie_cmp(a, b) u_cookie *a, *b;
 {
 	if (a->high == b->high)
 		return norm(a->low - b->low);

@@ -10,8 +10,7 @@ u_server me;
 u_list my_motd;
 char my_net_name[MAXNETNAME+1];
 
-void server_conf(key, val)
-char *key, *val;
+void server_conf(key, val) char *key, *val;
 {
 	if (strlen(key) < 3 || memcmp(key, "me.", 3)!=0) {
 		u_log(LG_WARN, "server_conf: Can't use %s", key);
@@ -36,8 +35,7 @@ char *key, *val;
 	}
 }
 
-void load_motd(key, val)
-char *key, *val;
+void load_motd(key, val) char *key, *val;
 {
 	char *s, *p, buf[BUFSIZE];
 	FILE *f;

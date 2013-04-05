@@ -8,8 +8,7 @@
 
 u_trie *u_conf_handlers = NULL;
 
-void do_cb(key, val)
-char *key, *val;
+void do_cb(key, val) char *key, *val;
 {
 	void (*cb)();
 
@@ -21,14 +20,12 @@ char *key, *val;
 	cb(key, val);
 }
 
-void skip_to_eol(f)
-FILE *f;
+void skip_to_eol(f) FILE *f;
 {
 	while (!feof(f) && getc(f) != '\n');
 }
 
-void skip_spaces(f)
-FILE *f;
+void skip_spaces(f) FILE *f;
 {
 	int c;
 	for (;;) {
@@ -40,10 +37,7 @@ FILE *f;
 		ungetc(c, f);
 }
 
-void read_quoted_value(f, p, n)
-FILE *f;
-char *p;
-int n;
+void read_quoted_value(f, p, n) FILE *f; char *p;
 {
 	int c;
 
@@ -62,10 +56,7 @@ int n;
 	*p = '\0';
 }
 
-void read_unquoted_value(f, p, n)
-FILE *f;
-char *p;
-int n;
+void read_unquoted_value(f, p, n) FILE *f; char *p;
 {
 	int c;
 
@@ -83,10 +74,7 @@ int n;
 	*p = '\0';
 }
 
-void read_value(f, p, n)
-FILE *f;
-char *p;
-int n;
+void read_value(f, p, n) FILE *f; char *p;
 {
 	int c;
 top:
@@ -108,9 +96,7 @@ top:
 	}
 }
 
-void conf_descend(key, value, f)
-char *key, *value;
-FILE *f;
+void conf_descend(key, value, f) char *key, *value; FILE *f;
 {
 	int c, n = strlen(key);
 	char *p = key + n;
@@ -140,8 +126,7 @@ FILE *f;
 	}
 }
 
-void u_conf_read(f)
-FILE *f;
+void u_conf_read(f) FILE *f;
 {
 	char key[U_CONF_MAX_KEY];
 	char value[U_CONF_MAX_VALUE];

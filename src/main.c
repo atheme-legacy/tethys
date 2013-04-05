@@ -10,8 +10,7 @@ u_io base_io;
 
 short opt_port = 6667;
 
-int usage(argv0, code)
-char *argv0;
+int usage(argv0, code) char *argv0;
 {
 	printf("Usage: %s [OPTIONS]\n", argv0);
 	printf("Options:\n");
@@ -59,9 +58,7 @@ int init()
 
 extern char *optarg;
 
-int main(argc, argv)
-int argc;
-char *argv[];
+int main(argc, argv) char *argv[];
 {
 	int c;
 

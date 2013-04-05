@@ -12,8 +12,7 @@ static char ascii_casemap[256];
 static int valid_nick_map[256];
 static int valid_ident_map[256];
 
-int matchmap(mask, string, casemap)
-char *mask, *string, *casemap;
+int matchmap(mask, string, casemap) char *mask, *string, *casemap;
 {
 	char *m = mask, *s = string;
 	char *m_bt = m, *s_bt = s;
@@ -49,36 +48,29 @@ char *mask, *string, *casemap;
 	}
 }
 
-int match(mask, string)
-char *mask, string;
+int match(mask, string) char *mask, *string;
 {
 	return matchmap(mask, string, null_casemap);
 }
 
-int matchirc(mask, string)
-char *mask, string;
+int matchirc(mask, string) char *mask, *string;
 {
 	return matchmap(mask, string, rfc1459_casemap);
 }
 
-int matchcase(mask, string)
-char *mask, string;
+int matchcase(mask, string) char *mask, *string;
 {
 	return matchmap(mask, string, ascii_casemap);
 }
 
-void u_memmove_lower(dest, src, n)
-char *dest, *src;
-int n;
+void u_memmove_lower(dest, src, n) char *dest, *src;
 {
 	while (n --> 0) {
 		*dest++ = *src++;
 	}
 }
 
-void u_memmove_upper(dest, src, n)
-char *dest, *src;
-int n;
+void u_memmove_upper(dest, src, n) char *dest, *src;
 {
 	src += n;
 	dest += n;
@@ -87,9 +79,7 @@ int n;
 	}
 }
 
-void u_memmove(dest, src, n)
-char *dest, *src;
-int n;
+void u_memmove(dest, src, n) char *dest, *src;
 {
 	if (dest < src)
 		u_memmove_lower(dest, src, n);
@@ -97,9 +87,7 @@ int n;
 		u_memmove_upper(dest, src, n);
 }
 
-void u_strlcpy(dest, src, n)
-char *dest, *src;
-int n;
+void u_strlcpy(dest, src, n) char *dest, *src;
 {
 	int len;
 	n--;
@@ -112,16 +100,13 @@ int n;
 	dest[n] = '\0';
 }
 
-void u_strlcat(dest, src, n)
-char *dest, *src;
-int n;
+void u_strlcat(dest, src, n) char *dest, *src;
 {
 	int len = strlen(dest);
 	u_strlcpy(dest+len, src, n-len);
 }
 
-char *u_strdup(s)
-char *s;
+char *u_strdup(s) char *s;
 {
 	int len = strlen(s) + 1;
 	char *p = malloc(len);
@@ -129,22 +114,17 @@ char *s;
 	return p;
 }
 
-void u_ntop(in, s)
-struct in_addr *in;
-char *s;
+void u_ntop(in, s) struct in_addr *in; char *s;
 {
 	u_strlcpy(s, inet_ntoa(*in), INET_ADDRSTRLEN);
 }
 
-void u_aton(s, in)
-char *s;
-struct in_addr *in;
+void u_aton(s, in) char *s; struct in_addr *in;
 {
 	in->s_addr = inet_addr(s);
 }
 
-char *cut(p, delim)
-char **p, *delim;
+char *cut(p, delim) char **p, *delim;
 {
 	char *s = *p;
 
@@ -179,9 +159,7 @@ char **p, *delim;
    if (s != buf)
            puts(buf);
  */
-int wrap(base, p, w, str)
-char *base, **p, *str;
-unsigned w;
+int wrap(base, p, w, str) char *base, **p, *str; unsigned w;
 {
 	unsigned len = strlen(str) + (base != *p);
 
@@ -202,27 +180,23 @@ unsigned w;
 	return 1;
 }
 
-void null_canonize(s)
-char *s;
+void null_canonize(s) char *s;
 {
 }
 
-void rfc1459_canonize(s)
-char *s;
+void rfc1459_canonize(s) char *s;
 {
 	for (; *s; s++)
 		*s = rfc1459_casemap[(unsigned char)*s];
 }
 
-void ascii_canonize(s)
-char *s;
+void ascii_canonize(s) char *s;
 {
 	for (; *s; s++)
 		*s = ascii_casemap[(unsigned char)*s];
 }
 
-int is_valid_nick(s)
-char *s;
+int is_valid_nick(s) char *s;
 {
 	if (isdigit(*s))
 		return 0;
@@ -233,8 +207,7 @@ char *s;
 	return 1;
 }
 
-int is_valid_ident(s)
-char *s;
+int is_valid_ident(s) char *s;
 {
 	for (; *s; s++) {
 		if (!valid_ident_map[(unsigned char)*s])

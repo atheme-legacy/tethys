@@ -41,16 +41,13 @@ char *id_next()
 }
 
 /* used to simplify user_local_event */
-void user_local_die(conn, msg)
-u_conn *conn;
-char *msg;
+void user_local_die(conn, msg) u_conn *conn; char *msg;
 {
 	u_user *u = conn->priv;
 	u_user_quit(u, msg);
 }
 
-void user_local_event(conn, event)
-u_conn *conn;
+void user_local_event(conn, event) u_conn *conn;
 {
 	switch (event) {
 	case EV_ERROR:
@@ -65,8 +62,7 @@ u_conn *conn;
 	}
 }
 
-void u_user_make_ureg(conn)
-u_conn *conn;
+void u_user_make_ureg(conn) u_conn *conn;
 {
 	u_user_local *ul;
 	u_user *u;
@@ -102,17 +98,12 @@ u_conn *conn;
 }
 
 void user_quit_cb(map, c, cu, priv)
-u_map *map;
-u_chan *c;
-u_chanuser *cu;
-void *priv;
+u_map *map; u_chan *c; u_chanuser *cu; void *priv;
 {
 	u_chan_user_del(cu);
 }
 
-void u_user_quit(u, msg)
-u_user *u;
-char *msg;
+void u_user_quit(u, msg) u_user *u; char *msg;
 {
 	u_conn *conn = u_user_conn(u);
 
@@ -139,8 +130,7 @@ char *msg;
 	u_trie_del(users_by_uid, u->uid);
 }
 
-u_conn *u_user_conn(u)
-u_user *u;
+u_conn *u_user_conn(u) u_user *u;
 {
 	if (u->flags & USER_IS_LOCAL) {
 		return ((u_user_local*)u)->conn;
@@ -149,21 +139,17 @@ u_user *u;
 	}
 }
 
-u_user *u_user_by_nick(nick)
-char *nick;
+u_user *u_user_by_nick(nick) char *nick;
 {
 	return u_trie_get(users_by_nick, nick);
 }
 
-u_user *u_user_by_uid(uid)
-char *uid;
+u_user *u_user_by_uid(uid) char *uid;
 {
 	return u_trie_get(users_by_uid, uid);
 }
 
-void u_user_set_nick(u, nick)
-u_user *u;
-char *nick;
+void u_user_set_nick(u, nick) u_user *u; char *nick;
 {
 	if (u->nick[0])
 		u_trie_del(users_by_nick, u->nick);
@@ -171,9 +157,7 @@ char *nick;
 	u_trie_set(users_by_nick, u->nick, u);
 }
 
-unsigned u_user_state(u, state)
-u_user *u;
-unsigned state;
+unsigned u_user_state(u, state) u_user *u; unsigned state;
 {
 	if (state & USER_MASK_STATE) {
 		u->flags &= ~USER_MASK_STATE;
@@ -183,10 +167,7 @@ unsigned state;
 	return u->flags & USER_MASK_STATE;
 }
 
-void u_user_vnum(u, num, va)
-u_user *u;
-int num;
-va_list va;
+void u_user_vnum(u, num, va) u_user *u; va_list va;
 {
 	u_conn *conn;
 	char *nick = u->nick;
@@ -206,10 +187,7 @@ va_list va;
 #ifdef STDARG
 void u_user_num(u_user *u, int num, ...)
 #else
-void u_user_num(u, num, va_alist)
-u_user *u;
-int num;
-va_dcl
+void u_user_num(u, num, va_alist) u_user *u; va_dcl
 #endif
 {
 	va_list va; 
@@ -218,8 +196,7 @@ va_dcl
 	va_end(va);
 }
 
-void u_user_welcome(ul)
-u_user_local *ul;
+void u_user_welcome(ul) u_user_local *ul;
 {
 	u_user *u = USER(ul);
 
@@ -231,8 +208,7 @@ u_user_local *ul;
 	u_user_send_motd((u_user_local*)u);
 }
 
-void u_user_send_motd(ul)
-u_user_local *ul;
+void u_user_send_motd(ul) u_user_local *ul;
 {
 	u_list *n;
 	u_user *u = USER(ul);
