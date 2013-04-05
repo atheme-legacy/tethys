@@ -14,7 +14,7 @@ typedef struct u_map_n u_map_n;
 struct u_map {
 	int traversing;
 	u_map_n *root;
-	unsigned size;
+	uint size;
 };
 
 extern u_map *u_map_new();

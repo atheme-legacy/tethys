@@ -13,7 +13,7 @@ typedef struct u_linebuf u_linebuf;
 
 struct u_linebuf {
 	char buf[U_LINEBUF_SIZE];
-	unsigned pos;
+	uint pos;
 };
 
 extern void u_linebuf_init(); /* u_linebuf* */

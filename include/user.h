@@ -42,7 +42,7 @@ typedef struct u_user_remote u_user_remote;
 
 struct u_umode_info {
 	char ch;
-	unsigned mask;
+	uint mask;
 };
 
 struct u_user {
@@ -52,7 +52,7 @@ struct u_user {
 	char host[MAXHOST+1];
 	char gecos[MAXGECOS+1];
 
-	unsigned flags;
+	uint flags;
 	u_map *channels;
 };
 
@@ -69,7 +69,7 @@ struct u_user_remote {
 #define USER(U) ((u_user*)(U))
 
 extern u_umode_info *umodes;
-extern unsigned umode_default;
+extern uint umode_default;
 
 extern void u_user_make_ureg(); /* u_conn* */
 extern void u_user_quit(); /* u_user*, char* */
@@ -80,7 +80,7 @@ extern u_user *u_user_by_nick(); /* char* */
 extern u_user *u_user_by_uid(); /* char* */
 
 extern void u_user_set_nick(); /* u_user*, char* */
-extern unsigned u_user_state(); /* u_user*, unsigned */
+extern uint u_user_state(); /* u_user*, uint */
 
 extern void u_user_vnum(); /* u_user*, int, va_list */
 extern void u_user_num(A3(u_user*, int num, ...));

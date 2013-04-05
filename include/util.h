@@ -20,7 +20,7 @@ extern void u_ntop(); /* in_addr*, char* */
 extern void u_aton(); /* char*, in_addr* */
 
 extern char *cut(); /* char **p, char *delim */
-extern int wrap(); /* char *base, char **p, unsigned w, char *str */
+extern int wrap(); /* char *base, char **p, uint w, char *str */
 
 extern void null_canonize();
 extern void rfc1459_canonize();

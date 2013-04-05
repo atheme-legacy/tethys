@@ -40,16 +40,16 @@ typedef struct dns_rr dns_rr_t;
 typedef struct dns_cache_ent dns_cache_ent_t;
 
 struct dns_hdr {
-	unsigned short id;
-	unsigned short flags;
-	unsigned short qdcount;
-	unsigned short ancount;
-	unsigned short nscount;
-	unsigned short arcount;
+	ushort id;
+	ushort flags;
+	ushort qdcount;
+	ushort ancount;
+	ushort nscount;
+	ushort arcount;
 };
 
 struct dns_req {
-	unsigned short id;
+	ushort id;
 	u_list *n;
 	u_io_timer *timeout;
 	char name[DNSNAMESIZE];
@@ -60,10 +60,10 @@ struct dns_req {
 
 struct dns_rr {
 	char name[DNSNAMESIZE];
-	unsigned short type;
-	unsigned short class;
-	unsigned int ttl;
-	unsigned short rdlength;
+	ushort type;
+	ushort class;
+	uint ttl;
+	ushort rdlength;
 	char rdata[DNSNAMESIZE];
 };
 
@@ -71,7 +71,7 @@ struct dns_cache_ent {
 	char req[DNSNAMESIZE];
 	int status;
 	char res[DNSNAMESIZE];
-	unsigned long expires;
+	ulong expires;
 	u_list *n;
 };
 
@@ -85,23 +85,23 @@ int dnsfd;
 u_io *dnsio = NULL;
 u_io_fd *dnssock = NULL;
 
-unsigned char msg[DNSBUFSIZE];
+uchar msg[DNSBUFSIZE];
 int msghead, msgtail;
 
 /* not sure if there's a better way... */
-unsigned int id_nfree_total = 65535;
-unsigned char id_nfree[512];
-unsigned int id_bitvec[2048];
+uint id_nfree_total = 65535;
+uchar id_nfree[512];
+uint id_bitvec[2048];
 
 /* brief break from style conventions here for compactness */
-void id_bitvec_set(i) unsigned short i; {
+void id_bitvec_set(i) ushort i; {
 	id_bitvec[i>>5] = id_bitvec[i>>5] | (1<<(i&0x1f)); }
-void id_bitvec_reset(i) unsigned short i; {
+void id_bitvec_reset(i) ushort i; {
 	id_bitvec[i>>5] = id_bitvec[i>>5] & ~(1<<(i&0x1f)); }
-unsigned char id_bitvec_get(i) unsigned short i; {
+uchar id_bitvec_get(i) ushort i; {
 	return ((id_bitvec[i>>5]) & (1<<(i&0x1f))) != 0; }
 
-unsigned char num_set_bits(n) unsigned long n;
+uchar num_set_bits(n) ulong n;
 {
 	/* http://graphics.stanford.edu/~seander/bithacks.html */
 	n = n - ((n >> 1) & 0x55555555);
@@ -109,17 +109,17 @@ unsigned char num_set_bits(n) unsigned long n;
 	return (((n + (n >> 4)) & 0x0f0f0f0f) * 0x01010101) >> 24;
 }
 
-unsigned short id_alloc()
+ushort id_alloc()
 {
-	unsigned short origoffs, offs, id;
-	unsigned char t;
+	ushort origoffs, offs, id;
+	uchar t;
 
 	if (id_nfree_total == 0) {
 		u_log(LG_SEVERE, "Cannot allocate a new DNS request id!");
 		return 0; /* XXX */
 	}
 
-	origoffs = offs = ((unsigned)(rand()) % id_nfree_total) + 1;
+	origoffs = offs = ((uint)(rand()) % id_nfree_total) + 1;
 
 	if (id_nfree_total == 65536) {
 		/* likely, for quiet servers */
@@ -164,7 +164,7 @@ unsigned short id_alloc()
 	return id;
 }
 
-void id_free(id) unsigned short id;
+void id_free(id) ushort id;
 {
 	if (id_bitvec_get(id) == 0)
 		return;
@@ -173,7 +173,7 @@ void id_free(id) unsigned short id;
 	id_nfree[id>>7]++;
 }
 
-void cache_add(req, status, res, expires) char *req, *res; unsigned long expires;
+void cache_add(req, status, res, expires) char *req, *res; ulong expires;
 {
 	dns_cache_ent_t *cached;
 
@@ -263,7 +263,7 @@ void (*cb)(); void *priv; void (*timeout)();
 	return req;
 }
 
-dns_req_t *req_find(id) unsigned short id;
+dns_req_t *req_find(id) ushort id;
 {
 	u_list *n;
 	dns_req_t *req;
@@ -291,7 +291,7 @@ void msg_reset()
 void msg_dump()
 {
 	/*
-	unsigned char *p = msg+msghead;
+	uchar *p = msg+msghead;
 	int i, len = msgtail-msghead;
 	for (i=0; i<len; i++) {
 		if (i%16 == 0) {
@@ -307,23 +307,23 @@ void msg_dump()
 	*/
 }
 
-unsigned short msg_get16_real(p) unsigned char **p;
+ushort msg_get16_real(p) uchar **p;
 {
-	unsigned char *s = *p;
+	uchar *s = *p;
 	(*p) += 2;
 	return (s[0]<<8) | s[1];
 }
 
-unsigned short msg_get16()
+ushort msg_get16()
 {
-	unsigned char *p = msg + msghead;
+	uchar *p = msg + msghead;
 	msghead += 2;
 	return msg_get16_real(&p);
 }
 
-unsigned int msg_get32()
+uint msg_get32()
 {
-	unsigned char *s;
+	uchar *s;
 	if (msgtail - msghead < 4)
 		return 0; /* XXX */
 	s = msg + msghead;
@@ -341,9 +341,9 @@ void msg_gethdr(hdr) dns_hdr_t *hdr;
 	hdr->arcount = msg_get16();
 }
 
-void get_name_real(s, p, depth) unsigned char *s, **p;
+void get_name_real(s, p, depth) uchar *s, **p;
 {
-	unsigned char len, *q;
+	uchar len, *q;
 
 	for (;;) {
 		/* goto used to reduce indentation levels */
@@ -375,9 +375,9 @@ ptr:
 	get_name_real(s, &q, depth + 1);
 }
 
-void get_name(s) unsigned char *s;
+void get_name(s) uchar *s;
 {
-	unsigned char *start, *p;
+	uchar *start, *p;
 
 	start = msg + msghead;
 	p = start;
@@ -415,7 +415,7 @@ void msg_put16(sh) short sh;
 	msg[msgtail++] = sh & 0xff;
 }
 
-void msg_puts(str, n) unsigned char *str;
+void msg_puts(str, n) uchar *str;
 {
 	if (n < 0)
 		n = strlen((char*)str);
@@ -423,12 +423,12 @@ void msg_puts(str, n) unsigned char *str;
 		return; /* XXX */
 	if (msgtail - msghead + 1 + n > DNSBUFSIZE)
 		n = DNSBUFSIZE - (msgtail - msghead) - 1; /* XXX */
-	msg[msgtail++] = 0xff & ((unsigned)n);
+	msg[msgtail++] = 0xff & ((uint)n);
 	for (; n>0; n--)
 		msg[msgtail++] = *str++;
 }
 
-void msg_putd(d) unsigned char d;
+void msg_putd(d) uchar d;
 {
 	char buf[4];
 	sprintf(buf, "%d", d);
@@ -467,7 +467,7 @@ void send_msg()
 {
 	struct sockaddr_in addr;
 	struct sockaddr *sa = (struct sockaddr*)&addr;
-	unsigned char *p;
+	uchar *p;
 	int len;
 
 	u_log(LG_FINE, "dns: sending message");
@@ -532,7 +532,7 @@ void dns_timeout(timer) u_io_timer *timer;
 void dns_recv(iofd) u_io_fd *iofd;
 {
 	struct sockaddr addr;
-	unsigned addrlen;
+	uint addrlen;
 	int err;
 	dns_hdr_t hdr;
 	dns_req_t *req;
@@ -580,7 +580,7 @@ void dns_recv(iofd) u_io_fd *iofd;
 
 		switch (rr.type) {
 		case DNS_TYPE_A:
-			in.s_addr = *((unsigned int*)rr.rdata);
+			in.s_addr = *((uint*)rr.rdata);
 			strcpy(rdata, (char*)inet_ntoa(in));
 			break;
 		case DNS_TYPE_CNAME:
@@ -630,7 +630,7 @@ void u_dns_use_io(io) u_io *io;
 	dnssock->send = NULL;
 }
 
-unsigned short u_dns(name, cb, priv) char *name; void (*cb)(); void *priv;
+ushort u_dns(name, cb, priv) char *name; void (*cb)(); void *priv;
 {
 	char buf[DNSNAMESIZE];
 	char res[DNSNAMESIZE];
@@ -659,13 +659,13 @@ unsigned short u_dns(name, cb, priv) char *name; void (*cb)(); void *priv;
 	return req->id;
 }
 
-unsigned short u_rdns(name, cb, priv) char *name; void (*cb)(); void *priv;
+ushort u_rdns(name, cb, priv) char *name; void (*cb)(); void *priv;
 {
 	char buf[DNSNAMESIZE];
 	char res[DNSNAMESIZE];
 	struct in_addr in;
 	dns_req_t *req;
-	unsigned char *p;
+	uchar *p;
 	int status;
 
 	if (!cb) {
@@ -675,7 +675,7 @@ unsigned short u_rdns(name, cb, priv) char *name; void (*cb)(); void *priv;
 
 	u_log(LG_DEBUG, "dns: reverse dns for %s", name);
 	u_aton(name, &in);
-	p = (unsigned char*)&(in.s_addr);
+	p = (uchar*)&(in.s_addr);
 	sprintf(buf, "%u.%u.%u.%u.in-addr.arpa.",
 	        p[3], p[2], p[1], p[0]);
 
@@ -693,7 +693,7 @@ unsigned short u_rdns(name, cb, priv) char *name; void (*cb)(); void *priv;
 	return req->id;
 }
 
-void u_dns_cancel(id) unsigned short id;
+void u_dns_cancel(id) ushort id;
 {
 	dns_req_t *req = req_find(id);
 	if (req != NULL)

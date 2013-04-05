@@ -39,7 +39,7 @@ int matchmap(mask, string, casemap) char *mask, *string, *casemap;
 		default:
 			if (!*s)
 				return 0;
-			if (casemap[(unsigned char)*m] != casemap[(unsigned char)*s]
+			if (casemap[(uchar)*m] != casemap[(uchar)*s]
 			    && *m != '?')
 				goto backtrack;
 			m++;
@@ -159,9 +159,9 @@ char *cut(p, delim) char **p, *delim;
    if (s != buf)
            puts(buf);
  */
-int wrap(base, p, w, str) char *base, **p, *str; unsigned w;
+int wrap(base, p, w, str) char *base, **p, *str; uint w;
 {
-	unsigned len = strlen(str) + (base != *p);
+	uint len = strlen(str) + (base != *p);
 
 	if (*p + len > base + w) {
 		*p = base;
@@ -187,13 +187,13 @@ void null_canonize(s) char *s;
 void rfc1459_canonize(s) char *s;
 {
 	for (; *s; s++)
-		*s = rfc1459_casemap[(unsigned char)*s];
+		*s = rfc1459_casemap[(uchar)*s];
 }
 
 void ascii_canonize(s) char *s;
 {
 	for (; *s; s++)
-		*s = ascii_casemap[(unsigned char)*s];
+		*s = ascii_casemap[(uchar)*s];
 }
 
 int is_valid_nick(s) char *s;
@@ -201,7 +201,7 @@ int is_valid_nick(s) char *s;
 	if (isdigit(*s))
 		return 0;
 	for (; *s; s++) {
-		if (!valid_nick_map[(unsigned char)*s])
+		if (!valid_nick_map[(uchar)*s])
 			return 0;
 	}
 	return 1;
@@ -210,7 +210,7 @@ int is_valid_nick(s) char *s;
 int is_valid_ident(s) char *s;
 {
 	for (; *s; s++) {
-		if (!valid_ident_map[(unsigned char)*s])
+		if (!valid_ident_map[(uchar)*s])
 			return 0;
 	}
 	return 1;

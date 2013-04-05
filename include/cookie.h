@@ -10,7 +10,7 @@
 typedef struct u_cookie u_cookie;
 
 struct u_cookie {
-	unsigned long high, low;
+	ulong high, low;
 };
 
 extern void u_cookie_reset(); /* u_cookie* */

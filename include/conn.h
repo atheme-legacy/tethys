@@ -28,13 +28,13 @@ typedef struct u_conn u_conn;
 typedef struct u_conn_origin u_conn_origin;
 
 struct u_conn {
-	unsigned flags;
+	uint flags;
 	int ctx;
 
 	u_io_fd *sock;
 	char ip[INET_ADDRSTRLEN];
 	char host[U_CONN_HOSTSIZE];
-	unsigned short dns_id;
+	ushort dns_id;
 
 	u_linebuf ibuf;
 

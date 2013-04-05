@@ -260,7 +260,7 @@ static void origin_recv(sock) u_io_fd *sock;
 	u_io_fd *iofd;
 	u_conn *conn;
 	struct sockaddr_in addr;
-	unsigned addrlen = sizeof(addr);
+	uint addrlen = sizeof(addr);
 	int fd;
 
 	if ((fd = accept(sock->fd, (struct sockaddr*)&addr, &addrlen)) < 0) {

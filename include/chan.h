@@ -38,7 +38,7 @@ struct u_cmode_info {
 	   getarg takes no arguments; returns NULL if no more args
 	   cb returns -1 if it was unable to process the mode */
 	int (*cb)();
-	unsigned data;
+	uint data;
 };
 
 struct u_chan {
@@ -46,7 +46,7 @@ struct u_chan {
 	char topic[MAXTOPICLEN+1];
 	char topic_setter[MAXNICKLEN+1];
 	u_ts_t topic_time;
-	unsigned mode;
+	uint mode;
 	u_cookie ck_flags;
 	u_map *members;
 	u_list ban, quiet, banex, invex;
@@ -54,14 +54,14 @@ struct u_chan {
 };
 
 struct u_chanuser {
-	unsigned flags;
+	uint flags;
 	u_cookie ck_flags;
 	u_chan *c;
 	u_user *u;
 };
 
 extern u_cmode_info *cmodes;
-extern unsigned cmode_default;
+extern uint cmode_default;
 
 extern u_chan *u_chan_get(); /* char* */
 extern u_chan *u_chan_get_or_create(); /* char* */

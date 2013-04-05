@@ -35,7 +35,7 @@ static u_cmode_info __cmodes[] = {
 };
 
 u_cmode_info *cmodes = __cmodes;
-unsigned cmode_default = CMODE_TOPIC | CMODE_NOEXTERNAL;
+uint cmode_default = CMODE_TOPIC | CMODE_NOEXTERNAL;
 
 static int cb_flag(info, c, on, getarg)
 u_cmode_info *info; u_chan *c; char *(*getarg)();
@@ -218,7 +218,7 @@ struct send_names_priv {
 	u_chan *c;
 	u_user *u;
 	char pfx, *s, buf[512];
-	unsigned w;
+	uint w;
 };
 
 void send_names_cb(map, u, cu, priv)

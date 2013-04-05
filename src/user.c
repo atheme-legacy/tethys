@@ -15,7 +15,7 @@ static u_umode_info __umodes[32] = {
 };
 
 u_umode_info *umodes = __umodes;
-unsigned umode_default = UMODE_INVISIBLE;
+uint umode_default = UMODE_INVISIBLE;
 
 u_trie *users_by_nick;
 u_trie *users_by_uid;
@@ -157,7 +157,7 @@ void u_user_set_nick(u, nick) u_user *u; char *nick;
 	u_trie_set(users_by_nick, u->nick, u);
 }
 
-unsigned u_user_state(u, state) u_user *u; unsigned state;
+uint u_user_state(u, state) u_user *u; uint state;
 {
 	if (state & USER_MASK_STATE) {
 		u->flags &= ~USER_MASK_STATE;

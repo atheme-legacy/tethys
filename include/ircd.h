@@ -40,6 +40,11 @@
 #define memberp(base, offs) ((void*)((int)(base) + (int)(offs)))
 #define member(mtype, base, offs) (*((mtype*)memberp(base, offs)))
 
+typedef unsigned long ulong;
+typedef unsigned int uint;
+typedef unsigned short ushort;
+typedef unsigned char uchar;
+
 #ifdef __GNUC__
 
 # undef U_BSD

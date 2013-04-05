@@ -43,7 +43,7 @@ u_trie *u_trie_new(canonize) void (*canonize)();
 	return trie;
 }
 
-static unsigned char nibble(s, i) unsigned char *s;
+static uchar nibble(s, i) uchar *s;
 {
 	return (i%2==0) ? s[i/2]>>4 : s[i/2]&0xf;
 }
@@ -52,7 +52,7 @@ static u_trie_e *retrieval(trie, tkey, create) u_trie *trie; char *tkey;
 {
 	u_trie_e *n;
 	char key[U_TRIE_KEY_MAX];
-	unsigned int c, nib = 0; /* even=high, odd=low */
+	uint c, nib = 0; /* even=high, odd=low */
 
 	u_strlcpy(key, tkey, U_TRIE_KEY_MAX);
 
