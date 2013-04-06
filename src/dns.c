@@ -340,13 +340,13 @@ dns_req_t *req; char *rdata;
 		cbn->cb(err, rdata, cbn->priv);
 }
 
-dns_req_t *req_make(type, timeout) void (*timeout)();
+dns_req_t *req_make(type, dur, udur, timeout) void (*timeout)();
 {
 	dns_req_t *req;
 	req = malloc(sizeof(*req));
 	req->id = id_alloc();
 	req->n = u_list_add(&reqs, req);
-	req->timeout = u_io_add_timer(dnsio, 1, 0, timeout, req);
+	req->timeout = u_io_add_timer(dnsio, dur, udur, timeout, req);
 	req->type = type;
 	req->cblist = NULL;
 	return req;
@@ -734,6 +734,29 @@ void u_dns_use_io(io) u_io *io;
 	dnssock->send = NULL;
 }
 
+/* this whole short circuit thing is major hax, but I guess it works */
+
+void short_circuit_timeout(timer) u_io_timer *timer;
+{
+	dns_req_t *req = timer->priv;
+
+	u_log(LG_DEBUG, "dns: request short circuited");
+	req_cb_call(req, req->type, req->name);
+	req_del(req);
+}
+
+ushort short_circuit(cb, status, res, priv)
+void (*cb)(); char *res; void *priv;
+{
+	dns_req_t *req;
+
+	req = req_make(status, 0, 10000, short_circuit_timeout);
+	u_strlcpy(req->name, res, DNSNAMESIZE);
+	req_cb_add(req, cb, priv);
+
+	return req->id;
+}
+
 ushort request(type, name, cb, priv) char *name; void (*cb)(); void *priv;
 {
 	char res[DNSNAMESIZE];
@@ -742,15 +765,13 @@ ushort request(type, name, cb, priv) char *name; void (*cb)(); void *priv;
 
 	if ((status = cache_find(name, res)) >= 0) {
 		u_log(LG_DEBUG, "dns: using cached result for %s", name);
-		/* XXX: don't do callback right here */
-		cb(status, res, priv);
-		return 0;
+		return short_circuit(cb, status, res, priv);
 	}
 
 	req = req_find_by_name(name);
 
 	if (req == NULL) {
-		req = req_make(type, dns_timeout);
+		req = req_make(type, 1, 0, dns_timeout);
 		u_strlcpy(req->name, name, DNSNAMESIZE);
 		req_cb_add(req, cb, priv);
 		send_req(req);

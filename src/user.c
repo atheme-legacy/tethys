@@ -200,6 +200,8 @@ void u_user_welcome(ul) u_user_local *ul;
 {
 	u_user *u = USER(ul);
 
+	u_log(LG_DEBUG, "user: welcoming %s", u->nick);
+
 	u_user_state(u, USER_CONNECTED);
 	ul->conn->ctx = CTX_USER;
 
