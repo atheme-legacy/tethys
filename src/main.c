@@ -14,7 +14,7 @@ int usage(argv0, code) char *argv0;
 {
 	printf("Usage: %s [OPTIONS]\n", argv0);
 	printf("Options:\n");
-	printf("  -v         Be verbose. Supply twice to be even more verbose\n");
+	printf("  -v         Be verbose. Supply multiple times for more verbosity.\n");
 	printf("  -h         Print this help and exit\n");
 	printf("  -p PORT    The port to listen on for connections\n");
 	exit(code);
