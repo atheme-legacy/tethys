@@ -9,12 +9,37 @@ struct u_map_n {
 	u_map_n *parent, *child[2];
 };
 
-static u_map_n *u_map_n_new(key, data, color) void *key, *data;
+static void n_key(map, n, k) u_map *map; u_map_n *n; void *k;
+{
+	if (map->flags & MAP_STRING_KEYS) {
+		if (n->key != NULL)
+			free(n->key);
+
+		if (k != NULL) {
+			n->key = u_strdup(k); /* ;_; */
+			return;
+		}
+	}
+
+	n->key = k;
+}
+
+static int n_cmp(map, k1, k2) u_map *map; void *k1, *k2;
+{
+	if (map->flags & MAP_STRING_KEYS)
+		return strcmp((char*)k1, (char*)k2);
+
+	return (int)k1 - (int)k2;
+}
+
+static u_map_n *u_map_n_new(map, key, data, color)
+u_map *map; void *key, *data;
 {
 	u_map_n *n;
 
 	n = malloc(sizeof(*n));
-	n->key = key;
+	n->key = NULL;
+	n_key(map, n, key);
 	n->data = data;
 	n->color = color;
 
@@ -24,12 +49,14 @@ static u_map_n *u_map_n_new(key, data, color) void *key, *data;
 	return n;
 }
 
-static void u_map_n_del(n) u_map_n *n;
+static void u_map_n_del(map, n) u_map *map; u_map_n *n;
 {
+	if ((map->flags & MAP_STRING_KEYS) && n->key)
+		free(n->key);
 	free(n);
 }
 
-u_map *u_map_new()
+u_map *u_map_new(string_keys)
 {
 	u_map *map;
 
@@ -37,7 +64,7 @@ u_map *u_map_new()
 	if (map == NULL)
 		return NULL;
 
-	map->traversing = 0;
+	map->flags = string_keys ? MAP_STRING_KEYS : 0;
 	map->root = NULL;
 	map->size = 0;
 
@@ -62,7 +89,7 @@ void u_map_free(map) u_map *map;
 		tn = n->parent;
 		if (tn != NULL)
 			tn->child[n == tn->child[LEFT] ? LEFT : RIGHT] = NULL;
-		u_map_n_del(n);
+		u_map_n_del(map, n);
 		n = tn;
 	}
 
@@ -80,7 +107,7 @@ void u_map_each(map, cb, priv) u_map *map; void (*cb)(); void *priv;
 	if ((cur = map->root) == NULL)
 		return;
 
-	map->traversing = 1;
+	map->flags |= MAP_TRAVERSING;
 
 try_left:
 	if (cur->child[LEFT] != NULL) {
@@ -109,7 +136,7 @@ loop_top:
 			goto loop_top;
 	}
 
-	map->traversing = 0;
+	map->flags &= ~MAP_TRAVERSING;
 }
 
 /* dumb functions are just standard binary search tree operations that
@@ -120,9 +147,9 @@ static u_map_n *dumb_fetch(map, key) u_map *map; void *key;
 	u_map_n *n = map->root;
 
 	while (n != NULL) {
-		if (n->key == key)
+		if (!n_cmp(map, n->key, key))
 			break;
-		n = n->child[n->key < key];
+		n = n->child[n_cmp(map, n->key, key) < 0];
 	}
 
 	return n;
@@ -142,7 +169,7 @@ static void dumb_insert(map, n) u_map *map; u_map_n *n;
 	cur = map->root;
 
 	for (;;) {
-		idx = cur->key < n->key ? RIGHT : LEFT;
+		idx = n_cmp(map, cur->key, n->key) < 0 ? RIGHT : LEFT;
 		if (cur->child[idx] == NULL) {
 			cur->child[idx] = n;
 			n->parent = cur;
@@ -198,7 +225,11 @@ static u_map_n *dumb_delete(map, n) u_map *map; u_map_n *n;
 	   will only recurse once */
 	tgt = leftmost_subchild(n->child[RIGHT]);
 	n->data = tgt->data;
+	/* we don't use n_key here, since this is faster */
+	if ((map->flags & MAP_STRING_KEYS) && n->key)
+		free(n->key);
 	n->key = tgt->key;
+	tgt->key = NULL;
 	return dumb_delete(map, tgt);
 }
 
@@ -219,7 +250,7 @@ void u_map_set(map, key, data) u_map *map; void *key, *data;
 
 	map->size++;
 
-	n = u_map_n_new(key, data, RED);
+	n = u_map_n_new(map, key, data, RED);
 	dumb_insert(map, n);
 
 	/* TODO: rb cases */
@@ -233,7 +264,7 @@ void *u_map_del(map, key) u_map *map; void *key;
 	if (n == NULL)
 		return NULL;
 
-	if (map->traversing)
+	if (map->flags & MAP_TRAVERSING)
 		abort();
 
 	map->size--;
@@ -243,7 +274,7 @@ void *u_map_del(map, key) u_map *map; void *key;
 
 	/* TODO: rb cases */
 
-	u_map_n_del(s);
+	u_map_n_del(map, s);
 	return data;
 }
 
@@ -253,30 +284,36 @@ static void indent(depth)
 		printf("  ");
 }
 
-static void map_dump_real(n, depth) u_map_n *n;
+static void map_dump_real(map, n, depth) u_map *map; u_map_n *n;
 {
 	if (n == NULL) {
 		printf("*");
 		return;
 	}
-	printf("\e[%sm%d=%d\e[0m[",
-	       n->color == RED ? "31;1" : "36;1",
-	       (int)n->key, (int)n->data);
+
+	if (map->flags & MAP_STRING_KEYS) {
+		printf("\e[%sm%s=%d\e[0m[", n->color == RED ? "31;1" : "36;1",
+		       (char*)n->key, (int)n->data);
+	} else {
+		printf("\e[%sm%d=%d\e[0m[", n->color == RED ? "31;1" : "36;1",
+		       (int)n->key, (int)n->data);
+	}
+
 	if (n->child[LEFT] == NULL && n->child[RIGHT] == NULL) {
 		printf("]");
 		return;
 	}
 	printf("\n");
 	indent(depth);
-	map_dump_real(n->child[LEFT], depth + 1);
+	map_dump_real(map, n->child[LEFT], depth + 1);
 	printf(",\n");
 	indent(depth);
-	map_dump_real(n->child[RIGHT], depth + 1);
+	map_dump_real(map, n->child[RIGHT], depth + 1);
 	printf("]");
 }
 
 void u_map_dump(map) u_map *map;
 {
-	map_dump_real(map->root, 1);
+	map_dump_real(map, map->root, 1);
 	printf("\n\n");
 }

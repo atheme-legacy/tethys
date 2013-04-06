@@ -142,7 +142,7 @@ u_chan *u_chan_get_or_create(name) char *name;
 	chan->topic_time = 0;
 	chan->mode = cmode_default;
 	u_cookie_reset(&chan->ck_flags);
-	chan->members = u_map_new();
+	chan->members = u_map_new(0);
 	u_list_init(&chan->ban);
 	u_list_init(&chan->quiet);
 	u_list_init(&chan->banex);

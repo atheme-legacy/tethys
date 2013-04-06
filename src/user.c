@@ -88,7 +88,7 @@ void u_user_make_ureg(conn) u_conn *conn;
 
 	u->flags = umode_default | USER_IS_LOCAL;
 	u_user_state(u, USER_REGISTERING);
-	u->channels = u_map_new();
+	u->channels = u_map_new(0);
 
 	ul->conn = conn;
 
