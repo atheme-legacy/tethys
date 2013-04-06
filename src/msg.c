@@ -24,6 +24,7 @@ char *ws_cut(s) char *s;
 
 int u_msg_parse(msg, s) u_msg *msg; char *s;
 {
+	int i;
 	s = ws_skip(s);
 	if (!*s) return -1;
 
@@ -37,6 +38,9 @@ int u_msg_parse(msg, s) u_msg *msg; char *s;
 
 	msg->command = s;
 	s = ws_cut(s);
+
+	for (i=0; i<U_MSG_MAXARGS; i++)
+		msg->argv[i] = NULL;
 
 	for (msg->argc=0; msg->argc<U_MSG_MAXARGS && *s;) {
 		if (*s == ':') {
