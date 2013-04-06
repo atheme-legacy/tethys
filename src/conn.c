@@ -6,6 +6,7 @@
 
 #include "ircd.h"
 
+static void origin_rdns();
 static void origin_recv();
 static int toplev_post();
 
@@ -39,7 +40,7 @@ void u_conn_init(conn) u_conn *conn;
 void u_conn_cleanup(conn) u_conn *conn;
 {
 	if (conn->dns_id)
-		u_dns_cancel(conn->dns_id);
+		u_dns_cancel(conn->dns_id, origin_rdns, conn);
 	if (conn->error)
 		free(conn->error);
 	free(conn->obuf);

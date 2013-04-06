@@ -35,6 +35,7 @@
 #define DNSNAMESIZE           256
 
 typedef struct dns_hdr dns_hdr_t;
+typedef struct dns_cb dns_cb_t;
 typedef struct dns_req dns_req_t;
 typedef struct dns_rr dns_rr_t;
 typedef struct dns_cache_ent dns_cache_ent_t;
@@ -48,14 +49,19 @@ struct dns_hdr {
 	ushort arcount;
 };
 
+struct dns_cb {
+	void (*cb)();
+	void *priv;
+	struct dns_cb *next;
+};
+
 struct dns_req {
 	ushort id;
 	u_list *n;
 	u_io_timer *timeout;
 	char name[DNSNAMESIZE];
 	int type; /* A = u_dns, PTR = u_rdns, for this */
-	void (*cb)();
-	void *priv;
+	dns_cb_t *cblist;
 };
 
 struct dns_rr {
@@ -249,8 +255,82 @@ int cache_find(req, res) char *req, *res;
 	return cached->status;
 }
 
-dns_req_t *req_make(type, cb, priv, timeout)
-void (*cb)(); void *priv; void (*timeout)();
+dns_cb_t *req_cb_add(req, cb, priv)
+dns_req_t *req; void (*cb)(); void *priv;
+{
+	dns_cb_t *cbn;
+
+	if (cb == NULL) {
+		u_log(LG_ERROR, "dns: refusing to add NULL callback");
+		return NULL;
+	}
+
+	for (cbn=req->cblist; cbn; cbn=cbn->next) {
+		if (cbn->cb == cb && cbn->priv == priv) {
+			/* how do we properly deal with this? */
+			u_log(LG_WARN, "dns: duplicate callbacks added to %s",
+			      req->name);
+			break;
+		}
+	}
+
+	cbn = malloc(sizeof(*cbn));
+	cbn->cb = cb;
+	cbn->priv = priv;
+
+	cbn->next = req->cblist;
+	req->cblist = cbn;
+
+	return cbn;
+}
+
+void req_cb_del(req, cb, priv)
+dns_req_t *req; void (*cb)(); void *priv;
+{
+	dns_cb_t *cbn, *cbp;
+
+	for (cbn=req->cblist,cbp=NULL; cbn; cbp=cbn,cbn=cbn->next) {
+		if (cbn->cb != cb || cbn->priv != priv)
+			continue;
+
+		if (cbn == req->cblist)
+			req->cblist = cbn->next;
+		else
+			cbp->next = cbn->next;
+
+		free(cbn);
+		return;
+	}
+
+	u_log(LG_WARN, "dns: couldn't find matching callback for %s", req->name);
+}
+
+void req_cb_del_all(req) dns_req_t *req;
+{
+	dns_cb_t *cbn, *cbt;
+
+	for (cbn=req->cblist; cbn; ) {
+		cbt = cbn->next;
+		free(cbn);
+		cbn = cbt;
+	}
+
+	req->cblist = NULL;
+}
+
+void req_cb_call(req, err, rdata)
+dns_req_t *req; char *rdata;
+{
+	dns_cb_t *cbn = req->cblist;
+
+	if (cbn == NULL)
+		u_log(LG_WARN, "dns: no callbacks to call for %s!", req->name);
+
+	for (; cbn; cbn=cbn->next)
+		cbn->cb(err, rdata, cbn->priv);
+}
+
+dns_req_t *req_make(type, timeout) void (*timeout)();
 {
 	dns_req_t *req;
 	req = malloc(sizeof(*req));
@@ -258,8 +338,7 @@ void (*cb)(); void *priv; void (*timeout)();
 	req->n = u_list_add(&reqs, req);
 	req->timeout = u_io_add_timer(dnsio, 1, 0, timeout, req);
 	req->type = type;
-	req->cb = cb;
-	req->priv = priv;
+	req->cblist = NULL;
 	return req;
 }
 
@@ -275,11 +354,24 @@ dns_req_t *req_find(id) ushort id;
 	return NULL;
 }
 
+dns_req_t *req_find_by_name(name) char *name;
+{
+	u_list *n;
+	dns_req_t *req;
+	U_LIST_EACH(n, &reqs) {
+		req = n->data;
+		if (!strcmp(req->name, name))
+			return req;
+	}
+	return NULL;
+}
+
 void req_del(req) dns_req_t *req;
 {
 	id_free(req->id);
 	u_io_del_timer(req->timeout);
 	u_list_del_n(req->n);
+	req_cb_del_all(req);
 	free(req);
 }
 
@@ -487,7 +579,10 @@ void send_msg()
 
 void send_req(req) dns_req_t *req;
 {
+	static int sent = 0;
 	dns_hdr_t hdr;
+
+	u_log(LG_DEBUG, "dns: sent total of %d requests", ++sent);
 
 	msg_reset();
 
@@ -525,7 +620,7 @@ void dns_timeout(timer) u_io_timer *timer;
 
 	u_log(LG_DEBUG, "dns: request timed out");
 	cache_add(req->name, DNS_TIMEOUT, "", NOW.tv_sec + 60);
-	req->cb(DNS_TIMEOUT, NULL, req->priv);
+	req_cb_call(req, DNS_TIMEOUT, NULL);
 	req_del(req);
 }
 
@@ -566,7 +661,7 @@ void dns_recv(iofd) u_io_fd *iofd;
 		if ((hdr.flags & DNS_MASK_RCODE) == DNS_RCODE_NAMEERR)
 			err = DNS_NXDOMAIN;
 		cache_add(req->name, err, "", NOW.tv_sec + 60);
-		req->cb(err, NULL, req->priv);
+		req_cb_call(req, err, NULL);
 		req_del(req);
 		return;
 	}
@@ -599,15 +694,14 @@ void dns_recv(iofd) u_io_fd *iofd;
 		if (rr.type == req->type && err == -1) {
 			err = DNS_OKAY;
 			cache_add(req->name, err, rdata, NOW.tv_sec + rr.ttl);
-			if (req->cb)
-				req->cb(err, rdata, req->priv);
+			req_cb_call(req, err, rdata);
 		}
 	}
 
-	if (err == -1 && req->cb) {
+	if (err == -1) {
 		u_log(LG_WARN, "dns_recv: didn't get record we wanted :(");
 		cache_add(req->name, DNS_NXDOMAIN, "", NOW.tv_sec + 60);
-		req->cb(DNS_NXDOMAIN, NULL, req->priv);
+		req_cb_call(req, DNS_NXDOMAIN, NULL);
 	}
 
 	req_del(req);
@@ -630,12 +724,37 @@ void u_dns_use_io(io) u_io *io;
 	dnssock->send = NULL;
 }
 
+ushort request(type, name, cb, priv) char *name; void (*cb)(); void *priv;
+{
+	char res[DNSNAMESIZE];
+	int status;
+	dns_req_t *req;
+
+	if ((status = cache_find(name, res)) >= 0) {
+		u_log(LG_DEBUG, "dns: using cached result for %s", name);
+		/* XXX: don't do callback right here */
+		cb(status, res, priv);
+		return 0;
+	}
+
+	req = req_find_by_name(name);
+
+	if (req == NULL) {
+		req = req_make(type, dns_timeout);
+		u_strlcpy(req->name, name, DNSNAMESIZE);
+		req_cb_add(req, cb, priv);
+		send_req(req);
+	} else {
+		u_log(LG_DEBUG, "dns: chaining request for %s", name);
+		req_cb_add(req, cb, priv);
+	}
+
+	return req->id;
+}
+
 ushort u_dns(name, cb, priv) char *name; void (*cb)(); void *priv;
 {
 	char buf[DNSNAMESIZE];
-	char res[DNSNAMESIZE];
-	dns_req_t *req;
-	int status;
 
 	if (!cb) {
 		u_log(LG_WARN, "u_dns: ignoring DNS request with null callback");
@@ -645,28 +764,14 @@ ushort u_dns(name, cb, priv) char *name; void (*cb)(); void *priv;
 	u_log(LG_DEBUG, "dns: forward dns for %s", name);
 	sprintf(buf, "%s.", name);
 
-	if ((status = cache_find(buf, res)) >= 0) {
-		/* XXX: don't do callback right here */
-		cb(status, res, priv);
-		return 0;
-	}
-
-	req = req_make(DNS_TYPE_A, cb, priv, dns_timeout);
-	u_strlcpy(req->name, buf, DNSNAMESIZE);
-
-	send_req(req);
-
-	return req->id;
+	return request(DNS_TYPE_A, buf, cb, priv);
 }
 
 ushort u_rdns(name, cb, priv) char *name; void (*cb)(); void *priv;
 {
 	char buf[DNSNAMESIZE];
-	char res[DNSNAMESIZE];
 	struct in_addr in;
-	dns_req_t *req;
 	uchar *p;
-	int status;
 
 	if (!cb) {
 		u_log(LG_WARN, "u_rdns: ignoring DNS request with null callback");
@@ -679,24 +784,14 @@ ushort u_rdns(name, cb, priv) char *name; void (*cb)(); void *priv;
 	sprintf(buf, "%u.%u.%u.%u.in-addr.arpa.",
 	        p[3], p[2], p[1], p[0]);
 
-	if ((status = cache_find(buf, res)) >= 0) {
-		/* XXX: don't do callback right here */
-		cb(status, res, priv);
-		return 0;
-	}
-
-	req = req_make(DNS_TYPE_PTR, cb, priv, dns_timeout);
-	u_strlcpy(req->name, buf, DNSNAMESIZE);
-
-	send_req(req);
-
-	return req->id;
+	return request(DNS_TYPE_PTR, buf, cb, priv);
 }
 
-void u_dns_cancel(id) ushort id;
+void u_dns_cancel(id, cb, priv) ushort id; void (*cb)(); void *priv;
 {
 	dns_req_t *req = req_find(id);
-	if (req != NULL)
+	req_cb_del(req, cb, priv);
+	if (req->cblist == NULL)
 		req_del(req);
 }
 
