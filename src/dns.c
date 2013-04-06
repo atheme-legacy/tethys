@@ -84,7 +84,7 @@ struct dns_cache_ent {
 u_list reqs;
 
 u_list cache_by_recent;
-u_trie *cache_by_name;
+u_map *cache_by_name;
 int cache_size = 0;
 
 int dnsfd;
@@ -181,15 +181,20 @@ void id_free(id) ushort id;
 
 void cache_add(req, status, res, expires) char *req, *res; ulong expires;
 {
+	char buf[DNSNAMESIZE];
 	dns_cache_ent_t *cached;
 
-	cached = u_trie_get(cache_by_name, req);
+	u_strlcpy(buf, req, DNSNAMESIZE);
+	req = buf;
+	ascii_canonize(req);
+
+	cached = u_map_get(cache_by_name, req);
 	if (cached == NULL) {
 		u_log(LG_FINE, "+++++ ALLOCATING CACHE ENT");
 		cached = malloc(sizeof(*cached));
 		if (cached == NULL)
 			goto fail;
-		u_trie_set(cache_by_name, req, cached);
+		u_map_set(cache_by_name, req, cached);
 		cache_size++;
 	} else {
 		u_log(LG_FINE, "***** REUSING CACHE ENT");
@@ -198,7 +203,7 @@ void cache_add(req, status, res, expires) char *req, *res; ulong expires;
 
 	cached->n = u_list_add(&cache_by_recent, cached);
 	if (cached->n == NULL) {
-		u_trie_del(cache_by_name, req);
+		u_map_del(cache_by_name, req);
 		goto fail;
 	}
 
@@ -212,7 +217,7 @@ void cache_add(req, status, res, expires) char *req, *res; ulong expires;
 		if (cached != NULL) {
 			u_log(LG_FINE, "DNS:CACHE: (full) dropping %s=>%s",
 			      cached->req, cached->res);
-			u_trie_del(cache_by_name, cached->req);
+			u_map_del(cache_by_name, cached->req);
 			free(cached);
 		}
 		cache_size--;
@@ -229,11 +234,16 @@ fail:
 
 int cache_find(req, res) char *req, *res;
 {
+	char buf[DNSNAMESIZE];
 	dns_cache_ent_t *cached;
+
+	u_strlcpy(buf, req, DNSNAMESIZE);
+	req = buf;
+	ascii_canonize(req);
 
 	*res = '\0';
 
-	cached = u_trie_get(cache_by_name, req);
+	cached = u_map_get(cache_by_name, req);
 	if (cached == NULL) {
 		u_log(LG_FINE, "DNS:CACHE: cache miss on %s", req);
 		return -1;
@@ -243,7 +253,7 @@ int cache_find(req, res) char *req, *res;
 		u_log(LG_FINE, "DNS:CACHE: (expiry) dropping %s=>%s, status %d",
 		      cached->req, cached->res, cached->status);
 		u_list_del_n(cached->n);
-		u_trie_del(cache_by_name, cached->req);
+		u_map_del(cache_by_name, cached->req);
 		free(cached);
 		cache_size--;
 		return -1;
@@ -805,7 +815,7 @@ int init_dns()
 		id_bitvec[i] = 0;
 
 	u_list_init(&cache_by_recent);
-	cache_by_name = u_trie_new(ascii_canonize);
+	cache_by_name = u_map_new(1);
 
 	dnsfd = socket(AF_INET, SOCK_DGRAM, 0);
 	if (dnsfd < 0)

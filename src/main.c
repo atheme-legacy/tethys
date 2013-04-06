@@ -60,7 +60,6 @@ extern char *optarg;
 
 int main(argc, argv) char *argv[];
 {
-	u_map *map;
 	int c;
 
 	u_log(LG_INFO, "%s starting...", PACKAGE_FULLNAME);
