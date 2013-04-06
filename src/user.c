@@ -226,25 +226,36 @@ void u_user_send_motd(ul) u_user_local *ul;
 	u_user_num(u, RPL_ENDOFMOTD);
 }
 
-void u_user_try_join_chan(ul, chan, key) u_user_local *ul; char *chan, *key;
+static int entry_blocked(c, u, key) u_chan *c; u_user *u; char *key;
 {
-	u_user *u = USER(ul);
-	u_conn *conn = u_user_conn(u);
-	u_chan *c;
-	u_chanuser *cu;
+	char hostmask[BUFSIZE];
+	u_list *n;
+	char *ban;
 
-	c = u_chan_get_or_create(chan);
-	
-	if (c == NULL) {
-		u_user_num(u, ERR_GENERIC, "Can't get or create channel!");
-		return;
+	if (c->mode & CMODE_INVITEONLY) {
+		/* TODO: check pending invites */
+		return ERR_INVITEONLYCHAN;
 	}
 
-	cu = u_chan_user_find(c, u);
-	if (cu != NULL)
-		return;
+	if (c->key != NULL && strcmp(c->key, key) != 0)
+		return ERR_BADCHANNELKEY;
 
-	/* TODO: verify entry */
+	sprintf(hostmask, "%s!%s@%s", u->nick, u->ident, u->host);
+	U_LIST_EACH(n, &c->ban) {
+		ban = n->data;
+		if (match(ban, hostmask))
+			return ERR_BANNEDFROMCHAN;
+	}
+
+	/* TODO: check +l */
+
+	return 0;
+}
+
+static void do_join_chan(c, u) u_chan *c; u_user *u;
+{
+	u_conn *conn = u_user_conn(u);
+	u_chanuser *cu;
 
 	cu = u_chan_user_add(c, u);
 
@@ -260,6 +271,58 @@ void u_user_try_join_chan(ul, chan, key) u_user_local *ul; char *chan, *key;
 		u_conn_f(conn, ":%s MODE %s %s", me.name, c->name, u_chan_modes(c));
 	u_chan_send_topic(c, u);
 	u_chan_send_names(c, u);
+}
+
+static u_chan *find_forward(c, u) u_chan *c; u_user *u;
+{
+	/* TODO: determine how to detect forward loops */
+
+	int forwards_left = 30;
+
+	while (forwards_left-- > 0) {
+		if (c->forward == NULL)
+			return NULL;
+
+		c = u_chan_get(c->forward);
+
+		if (c == NULL)
+			return NULL;
+		if (!entry_blocked(c, u, NULL))
+			return c;
+	}
+
+	return NULL;
+}
+
+void u_user_try_join_chan(ul, chan, key) u_user_local *ul; char *chan, *key;
+{
+	u_user *u = USER(ul);
+	u_chan *c, *fwd;
+	u_chanuser *cu;
+	int num;
+
+	c = u_chan_get_or_create(chan);
+	
+	if (c == NULL) {
+		u_user_num(u, ERR_GENERIC, "Can't get or create channel!");
+		return;
+	}
+
+	cu = u_chan_user_find(c, u);
+	if (cu != NULL)
+		return;
+
+	num = entry_blocked(c, u, key);
+	if (num != 0) {
+		fwd = find_forward(c, u);
+		if (fwd == NULL) {
+			u_user_num(u, num, c->name);
+			return;
+		}
+		c = fwd;
+	}
+
+	do_join_chan(c, u);
 }
 
 int init_user()

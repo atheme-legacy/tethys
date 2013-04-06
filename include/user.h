@@ -89,7 +89,7 @@ extern void u_user_welcome(); /* u_user_local* */
 extern void u_user_send_motd(); /* u_user_local* */
 
 /* returns 1 if it used the key or not (key may be NULL) */
-extern int u_user_try_join_chan(); /* u_user_local*, char *chan, char *key */
+extern void u_user_try_join_chan(); /* u_user_local*, char *chan, char *key */
 
 extern int init_user();
 
