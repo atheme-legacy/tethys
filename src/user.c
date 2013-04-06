@@ -226,6 +226,42 @@ void u_user_send_motd(ul) u_user_local *ul;
 	u_user_num(u, RPL_ENDOFMOTD);
 }
 
+void u_user_try_join_chan(ul, chan, key) u_user_local *ul; char *chan, *key;
+{
+	u_user *u = USER(ul);
+	u_conn *conn = u_user_conn(u);
+	u_chan *c;
+	u_chanuser *cu;
+
+	c = u_chan_get_or_create(chan);
+	
+	if (c == NULL) {
+		u_user_num(u, ERR_GENERIC, "Can't get or create channel!");
+		return;
+	}
+
+	cu = u_chan_user_find(c, u);
+	if (cu != NULL)
+		return;
+
+	/* TODO: verify entry */
+
+	cu = u_chan_user_add(c, u);
+
+	if (c->members->size == 1) {
+		u_log(LG_DEBUG, "Channel %s created", c->name);
+		cu->flags |= CU_PFX_OP;
+	}
+
+	u_map_set(u->channels, c, cu);
+
+	u_sendto_chan(c, NULL, ":%s!%s@%s JOIN %s", u->nick, u->ident, u->host, c->name);
+	if (c->members->size == 1) /* idk why charybdis does it this way */
+		u_conn_f(conn, ":%s MODE %s %s", me.name, c->name, u_chan_modes(c));
+	u_chan_send_topic(c, u);
+	u_chan_send_names(c, u);
+}
+
 int init_user()
 {
 	users_by_nick = u_trie_new(rfc1459_canonize);

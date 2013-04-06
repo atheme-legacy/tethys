@@ -77,32 +77,28 @@ static void m_message(conn, msg) u_conn *conn; u_msg *msg;
 
 static void m_join(conn, msg) u_conn *conn; u_msg *msg;
 {
+	char *keys[128], **keys_p;
+	char *s, *p;
 	u_user *u = conn->priv;
-	u_chan *c;
-	u_chanuser *cu;
+	int i;
 
-	c = u_chan_get_or_create(msg->argv[0]);
+	p = msg->argv[1];
+	for (i=0; i<128; i++)
+		keys[i] = cut(&p, ",");
+	keys_p = keys;
 
-	if (c == NULL) {
-		u_user_num(u, ERR_GENERIC, "Can't get or create channel!");
-		return;
+	p = msg->argv[0];
+	while ((s = cut(&p, ",")) != NULL) {
+		u_log(LG_FINE, "  %s$%s", s, p);
+		u_log(LG_FINE, "    key=%s", *keys_p);
+
+		if (s[0] != '#') {
+			if (*s) u_user_num(u, ERR_NOSUCHCHANNEL, s);
+			continue;
+		}
+
+		u_user_try_join_chan(u, s, *keys_p++);
 	}
-
-	/* TODO: verify entry */
-
-	cu = u_chan_user_add(c, u);
-
-	if (c->members->size == 1) {
-		u_log(LG_DEBUG, "Channel %s created", c->name);
-		cu->flags |= CU_PFX_OP;
-	}
-
-	u_map_set(u->channels, c, cu);
-
-	u_sendto_chan(c, NULL, ":%s!%s@%s JOIN %s", u->nick, u->ident, u->host, c->name);
-	u_conn_f(conn, ":%s MODE %s %s", me.name, c->name, u_chan_modes(c));
-	u_chan_send_topic(c, u);
-	u_chan_send_names(c, u);
 }
 
 static void m_topic(conn, msg) u_conn *conn; u_msg *msg;
