@@ -14,6 +14,7 @@ int usage(argv0, code) char *argv0;
 {
 	printf("Usage: %s [OPTIONS]\n", argv0);
 	printf("Options:\n");
+	printf("  -v         Be verbose. Supply twice to be even more verbose\n");
 	printf("  -h         Print this help and exit\n");
 	printf("  -p PORT    The port to listen on for connections\n");
 	exit(code);
@@ -64,8 +65,12 @@ int main(argc, argv) char *argv[];
 
 	u_log(LG_INFO, "%s starting...", PACKAGE_FULLNAME);
 
-	while ((c = getopt(argc, argv, "hp:")) != -1) {
+	while ((c = getopt(argc, argv, "vhp:")) != -1) {
 		switch(c) {
+		case 'v':
+			if (u_log_level < LG_FINE)
+				u_log_level++;
+			break;
 		case 'h':
 			usage(argv[0], 0);
 			break;
