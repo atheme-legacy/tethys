@@ -273,7 +273,7 @@ static void do_join_chan(c, u) u_chan *c; u_user *u;
 	u_chan_send_names(c, u);
 }
 
-static u_chan *find_forward(c, u) u_chan *c; u_user *u;
+static u_chan *find_forward(c, u, key) u_chan *c; u_user *u; char *key;
 {
 	/* TODO: determine how to detect forward loops */
 
@@ -287,7 +287,7 @@ static u_chan *find_forward(c, u) u_chan *c; u_user *u;
 
 		if (c == NULL)
 			return NULL;
-		if (!entry_blocked(c, u, NULL))
+		if (!entry_blocked(c, u, key))
 			return c;
 	}
 
@@ -314,7 +314,7 @@ void u_user_try_join_chan(ul, chan, key) u_user_local *ul; char *chan, *key;
 
 	num = entry_blocked(c, u, key);
 	if (num != 0) {
-		fwd = find_forward(c, u);
+		fwd = find_forward(c, u, key);
 		if (fwd == NULL) {
 			u_user_num(u, num, c->name);
 			return;
