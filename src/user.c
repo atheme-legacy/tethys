@@ -237,8 +237,10 @@ static int entry_blocked(c, u, key) u_chan *c; u_user *u; char *key;
 		return ERR_INVITEONLYCHAN;
 	}
 
-	if (c->key != NULL && strcmp(c->key, key) != 0)
-		return ERR_BADCHANNELKEY;
+	if (c->key != NULL) {
+		if (key == NULL || strcmp(c->key, key) != 0)
+			return ERR_BADCHANNELKEY;
+	}
 
 	sprintf(hostmask, "%s!%s@%s", u->nick, u->ident, u->host);
 	U_LIST_EACH(n, &c->ban) {

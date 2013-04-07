@@ -8,118 +8,163 @@
 
 static u_trie *all_chans;
 
-static int cb_flag();
-static int cb_list();
-static int cb_string();
-static int cb_prefix();
+static void cb_flag();
+static void cb_list();
+static void cb_string();
+static void cb_prefix();
 
 static u_cmode_info __cmodes[] = {
-	{ 'c', cb_flag,   CMODE_NOCOLOR                     },
-	{ 'g', cb_flag,   CMODE_FREEINVITE                  },
-	{ 'i', cb_flag,   CMODE_INVITEONLY                  },
-	{ 'm', cb_flag,   CMODE_MODERATED                   },
-	{ 'n', cb_flag,   CMODE_NOEXTERNAL                  },
-	{ 'p', cb_flag,   CMODE_PRIVATE                     },
-	{ 's', cb_flag,   CMODE_SECRET                      },
-	{ 't', cb_flag,   CMODE_TOPIC                       },
-	{ 'z', cb_flag,   CMODE_OPMOD                       },
+	{ 'c', cb_flag,   CMODE_NOCOLOR              },
+	{ 'g', cb_flag,   CMODE_FREEINVITE           },
+	{ 'i', cb_flag,   CMODE_INVITEONLY           },
+	{ 'm', cb_flag,   CMODE_MODERATED            },
+	{ 'n', cb_flag,   CMODE_NOEXTERNAL           },
+	{ 'p', cb_flag,   CMODE_PRIVATE              },
+	{ 's', cb_flag,   CMODE_SECRET               },
+	{ 't', cb_flag,   CMODE_TOPIC                },
+	{ 'z', cb_flag,   CMODE_OPMOD                },
 	{ 'f', cb_string, offsetof(u_chan, forward)  },
 	{ 'k', cb_string, offsetof(u_chan, key)      },
 	{ 'b', cb_list,   offsetof(u_chan, ban)      },
 	{ 'q', cb_list,   offsetof(u_chan, quiet)    },
 	{ 'e', cb_list,   offsetof(u_chan, banex)    },
 	{ 'I', cb_list,   offsetof(u_chan, invex)    },
-	{ 'o', cb_prefix, CU_PFX_OP                         },
-	{ 'v', cb_prefix, CU_PFX_VOICE                      },
+	{ 'o', cb_prefix, CU_PFX_OP                  },
+	{ 'v', cb_prefix, CU_PFX_VOICE               },
 	{ 0 }
 };
 
 u_cmode_info *cmodes = __cmodes;
 uint cmode_default = CMODE_TOPIC | CMODE_NOEXTERNAL;
 
-static int cb_flag(info, c, on, getarg)
-u_cmode_info *info; u_chan *c; char *(*getarg)();
+static int cm_on;
+static char *cm_buf_p, cm_buf[128];
+static char *cm_data_p, cm_data[512];
+
+void u_chan_m_start(void)
 {
+	cm_on = -1;
+	cm_buf_p = cm_buf;
+	cm_data_p = cm_data;
+}
+
+char *u_chan_m_end(void)
+{
+	static char cm[512];
+
+	*cm_buf_p = '\0';
+	*cm_data_p = '\0';
+	sprintf(cm, "%s%s", cm_buf, cm_data);
+
+	return cm;
+}
+
+static void cm_put(on, ch, arg) char ch, *arg;
+{
+	if (on != cm_on) {
+		cm_on = on;
+		*cm_buf_p++ = on ? '+' : '-';
+	}
+	*cm_buf_p++ = ch;
+	if (arg != NULL)
+		cm_data_p += sprintf(cm_data_p, " %s", arg);
+}
+
+static void cb_flag(info, c, u, on, getarg)
+u_cmode_info *info; u_chan *c; u_user *u; char *(*getarg)();
+{
+	uint oldm = c->mode;
 	if (on)
 		c->mode |= info->data;
 	else
 		c->mode &= ~info->data;
-
-	return 0;
+	if (oldm != c->mode)
+		cm_put(on, info->ch, NULL);
+	return;
 }
 
-static int cb_list(info, c, on, getarg)
-u_cmode_info *info; u_chan *c; char *(*getarg)();
+static void cb_list(info, c, u, on, getarg)
+u_cmode_info *info; u_chan *c; u_user *u; char *(*getarg)();
 {
 	u_list *list, *n;
 	char *ban, *arg = getarg();
 
-	if (arg == NULL)
-		return -1;
+	if (arg == NULL) {
+		/* TODO: send list in this case */
+		return;
+	}
 
-	list = member(u_list*, c, info->data);
+	list = (u_list*)memberp(c, info->data);
 
 	U_LIST_EACH(n, list) {
 		ban = n->data;
 		if (!strcmp(ban, arg)) {
-			if (!on)
+			if (!on) {
+				cm_put(on, info->ch, ban);
 				free(u_list_del_n(n));
-			return 0;
+			}
+			return;
 		}
 	}
 
-	if (on)
-		u_list_add(list, u_strdup(ban));
+	if (on) {
+		cm_put(on, info->ch, arg);
+		u_list_add(list, u_strdup(arg));
+	}
 
-	return 0;
+	return;
 }
 
-static int cb_string(info, c, on, getarg)
-u_cmode_info *info; u_chan *c; char *(*getarg)();
+static void cb_string(info, c, u, on, getarg)
+u_cmode_info *info; u_chan *c; u_user *u; char *(*getarg)();
 {
 	char *arg, **val;
 
-	val = &member(char*, c, info->data);
+	val = (char**)memberp(c, info->data);
 
 	if (!on) {
 		free(*val);
 		*val = NULL;
+		cm_put(on, info->ch, NULL);
 	} else {
 		arg = getarg();
 		if (arg == NULL)
-			return -1;
+			return;
 		if (*val)
 			free(*val);
 		*val = u_strdup(arg);
+		cm_put(on, info->ch, arg);
 	}
-
-	return 0;
 }
 
-static int cb_prefix(info, c, on, getarg)
-u_cmode_info *info; u_chan *c; char *(*getarg)();
+static void cb_prefix(info, c, u, on, getarg)
+u_cmode_info *info; u_chan *c; u_user *u; char *(*getarg)();
 {
 	u_chanuser *cu;
-	u_user *u;
+	u_user *tu;
 	char *arg = getarg();
 
 	if (arg == NULL)
-		return -1;
-	u = u_user_by_nick(arg);
-	if (u == NULL) {
+		return;
+
+	tu = u_user_by_nick(arg);
+	if (tu == NULL) {
 		/* TODO: u_user_by_nick_history */
-		return -1;
+		u_user_num(u, ERR_NOSUCHNICK, arg);
+		return;
 	}
-	cu = u_chan_user_find(c, u);
-	if (cu == NULL)
-		return -1;
+
+	cu = u_chan_user_find(c, tu);
+	if (cu == NULL) {
+		u_user_num(u, ERR_USERNOTINCHANNEL, tu->nick, c->name);
+		return;
+	}
 
 	if (on)
 		cu->flags |= info->data;
 	else
 		cu->flags &= ~info->data;
-
-	return 0;
+	cm_put(on, info->ch, tu->nick);
 }
 
 u_chan *u_chan_get(name) char *name;
@@ -201,6 +246,22 @@ char *u_chan_modes(c) u_chan *c;
 	*s = '\0';
 
 	return buf;
+}
+
+void u_chan_mode(c, u, ch, on, getarg)
+u_chan *c; u_user *u; char ch; char *(*getarg)();
+{
+	u_cmode_info *info = cmodes;
+
+	while (info->ch && info->ch != ch)
+		info++;
+
+	if (!info->ch) {
+		u_user_num(u, ERR_UNKNOWNMODE, ch);
+		return;
+	}
+
+	info->cb(info, c, u, on, getarg);
 }
 
 void u_chan_send_topic(c, u) u_chan *c; u_user *u;

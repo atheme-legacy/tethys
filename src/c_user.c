@@ -6,6 +6,16 @@
 
 #include "ircd.h"
 
+int ga_argc = 0;
+static char **ga_argv;
+static char *getarg(void)
+{
+	if (ga_argc <= 0)
+		return NULL;
+	ga_argc--;
+	return (*ga_argv)++;
+}
+
 /* XXX this is wrong */
 static void m_ping(conn, msg) u_conn *conn; u_msg *msg;
 {
@@ -145,6 +155,75 @@ static void m_names(conn, msg) u_conn *conn; u_msg *msg;
 	u_chan_send_names(c, u);
 }
 
+static void m_mode(conn, msg) u_conn *conn; u_msg *msg;
+{
+	int on = 1;
+	char *p;
+	u_user *tu, *u = conn->priv;
+	u_chan *c;
+	u_chanuser *cu;
+
+	if (msg->argv[0][0] != '#') {
+		tu = u_user_by_nick(msg->argv[0]);
+		if (tu == NULL) {
+			/* not sure why charybdis does this */
+			u_user_num(u, ERR_NOSUCHCHANNEL, msg->argv[0]);
+		} else if (u != tu) {
+			u_user_num(u, ERR_USERSDONTMATCH);
+		} else {
+			u_user_num(u, ERR_GENERIC, "Can't change user modes yet!");
+		}
+		return;
+	}
+
+	c = u_chan_get(msg->argv[0]);
+	if (c == NULL) {
+		u_user_num(u, ERR_NOSUCHCHANNEL, msg->argv[0]);
+		return;
+	}
+
+	if (msg->argv[1] == NULL) {
+		/* TODO: params or something */
+		u_user_num(u, RPL_CHANNELMODEIS, c->name, u_chan_modes(c), "");
+		return;
+	}
+
+	cu = u_chan_user_find(c, u);
+	if (cu == NULL) {
+		u_user_num(u, ERR_NOTONCHANNEL, c->name);
+		return;
+	}
+	if (!(cu->flags & CU_PFX_OP)) {
+		u_user_num(u, ERR_CHANOPRIVSNEEDED, c->name);
+		return;
+	}
+
+	ga_argc = msg->argc - 2;
+	ga_argv = msg->argv + 2;
+	if (ga_argc > 4)
+		ga_argc = 4;
+
+	u_chan_m_start();
+
+	for (p=msg->argv[1]; *p; p++) {
+		switch (*p) {
+		case '+':
+		case '-':
+			on = *p == '+';
+			break;
+
+		default:
+			u_chan_mode(c, u, *p, on, getarg);
+		}
+	}
+
+	p = u_chan_m_end();
+	if (*p != '\0') {
+		u_sendto_chan(c, NULL, ":%s!%s@%s MODE %s %s", u->nick,
+		              u->ident, u->host, c->name, p);
+	}
+}
+
 u_cmd c_user[] = {
 	{ "PING",    CTX_USER, m_ping,    1 },
 	{ "PONG",    CTX_USER, m_ping,    0 },
@@ -155,5 +234,6 @@ u_cmd c_user[] = {
 	{ "JOIN",    CTX_USER, m_join,    1 },
 	{ "TOPIC",   CTX_USER, m_topic,   1 },
 	{ "NAMES",   CTX_USER, m_names,   0 },
+	{ "MODE",    CTX_USER, m_mode,    1 },
 	{ "" },
 };

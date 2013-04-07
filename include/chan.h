@@ -33,11 +33,10 @@ typedef struct u_chanuser u_chanuser;
 
 struct u_cmode_info {
 	char ch;
-	/* int cb(u_cmode_info*, u_chan*, on, char *(*getarg)())
+	/* int cb(u_cmode_info*, u_chan*, u_user*, on, char *(*getarg)())
 	   on is 1 if +, 0 if -
-	   getarg takes no arguments; returns NULL if no more args
-	   cb returns -1 if it was unable to process the mode */
-	int (*cb)();
+	   getarg takes no arguments; returns NULL if no more args */
+	void (*cb)();
 	uint data;
 };
 
@@ -63,11 +62,16 @@ struct u_chanuser {
 extern u_cmode_info *cmodes;
 extern uint cmode_default;
 
+/* used to build a string to send to users about mode changes */
+extern void u_chan_m_start();
+extern char *u_chan_m_end();
+
 extern u_chan *u_chan_get(); /* char* */
 extern u_chan *u_chan_get_or_create(); /* char* */
 extern void u_chan_drop(); /* u_chan* */
 
 extern char *u_chan_modes(); /* u_chan* */
+extern void u_chan_mode(); /* u_chan*, u_user*, char chr, int on, getarg() */
 
 extern void u_chan_send_topic(); /* u_chan*, u_user* */
 extern void u_chan_send_names(); /* u_chan*, u_user* */
