@@ -287,10 +287,10 @@ u_map *map; u_user *u; u_chanuser *cu; struct send_names_priv *priv;
 {
 	char *p, nbuf[MAXNICKLEN+3];
 	p = nbuf;
-	/* TODO: multi-prefix */
 	if (cu->flags & CU_PFX_OP)
 		*p++ = '@';
-	else if (cu->flags & CU_PFX_VOICE)
+	if ((cu->flags & CU_PFX_VOICE)
+	    && (p == nbuf || (priv->u->flags & CAP_MULTI_PREFIX)))
 		*p++ = '+';
 	strcpy(p, u->nick);
 	if (!wrap(priv->buf, &priv->s, priv->w, nbuf)) {
