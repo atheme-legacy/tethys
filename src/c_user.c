@@ -13,7 +13,7 @@ static char *getarg(void)
 	if (ga_argc <= 0)
 		return NULL;
 	ga_argc--;
-	return (*ga_argv)++;
+	return *ga_argv++;
 }
 
 /* XXX this is wrong */
