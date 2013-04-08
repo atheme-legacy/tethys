@@ -67,6 +67,7 @@ struct u_user_remote {
 };
 
 #define USER(U) ((u_user*)(U))
+#define USER_REMOTE(U) ((u_user_remote*)(U))
 
 extern u_umode_info *umodes;
 extern uint umode_default;

@@ -237,6 +237,50 @@ static void m_mode(conn, msg) u_conn *conn; u_msg *msg;
 	}
 }
 
+static void m_whois(conn, msg) u_conn *conn; u_msg *msg;
+{
+	u_user *tu, *u = conn->priv;
+	u_server *serv;
+	char *nick;
+
+	/*
+	WHOIS aji aji
+	:host.irc 311 x aji alex ponychat.net * :Alex Iadicicco
+	:host.irc 319 x aji :#chan #foo ...
+	:host.irc 312 x aji some.host :Host Description
+	:host.irc 313 x aji :is a Server Administrator
+	:host.irc 671 x aji :is using a secure connection
+	:host.irc 317 x aji 1961 1365205045 :seconds idle, signon time
+	:host.irc 330 x aji aji :is logged in as
+	:host.irc 318 x aji :End of /WHOIS list.
+	*/
+
+	nick = strchr(msg->argv[0], ',');
+	if (nick != NULL)
+		*nick = '\0';
+	nick = msg->argv[0];
+
+	tu = u_user_by_nick(nick);
+
+	if (tu == NULL) {
+		u_user_num(u, ERR_NOSUCHNICK, nick);
+		return;
+	}
+
+	if (tu->flags & USER_IS_LOCAL)
+		serv = &me;
+	else
+		serv = USER_REMOTE(tu)->server;
+
+	u_user_num(u, RPL_WHOISUSER, tu->nick, tu->ident, tu->host, tu->gecos);
+	u_user_num(u, RPL_WHOISSERVER, tu->nick, serv->name, serv->desc);
+
+	if (tu->flags & UMODE_OPER)
+		u_user_num(u, RPL_WHOISOPERATOR, tu->nick);
+
+	u_user_num(u, RPL_ENDOFWHOIS, tu->nick);
+}
+
 u_cmd c_user[] = {
 	{ "PING",    CTX_USER, m_ping,    1 },
 	{ "PONG",    CTX_USER, m_ping,    0 },
@@ -249,5 +293,6 @@ u_cmd c_user[] = {
 	{ "TOPIC",   CTX_USER, m_topic,   1 },
 	{ "NAMES",   CTX_USER, m_names,   0 },
 	{ "MODE",    CTX_USER, m_mode,    1 },
+	{ "WHOIS",   CTX_USER, m_whois,   1 },
 	{ "" },
 };
