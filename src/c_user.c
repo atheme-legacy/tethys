@@ -111,6 +111,19 @@ static void m_join(conn, msg) u_conn *conn; u_msg *msg;
 	}
 }
 
+static void m_part(conn, msg) u_conn *conn; u_msg *msg;
+{
+	struct u_user *u = conn->priv;
+	char *s, *p;
+
+	p = msg->argv[0];
+	while ((s = cut(&p, ",")) != NULL) {
+		u_log(LG_FINE, "%s PART %s$%s", u->nick, s, p);
+
+		u_user_part_chan(u, s, msg->argv[1]);
+	}
+}
+
 static void m_topic(conn, msg) u_conn *conn; u_msg *msg;
 {
 	u_user *u = conn->priv;
@@ -232,6 +245,7 @@ u_cmd c_user[] = {
 	{ "PRIVMSG", CTX_USER, m_message, 2 },
 	{ "NOTICE",  CTX_USER, m_message, 2 },
 	{ "JOIN",    CTX_USER, m_join,    1 },
+	{ "PART",    CTX_USER, m_part,    1 },
 	{ "TOPIC",   CTX_USER, m_topic,   1 },
 	{ "NAMES",   CTX_USER, m_names,   0 },
 	{ "MODE",    CTX_USER, m_mode,    1 },

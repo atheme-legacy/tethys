@@ -327,6 +327,40 @@ void u_user_try_join_chan(ul, chan, key) u_user_local *ul; char *chan, *key;
 	do_join_chan(c, u);
 }
 
+void u_user_part_chan(ul, chan, reason) u_user_local *ul; char *chan, *reason;
+{
+	char buf[512];
+	u_user *u = USER(ul);
+	u_chan *c;
+	u_chanuser *cu;
+
+	c = u_chan_get(chan);
+	if (c == NULL) {
+		u_user_num(u, ERR_NOSUCHCHANNEL, chan);
+		return;
+	}
+
+	cu = u_chan_user_find(c, u);
+	if (cu == NULL) {
+		u_user_num(u, ERR_NOTONCHANNEL, chan);
+		return;
+	}
+
+	buf[0] = '\0';
+	if (reason)
+		sprintf(buf, " :%s", reason);
+
+	u_sendto_chan(c, NULL, ":%s!%s@%s PART %s%s", u->nick, u->ident,
+	              u->host, c->name, buf);
+
+	u_chan_user_del(cu);
+
+	if (c->members->size == 0) {
+		u_log(LG_DEBUG, "Dropping channel %s", c->name);
+		u_chan_drop(c);
+	}
+}
+
 int init_user()
 {
 	users_by_nick = u_trie_new(rfc1459_canonize);

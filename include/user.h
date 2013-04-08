@@ -88,8 +88,8 @@ extern void u_user_num(A3(u_user*, int num, ...));
 extern void u_user_welcome(); /* u_user_local* */
 extern void u_user_send_motd(); /* u_user_local* */
 
-/* returns 1 if it used the key or not (key may be NULL) */
 extern void u_user_try_join_chan(); /* u_user_local*, char *chan, char *key */
+extern void u_user_part_chan(); /* u_user_local*, char *chan, char *reason */
 
 extern int init_user();
 
