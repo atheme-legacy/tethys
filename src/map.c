@@ -96,18 +96,44 @@ void u_map_free(map) u_map *map;
 	free(map);
 }
 
-/* I'm inclined to claim this tree traversal algorithm won't complain
-   if you try to delete the node you're currently visiting (or any
-   other node, for that matter). */
+static u_map_n *dumb_fetch();
+static void rb_delete();
+
+static void clear_pending(map) u_map *map;
+{
+	u_list_init(&map->pending);
+}
+
+static void delete_pending(map) u_map *map;
+{
+	u_list *cur, *tn;
+	u_map_n *n;
+
+	U_LIST_EACH_SAFE(cur, tn, &map->pending) {
+		n = dumb_fetch(map, cur->data);
+		u_log(LG_FINE, "DEL PENDING %p (n=%p)", cur->data, n);
+		if (n != NULL)
+			rb_delete(map, n);
+		u_list_del_n(cur);
+	}
+}
+
+static void add_pending(map, n) u_map *map; u_map_n *n;
+{
+	u_log(LG_FINE, "ADD PENDING %p (n=%p)", n->key, n);
+	u_list_add(&map->pending, n->key);
+}
+
 void u_map_each(map, cb, priv) u_map *map; void (*cb)(); void *priv;
 {
-	u_map_n *cur, *child, cpy;
+	u_map_n *cur;
 	int idx;
 
 	if ((cur = map->root) == NULL)
 		return;
 
 	map->flags |= MAP_TRAVERSING;
+	clear_pending(map);
 
 try_left:
 	if (cur->child[LEFT] != NULL) {
@@ -116,11 +142,7 @@ try_left:
 	}
 
 loop_top:
-	/* we copy the current node in case it is deleted */
-	memcpy(&cpy, cur, sizeof(cpy));
 	cb(map, cur->key, cur->data, priv);
-	child = cur;
-	cur = &cpy;
 
 	if (cur->child[RIGHT] != NULL) {
 		cur = cur->child[RIGHT];
@@ -130,13 +152,14 @@ loop_top:
 	for (;;) {
 		if (cur->parent == NULL)
 			break;
-		idx = cur->parent->child[LEFT] == child ? LEFT : RIGHT;
-		child = cur = cur->parent;
+		idx = cur->parent->child[LEFT] == cur ? LEFT : RIGHT;
+		cur = cur->parent;
 		if (idx == LEFT)
 			goto loop_top;
 	}
 
 	map->flags &= ~MAP_TRAVERSING;
+	delete_pending(map);
 }
 
 /* dumb functions are just standard binary search tree operations that
@@ -233,6 +256,20 @@ static u_map_n *dumb_delete(map, n) u_map *map; u_map_n *n;
 	return dumb_delete(map, tgt);
 }
 
+static void rb_delete(map, n) u_map *map; u_map_n *n;
+{
+	if (map->flags & MAP_STRING_KEYS)
+		u_log(LG_FINE, "MAP: %p RB-DEL %s", map, n->key);
+	else
+		u_log(LG_FINE, "MAP: %p RB-DEL %p", map, n->key);
+
+	n = dumb_delete(map, n);
+
+	/* TODO: rb cases */
+
+	u_map_n_del(map, n);
+}
+
 void *u_map_get(map, key) u_map *map; void *key;
 {
 	u_map_n *n = dumb_fetch(map, key);
@@ -242,6 +279,9 @@ void *u_map_get(map, key) u_map *map; void *key;
 void u_map_set(map, key, data) u_map *map; void *key, *data;
 {
 	u_map_n *n = dumb_fetch(map, key);
+
+	if (map->flags & MAP_TRAVERSING)
+		abort();
 
 	if (n != NULL) {
 		n->data = data;
@@ -258,23 +298,30 @@ void u_map_set(map, key, data) u_map *map; void *key, *data;
 
 void *u_map_del(map, key) u_map *map; void *key;
 {
-	u_map_n *s, *n = dumb_fetch(map, key);
+	u_map_n *n = dumb_fetch(map, key);
 	void *data;
 
 	if (n == NULL)
 		return NULL;
 
-	if (map->flags & MAP_TRAVERSING)
-		abort();
+	if (map->flags & MAP_STRING_KEYS)
+		u_log(LG_FINE, "MAP: %p DEL %s", map, n->key);
+	else
+		u_log(LG_FINE, "MAP: %p DEL %p", map, n->key);
 
+	/* we decrement size here, even if the deletion doesn't actually
+	   happen, since we consider the node to have been deleted when
+	   u_map_del is called. */
 	map->size--;
 
 	data = n->data;
-	s = dumb_delete(map, n);
+	n->data = NULL;
 
-	/* TODO: rb cases */
+	if (map->flags & MAP_TRAVERSING)
+		add_pending(map, n);
+	else
+		rb_delete(map, n);
 
-	u_map_n_del(map, s);
 	return data;
 }
 

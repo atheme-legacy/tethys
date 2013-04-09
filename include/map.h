@@ -18,6 +18,7 @@ struct u_map {
 	uint flags;
 	u_map_n *root;
 	uint size;
+	u_list pending;
 };
 
 extern u_map *u_map_new(); /* int string_keys */
