@@ -286,6 +286,8 @@ void send_names_cb(map, u, cu, priv)
 u_map *map; u_user *u; u_chanuser *cu; struct send_names_priv *priv;
 {
 	char *p, nbuf[MAXNICKLEN+3];
+	int retrying = 0;
+
 	p = nbuf;
 	if (cu->flags & CU_PFX_OP)
 		*p++ = '@';
@@ -293,10 +295,17 @@ u_map *map; u_user *u; u_chanuser *cu; struct send_names_priv *priv;
 	    && (p == nbuf || (priv->u->flags & CAP_MULTI_PREFIX)))
 		*p++ = '+';
 	strcpy(p, u->nick);
+
+try_again:
 	if (!wrap(priv->buf, &priv->s, priv->w, nbuf)) {
-		u_user_num(priv->u, RPL_NAMREPLY, priv->pfx, priv->c->name, priv->buf);
-		if (!wrap(priv->buf, &priv->s, priv->w, nbuf))
+		if (retrying) {
 			u_log(LG_SEVERE, "Can't fit %s into RPL_NAMREPLY!", nbuf);
+			return;
+		}
+		u_user_num(priv->u, RPL_NAMREPLY, priv->pfx,
+		           priv->c->name, priv->buf);
+		retrying = 1;
+		goto try_again;
 	}
 }
 

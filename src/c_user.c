@@ -246,12 +246,21 @@ struct m_whois_cb_priv {
 static void m_whois_cb(map, c, cu, priv)
 u_map *map; u_chan *c; u_chanuser *cu; struct m_whois_cb_priv *priv;
 {
+	char *p, buf[MAXCHANNAME+3];
 	int retrying = 0;
+
+	p = buf;
+	if (cu->flags & CU_PFX_OP)
+		*p++ = '@';
+	if (cu->flags & CU_PFX_VOICE)
+		*p++ = '+';
+	strcpy(p, c->name);
+
 try_again:
-	if (!wrap(priv->buf, &priv->s, priv->w, c->name)) {
+	if (!wrap(priv->buf, &priv->s, priv->w, buf)) {
 		if (retrying) {
 			u_log(LG_SEVERE, "Can't fit %s into %s!",
-			      c->name, "RPL_WHOISCHANNELS");
+			      buf, "RPL_WHOISCHANNELS");
 			return;
 		}
 		u_user_num(priv->u, RPL_WHOISCHANNELS,
