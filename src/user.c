@@ -266,8 +266,6 @@ static void do_join_chan(c, u) u_chan *c; u_user *u;
 		cu->flags |= CU_PFX_OP;
 	}
 
-	u_map_set(u->channels, c, cu);
-
 	u_sendto_chan(c, NULL, ":%s!%s@%s JOIN %s", u->nick, u->ident, u->host, c->name);
 	if (c->members->size == 1) /* idk why charybdis does it this way */
 		u_conn_f(conn, ":%s MODE %s %s", me.name, c->name, u_chan_modes(c));

@@ -330,6 +330,7 @@ u_chanuser *u_chan_user_add(c, u) u_chan *c; u_user *u;
 	cu->u = u;
 
 	u_map_set(c->members, u, cu);
+	u_map_set(u->channels, c, cu);
 
 	return cu;
 }
@@ -337,6 +338,7 @@ u_chanuser *u_chan_user_add(c, u) u_chan *c; u_user *u;
 void u_chan_user_del(cu) u_chanuser *cu;
 {
 	u_map_del(cu->c->members, cu->u);
+	u_map_del(cu->u->channels, cu->c);
 	free(cu);
 }
 
