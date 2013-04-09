@@ -237,16 +237,42 @@ static void m_mode(conn, msg) u_conn *conn; u_msg *msg;
 	}
 }
 
+struct m_whois_cb_priv {
+	u_user *u, *tu;
+	char *s, buf[512];
+	uint w;
+};
+
+static void m_whois_cb(map, c, cu, priv)
+u_map *map; u_chan *c; u_chanuser *cu; struct m_whois_cb_priv *priv;
+{
+	int retrying = 0;
+try_again:
+	if (!wrap(priv->buf, &priv->s, priv->w, c->name)) {
+		if (retrying) {
+			u_log(LG_SEVERE, "Can't fit %s into %s!",
+			      c->name, "RPL_WHOISCHANNELS");
+			return;
+		}
+		u_user_num(priv->u, RPL_WHOISCHANNELS,
+			   priv->tu->nick, priv->buf);
+		retrying = 1;
+		goto try_again;
+	}
+}
+
 static void m_whois(conn, msg) u_conn *conn; u_msg *msg;
 {
 	u_user *tu, *u = conn->priv;
 	u_server *serv;
 	char *nick;
+	struct m_whois_cb_priv cb_priv;
 
 	/*
 	WHOIS aji aji
 	:host.irc 311 x aji alex ponychat.net * :Alex Iadicicco
 	:host.irc 319 x aji :#chan #foo ...
+	*        ***** *   **   = 9
 	:host.irc 312 x aji some.host :Host Description
 	:host.irc 313 x aji :is a Server Administrator
 	:host.irc 671 x aji :is using a secure connection
@@ -273,6 +299,15 @@ static void m_whois(conn, msg) u_conn *conn; u_msg *msg;
 		serv = USER_REMOTE(tu)->server;
 
 	u_user_num(u, RPL_WHOISUSER, tu->nick, tu->ident, tu->host, tu->gecos);
+
+	cb_priv.u = u;
+	cb_priv.tu = tu;
+	cb_priv.s = cb_priv.buf;
+	cb_priv.w = 512 - (strlen(me.name) + strlen(u->nick) + strlen(tu->nick) + 9);
+	u_map_each(tu->channels, m_whois_cb, &cb_priv);
+	if (cb_priv.s != cb_priv.buf) /* left over */
+		u_user_num(u, RPL_WHOISCHANNELS, tu->nick, cb_priv.buf);
+
 	u_user_num(u, RPL_WHOISSERVER, tu->nick, serv->name, serv->desc);
 
 	if (tu->away[0])
