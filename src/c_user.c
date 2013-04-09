@@ -275,10 +275,26 @@ static void m_whois(conn, msg) u_conn *conn; u_msg *msg;
 	u_user_num(u, RPL_WHOISUSER, tu->nick, tu->ident, tu->host, tu->gecos);
 	u_user_num(u, RPL_WHOISSERVER, tu->nick, serv->name, serv->desc);
 
+	if (tu->away[0])
+		u_user_num(u, RPL_AWAY, tu->nick, tu->away);
+
 	if (tu->flags & UMODE_OPER)
 		u_user_num(u, RPL_WHOISOPERATOR, tu->nick);
 
 	u_user_num(u, RPL_ENDOFWHOIS, tu->nick);
+}
+
+static void m_away(conn, msg) u_conn *conn; u_msg *msg;
+{
+	u_user *u = conn->priv;
+
+	if (msg->argc == 0 || !msg->argv[0][0]) {
+		u->away[0] = '\0';
+		u_user_num(u, RPL_UNAWAY);
+	} else {
+		u_strlcpy(u->away, msg->argv[0], MAXAWAY);
+		u_user_num(u, RPL_NOWAWAY);
+	}
 }
 
 u_cmd c_user[] = {
@@ -294,5 +310,6 @@ u_cmd c_user[] = {
 	{ "NAMES",   CTX_USER, m_names,   0 },
 	{ "MODE",    CTX_USER, m_mode,    1 },
 	{ "WHOIS",   CTX_USER, m_whois,   1 },
+	{ "AWAY",    CTX_USER, m_away,    0 },
 	{ "" },
 };

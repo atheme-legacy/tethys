@@ -14,6 +14,8 @@
 #define MAXHOST 120
 #define MAXGECOS 40
 
+#define MAXAWAY 256
+
 /* all users */
 #define USER_MASK_UMODE        0x000000ff
 #define UMODE_OPER             0x00000001
@@ -54,6 +56,8 @@ struct u_user {
 
 	uint flags;
 	u_map *channels;
+
+	char away[MAXAWAY+1];
 };
 
 struct u_user_local {
