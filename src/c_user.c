@@ -341,6 +341,66 @@ static void m_away(conn, msg) u_conn *conn; u_msg *msg;
 	}
 }
 
+/* :serv.irc 352 aji #chan ident my.host serv.irc nick H*@ :hops realname */
+static void who_reply(u, tu, c, cu) u_user *u, *tu; u_chan *c; u_chanuser *cu;
+{
+	u_server *serv;
+	char *s, buf[6];
+	s = buf;
+
+	if (c != NULL && cu == NULL)
+		cu = u_chan_user_find(c, u);
+	if (cu == NULL) /* this is an error */
+		c = NULL;
+
+	if (tu->flags & USER_IS_LOCAL)
+		serv = &me;
+	else
+		serv = USER_REMOTE(tu)->server;
+
+	*s++ = tu->away[0] ? 'G' : 'H';
+	if (tu->flags & UMODE_OPER)
+		*s++ = '*';
+	if (cu != NULL && (cu->flags & CU_PFX_OP))
+		*s++ = '@';
+	if (cu != NULL && (cu->flags & CU_PFX_VOICE))
+		*s++ = '+';
+	*s++ = '\0';
+
+	u_user_num(u, RPL_WHOREPLY, c?c->name:"*", tu->ident, tu->host,
+	           serv->name, tu->nick, buf, 0, tu->gecos);
+}
+
+static void m_who_chan_cb(map, tu, cu, u) u_map *map; u_user *tu, *u; u_chanuser *cu;
+{
+	who_reply(u, tu, cu->c, cu);
+}
+
+static void m_who(conn, msg) u_conn *conn; u_msg *msg;
+{
+	u_user *tu, *u = conn->priv;
+	u_chan *c = NULL;
+	char *name = msg->argv[0];
+
+	/* TODO: WHOX, operspy? */
+
+	if (name[0] == '#') {
+		if ((c = u_chan_get(name)) == NULL)
+			goto end;
+
+		u_map_each(c->members, m_who_chan_cb, u);
+	} else {
+		if ((tu = u_user_by_nick(name)) == NULL)
+			goto end;
+
+		/* TODO: chan field */
+		who_reply(u, tu, NULL, NULL);
+	}
+
+end:
+	u_user_num(u, RPL_ENDOFWHO, name);
+}
+
 u_cmd c_user[] = {
 	{ "PING",    CTX_USER, m_ping,    1 },
 	{ "PONG",    CTX_USER, m_ping,    0 },
@@ -355,5 +415,6 @@ u_cmd c_user[] = {
 	{ "MODE",    CTX_USER, m_mode,    1 },
 	{ "WHOIS",   CTX_USER, m_whois,   1 },
 	{ "AWAY",    CTX_USER, m_away,    0 },
+	{ "WHO",     CTX_USER, m_who,     1 },
 	{ "" },
 };
