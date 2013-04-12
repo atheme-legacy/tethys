@@ -665,7 +665,7 @@ void dns_recv(iofd) u_io_fd *iofd;
 	}
 
 	if ((hdr.flags & DNS_MASK_RCODE) != DNS_RCODE_OK) {
-		u_log(LG_ERROR, "dns_recv: response has RCODE 0x%x",
+		u_log(LG_DEBUG, "dns_recv: response has RCODE 0x%x",
 		      hdr.flags & DNS_MASK_RCODE);
 		err = DNS_OTHER;
 		if ((hdr.flags & DNS_MASK_RCODE) == DNS_RCODE_NAMEERR)
