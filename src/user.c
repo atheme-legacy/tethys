@@ -113,10 +113,8 @@ void u_user_quit(u, msg) u_user *u; char *msg;
 	u_user_state(u, USER_DISCONNECTED);
 
 	if (conn->ctx == CTX_USER) {
-		u_sendto_visible(u, ":%s!%s@%s QUIT :%s",
-		                 u->nick, u->ident, u->host, msg);
-		u_conn_f(conn, ":%s!%s@%s QUIT :%s",
-		         u->nick, u->ident, u->host, msg);
+		u_sendto_visible(u, ":%H QUIT :%s", u, msg);
+		u_conn_f(conn, ":%H QUIT :%s", u, msg);
 	} else {
 		u_conn_f(conn, "ERROR :%s", msg);
 	}
@@ -242,7 +240,7 @@ static int entry_blocked(c, u, key) u_chan *c; u_user *u; char *key;
 			return ERR_BADCHANNELKEY;
 	}
 
-	sprintf(hostmask, "%s!%s@%s", u->nick, u->ident, u->host);
+	snf(FMT_USER, hostmask, BUFSIZE, "%H", u);
 	U_LIST_EACH(n, &c->ban) {
 		ban = n->data;
 		if (match(ban, hostmask))
@@ -266,9 +264,9 @@ static void do_join_chan(c, u) u_chan *c; u_user *u;
 		cu->flags |= CU_PFX_OP;
 	}
 
-	u_sendto_chan(c, NULL, ":%s!%s@%s JOIN %s", u->nick, u->ident, u->host, c->name);
+	u_sendto_chan(c, NULL, ":%H JOIN %s", u, c->name);
 	if (c->members->size == 1) /* idk why charybdis does it this way */
-		u_conn_f(conn, ":%s MODE %s %s", me.name, c->name, u_chan_modes(c));
+		u_conn_f(conn, ":%S MODE %s %s", &me, c->name, u_chan_modes(c));
 	u_chan_send_topic(c, u);
 	u_chan_send_names(c, u);
 }
@@ -348,8 +346,7 @@ void u_user_part_chan(ul, chan, reason) u_user_local *ul; char *chan, *reason;
 	if (reason)
 		sprintf(buf, " :%s", reason);
 
-	u_sendto_chan(c, NULL, ":%s!%s@%s PART %s%s", u->nick, u->ident,
-	              u->host, c->name, buf);
+	u_sendto_chan(c, NULL, ":%H PART %s%s", u, c->name, buf);
 
 	u_chan_user_del(cu);
 

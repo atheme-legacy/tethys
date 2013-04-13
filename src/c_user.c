@@ -48,10 +48,10 @@ static void m_message_chan(conn, msg) u_conn *conn; u_msg *msg;
 		return;
 	}
 
-	u_log(LG_DEBUG, "[%s -> %s] %s", src->nick, tgt->name, msg->argv[1]);
+	u_log(LG_DEBUG, "[%U -> %s] %s", src, tgt->name, msg->argv[1]);
 
-	u_sendto_chan(tgt, conn, ":%s!%s@%s %s %s :%s", src->nick, src->ident,
-	              src->host, msg->command, tgt->name, msg->argv[1]);
+	u_sendto_chan(tgt, conn, ":%H %s %s :%s", src, msg->command,
+	              tgt->name, msg->argv[1]);
 }
 
 static void m_message_user(conn, msg) u_conn *conn; u_msg *msg;
@@ -65,12 +65,11 @@ static void m_message_user(conn, msg) u_conn *conn; u_msg *msg;
 		return;
 	}
 
-	u_log(LG_DEBUG, "[%s -> %s] %s", src->nick, tgt->nick, msg->argv[1]);
+	u_log(LG_DEBUG, "[%U -> %U] %s", src, tgt, msg->argv[1]);
 
 	if (tgt->flags & USER_IS_LOCAL) {
 		u_conn_f(((u_user_local*)tgt)->conn,
-		         ":%s!%s@%s %s %s :%s", src->nick, src->ident, src->host,
-		         msg->command, tgt->nick, msg->argv[1]);
+		         ":%H %s %U :%s", src, msg->command, tgt, msg->argv[1]);
 	} else {
 		u_user_num(src, ERR_GENERIC, "Can't send messages to remote users yet");
 	}
@@ -146,8 +145,7 @@ static void m_topic(conn, msg) u_conn *conn; u_msg *msg;
 	u_strlcpy(c->topic_setter, u->nick, MAXNICKLEN+1);
 	c->topic_time = NOW.tv_sec;
 
-	u_sendto_chan(c, NULL, ":%s!%s@%s TOPIC %s :%s", u->nick, u->ident,
-	              u->host, c->name, c->topic);
+	u_sendto_chan(c, NULL, ":%H TOPIC %s :%s", u, c->name, c->topic);
 }
 
 static void m_names(conn, msg) u_conn *conn; u_msg *msg;
@@ -232,8 +230,7 @@ static void m_mode(conn, msg) u_conn *conn; u_msg *msg;
 
 	p = u_chan_m_end();
 	if (*p != '\0') {
-		u_sendto_chan(c, NULL, ":%s!%s@%s MODE %s %s", u->nick,
-		              u->ident, u->host, c->name, p);
+		u_sendto_chan(c, NULL, ":%H MODE %s %s", u, c->name, p);
 	}
 }
 
