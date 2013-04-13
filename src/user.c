@@ -338,7 +338,7 @@ void u_user_part_chan(ul, chan, reason) u_user_local *ul; char *chan, *reason;
 
 	cu = u_chan_user_find(c, u);
 	if (cu == NULL) {
-		u_user_num(u, ERR_NOTONCHANNEL, chan);
+		u_user_num(u, ERR_NOTONCHANNEL, c);
 		return;
 	}
 

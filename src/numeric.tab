@@ -68,11 +68,11 @@ RPL_LISTSTART	321
 RPL_LIST	322
 RPL_LISTEND	323
 
-RPL_CHANNELMODEIS	324	"%s %s %s"
+RPL_CHANNELMODEIS	324	"%C %s %s"
 RPL_CHANNELMLOCK	325
-RPL_NOTOPIC	331	"%s :No topic is set"
-RPL_TOPIC	332	"%s :%s"
-RPL_TOPICWHOTIME	333	"%s %s %u"
+RPL_NOTOPIC	331	"%C :No topic is set"
+RPL_TOPIC	332	"%C :%s"
+RPL_TOPICWHOTIME	333	"%C %s %u"
 
 RPL_WHOISTEXT	337
 RPL_WHOISACTUALLY	338
@@ -87,13 +87,13 @@ RPL_ENDOFEXCEPTLIST	349
 
 RPL_VERSION	351	"%s %s :%s"
 
-RPL_WHOREPLY	352	"%s %s %s %s %s %s :%d %s"
-RPL_NAMREPLY	353	"%c %s :%s"
+RPL_WHOREPLY	352	"%C %s %s %s %s %s :%d %s"
+RPL_NAMREPLY	353	"%c %C :%s"
 
 RPL_LINKS	364
 RPL_ENDOFLINKS	365
 
-RPL_ENDOFNAMES	366	"%s :End of /NAMES list"
+RPL_ENDOFNAMES	366	"%C :End of /NAMES list"
 
 RPL_BANLIST	367
 RPL_ENDOFBANLIST	368
@@ -119,7 +119,7 @@ ERR_GENERIC	400	":Error: %s"
 ERR_NOSUCHNICK	401	"%s :No such nick/channel"
 ERR_NOSUCHSERVER	402	"%s :No such server"
 ERR_NOSUCHCHANNEL	403	"%s :No such channel"
-ERR_CANNOTSENDTOCHAN	404	"%s :Cannot send to channel"
+ERR_CANNOTSENDTOCHAN	404	"%C :Cannot send to channel"
 ERR_TOOMANYCHANNELS	405	"%s :You have joined too many channels"
 ERR_WASNOSUCHNICK	406	"%s :There was no such nickname"
 ERR_TOOMANYTARGETS	407	"%s :Too many recipients."
@@ -139,8 +139,8 @@ ERR_NICKNAMEINUSE	433	"%s :Nickname is already in use"
 ERR_NICKCOLLISION	436
 
 ERR_SERVICESDOWN	440
-ERR_USERNOTINCHANNEL	441	"%s %s :They aren't on that channel"
-ERR_NOTONCHANNEL	442	"%s :You're not on that channel"
+ERR_USERNOTINCHANNEL	441	"%U %C :They aren't on that channel"
+ERR_NOTONCHANNEL	442	"%C :You're not on that channel"
 ERR_USERONCHANNEL	443
 ERR_NOLOGIN	444
 ERR_SUMMONDISABLED	445
@@ -162,7 +162,7 @@ ERR_BANNEDFROMCHAN	474	"%C :Cannot join channel (+b)"
 ERR_BADCHANNELKEY	475	"%C :Cannot join channel (+k)"
 
 ERR_NOPRIVILEGES	481	":You're not an IRC operator"
-ERR_CHANOPRIVSNEEDED	482	"%s :You're not a channel operator"
+ERR_CHANOPRIVSNEEDED	482	"%C :You're not a channel operator"
 ERR_CANTKILLSERVER	483	":You don't kill a server, moron. Try /DIE. Who gave you your O-line?"
 
 ERR_NOOPERHOST	491

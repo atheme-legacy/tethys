@@ -195,17 +195,17 @@ static void m_mode(conn, msg) u_conn *conn; u_msg *msg;
 
 	if (msg->argv[1] == NULL) {
 		/* TODO: params or something */
-		u_user_num(u, RPL_CHANNELMODEIS, c->name, u_chan_modes(c), "");
+		u_user_num(u, RPL_CHANNELMODEIS, c, u_chan_modes(c), "");
 		return;
 	}
 
 	cu = u_chan_user_find(c, u);
 	if (cu == NULL) {
-		u_user_num(u, ERR_NOTONCHANNEL, c->name);
+		u_user_num(u, ERR_NOTONCHANNEL, c);
 		return;
 	}
 	if (!(cu->flags & CU_PFX_OP)) {
-		u_user_num(u, ERR_CHANOPRIVSNEEDED, c->name);
+		u_user_num(u, ERR_CHANOPRIVSNEEDED, c);
 		return;
 	}
 
@@ -363,7 +363,7 @@ static void who_reply(u, tu, c, cu) u_user *u, *tu; u_chan *c; u_chanuser *cu;
 		*s++ = '+';
 	*s++ = '\0';
 
-	u_user_num(u, RPL_WHOREPLY, c?c->name:"*", tu->ident, tu->host,
+	u_user_num(u, RPL_WHOREPLY, c, tu->ident, tu->host,
 	           serv->name, tu->nick, buf, 0, tu->gecos);
 }
 

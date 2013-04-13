@@ -185,7 +185,7 @@ top:
 
 	case 'C': /* channel */
 		chan = va_arg(va, u_chan*);
-		string(&buf, chan->name, -1, &spec);
+		string(&buf, chan?chan->name:"*", -1, &spec);
 		if (debug) {
 			character(&buf, '[');
 			integer(&buf, user, 0, 16, NULL);

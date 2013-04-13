@@ -156,7 +156,7 @@ u_cmode_info *info; u_chan *c; u_user *u; char *(*getarg)();
 
 	cu = u_chan_user_find(c, tu);
 	if (cu == NULL) {
-		u_user_num(u, ERR_USERNOTINCHANNEL, tu->nick, c->name);
+		u_user_num(u, ERR_USERNOTINCHANNEL, tu, c);
 		return;
 	}
 
@@ -267,11 +267,11 @@ u_chan *c; u_user *u; char ch; char *(*getarg)();
 void u_chan_send_topic(c, u) u_chan *c; u_user *u;
 {
 	if (c->topic[0]) {
-		u_user_num(u, RPL_TOPIC, c->name, c->topic);
-		u_user_num(u, RPL_TOPICWHOTIME, c->name, c->topic_setter,
+		u_user_num(u, RPL_TOPIC, c, c->topic);
+		u_user_num(u, RPL_TOPICWHOTIME, c, c->topic_setter,
 		           c->topic_time);
 	} else {
-		u_user_num(u, RPL_NOTOPIC, c->name);
+		u_user_num(u, RPL_NOTOPIC, c);
 	}
 }
 
@@ -302,8 +302,7 @@ try_again:
 			u_log(LG_SEVERE, "Can't fit %s into RPL_NAMREPLY!", nbuf);
 			return;
 		}
-		u_user_num(priv->u, RPL_NAMREPLY, priv->pfx,
-		           priv->c->name, priv->buf);
+		u_user_num(priv->u, RPL_NAMREPLY, priv->pfx, priv->c, priv->buf);
 		retrying = 1;
 		goto try_again;
 	}
@@ -323,8 +322,8 @@ void u_chan_send_names(c, u) u_chan *c; u_user *u;
 
 	u_map_each(c->members, send_names_cb, &priv);
 	if (priv.s != priv.buf)
-		u_user_num(u, RPL_NAMREPLY, priv.pfx, c->name, priv.buf);
-	u_user_num(u, RPL_ENDOFNAMES, c->name);
+		u_user_num(u, RPL_NAMREPLY, priv.pfx, c, priv.buf);
+	u_user_num(u, RPL_ENDOFNAMES, c);
 }
 
 /* XXX: assumes the chanuser doesn't already exist */
