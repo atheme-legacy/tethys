@@ -48,10 +48,15 @@ extern int snf(A5(int, char*, uint, char*, ...));
 
    %C, u_char*     Prints the channel name in all cases.
 
-   It should be noted that none of the format specifiers between the %
-   and the format character (e.g. the +03 in %+03d) are implemented in
-   vsnf. (They are simply skipped over.) However, vsnf is a very ad-hoc
-   tool, and so support may be added if it is deemed necessary.
+   Only a limited subset of format specifier parameters (width, etc.) are
+   supported. These go between % and the letter. I don't know how to
+   classify these, so here's a table of what's implemented and what's not:
+
+      IMPLEMENTED   FORGET ABOUT IT
+      %15s          %*s
+      %03d          %+3d
+                    % 5d
+
  */
 
 #endif

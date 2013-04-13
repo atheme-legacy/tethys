@@ -11,17 +11,38 @@ struct buffer {
 	uint len, size;
 };
 
-void string(buf, s, copylen) struct buffer *buf; char *s;
+struct spec {
+	int width;
+	char pad;
+};
+static struct spec __spec_default = { 0, ' ' };
+
+static void string(buf, s, copylen, spec)
+struct buffer *buf; char *s; struct spec *spec;
 {
+	int width;
+
 	if (s == NULL) {
-		string(buf, "(null)", 6);
+		string(buf, "(null)", 6, spec);
 		return;
 	}
 
-	if (copylen < 0) /* may be needed for shenanigans later */
+	if (spec == NULL)
+		spec = &__spec_default;
+	width = spec->width;
+
+	if (copylen < 0)
 		copylen = strlen(s);
 
-	if (copylen > (buf->size - buf->len))
+	if (width > copylen) {
+		if (width - copylen > buf->size - buf->len)
+			width = buf->size - buf->len + copylen;
+		memset(buf->p, spec->pad, width - copylen);
+		buf->p += width - copylen;
+		buf->len += width - copylen;
+	}
+	
+	if (copylen > buf->size - buf->len)
 		copylen = buf->size - buf->len;
 
 	memcpy(buf->p, s, copylen);
@@ -29,23 +50,16 @@ void string(buf, s, copylen) struct buffer *buf; char *s;
 	buf->len += copylen;
 }
 
-void character(buf, c) struct buffer *buf; char c;
+static void character(buf, c) struct buffer *buf; char c;
 {
-	if (buf->len > buf->size)
+	if (buf->len >= buf->size)
 		return;
 	*(buf->p++) = c;
 	buf->len++;
 }
 
-struct intopts {
-	uint n, base, sign;
-
-	/* these fields used for %p: */
-	int width;
-	char pad;
-};
-
-void integer(buf, n) struct buffer *buf; struct intopts *n;
+static void integer(buf, n, sign, base, spec)
+struct buffer *buf; uint n, sign, base; struct spec *spec;
 {
 	static char *digits = "0123456789abcdef";
 	int negative = 0;
@@ -54,57 +68,37 @@ void integer(buf, n) struct buffer *buf; struct intopts *n;
 	s = buf2 + 64;
 	*--s = '\0';
 
-	if (n->sign && (int)n->n < 0) {
+	if (sign && (int)n < 0) {
 		negative = 1;
-		n->n = -n->n;
+		n = -n;
 	}
 
-	if (n->n == 0) /* special case? */
+	if (n == 0) /* special case? */
 		*--s = digits[0];
 
-	while (n->n > 0 || n->width > 0) {
-		n->width--;
+	while (n > 0) {
+		*--s = digits[n % base];
+		n /= base;
 
-		if (n->n == 0) {
-			*--s = n->pad;
-			continue;
-		}
-
-		*--s = digits[n->n % n->base];
-		n->n /= n->base;
-
-		if (n->n == 0 && negative)
+		if (n == 0 && negative)
 			*--s = '-';
 	}
 
-	string(buf, s, buf2 + 63 - s);
-}
-
-void quick_uint(buf, prefix, n, base)
-struct buffer *buf; char *prefix; uint n, base;
-{
-	struct intopts opts;
-
-	opts.n = n;
-	opts.base = base;
-	opts.sign = 0;
-	opts.width = 0;
-	opts.pad = '0';
-
-	if (prefix != NULL)
-		string(buf, prefix, -1);
-	integer(buf, &opts);
+	/* sneakily hand off spec to string() .. */
+	string(buf, s, buf2 + 63 - s, spec);
 }
 
 int vsnf(type, s, size, fmt, va) char *s, *fmt; uint size; va_list va;
 {
+	char *p, specbuf[16];
 	char c_arg, *s_arg;
 	u_user *user;
 	u_server *server;
 
 	struct buffer buf;
-	struct intopts n;
-	int debug = 0;
+	struct spec spec;
+	int base, debug = 0;
+	uint n;
 
 	if (type == FMT_DEBUG) {
 		debug = 1;
@@ -125,31 +119,46 @@ top:
 		goto top;
 	}
 
-	n.base = 0;
-	n.sign = 0;
-	n.width = 0;
-	n.pad = '0';
+	fmt++;
 
-	switch (*++fmt) {
+	base = 0;
+	spec.width = 0;
+	spec.pad = ' ';
+
+	p = specbuf;
+	while (isdigit(*fmt))
+		*p++ = *fmt++;
+	*p = '\0';
+
+	p = specbuf;
+	if (*p) {
+		if (*p == '0') {
+			spec.pad = '0';
+			p++;
+		}
+		spec.width = atoi(p);
+	}
+
+	switch (*fmt) {
 	/* useful IRC formats */
 	case 'T': /* timestamp */
 		if (type == FMT_LOG) {
 			character(&buf, '(');
-			string(&buf, ctime(&NOW.tv_sec), 24);
+			string(&buf, ctime(&NOW.tv_sec), 24, &spec);
 			character(&buf, ')');
 		} else {
-			quick_uint(&buf, NULL, NOW.tv_sec, 10);
+			integer(&buf, NOW.tv_sec, 0, 10, &spec);
 		}
 		break;
 
 	case 'U': /* user */
 		user = va_arg(va, u_user*);
 		if (type == FMT_SERVER) {
-			string(&buf, user->uid, 9);
+			string(&buf, user->uid, 9, NULL);
 		} else {
-			string(&buf, user->nick, -1);
+			string(&buf, user->nick, -1, &spec);
 			if (debug) {
-				quick_uint(&buf, "[0x", user, 16);
+				integer(&buf, user, 0, 16, NULL);
 				character(&buf, ']');
 			}
 		}
@@ -158,15 +167,16 @@ top:
 	case 'H': /* hostmask */
 		user = va_arg(va, u_user*);
 		if (type == FMT_SERVER) {
-			string(&buf, user->uid, 9);
+			string(&buf, user->uid, 9, NULL);
 		} else {
-			string(&buf, user->nick, -1);
+			string(&buf, user->nick, -1, NULL);
 			character(&buf, '!');
-			string(&buf, user->ident, -1);
+			string(&buf, user->ident, -1, NULL);
 			character(&buf, '@');
-			string(&buf, user->host, -1);
+			string(&buf, user->host, -1, NULL);
 			if (debug) {
-				quick_uint(&buf, "[0x", user, 16);
+				character(&buf, '[');
+				integer(&buf, user, 0, 16, NULL);
 				character(&buf, ']');
 			}
 		}
@@ -175,11 +185,12 @@ top:
 	case 'S': /* server */
 		server = va_arg(va, u_server*);
 		if (type == FMT_SERVER) {
-			string(&buf, server->sid, 3);
+			string(&buf, server->sid, 3, NULL);
 		} else {
-			string(&buf, server->name, -1);
+			string(&buf, server->name, -1, &spec);
 			if (debug) {
-				quick_uint(&buf, "[0x", user, 16);
+				character(&buf, '[');
+				integer(&buf, server, 0, 16, NULL);
 				character(&buf, ']');
 			}
 		}
@@ -188,26 +199,27 @@ top:
 	/* standard printf-family formats */
 	case 's':
 		s_arg = va_arg(va, char*);
-		string(&buf, s_arg, -1);
+		string(&buf, s_arg, -1, &spec);
 		break;
 
 	case 'd':
-		n.sign = 1;
 	case 'u':
-		n.base = 10;
+		base = 10;
 	case 'o':
 	case 'x':
 	case 'p':
-		n.n = va_arg(va, uint);
-		if (n.base == 0) /* eww, further hax */
-			n.base = (*fmt == 'o') ? 8 : 16;
+		n = va_arg(va, uint);
+		if (base == 0) /* eww, further hax */
+			base = (*fmt == 'o') ? 8 : 16;
 
 		if (*fmt == 'p') {
-			n.width = 8;
-			string(&buf, "0x", 2);
+			/* this is non-conforming :( */
+			spec.width = 8;
+			spec.pad = 0;
+			string(&buf, "0x", 2, NULL);
 		}
 
-		integer(&buf, &n);
+		integer(&buf, n, *fmt == 'd', base, &spec);
 		break;
 
 	case 'c':
