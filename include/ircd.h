@@ -14,6 +14,7 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/time.h>
+#include <time.h>
 #include <string.h>
 #include <ctype.h>
 #include <sys/socket.h>
@@ -58,6 +59,7 @@ typedef unsigned char uchar;
 # define A2(x,y) x,y
 # define A3(x,y,z) x,y,z
 # define A4(w,x,y,z) w,x,y,z
+# define A5(v,w,x,y,z) v,w,x,y,z
 # define u_va_start(va, arg) va_start(va, arg)
 
 #else
@@ -70,6 +72,7 @@ typedef unsigned char uchar;
 # define A2(x,y)
 # define A3(x,y,z)
 # define A4(w,x,y,z)
+# define A5(v,w,x,y,z)
 # define u_va_start(va, arg) va_start(va)
 
 extern void *malloc();
@@ -95,5 +98,6 @@ typedef unsigned long u_ts_t;
 #include "user.h"
 #include "chan.h"
 #include "sendto.h"
+#include "vsnf.h"
 
 #endif

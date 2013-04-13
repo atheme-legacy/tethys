@@ -25,6 +25,7 @@ OBJS = numeric.o \
 	trie.o \
 	chan.o \
 	sendto.o \
+	vsnf.o \
 	c_reg.o \
 	c_user.o
 
