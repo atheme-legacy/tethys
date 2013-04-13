@@ -155,11 +155,11 @@ ERR_PASSWDMISMATCH	464
 ERR_YOUREBANNEDCREEP	465
 ERR_KEYSET	467
 
-ERR_CHANNELISFULL	471	"%s :Channel is full"
+ERR_CHANNELISFULL	471	"%C :Channel is full"
 ERR_UNKNOWNMODE	472	"%c :is an unknown mode char to me"
-ERR_INVITEONLYCHAN	473	"%s :Cannot join channel (+i)"
-ERR_BANNEDFROMCHAN	474	"%s :Cannot join channel (+b)"
-ERR_BADCHANNELKEY	475	"%s :Cannot join channel (+k)"
+ERR_INVITEONLYCHAN	473	"%C :Cannot join channel (+i)"
+ERR_BANNEDFROMCHAN	474	"%C :Cannot join channel (+b)"
+ERR_BADCHANNELKEY	475	"%C :Cannot join channel (+k)"
 
 ERR_NOPRIVILEGES	481	":You're not an IRC operator"
 ERR_CHANOPRIVSNEEDED	482	"%s :You're not a channel operator"

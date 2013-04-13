@@ -105,7 +105,7 @@ static void m_cap(conn, msg) u_conn *conn; u_msg *msg;
 	ascii_canonize(msg->argv[0]);
 
 	if (!strcmp(msg->argv[0], "LS")) {
-		u_conn_f(conn, ":%s CAP * LS :multi-prefix away-notify", me.name);
+		u_conn_f(conn, ":%S CAP * LS :multi-prefix away-notify", &me);
 
 	} else if (!strcmp(msg->argv[0], "REQ")) {
 		if (msg->argc != 2) {
@@ -125,9 +125,9 @@ static void m_cap(conn, msg) u_conn *conn; u_msg *msg;
 		}
 
 		if (ackbuf[1])
-			u_conn_f(conn, ":%s CAP * ACK :%s", me.name, ackbuf+1);
+			u_conn_f(conn, ":%S CAP * ACK :%s", &me, ackbuf+1);
 		if (nakbuf[1])
-			u_conn_f(conn, ":%s CAP * NAK :%s", me.name, nakbuf+1);
+			u_conn_f(conn, ":%S CAP * NAK :%s", &me, nakbuf+1);
 
 	} else if (!strcmp(msg->argv[0], "END")) {
 		u_user_state(USER(ul), USER_REGISTERING);

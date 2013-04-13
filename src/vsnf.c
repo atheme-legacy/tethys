@@ -93,6 +93,7 @@ int vsnf(type, s, size, fmt, va) char *s, *fmt; uint size; va_list va;
 	char *p, specbuf[16];
 	char c_arg, *s_arg;
 	u_user *user;
+	u_chan *chan;
 	u_server *server;
 
 	struct buffer buf;
@@ -179,6 +180,16 @@ top:
 				integer(&buf, user, 0, 16, NULL);
 				character(&buf, ']');
 			}
+		}
+		break;
+
+	case 'C': /* channel */
+		chan = va_arg(va, u_chan*);
+		string(&buf, chan->name, -1, &spec);
+		if (debug) {
+			character(&buf, '[');
+			integer(&buf, user, 0, 16, NULL);
+			character(&buf, ']');
 		}
 		break;
 

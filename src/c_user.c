@@ -22,7 +22,7 @@ static void m_ping(conn, msg) u_conn *conn; u_msg *msg;
 	if (msg->command[1] == 'O') /* PONG */
 		return;
 
-	u_conn_f(conn, ":%s PONG %s :%s", me.name, me.name, msg->argv[0]);
+	u_conn_f(conn, ":%S PONG %S :%s", &me, &me, msg->argv[0]);
 }
 
 static void m_version(conn, msg) u_conn *conn; u_msg *msg;
@@ -48,10 +48,10 @@ static void m_message_chan(conn, msg) u_conn *conn; u_msg *msg;
 		return;
 	}
 
-	u_log(LG_DEBUG, "[%U -> %s] %s", src, tgt->name, msg->argv[1]);
+	u_log(LG_DEBUG, "[%U -> %C] %s", src, tgt, msg->argv[1]);
 
-	u_sendto_chan(tgt, conn, ":%H %s %s :%s", src, msg->command,
-	              tgt->name, msg->argv[1]);
+	u_sendto_chan(tgt, conn, ":%H %s %C :%s", src, msg->command,
+	              tgt, msg->argv[1]);
 }
 
 static void m_message_user(conn, msg) u_conn *conn; u_msg *msg;
@@ -145,7 +145,7 @@ static void m_topic(conn, msg) u_conn *conn; u_msg *msg;
 	u_strlcpy(c->topic_setter, u->nick, MAXNICKLEN+1);
 	c->topic_time = NOW.tv_sec;
 
-	u_sendto_chan(c, NULL, ":%H TOPIC %s :%s", u, c->name, c->topic);
+	u_sendto_chan(c, NULL, ":%H TOPIC %C :%s", u, c, c->topic);
 }
 
 static void m_names(conn, msg) u_conn *conn; u_msg *msg;
@@ -229,9 +229,8 @@ static void m_mode(conn, msg) u_conn *conn; u_msg *msg;
 	}
 
 	p = u_chan_m_end();
-	if (*p != '\0') {
-		u_sendto_chan(c, NULL, ":%H MODE %s %s", u, c->name, p);
-	}
+	if (*p != '\0')
+		u_sendto_chan(c, NULL, ":%H MODE %C %s", u, c, p);
 }
 
 struct m_whois_cb_priv {

@@ -260,13 +260,13 @@ static void do_join_chan(c, u) u_chan *c; u_user *u;
 	cu = u_chan_user_add(c, u);
 
 	if (c->members->size == 1) {
-		u_log(LG_DEBUG, "Channel %s created", c->name);
+		u_log(LG_DEBUG, "Channel %C created", c);
 		cu->flags |= CU_PFX_OP;
 	}
 
-	u_sendto_chan(c, NULL, ":%H JOIN %s", u, c->name);
+	u_sendto_chan(c, NULL, ":%H JOIN %C", u, c);
 	if (c->members->size == 1) /* idk why charybdis does it this way */
-		u_conn_f(conn, ":%S MODE %s %s", &me, c->name, u_chan_modes(c));
+		u_conn_f(conn, ":%S MODE %C %s", &me, c, u_chan_modes(c));
 	u_chan_send_topic(c, u);
 	u_chan_send_names(c, u);
 }
@@ -314,7 +314,7 @@ void u_user_try_join_chan(ul, chan, key) u_user_local *ul; char *chan, *key;
 	if (num != 0) {
 		fwd = find_forward(c, u, key);
 		if (fwd == NULL) {
-			u_user_num(u, num, c->name);
+			u_user_num(u, num, c);
 			return;
 		}
 		c = fwd;
@@ -346,12 +346,12 @@ void u_user_part_chan(ul, chan, reason) u_user_local *ul; char *chan, *reason;
 	if (reason)
 		sprintf(buf, " :%s", reason);
 
-	u_sendto_chan(c, NULL, ":%H PART %s%s", u, c->name, buf);
+	u_sendto_chan(c, NULL, ":%H PART %C%s", u, c, buf);
 
 	u_chan_user_del(cu);
 
 	if (c->members->size == 0) {
-		u_log(LG_DEBUG, "Dropping channel %s", c->name);
+		u_log(LG_DEBUG, "Dropping channel %C", c);
 		u_chan_drop(c);
 	}
 }
