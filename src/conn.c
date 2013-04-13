@@ -77,10 +77,9 @@ void conn_out_clear(conn) u_conn *conn;
 	conn->obuflen = s - conn->obuf;
 }
 
-/* Some day I might write my own string formatter with my own special
-   formatting things for use in IRC... but today is not that day */
 void u_conn_vf(conn, fmt, va) u_conn *conn; char *fmt; va_list va;
 {
+	int type;
 	char buf[4096];
 	char *p, *s, *end;
 
@@ -90,8 +89,13 @@ void u_conn_vf(conn, fmt, va) u_conn *conn; char *fmt; va_list va;
 	p = conn->obuf + conn->obuflen;
 	end = conn->obuf + conn->obufsize - 2; /* -2 for \r\n */
 
-	vsprintf(buf, fmt, va);
+	type = FMT_USER;
+	if (conn->ctx == CTX_SERVER || conn->ctx == CTX_SREG)
+		type = FMT_SERVER;
+
+	vsnf(type, buf, 4096, fmt, va);
 	buf[512] = '\0'; /* i guess it works... */
+
 	u_log(LG_FINE, "[%p] <- %s", conn, buf);
 
 	for (s=buf; p<end && *s;)
@@ -132,7 +136,8 @@ void u_conn_vnum(conn, nick, num, va) u_conn *conn; char *nick; va_list va;
 		return;
 	}
 
-	vsprintf(buf, fmt, va);
+	/* numerics are ALWAYS FMT_USER */
+	vsnf(FMT_USER, buf, 4096, fmt, va);
 
 	u_conn_f(conn, ":%s %03d %s %s", me.name, num, nick, buf);
 }

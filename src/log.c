@@ -35,9 +35,8 @@ void u_log(level, fmt, va_alist) char *fmt; va_dcl
 	if (level > u_log_level)
 		return;
 
-	/* a tear is shed for our buffer overflow bug... */
 	u_va_start(va, fmt);
-	vsprintf(buf, fmt, va);
+	vsnf(FMT_LOG, buf, BUFSIZE, fmt, va);
 	va_end(va);
 
 	u_log_handler(level, buf);
