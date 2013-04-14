@@ -30,6 +30,7 @@
 typedef struct u_cmode_info u_cmode_info;
 typedef struct u_chan u_chan;
 typedef struct u_chanuser u_chanuser;
+typedef struct u_chanban u_chanban;
 
 struct u_cmode_info {
 	char ch;
@@ -57,6 +58,12 @@ struct u_chanuser {
 	u_cookie ck_flags;
 	u_chan *c;
 	u_user *u;
+};
+
+struct u_chanban {
+	char mask[256];
+	char setter[256];
+	u_ts_t time;
 };
 
 extern u_cmode_info *cmodes;

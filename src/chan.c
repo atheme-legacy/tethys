@@ -87,7 +87,8 @@ static void cb_list(info, c, u, on, getarg)
 u_cmode_info *info; u_chan *c; u_user *u; char *(*getarg)();
 {
 	u_list *list, *n;
-	char *ban, *arg = getarg();
+	u_chanban *ban;
+	char *arg = getarg();
 
 	if (arg == NULL) {
 		/* TODO: send list in this case */
@@ -98,9 +99,9 @@ u_cmode_info *info; u_chan *c; u_user *u; char *(*getarg)();
 
 	U_LIST_EACH(n, list) {
 		ban = n->data;
-		if (!strcmp(ban, arg)) {
+		if (!strcmp(ban->mask, arg)) {
 			if (!on) {
-				cm_put(on, info->ch, ban);
+				cm_put(on, info->ch, ban->mask);
 				free(u_list_del_n(n));
 			}
 			return;
@@ -108,8 +109,14 @@ u_cmode_info *info; u_chan *c; u_user *u; char *(*getarg)();
 	}
 
 	if (on) {
+		ban = malloc(sizeof(*ban));
+
+		u_strlcpy(ban->mask, arg, 256);
+		snf(FMT_USER, ban->setter, 256, "%H", u);
+		ban->time = NOW.tv_sec;
+
 		cm_put(on, info->ch, arg);
-		u_list_add(list, u_strdup(arg));
+		u_list_add(list, ban);
 	}
 
 	return;
