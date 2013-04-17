@@ -90,6 +90,24 @@ void *u_trie_get(trie, key) u_trie *trie; char *key;
 	return n ? n->val : NULL;
 }
 
+static void each(e, cb, priv) u_trie_e *e; void (*cb)(); void *priv;
+{
+	int i;
+
+	if (e->val != NULL)
+		cb(e->val, priv);
+
+	for (i=0; i<16; i++) {
+		if (e->n[i] != NULL)
+			each(e->n[i], cb, priv);
+	}
+}
+
+void u_trie_each(trie, cb, priv) u_trie *trie; void (*cb)(); void *priv;
+{
+	each(&trie->n, cb, priv);
+}
+
 void *u_trie_del(trie, key) u_trie *trie; char *key;
 {
 	u_trie_e *prev, *cur;
