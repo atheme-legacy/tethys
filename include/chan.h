@@ -66,6 +66,8 @@ struct u_chanban {
 	u_ts_t time;
 };
 
+extern u_trie *all_chans;
+
 extern u_cmode_info *cmodes;
 extern uint cmode_default;
 

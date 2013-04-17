@@ -6,7 +6,7 @@
 
 #include "ircd.h"
 
-static u_trie *all_chans;
+u_trie *all_chans;
 
 static void cb_flag();
 static void cb_list();
