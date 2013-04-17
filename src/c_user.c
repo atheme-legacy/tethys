@@ -402,6 +402,38 @@ static void m_oper(conn, msg) u_conn *conn; u_msg *msg;
 	u_conn_num(conn, ERR_NOOPERHOST);
 }
 
+static void list_entry(u, c) u_user *u; u_chan *c;
+{
+	u_user_num(u, RPL_LIST, c->name, c->members->size, c->topic);
+}
+
+static void m_list_chan_cb(c, u) u_chan *c; u_user *u;
+{
+	/* TODO: filtering etc */
+	list_entry(u, c);
+}
+
+static void m_list(conn, msg) u_conn *conn; u_msg *msg;
+{
+	u_user *u = conn->priv;
+
+	if (msg->argc > 0) {
+		u_chan *c = u_chan_get(msg->argv[0]);
+		if (c == NULL) {
+			u_user_num(u, ERR_NOSUCHCHANNEL, msg->argv[0]);
+			return;
+		}
+		u_user_num(u, RPL_LISTSTART);
+		list_entry(u, c);
+		u_user_num(u, RPL_LISTEND);
+		return;
+	}
+
+	u_user_num(u, RPL_LISTSTART);
+	u_trie_each(all_chans, m_list_chan_cb, u);
+	u_user_num(u, RPL_LISTEND);
+}
+
 u_cmd c_user[] = {
 	{ "PING",    CTX_USER, m_ping,    1 },
 	{ "PONG",    CTX_USER, m_ping,    0 },
@@ -418,5 +450,6 @@ u_cmd c_user[] = {
 	{ "AWAY",    CTX_USER, m_away,    0 },
 	{ "WHO",     CTX_USER, m_who,     1 },
 	{ "OPER",    CTX_USER, m_oper,    2 },
+	{ "LIST",    CTX_USER, m_list,    0 },
 	{ "" },
 };
