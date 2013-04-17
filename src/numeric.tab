@@ -151,7 +151,7 @@ ERR_NOTREGISTERED	451
 ERR_NEEDMOREPARAMS	461	"%s :Not enough parameters"
 ERR_ALREADYREGISTERED	462	":You may not reregister"
 ERR_NOPERMFORHOST	463
-ERR_PASSWDMISMATCH	464
+ERR_PASSWDMISMATCH	464	":Password incorrect"
 ERR_YOUREBANNEDCREEP	465
 ERR_KEYSET	467
 
@@ -165,7 +165,7 @@ ERR_NOPRIVILEGES	481	":You're not an IRC operator"
 ERR_CHANOPRIVSNEEDED	482	"%C :You're not a channel operator"
 ERR_CANTKILLSERVER	483	":You don't kill a server, moron. Try /DIE. Who gave you your O-line?"
 
-ERR_NOOPERHOST	491
+ERR_NOOPERHOST	491	":No O-lines for your host"
 
 ERR_UMODEUNKNOWNFLAG	501
 ERR_USERSDONTMATCH	502	":Can't change mode for other users"

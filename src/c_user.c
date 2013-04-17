@@ -397,6 +397,11 @@ end:
 	u_user_num(u, RPL_ENDOFWHO, name);
 }
 
+static void m_oper(conn, msg) u_conn *conn; u_msg *msg;
+{
+	u_conn_num(conn, ERR_NOOPERHOST);
+}
+
 u_cmd c_user[] = {
 	{ "PING",    CTX_USER, m_ping,    1 },
 	{ "PONG",    CTX_USER, m_ping,    0 },
@@ -412,5 +417,6 @@ u_cmd c_user[] = {
 	{ "WHOIS",   CTX_USER, m_whois,   1 },
 	{ "AWAY",    CTX_USER, m_away,    0 },
 	{ "WHO",     CTX_USER, m_who,     1 },
+	{ "OPER",    CTX_USER, m_oper,    2 },
 	{ "" },
 };
