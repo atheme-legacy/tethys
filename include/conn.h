@@ -54,7 +54,7 @@ struct u_conn_origin {
 };
 
 extern void u_conn_init(); /* u_conn* */
-extern void u_conn_cleanup(); /* u_conn* */
+extern void u_conn_close(); /* u_conn* */
 extern void u_conn_obufsize(); /* u_conn*, int obufsize */
 
 extern void u_conn_vf(); /* u_conn*, char *fmt, va_list */

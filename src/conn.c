@@ -46,6 +46,11 @@ void u_conn_cleanup(conn) u_conn *conn;
 	free(conn->obuf);
 }
 
+void u_conn_close(conn) u_conn *conn;
+{
+	conn->flags |= U_CONN_CLOSING;
+}
+
 /* sadfaec */
 void u_conn_obufsize(conn, obufsize) u_conn *conn;
 {

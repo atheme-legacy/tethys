@@ -25,6 +25,12 @@ static void m_ping(conn, msg) u_conn *conn; u_msg *msg;
 	u_conn_f(conn, ":%S PONG %S :%s", &me, &me, msg->argv[0]);
 }
 
+static void m_quit(conn, msg) u_conn *conn; u_msg *msg;
+{
+	u_user_unlink(conn->priv, msg->argc > 0 ? msg->argv[0] : "Client quit");
+	u_conn_close(conn);
+}
+
 static void m_version(conn, msg) u_conn *conn; u_msg *msg;
 {
 	u_user *u = conn->priv;
@@ -327,35 +333,34 @@ static void m_whois(conn, msg) u_conn *conn; u_msg *msg;
 static void m_userhost(conn, msg) u_conn *conn; u_msg *msg;
 {
 	/* USERHOST user1 user2... usern 
-	 * :host.irc 302 :user1=+~user@host user2=+~user@host ...
+	 * :host.irc 302 nick :user1=+~user@host user2=+~user@host ...
+	 * *        *****    **   = 8
 	 */
 	u_user *tu, *u = conn->priv;
-	int para;
-	int w;
-	int rem = 501;
-	char buf[512];
+	int i, w, rem = 510;
+	char buf[512], data[512];
 	char *ptr = buf;
 
 	rem -= strlen(me.name) + strlen(u->nick);
 
 	/* TODO - last param could contain multiple targets */
-	for (para = 0; para != msg->argc || rem <= 0; para++)
-	{
-		tu = u_user_by_nick(msg->argv[para]);
+	for (i=0; i<msg->argc; i++) {
+		tu = u_user_by_nick(msg->argv[i]);
 		if (tu == NULL)
 			continue;
 
-		w = strlen(tu->nick) + strlen(tu->ident) + strlen(tu->host);
-		w += (tu->flags & UMODE_OPER) ? 4 : 3;
-
-		if ((rem - w) <= 0)
-			/* TODO - overflow handling */
+		w = sprintf(data, "%s%s=%c%s@%s", tu->nick,
+		            ((tu->flags & UMODE_OPER) ? "*" : ""),
+		            (tu->away[0] ? '-' : '+'),
+		            tu->ident, tu->host);
+		if (w + 1 > rem)
 			break;
 
-		ptr += sprintf(ptr, "%s%s=%c%s@%s ", tu->nick,
-				((tu->flags & UMODE_OPER) ? "*" : ""),
-				(tu->away[0] ? '-' : '+'),
-				tu->ident, tu->host);
+		if (ptr != buf)
+			*ptr++ = ' ';
+
+		u_strlcpy(ptr, data, rem);
+		ptr += w;
 		rem -= w;
 	}
 
@@ -475,6 +480,7 @@ static void m_list(conn, msg) u_conn *conn; u_msg *msg;
 u_cmd c_user[] = {
 	{ "PING",    CTX_USER, m_ping,    1 },
 	{ "PONG",    CTX_USER, m_ping,    0 },
+	{ "QUIT",    CTX_USER, m_quit,    0 },
 	{ "VERSION", CTX_USER, m_version, 0 },
 	{ "MOTD",    CTX_USER, m_motd,    0 },
 	{ "PRIVMSG", CTX_USER, m_message, 2 },
