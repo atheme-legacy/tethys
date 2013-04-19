@@ -13,8 +13,6 @@
 
 #include <stdio.h>
 #include <sys/types.h>
-#include <sys/time.h>
-#include <time.h>
 #include <string.h>
 #include <ctype.h>
 #include <sys/socket.h>
@@ -43,7 +41,6 @@
 
 typedef unsigned long ulong;
 typedef unsigned int uint;
-typedef unsigned short ushort;
 typedef unsigned char uchar;
 
 #ifdef __GNUC__
@@ -55,12 +52,18 @@ typedef unsigned char uchar;
 # include <getopt.h>
 # include <stdlib.h>
 # include <unistd.h>
+# include <sys/time.h>
+# include <time.h>
 
 # define A2(x,y) x,y
 # define A3(x,y,z) x,y,z
 # define A4(w,x,y,z) w,x,y,z
 # define A5(v,w,x,y,z) v,w,x,y,z
+
 # define u_va_start(va, arg) va_start(va, arg)
+# define u_va_copy(a1, a2) va_copy(a1, a2)
+
+typedef unsigned short ushort;
 
 #else
 
@@ -68,12 +71,15 @@ typedef unsigned char uchar;
 # undef STDARG
 
 # include <varargs.h>
+# include <sys/time.h>
 
 # define A2(x,y)
 # define A3(x,y,z)
 # define A4(w,x,y,z)
 # define A5(v,w,x,y,z)
+
 # define u_va_start(va, arg) va_start(va)
+# define u_va_copy(a1, a2) (a1) = (a2)
 
 extern void *malloc();
 

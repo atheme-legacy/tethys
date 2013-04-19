@@ -41,14 +41,14 @@ static int cm_on;
 static char *cm_buf_p, cm_buf[128];
 static char *cm_data_p, cm_data[512];
 
-void u_chan_m_start(void)
+void u_chan_m_start()
 {
 	cm_on = -1;
 	cm_buf_p = cm_buf;
 	cm_data_p = cm_data;
 }
 
-char *u_chan_m_end(void)
+char *u_chan_m_end()
 {
 	static char cm[512];
 

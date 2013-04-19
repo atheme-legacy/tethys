@@ -7,4 +7,4 @@ src/numeric.h
 test/
 etc/
 local/
-ircd-micro.tar.gz
+release/

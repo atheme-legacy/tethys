@@ -38,7 +38,7 @@ u_map *map; u_user *u; u_chanuser *cu; struct sendto_priv *priv;
 	if (!u_cookie_cmp(&conn->ck_sendto, &ck_sendto))
 		return;
 
-	va_copy(va, priv->va);
+	u_va_copy(va, priv->va);
 	u_conn_vf(conn, priv->fmt, va);
 	va_end(va);
 

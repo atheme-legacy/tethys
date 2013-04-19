@@ -1,2 +1,0 @@
-#!/bin/sh
-git archive --format=tar.gz --output=ircd-micro.tar.gz --prefix=ircd-micro/ master

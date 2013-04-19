@@ -8,7 +8,7 @@
 
 int ga_argc = 0;
 static char **ga_argv;
-static char *getarg(void)
+static char *getarg()
 {
 	if (ga_argc <= 0)
 		return NULL;
