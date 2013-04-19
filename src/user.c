@@ -44,7 +44,7 @@ char *id_next()
 void user_local_die(conn, msg) u_conn *conn; char *msg;
 {
 	u_user *u = conn->priv;
-	u_user_quit(u, msg);
+	u_user_unlink(u, msg);
 }
 
 void user_local_event(conn, event) u_conn *conn;
@@ -103,7 +103,7 @@ u_map *map; u_chan *c; u_chanuser *cu; void *priv;
 	u_chan_user_del(cu);
 }
 
-void u_user_quit(u, msg) u_user *u; char *msg;
+void u_user_unlink(u, msg) u_user *u; char *msg;
 {
 	u_conn *conn = u_user_conn(u);
 

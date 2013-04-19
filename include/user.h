@@ -77,7 +77,7 @@ extern u_umode_info *umodes;
 extern uint umode_default;
 
 extern void u_user_make_ureg(); /* u_conn* */
-extern void u_user_quit(); /* u_user*, char* */
+extern void u_user_unlink(); /* u_user*, char* */
 
 extern u_conn *u_user_conn(); /* u_user* */
 

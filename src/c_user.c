@@ -27,7 +27,7 @@ static void m_ping(conn, msg) u_conn *conn; u_msg *msg;
 
 static void m_quit(conn, msg) u_conn *conn; u_msg *msg;
 {
-	u_user_quit(conn->priv, msg->argc > 0 ? msg->argv[0] : "Client quit");
+	u_user_unlink(conn->priv, msg->argc > 0 ? msg->argv[0] : "Client quit");
 	u_conn_close(conn);
 }
 
