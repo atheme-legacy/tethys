@@ -113,16 +113,25 @@ void conf_descend(key, value, f) char *key, *value; FILE *f;
 
 		skip_spaces(f);
 		c = getc(f);
-		if (c == EOF) {
+		if (c == EOF)
 			return;
-		} else if (c == '{') {
-			u_strlcat(key, ".", U_CONF_MAX_KEY);
-			conf_descend(key, value, f);
-		} else {
+
+		if (c != '{') {
 			ungetc(c, f);
 			read_value(f, value, n);
 			do_cb(key, value);
+
+			skip_spaces(f);
+			c = getc(f);
 		}
+
+		if (c != '{') {
+			ungetc(c, f);
+			continue;
+		}
+
+		u_strlcat(key, ".", U_CONF_MAX_KEY);
+		conf_descend(key, value, f);
 	}
 }
 

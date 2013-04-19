@@ -1,0 +1,99 @@
+# ircd-micro example configuration file
+# Copyright (C) 2013 Alex Iadicicco
+#
+# This file is protected under the terms contained
+# in the COPYING file in the project root
+
+# Read the whole thing, please. You won't regret
+# it. Besides, it's very short.
+
+
+# me{} - this block contains a few options for
+# the local server's configuration.
+
+me {
+	# the server's name, sid, and description
+	name irc.ajitek.net
+	sid 22U
+	desc "Yesterday's Tech Tomorrow"
+
+	# the network name, used in 001
+	net AJITEK
+
+	# where to find the MOTD file
+	motd etc/micro.motd
+}
+
+
+# class{} - these blocks define connection
+# classes, which specify certain parameters and
+# limitations for connections
+
+class users {
+	# ping timeout, in seconds
+	timeout 300
+}
+
+class server {
+	timeout 900
+}
+
+
+# auth{} - these blocks specify authentication
+# requirements for connecting users. auth blocks
+# are tried in the order they appear in the file.
+
+auth local {
+	# the connection class to put matching
+	# users into
+	class users
+
+	# the CIDR block to match to
+	cidr 127.0.0.1/32
+
+	# the password to require for users in
+	# this block
+	password "micro"
+}
+
+auth lan {
+	class users
+	cidr 192.168.0.0/16
+}
+
+auth world {
+	class users
+	cidr 0.0.0.0/0
+	password "flowerpot"
+}
+
+
+# oper{} - operators
+
+oper aji {
+	# the password. currently, no encryption
+	# is available
+	password "god"
+
+	# the auth block the user must be in to
+	# be able to oper
+	auth local
+}
+
+
+# link{} - connections to other servers
+
+link svc.ajitek.net {
+	# the IP to expect connections from,
+	# or to make connections to
+	host 127.0.0.1
+
+	# the password to send when connecting,
+	# and to expect when accepting
+	sendpass "morality"
+	recvpass "soup"
+
+	# the connection class to put this
+	# server into
+	class server
+}
