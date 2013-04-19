@@ -324,6 +324,44 @@ static void m_whois(conn, msg) u_conn *conn; u_msg *msg;
 	u_user_num(u, RPL_ENDOFWHOIS, tu->nick);
 }
 
+static void m_userhost(conn, msg) u_conn *conn; u_msg *msg;
+{
+	/* USERHOST user1 user2... usern 
+	 * :host.irc 302 :user1=+~user@host user2=+~user@host ...
+	 */
+	u_user *tu, *u = conn->priv;
+	int para;
+	int w;
+	int rem = 510;
+	char buf[512];
+	char *ptr = buf;
+
+	rem -= strlen(me.name) + strlen(u->nick) + 8;
+
+	/* TODO - last param could contain multiple targets */
+	for (para = 0; para != msg->argc || rem <= 0; para++)
+	{
+		tu = u_user_by_nick(msg->argv[para]);
+		if (tu == NULL)
+			continue;
+
+		w = strlen(tu->nick) + strlen(tu->ident) + strlen(tu->host);
+		w += (tu->flags & UMODE_OPER) ? 4 : 3;
+
+		if ((rem - w) <= 0)
+			/* TODO - overflow handling */
+			break;
+
+		ptr += sprintf(ptr, "%s%s=%c%s@%s ", tu->nick,
+				((tu->flags & UMODE_OPER) ? "*" : ""),
+				(tu->away[0] ? '-' : '+'),
+				tu->ident, tu->host);
+		rem -= w;
+	}
+
+	u_user_num(u, RPL_USERHOST, buf);
+}
+
 static void m_away(conn, msg) u_conn *conn; u_msg *msg;
 {
 	u_user *u = conn->priv;
@@ -447,6 +485,7 @@ u_cmd c_user[] = {
 	{ "NAMES",   CTX_USER, m_names,   0 },
 	{ "MODE",    CTX_USER, m_mode,    1 },
 	{ "WHOIS",   CTX_USER, m_whois,   1 },
+	{ "USERHOST",CTX_USER, m_userhost,1 },
 	{ "AWAY",    CTX_USER, m_away,    0 },
 	{ "WHO",     CTX_USER, m_who,     1 },
 	{ "OPER",    CTX_USER, m_oper,    2 },
