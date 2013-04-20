@@ -10,26 +10,26 @@ EXTRA = numeric.h \
 	version.c
 OBJS = numeric.o \
 	version.o \
+	c_reg.o \
+	c_user.o \
+	chan.o \
+	conf.o \
+	conn.o \
+	cookie.o \
+	dns.o \
+	io.o \
+	linebuf.o \
 	list.o \
 	log.o \
-	io.o \
 	map.o \
-	dns.o \
-	cookie.o \
-	linebuf.o \
 	msg.o \
-	main.o \
-	util.o \
-	server.o \
-	conf.o \
-	user.o \
-	conn.o \
-	trie.o \
-	chan.o \
 	sendto.o \
+	server.o \
+	trie.o \
+	util.o \
+	user.o \
 	vsnf.o \
-	c_reg.o \
-	c_user.o
+	main.o
 
 CFLAGS = -Wall -g -I. -I../include
 CC = cc

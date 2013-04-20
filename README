@@ -36,14 +36,5 @@ COMPILING
 
 
 RUNNING
-  Configuration goes in etc/micro.conf. The following is an example
-  configuration file:
-
-    me {
-      name irc.ajitek.net           # name of the server
-      sid 22U                       # our SID
-      desc "Tomorrow's Tech Today"  # server description
-      net AJITEK                    # network name
-      motd etc/micro.motd           # file containing the MOTD
-    }
-
+  Configuration goes in etc/micro.conf. An example configuration file
+  can be found in doc/micro.conf.example
