@@ -9,7 +9,6 @@ EXTRA = numeric.h \
 	numeric.c \
 	version.c
 OBJS = numeric.o \
-	version.o \
 	c_reg.o \
 	c_user.o \
 	chan.o \
@@ -28,6 +27,7 @@ OBJS = numeric.o \
 	trie.o \
 	util.o \
 	user.o \
+	version.o \
 	vsnf.o \
 	main.o
 
