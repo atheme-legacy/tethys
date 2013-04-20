@@ -337,7 +337,7 @@ static void m_userhost(conn, msg) u_conn *conn; u_msg *msg;
 	 * *        *****    **   = 8
 	 */
 	u_user *tu, *u = conn->priv;
-	int i, w, rem = 510;
+	int i, w, rem = 501;
 	char buf[512], data[512];
 	char *ptr = buf;
 
