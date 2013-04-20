@@ -353,11 +353,12 @@ static void m_userhost(conn, msg) u_conn *conn; u_msg *msg;
 	 * *        *****    **   = 8
 	 */
 	u_user *tu, *u = conn->priv;
-	int i, w, rem = 501;
+	int i, w, max;
 	char buf[512], data[512];
 	char *ptr = buf;
 
-	rem -= strlen(me.name) + strlen(u->nick);
+	max = 501 - strlen(me.name) - strlen(u->nick);
+	buf[0] = '\0';
 
 	/* TODO - last param could contain multiple targets */
 	for (i=0; i<msg->argc; i++) {
@@ -365,22 +366,24 @@ static void m_userhost(conn, msg) u_conn *conn; u_msg *msg;
 		if (tu == NULL)
 			continue;
 
-		w = sprintf(data, "%s%s=%c%s@%s", tu->nick,
+		w = snf(FMT_USER, data, 512, "%s%s=%c%s@%s", tu->nick,
 		            ((tu->flags & UMODE_OPER) ? "*" : ""),
 		            (tu->away[0] ? '-' : '+'),
 		            tu->ident, tu->host);
-		if (w + 1 > rem)
-			break;
+
+		if (ptr + w + 1 > buf + max)
+			u_user_num(u, RPL_USERHOST, buf);
+			ptr = buf;
 
 		if (ptr != buf)
 			*ptr++ = ' ';
 
-		u_strlcpy(ptr, data, rem);
+		u_strlcpy(ptr, data, buf + max - ptr);
 		ptr += w;
-		rem -= w;
 	}
 
-	u_user_num(u, RPL_USERHOST, buf);
+	if (ptr != buf)
+		u_user_num(u, RPL_USERHOST, buf);
 }
 
 static void m_away(conn, msg) u_conn *conn; u_msg *msg;
