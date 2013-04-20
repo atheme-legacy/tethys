@@ -16,6 +16,22 @@ static char *getarg()
 	return *ga_argv++;
 }
 
+static void m_echo(conn, msg) u_conn *conn; u_msg *msg;
+{
+	u_user *u = conn->priv;
+	char buf[512];
+	int i;
+
+	snf(FMT_USER, buf, 512, ":%S NOTICE %U :***", &me, u);
+
+	u_conn_f(conn, "%s Source: %s", buf, msg->source ? msg->source : "(none)");
+	u_conn_f(conn, "%s Command: %s", buf, msg->command);
+	u_conn_f(conn, "%s Recieved %d arguments:", buf, msg->argc);
+
+	for (i=0; i<msg->argc; i++)
+		u_conn_f(conn, "%s %3d. ^%s$", buf, i, msg->argv[i]);
+}
+
 /* XXX this is wrong */
 static void m_ping(conn, msg) u_conn *conn; u_msg *msg;
 {
@@ -478,6 +494,7 @@ static void m_list(conn, msg) u_conn *conn; u_msg *msg;
 }
 
 u_cmd c_user[] = {
+	{ "ECHO",    CTX_USER, m_echo,    0 },
 	{ "PING",    CTX_USER, m_ping,    1 },
 	{ "PONG",    CTX_USER, m_ping,    0 },
 	{ "QUIT",    CTX_USER, m_quit,    0 },
