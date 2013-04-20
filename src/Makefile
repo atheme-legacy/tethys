@@ -6,8 +6,10 @@
 
 OUTPUT = ircd-micro
 EXTRA = numeric.h \
-	numeric.c
+	numeric.c \
+	version.c
 OBJS = numeric.o \
+	version.o \
 	list.o \
 	log.o \
 	io.o \
@@ -45,3 +47,5 @@ $(OUTPUT): $(EXTRA) $(OBJS)
 	$(CC) -c $(CFLAGS) -o $@ $<
 numeric.h numeric.c: numeric.tab
 	awk -f numeric.awk < numeric.tab
+version.c: version.sh
+	sh version.sh

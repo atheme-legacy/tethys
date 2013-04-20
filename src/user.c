@@ -205,6 +205,7 @@ void u_user_welcome(ul) u_user_local *ul;
 
 	u_user_num(u, RPL_WELCOME, my_net_name, u->nick);
 	u_user_num(u, RPL_YOURHOST, me.name, PACKAGE_FULLNAME);
+	u_user_num(u, RPL_CREATED, date);
 	u_user_send_motd((u_user_local*)u);
 }
 

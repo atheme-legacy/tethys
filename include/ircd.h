@@ -105,5 +105,6 @@ typedef unsigned long u_ts_t;
 #include "chan.h"
 #include "sendto.h"
 #include "vsnf.h"
+#include "version.h"
 
 #endif

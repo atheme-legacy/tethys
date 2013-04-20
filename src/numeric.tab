@@ -1,6 +1,6 @@
 RPL_WELCOME	1	":Welcome to the %s Internet Relay Chat Network %s"
 RPL_YOURHOST	2	":Your host is %s, running version %s"
-RPL_CREATED	3	":This server was created %s"
+RPL_CREATED	3	":This server was born on %s"
 RPL_MYINFO	4	"%s %s %s %s idfk"
 RPL_ISUPPORT	5	"%s :are supported by this server"
 
