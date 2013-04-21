@@ -506,7 +506,9 @@ static void m_nick(conn, msg) u_conn *conn; u_msg *msg;
 		return;
 	}
 
-	/* Check for case change */
+	/* Check for case change 
+	 * FIXME - need to REALLY use IRC case cmp!!!!!!!!
+	 */
 	if (!matchirc(u->nick, newnick) && u_user_by_nick(newnick)) {
 		u_user_num(u, ERR_NICKNAMEINUSE, newnick);
 		return;
