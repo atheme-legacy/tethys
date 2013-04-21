@@ -496,15 +496,40 @@ static void m_list(conn, msg) u_conn *conn; u_msg *msg;
 	u_user_num(u, RPL_LISTEND);
 }
 
+static void m_nick(conn, msg) u_conn *conn; u_msg *msg;
+{
+	u_user *u = conn->priv;
+	char *newnick = msg->argv[0];
+
+	if (!is_valid_nick(newnick)) {
+		u_user_num(u, ERR_ERRONEOUSNICKNAME, newnick);
+		return;
+	}
+
+	/* Check for case change 
+	 * FIXME - need to REALLY use IRC case cmp!!!!!!!!
+	 */
+	if (!matchirc(u->nick, newnick) && u_user_by_nick(newnick)) {
+		u_user_num(u, ERR_NICKNAMEINUSE, newnick);
+		return;
+	}
+
+	/* Send these BEFORE clobbered --Elizabeth */
+	u_sendto_visible(u, ":%H NICK :%s", u, newnick);
+	u_conn_f(conn, ":%H NICK :%s", u, newnick);
+	u_user_set_nick(u, newnick);
+}
+
 u_cmd c_user[] = {
 	{ "ECHO",    CTX_USER, m_echo,    0 },
+	{ "PRIVMSG", CTX_USER, m_message, 2 },
+	{ "NOTICE",  CTX_USER, m_message, 2 },
+	{ "NICK",    CTX_USER, m_nick,    1 },
 	{ "PING",    CTX_USER, m_ping,    1 },
 	{ "PONG",    CTX_USER, m_ping,    0 },
 	{ "QUIT",    CTX_USER, m_quit,    0 },
 	{ "VERSION", CTX_USER, m_version, 0 },
 	{ "MOTD",    CTX_USER, m_motd,    0 },
-	{ "PRIVMSG", CTX_USER, m_message, 2 },
-	{ "NOTICE",  CTX_USER, m_message, 2 },
 	{ "JOIN",    CTX_USER, m_join,    1 },
 	{ "PART",    CTX_USER, m_part,    1 },
 	{ "TOPIC",   CTX_USER, m_topic,   1 },
