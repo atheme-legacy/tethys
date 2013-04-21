@@ -63,6 +63,31 @@ int matchcase(mask, string) char *mask, *string;
 	return matchmap(mask, string, ascii_casemap);
 }
 
+int mapcmp(s1, s2, map) char *s1, *s2, *map;
+{
+	int diff;
+
+	while (*s1 && *s2) {
+		diff = map[(unsigned)*s1] - map[(unsigned)*s2];
+		if (diff != 0)
+			return diff;
+		s1++;
+		s2++;
+	}
+
+	return map[(unsigned)*s1] - map[(unsigned)*s2];
+}
+
+int casecmp(s1, s2) char *s1, *s2;
+{
+	return mapcmp(s1, s2, ascii_casemap);
+}
+
+int irccmp(s1, s2) char *s1, *s2;
+{
+	return mapcmp(s1, s2, rfc1459_casemap);
+}
+
 void u_memmove_lower(dest, src, n) char *dest, *src;
 {
 	while (n --> 0) {

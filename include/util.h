@@ -12,6 +12,10 @@ extern int match(); /* char *pattern, char *string */
 extern int matchirc(); /* rfc1459 casemapping */
 extern int matchcase(); /* ascii casemapping */
 
+extern int mapcmp(); /* char *s1, char *s2, char *map */
+extern int casecmp(); /* char *s1, char *s2 */
+extern int irccmp(); /* char *s1, char *s2 */
+
 extern void u_memmove();
 extern void u_strlcpy();
 extern void u_strlcat();
