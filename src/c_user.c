@@ -499,20 +499,29 @@ static void m_list(conn, msg) u_conn *conn; u_msg *msg;
 static void m_nick(conn, msg) u_conn *conn; u_msg *msg;
 {
 	u_user *u = conn->priv;
-	char *newnick = msg->argv[0];
+	char *s, *newnick = msg->argv[0];
 
 	if (!is_valid_nick(newnick)) {
 		u_user_num(u, ERR_ERRONEOUSNICKNAME, newnick);
 		return;
 	}
 
-	/* Check for case change 
-	 * FIXME - need to REALLY use IRC case cmp!!!!!!!!
-	 */
-	if (!matchirc(u->nick, newnick) && u_user_by_nick(newnick)) {
+	/* due to the scandinavian origins, (~ being uppercase of ^) and ~
+	 * being disallowed as a nick char, we need to chop the first ~
+	 * instead of just erroring.
+	 */ 
+	if ((s = strchr(newnick, '~')))
+		*s = '\0';
+
+	/* Check for case change */
+	if (!irccmp(u->nick, newnick) && u_user_by_nick(newnick)) {
 		u_user_num(u, ERR_NICKNAMEINUSE, newnick);
 		return;
 	}
+
+	/* ignore changes to the exact same nick */
+	if (!strcmp(u->nick, newnick))
+		return;
 
 	/* Send these BEFORE clobbered --Elizabeth */
 	u_sendto_visible(u, ":%H NICK :%s", u, newnick);
@@ -524,7 +533,6 @@ u_cmd c_user[] = {
 	{ "ECHO",    CTX_USER, m_echo,    0 },
 	{ "PRIVMSG", CTX_USER, m_message, 2 },
 	{ "NOTICE",  CTX_USER, m_message, 2 },
-	{ "NICK",    CTX_USER, m_nick,    1 },
 	{ "PING",    CTX_USER, m_ping,    1 },
 	{ "PONG",    CTX_USER, m_ping,    0 },
 	{ "QUIT",    CTX_USER, m_quit,    0 },
@@ -541,5 +549,6 @@ u_cmd c_user[] = {
 	{ "WHO",     CTX_USER, m_who,     1 },
 	{ "OPER",    CTX_USER, m_oper,    2 },
 	{ "LIST",    CTX_USER, m_list,    0 },
+	{ "NICK",    CTX_USER, m_nick,    1 },
 	{ "" },
 };
