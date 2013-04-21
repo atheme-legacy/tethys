@@ -501,6 +501,10 @@ static void m_nick(conn, msg) u_conn *conn; u_msg *msg;
 	u_user *u = conn->priv;
 	char *s, *newnick = msg->argv[0];
 
+	/* cut newnick to nicklen */
+	if (strlen(newnick) > MAXNICKLEN)
+		newnick[MAXNICKLEN] = '\0';
+
 	if (!is_valid_nick(newnick)) {
 		u_user_num(u, ERR_ERRONEOUSNICKNAME, newnick);
 		return;
@@ -514,7 +518,7 @@ static void m_nick(conn, msg) u_conn *conn; u_msg *msg;
 		*s = '\0';
 
 	/* Check for case change */
-	if (!irccmp(u->nick, newnick) && u_user_by_nick(newnick)) {
+	if (irccmp(u->nick, newnick) && u_user_by_nick(newnick)) {
 		u_user_num(u, ERR_NICKNAMEINUSE, newnick);
 		return;
 	}

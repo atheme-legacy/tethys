@@ -256,7 +256,7 @@ int init_util()
 	rfc1459_casemap['~'] = '^';
 
 	for (i=0; i<256; i++)
-		valid_nick_map[i] = isalnum(i) || strchr("[]{}|\\^-_", i);
+		valid_nick_map[i] = isalnum(i) || strchr("[]{}|\\^-_`", i);
 
 	/* TODO: decide */
 	for (i=0; i<256; i++)
