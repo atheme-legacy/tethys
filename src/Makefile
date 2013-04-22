@@ -9,6 +9,7 @@ EXTRA = numeric.h \
 	numeric.c \
 	version.c
 OBJS = numeric.o \
+	auth.o \
 	c_reg.o \
 	c_user.o \
 	chan.o \

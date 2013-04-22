@@ -35,6 +35,7 @@ int init()
 	INIT(init_util);
 	INIT(init_dns);
 	INIT(init_conf);
+	INIT(init_auth);
 	INIT(init_user);
 	INIT(init_cmd);
 	INIT(init_server);

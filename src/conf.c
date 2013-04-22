@@ -12,6 +12,8 @@ void do_cb(key, val) char *key, *val;
 {
 	void (*cb)();
 
+	u_log(LG_FINE, "conf: %s=%s", key, val);
+
 	cb = u_trie_get(u_conf_handlers, key);
 	if (!cb) {
 		u_log(LG_WARN, "No config handler for %s=%s", key, val);

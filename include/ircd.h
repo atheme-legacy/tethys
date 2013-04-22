@@ -96,6 +96,7 @@ typedef unsigned long u_ts_t;
 #include "trie.h"
 #include "map.h"
 #include "conf.h"
+#include "auth.h"
 #include "io.h"
 #include "dns.h"
 #include "cookie.h"
