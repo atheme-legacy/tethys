@@ -226,7 +226,7 @@ top:
 		if (*fmt == 'p') {
 			/* this is non-conforming :( */
 			spec.width = 8;
-			spec.pad = 0;
+			spec.pad = '0';
 			string(&buf, "0x", 2, NULL);
 		}
 
