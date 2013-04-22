@@ -197,7 +197,7 @@ void u_user_num(u, num, va_alist) u_user *u; va_dcl
 static char *isupport[] = {
 	"PREFIX",       "(ov)@+",
 	"CHANTYPES",    "#",
-	"CHANMODES",    "beIq,,fk,cgimnpstz",
+	"CHANMODES",    "beIq,f,k,cgimnpstz",
 	"MODES",        "4",
 	"MAXLIST",      "50", /* TODO: enforce this */
 	"CASEMAPPING",  "rfc1459",
