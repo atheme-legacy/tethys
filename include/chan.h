@@ -91,7 +91,6 @@ extern void u_chan_user_del(); /* u_chanuser* */
 extern u_chanuser *u_chan_user_find(); /* u_chan*, u_user* */
 
 extern int u_can_join(); /* u_chan*, u_user*, char *key */
-extern int u_is_in_list(); /* u_user*, u_list* */
 extern int u_is_muted(); /* u_chanuser* */
 
 extern int init_chan();

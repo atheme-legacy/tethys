@@ -107,6 +107,12 @@ static char *full_hostmask(mask) char *mask;
 	static char buf[512];
 	char *nick, *ident, *host, *ex, *at;
 
+	if (*mask == '$') {
+		/* extbans are untouched */
+		strcpy(buf, mask);
+		return buf;
+	}
+
 	nick = ident = host = "*";
 
 	ex = strchr(mask, '!');
@@ -446,14 +452,96 @@ u_chanuser *u_chan_user_find(c, u) u_chan *c; u_user *u;
 	return u_map_get(c->members, u);
 }
 
-static int is_in_list(host, list) char *host; u_list *list;
+typedef struct extban extb_t;
+
+struct extban {
+	char ch;
+	/* struct extban*, u_chan*, u_user*, char *data */
+	int (*cb)();
+	void *priv;
+};
+
+static int ex_oper(ex, c, u, data) extb_t *ex; u_chan *c; u_user *u; char *data;
+{
+	return u->flags & UMODE_OPER;
+}
+
+static int ex_account(ex, c, u, data) extb_t *ex; u_chan *c; u_user *u; char *data;
+{
+	/* TODO: do this, once we have accounts */
+	return 0;
+}
+
+static int ex_channel(ex, c, u, data) extb_t *ex; u_chan *c; u_user *u; char *data;
+{
+	u_chan *tc;
+	if (data == NULL)
+		return 0;
+	tc = u_chan_get(data);
+	if (tc == NULL || u_chan_user_find(tc, u) == NULL)
+		return 0;
+	return 1;
+}
+
+static int ex_gecos(ex, c, u, data) extb_t *ex; u_chan *c; u_user *u; char *data;
+{
+	if (data == NULL)
+		return 0;
+	return match(data, u->gecos);
+}
+
+static extb_t extbans[] = {
+	{ 'o', ex_oper, NULL },
+	{ 'a', ex_account, NULL },
+	{ 'c', ex_channel, NULL },
+	{ 'r', ex_gecos, NULL },
+	{ 0 }
+};
+
+static int matches_ban(c, u, mask, host) u_chan *c; u_user *u; char *mask, *host;
+{
+	char *data;
+	extb_t *extb = extbans;
+	int invert, banned;
+
+	if (*mask == '$') {
+		data = strchr(mask, ':');
+		if (data != NULL)
+			data++;
+		mask++;
+
+		invert = 0;
+		if (*mask == '~') {
+			invert = 1;
+			mask++;	
+		}
+
+		for (; extb->ch; extb++) {
+			if (extb->ch == *mask)
+				break;
+		}
+
+		if (!extb->ch)
+			return 0;
+
+		banned = extb->cb(extb, c, u, data);
+		if (invert)
+			banned = !banned;
+		return banned;
+	}
+
+	return match(mask, host);
+}
+
+static int is_in_list(c, u, host, list)
+u_chan *c; u_user *u; char *host; u_list *list;
 {
 	u_list *n;
 	u_chanban *ban;
 
 	U_LIST_EACH(n, list) {
 		ban = n->data;
-		if (match(ban->mask, host))
+		if (matches_ban(c, u, ban->mask, host))
 			return 1;
 	}
 
@@ -469,7 +557,7 @@ int u_can_join(c, u, key) u_chan *c; u_user *u; char *key;
 	if (c->mode & CMODE_INVITEONLY) {
 		/* TODO: check pending invites */
 
-		if (!is_in_list(host, &c->invex))
+		if (!is_in_list(c, u, host, &c->invex))
 			return ERR_INVITEONLYCHAN;
 	}
 
@@ -478,8 +566,8 @@ int u_can_join(c, u, key) u_chan *c; u_user *u; char *key;
 			return ERR_BADCHANNELKEY;
 	}
 
-	if (is_in_list(host, &c->ban)) {
-		if (!is_in_list(host, &c->banex))
+	if (is_in_list(c, u, host, &c->ban)) {
+		if (!is_in_list(c, u, host, &c->banex))
 			return ERR_BANNEDFROMCHAN;
 	}
 
@@ -488,15 +576,12 @@ int u_can_join(c, u, key) u_chan *c; u_user *u; char *key;
 	return 0;
 }
 
-int u_is_in_list(u, list) u_user *u; u_list *list;
-{
-	char buf[512];
-	snf(FMT_USER, buf, 512, "%H", u);
-	return is_in_list(buf, list);
-}
-
 int u_is_muted(cu) u_chanuser *cu;
 {
+	char buf[512];
+
+	snf(FMT_USER, buf, 512, "%H", cu->u);
+
 	if (u_cookie_cmp(&cu->ck_flags, &cu->c->ck_flags) >= 0)
 		return cu->flags & CU_MUTED;
 
@@ -506,7 +591,7 @@ int u_is_muted(cu) u_chanuser *cu;
 	if (cu->flags & (CU_PFX_OP | CU_PFX_VOICE))
 		return 0;
 
-	if (!u_is_in_list(cu->u, &cu->c->quiet)
+	if (!is_in_list(cu->c, cu->u, buf, &cu->c->quiet)
 	    && !(cu->c->mode & CMODE_MODERATED))
 		return 0;
 
