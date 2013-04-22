@@ -304,17 +304,28 @@ void u_chan_drop(chan) u_chan *chan;
 
 char *u_chan_modes(c) u_chan *c;
 {
-	static char buf[64];
+	static char buf[512];
+	char chs[64], args[512];
 	u_cmode_info *info;
-	char *s = buf;
+	char *s = chs, *p = args;
 
 	*s++ = '+';
 	for (info=cmodes; info->ch; info++) {
-		if (info->cb == cb_flag && (c->mode & info->data))
-			*s++ = info->ch;
-	}
-	*s = '\0';
+		if (info->cb == cb_flag) {
+			if (c->mode & info->data)
+				*s++ = info->ch;
+		} else if (info->cb == cb_string) {
+			char *arg = member(char*, c, info->data);
 
+			if (arg != NULL) {
+				*s++ = info->ch;
+				p += sprintf(p, " %s", arg);
+			}
+		}
+	}
+	*s = *p = '\0';
+
+	sprintf(buf, "%s%s", chs, args);
 	return buf;
 }
 

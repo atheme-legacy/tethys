@@ -235,8 +235,7 @@ static void m_mode(conn, msg) u_conn *conn; u_msg *msg;
 	}
 
 	if (msg->argv[1] == NULL) {
-		/* TODO: params or something */
-		u_user_num(u, RPL_CHANNELMODEIS, c, u_chan_modes(c), "");
+		u_user_num(u, RPL_CHANNELMODEIS, c, u_chan_modes(c));
 		return;
 	}
 
