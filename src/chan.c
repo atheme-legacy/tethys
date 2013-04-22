@@ -446,6 +446,55 @@ u_chanuser *u_chan_user_find(c, u) u_chan *c; u_user *u;
 	return u_map_get(c->members, u);
 }
 
+static int is_in_list(host, list) char *host; u_list *list;
+{
+	u_list *n;
+	u_chanban *ban;
+
+	U_LIST_EACH(n, list) {
+		ban = n->data;
+		if (match(ban->mask, host))
+			return 1;
+	}
+
+	return 0;
+}
+
+int u_can_join(c, u, key) u_chan *c; u_user *u; char *key;
+{
+	char host[BUFSIZE];
+
+	snf(FMT_USER, host, BUFSIZE, "%H", u);
+
+	if (c->mode & CMODE_INVITEONLY) {
+		/* TODO: check pending invites */
+
+		if (!is_in_list(host, &c->invex))
+			return ERR_INVITEONLYCHAN;
+	}
+
+	if (c->key != NULL) {
+		if (key == NULL || strcmp(c->key, key) != 0)
+			return ERR_BADCHANNELKEY;
+	}
+
+	if (is_in_list(host, &c->ban)) {
+		if (!is_in_list(host, &c->banex))
+			return ERR_BANNEDFROMCHAN;
+	}
+
+	/* TODO: check +l */
+
+	return 0;
+}
+
+int u_is_in_list(u, list) u_user *u; u_list *list;
+{
+	char buf[512];
+	snf(FMT_USER, buf, 512, "%H", u);
+	return is_in_list(buf, list);
+}
+
 int u_is_muted(cu) u_chanuser *cu;
 {
 	if (u_cookie_cmp(&cu->ck_flags, &cu->c->ck_flags) >= 0)
@@ -457,7 +506,7 @@ int u_is_muted(cu) u_chanuser *cu;
 	if (cu->flags & (CU_PFX_OP | CU_PFX_VOICE))
 		return 0;
 
-	if (!u_user_in_list(cu->u, &cu->c->quiet)
+	if (!u_is_in_list(cu->u, &cu->c->quiet)
 	    && !(cu->c->mode & CMODE_MODERATED))
 		return 0;
 

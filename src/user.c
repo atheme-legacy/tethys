@@ -288,34 +288,6 @@ static int is_in_list(host, list) char *host; u_list *list;
 	return 0;
 }
 
-static int entry_blocked(c, u, key) u_chan *c; u_user *u; char *key;
-{
-	char host[BUFSIZE];
-
-	snf(FMT_USER, host, BUFSIZE, "%H", u);
-
-	if (c->mode & CMODE_INVITEONLY) {
-		/* TODO: check pending invites */
-
-		if (!is_in_list(host, &c->invex))
-			return ERR_INVITEONLYCHAN;
-	}
-
-	if (c->key != NULL) {
-		if (key == NULL || strcmp(c->key, key) != 0)
-			return ERR_BADCHANNELKEY;
-	}
-
-	if (is_in_list(host, &c->ban)) {
-		if (!is_in_list(host, &c->banex))
-			return ERR_BANNEDFROMCHAN;
-	}
-
-	/* TODO: check +l */
-
-	return 0;
-}
-
 static void do_join_chan(c, u) u_chan *c; u_user *u;
 {
 	u_conn *conn = u_user_conn(u);
@@ -337,8 +309,6 @@ static void do_join_chan(c, u) u_chan *c; u_user *u;
 
 static u_chan *find_forward(c, u, key) u_chan *c; u_user *u; char *key;
 {
-	/* TODO: determine how to detect forward loops */
-
 	int forwards_left = 30;
 
 	while (forwards_left-- > 0) {
@@ -349,7 +319,7 @@ static u_chan *find_forward(c, u, key) u_chan *c; u_user *u; char *key;
 
 		if (c == NULL)
 			return NULL;
-		if (!entry_blocked(c, u, key))
+		if (!u_can_join(c, u, key))
 			return c;
 	}
 
@@ -374,7 +344,7 @@ void u_user_try_join_chan(ul, chan, key) u_user_local *ul; char *chan, *key;
 	if (cu != NULL)
 		return;
 
-	num = entry_blocked(c, u, key);
+	num = u_can_join(c, u, key);
 	if (num != 0) {
 		fwd = find_forward(c, u, key);
 		if (fwd == NULL) {
