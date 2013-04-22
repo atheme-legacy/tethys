@@ -41,22 +41,21 @@ static int cm_on;
 static char *cm_buf_p, cm_buf[128];
 static char *cm_data_p, cm_data[512];
 
-void u_chan_m_start()
+void u_chan_m_start(u, c) u_user *u; u_chan *c;
 {
+	u_cookie_inc(&c->ck_flags);
+
 	cm_on = -1;
 	cm_buf_p = cm_buf;
 	cm_data_p = cm_data;
 }
 
-char *u_chan_m_end()
+void u_chan_m_end(u, c) u_user *u; u_chan *c;
 {
-	static char cm[512];
-
 	*cm_buf_p = '\0';
 	*cm_data_p = '\0';
-	sprintf(cm, "%s%s", cm_buf, cm_data);
 
-	return cm;
+	u_sendto_chan(c, NULL, ":%H MODE %C %s%s", u, c, cm_buf, cm_data);
 }
 
 static void cm_put(on, ch, arg) char ch, *arg;
@@ -360,6 +359,25 @@ void u_chan_user_del(cu) u_chanuser *cu;
 u_chanuser *u_chan_user_find(c, u) u_chan *c; u_user *u;
 {
 	return u_map_get(c->members, u);
+}
+
+int u_is_muted(cu) u_chanuser *cu;
+{
+	if (u_cookie_cmp(&cu->ck_flags, &cu->c->ck_flags) >= 0)
+		return cu->flags & CU_MUTED;
+
+	u_cookie_cpy(&cu->ck_flags, &cu->c->ck_flags);
+	cu->flags &= ~CU_MUTED;
+
+	if (cu->flags & (CU_PFX_OP | CU_PFX_VOICE))
+		return 0;
+
+	if (!u_user_in_list(cu->u, &cu->c->quiet)
+	    && !(cu->c->mode & CMODE_MODERATED))
+		return 0;
+
+	cu->flags |= CU_MUTED;
+	return CU_MUTED; /* not 1, to mimic cu->flags & CU_MUTED */
 }
 
 int init_chan()

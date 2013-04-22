@@ -96,6 +96,8 @@ extern void u_user_send_motd(); /* u_user_local* */
 extern void u_user_try_join_chan(); /* u_user_local*, char *chan, char *key */
 extern void u_user_part_chan(); /* u_user_local*, char *chan, char *reason */
 
+extern int u_user_in_list(); /* u_user*, u_list* */
+
 extern int init_user();
 
 #endif

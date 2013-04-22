@@ -71,9 +71,9 @@ extern u_trie *all_chans;
 extern u_cmode_info *cmodes;
 extern uint cmode_default;
 
-/* used to build a string to send to users about mode changes */
-extern void u_chan_m_start();
-extern char *u_chan_m_end();
+/* start and end of mode processing */
+extern void u_chan_m_start(); /* u_user*, u_chan* */
+extern void u_chan_m_end(); /* u_user*, u_chan* */
 
 extern u_chan *u_chan_get(); /* char* */
 extern u_chan *u_chan_get_or_create(); /* char* */
@@ -88,6 +88,8 @@ extern void u_chan_send_names(); /* u_chan*, u_user* */
 extern u_chanuser *u_chan_user_add(); /* u_chan*, u_user* */
 extern void u_chan_user_del(); /* u_chanuser* */
 extern u_chanuser *u_chan_user_find(); /* u_chan*, u_user* */
+
+extern int u_is_muted(); /* u_chanuser* */
 
 extern int init_chan();
 

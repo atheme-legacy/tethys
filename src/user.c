@@ -371,6 +371,13 @@ void u_user_part_chan(ul, chan, reason) u_user_local *ul; char *chan, *reason;
 	}
 }
 
+int u_user_in_list(u, list) u_user *u; u_list *list;
+{
+	char buf[512];
+	snf(FMT_USER, buf, 512, "%H", u);
+	return is_in_list(buf, list);
+}
+
 int init_user()
 {
 	users_by_nick = u_trie_new(rfc1459_canonize);

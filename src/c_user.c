@@ -63,10 +63,23 @@ static void m_message_chan(conn, msg) u_conn *conn; u_msg *msg;
 {
 	u_user *src = conn->priv;
 	u_chan *tgt;
+	u_chanuser *cu;
 
 	tgt = u_chan_get(msg->argv[0]);
 	if (tgt == NULL) {
 		u_user_num(src, ERR_NOSUCHCHANNEL, msg->argv[0]);
+		return;
+	}
+
+	cu = u_chan_user_find(tgt, src);
+	if (!cu) {
+		if (tgt->mode & CMODE_NOEXTERNAL) {
+			u_user_num(src, ERR_CANNOTSENDTOCHAN, tgt);
+			return;
+		}
+	} else if (u_is_muted(cu)) {
+		/* TODO: +z */
+		u_user_num(src, ERR_CANNOTSENDTOCHAN, tgt);
 		return;
 	}
 
@@ -99,7 +112,6 @@ static void m_message_user(conn, msg) u_conn *conn; u_msg *msg;
 
 static void m_message(conn, msg) u_conn *conn; u_msg *msg;
 {
-
 	if (msg->argv[0][0] == '#')
 		m_message_chan(conn, msg);
 	else
@@ -242,7 +254,7 @@ static void m_mode(conn, msg) u_conn *conn; u_msg *msg;
 	if (ga_argc > 4)
 		ga_argc = 4;
 
-	u_chan_m_start();
+	u_chan_m_start(u, c);
 
 	for (p=msg->argv[1]; *p; p++) {
 		switch (*p) {
@@ -256,9 +268,7 @@ static void m_mode(conn, msg) u_conn *conn; u_msg *msg;
 		}
 	}
 
-	p = u_chan_m_end();
-	if (*p != '\0')
-		u_sendto_chan(c, NULL, ":%H MODE %C %s", u, c, p);
+	u_chan_m_end(u, c);
 }
 
 struct m_whois_cb_priv {
@@ -539,6 +549,13 @@ static void m_nick(conn, msg) u_conn *conn; u_msg *msg;
 	u_user_set_nick(u, newnick);
 }
 
+static void m_42(conn, msg) u_conn *conn; u_msg *msg;
+{
+	u_user *u = conn->priv;
+	u_conn_f(conn, ":%S NOTICE %U :The Answer to Life, the Universe, and %s",
+	         &me, u, (u->flags & UMODE_OPER) ? "matthew" : "Everything");
+}
+
 u_cmd c_user[] = {
 	{ "ECHO",    CTX_USER, m_echo,    0 },
 	{ "PRIVMSG", CTX_USER, m_message, 2 },
@@ -560,5 +577,6 @@ u_cmd c_user[] = {
 	{ "OPER",    CTX_USER, m_oper,    2 },
 	{ "LIST",    CTX_USER, m_list,    0 },
 	{ "NICK",    CTX_USER, m_nick,    1 },
+	{ "42",      CTX_USER, m_42,      0 },
 	{ "" },
 };
