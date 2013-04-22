@@ -63,6 +63,7 @@ struct u_user {
 struct u_user_local {
 	u_user user;
 	u_conn *conn;
+	u_oper *oper;
 };
 
 struct u_user_remote {

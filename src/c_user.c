@@ -478,7 +478,21 @@ end:
 
 static void m_oper(conn, msg) u_conn *conn; u_msg *msg;
 {
-	u_conn_num(conn, ERR_NOOPERHOST);
+	u_user_local *ul = conn->priv;
+	u_user *u = USER(ul);
+	u_oper *oper;
+
+	oper = u_find_oper(conn->auth, msg->argv[0], msg->argv[1]);
+
+	if (oper == NULL) {
+		u_conn_num(conn, ERR_NOOPERHOST);
+		return;
+	}
+
+	ul->oper = oper;
+	u->flags |= UMODE_OPER;
+	u_conn_f(conn, ":%U MODE %U +o", u, u);
+	u_conn_num(conn, RPL_YOUREOPER);
 }
 
 static void list_entry(u, c) u_user *u; u_chan *c;

@@ -91,6 +91,7 @@ void u_user_make_ureg(conn) u_conn *conn;
 	u->channels = u_map_new(0);
 
 	ul->conn = conn;
+	ul->oper = NULL;
 
 	conn->event = user_local_event;
 

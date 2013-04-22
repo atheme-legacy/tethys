@@ -92,8 +92,11 @@ static u_class *cur_class = NULL;
 void conf_class(key, val) char *key, *val;
 {
 	cur_class = malloc(sizeof(*cur_class));
+
 	u_strlcpy(cur_class->name, val, MAXCLASSNAME+1);
 	cur_class->timeout = 300;
+
+	u_map_set(all_classes, val, cur_class);
 }
 
 void conf_class_timeout(key, val) char *key, *val;
