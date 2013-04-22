@@ -7,6 +7,19 @@
 #ifndef __INC_UTIL_H__
 #define __INC_UTIL_H__
 
+#define CIDR_ADDRSTRLEN (INET_ADDRSTRLEN+3)
+
+typedef struct u_cidr u_cidr;
+
+struct u_cidr {
+	ulong addr;
+	int netsize;
+};
+
+extern void u_cidr_to_str(); /* u_cidr*, char* */
+extern void u_str_to_cidr(); /* char*, u_cidr* */
+extern int u_cidr_match(); /* u_cidr*, char* */
+
 extern int matchmap(); /* char *pat, char *string, char *map */
 extern int match(); /* char *pattern, char *string */
 extern int matchirc(); /* rfc1459 casemapping */

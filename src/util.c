@@ -6,6 +6,53 @@
 
 #include "ircd.h"
 
+void u_cidr_to_str(cidr, s) u_cidr *cidr; char *s;
+{
+	struct in_addr in;
+
+	in.s_addr = htonl(cidr->addr);
+	u_ntop(&in, s);
+	s += strlen(s);
+	sprintf(s, "/%d", cidr->netsize);
+}
+
+void u_str_to_cidr(s, cidr) char *s; u_cidr *cidr;
+{
+	struct in_addr in;
+	char *p;
+
+	p = strchr(s, '/');
+	if (p == NULL) {
+		cidr->netsize = 32;
+	} else {
+		*p++ = '\0';
+		cidr->netsize = atoi(p);
+		if (cidr->netsize < 0)
+			cidr->netsize = 0;
+		else if (cidr->netsize > 32)
+			cidr->netsize = 32;
+	}
+
+	u_aton(s, &in);
+	cidr->addr = ntohl(in.s_addr);
+}
+
+int u_cidr_match(cidr, s) u_cidr *cidr; char *s;
+{
+	struct in_addr in;
+	ulong mask, addr;
+
+	if (cidr->netsize == 0)
+		return 1; /* everything is in /0 */
+	/* 8 becomes 0x00ffffff, 21 becomes 0x000007ff, etc */
+	mask = (1 << (32 - cidr->netsize)) - 1;
+
+	u_aton(s, &in);
+	addr = ntohl(in.s_addr);
+
+	return (addr | mask) == (cidr->addr | mask);
+}
+
 static char null_casemap[256];
 static char rfc1459_casemap[256];
 static char ascii_casemap[256];
