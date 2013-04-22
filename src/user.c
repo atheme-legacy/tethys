@@ -225,15 +225,31 @@ void u_user_send_motd(ul) u_user_local *ul;
 	u_user_num(u, RPL_ENDOFMOTD);
 }
 
+static int is_in_list(host, list) char *host; u_list *list;
+{
+	u_list *n;
+	u_chanban *ban;
+
+	U_LIST_EACH(n, list) {
+		ban = n->data;
+		if (match(ban->mask, host))
+			return 1;
+	}
+
+	return 0;
+}
+
 static int entry_blocked(c, u, key) u_chan *c; u_user *u; char *key;
 {
-	char hostmask[BUFSIZE];
-	u_list *n;
-	char *ban;
+	char host[BUFSIZE];
+
+	snf(FMT_USER, host, BUFSIZE, "%H", u);
 
 	if (c->mode & CMODE_INVITEONLY) {
 		/* TODO: check pending invites */
-		return ERR_INVITEONLYCHAN;
+
+		if (!is_in_list(host, &c->invex))
+			return ERR_INVITEONLYCHAN;
 	}
 
 	if (c->key != NULL) {
@@ -241,10 +257,8 @@ static int entry_blocked(c, u, key) u_chan *c; u_user *u; char *key;
 			return ERR_BADCHANNELKEY;
 	}
 
-	snf(FMT_USER, hostmask, BUFSIZE, "%H", u);
-	U_LIST_EACH(n, &c->ban) {
-		ban = n->data;
-		if (match(ban, hostmask))
+	if (is_in_list(host, &c->ban)) {
+		if (!is_in_list(host, &c->banex))
 			return ERR_BANNEDFROMCHAN;
 	}
 
