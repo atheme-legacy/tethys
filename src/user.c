@@ -194,6 +194,54 @@ void u_user_num(u, num, va_alist) u_user *u; va_dcl
 	va_end(va);
 }
 
+static char *isupport[] = {
+	"PREFIX",       "(ov)@+",
+	"CHANTYPES",    "#",
+	"CHANMODES",    "beIq,,fk,cgimnpstz",
+	"MODES",        "4",
+	"MAXLIST",      "50", /* TODO: enforce this */
+	"CASEMAPPING",  "rfc1459",
+	"NICKLEN",      stringify(MAXNICKLEN),
+	"TOPICLEN",     stringify(MAXTOPICLEN),
+	"CHANNELLEN",   stringify(MAXCHANNAME),
+	"AWAYLEN",      stringify(MAXAWAY),
+	"MAXTARGETS",   "1",
+	"EXCEPTS",      NULL,
+	"INVEX",        NULL,
+	"FNC",          NULL,
+	"WHOX",         NULL, /* TODO: add this */
+	NULL
+};
+
+void u_user_send_isupport(ul) u_user_local *ul;
+{
+	/* :host.irc 005 nick ... :are supported by this server
+	   *        *****    *   *....*....*....*....*....*.... = 37 */
+	u_user *u = USER(ul);
+	char **cur, *s, *p, buf[512], tmp[512];
+	int w;
+
+	w = 475 - strlen(me.name) - strlen(u->nick);
+
+	s = buf;
+	for (cur=isupport; cur[0]; cur+=2) {
+		if (cur[1]) {
+			sprintf(tmp, "%s=%s", cur[0], cur[1]);
+			p = tmp;
+		} else {
+			p = cur[0];
+		}
+
+again:
+		if (!wrap(buf, &s, w, p)) {
+			u_user_num(u, RPL_ISUPPORT, buf);
+			goto again;
+		}
+	}
+	if (s != buf)
+		u_user_num(u, RPL_ISUPPORT, buf);
+}
+
 void u_user_welcome(ul) u_user_local *ul;
 {
 	u_user *u = USER(ul);
@@ -206,6 +254,7 @@ void u_user_welcome(ul) u_user_local *ul;
 	u_user_num(u, RPL_WELCOME, my_net_name, u->nick);
 	u_user_num(u, RPL_YOURHOST, me.name, PACKAGE_FULLNAME);
 	u_user_num(u, RPL_CREATED, date);
+	u_user_send_isupport((u_user_local*)u);
 	u_user_send_motd((u_user_local*)u);
 }
 

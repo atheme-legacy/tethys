@@ -90,6 +90,7 @@ extern uint u_user_state(); /* u_user*, uint */
 extern void u_user_vnum(); /* u_user*, int, va_list */
 extern void u_user_num(A3(u_user*, int num, ...));
 
+extern void u_user_send_isupport(); /* u_user_local* */
 extern void u_user_welcome(); /* u_user_local* */
 extern void u_user_send_motd(); /* u_user_local* */
 
