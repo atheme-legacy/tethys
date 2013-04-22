@@ -548,7 +548,7 @@ u_chan *c; u_user *u; char *host; u_list *list;
 	return 0;
 }
 
-int u_can_join(c, u, key) u_chan *c; u_user *u; char *key;
+int u_entry_blocked(c, u, key) u_chan *c; u_user *u; char *key;
 {
 	char host[BUFSIZE];
 

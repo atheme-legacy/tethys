@@ -319,7 +319,7 @@ static u_chan *find_forward(c, u, key) u_chan *c; u_user *u; char *key;
 
 		if (c == NULL)
 			return NULL;
-		if (!u_can_join(c, u, key))
+		if (!u_entry_blocked(c, u, key))
 			return c;
 	}
 
@@ -344,7 +344,7 @@ void u_user_try_join_chan(ul, chan, key) u_user_local *ul; char *chan, *key;
 	if (cu != NULL)
 		return;
 
-	num = u_can_join(c, u, key);
+	num = u_entry_blocked(c, u, key);
 	if (num != 0) {
 		fwd = find_forward(c, u, key);
 		if (fwd == NULL) {
