@@ -161,7 +161,13 @@ static void m_topic(conn, msg) u_conn *conn; u_msg *msg;
 		return;
 	}
 
-	/* TODO: access checks */
+	if (c->mode & CMODE_TOPIC) {
+		u_chanuser *cu = u_chan_user_find(c, u);
+		if (!(cu->flags & CU_PFX_OP)) {
+			u_user_num(u, ERR_CHANOPRIVSNEEDED, c);
+			return;
+		}
+	}
 
 	u_strlcpy(c->topic, msg->argv[1], MAXTOPICLEN+1);
 	u_strlcpy(c->topic_setter, u->nick, MAXNICKLEN+1);
@@ -510,7 +516,7 @@ static void m_nick(conn, msg) u_conn *conn; u_msg *msg;
 		return;
 	}
 
-	/* due to the scandinavian origins, (~ being uppercase of ^) and ~
+	/* due to the scandalous origins, (~ being uppercase of ^) and ~
 	 * being disallowed as a nick char, we need to chop the first ~
 	 * instead of just erroring.
 	 */ 
