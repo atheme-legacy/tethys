@@ -25,12 +25,14 @@ void skip_to_eol(f) FILE *f;
 	while (!feof(f) && getc(f) != '\n');
 }
 
-void skip_spaces(f) FILE *f;
+void skip_ews(f) FILE *f; /* ews == effective whitespace */
 {
 	int c;
 	for (;;) {
 		c = getc(f);
-		if (c == EOF || !isspace(c))
+		if (c == '#')
+			skip_to_eol(f);
+		else if (c == EOF || !isspace(c))
 			break;
 	}
 	if (c != EOF)
@@ -77,17 +79,13 @@ void read_unquoted_value(f, p, n) FILE *f; char *p;
 void read_value(f, p, n) FILE *f; char *p;
 {
 	int c;
-top:
 
-	skip_spaces(f);
+	skip_ews(f);
 
 	c = getc(f);
 	
 	if (c == EOF) {
 		return;
-	} else if (c == '#') {
-		skip_to_eol(f);
-		goto top;
 	} else if (c == '"') {
 		read_quoted_value(f, p, n);
 	} else {
@@ -103,7 +101,7 @@ void conf_descend(key, value, f) char *key, *value; FILE *f;
 	n = U_CONF_MAX_KEY - n;
 
 	for (;;) {
-		skip_spaces(f);
+		skip_ews(f);
 		c = getc(f);
 		if (c == '}' || c == EOF)
 			return;
@@ -111,7 +109,7 @@ void conf_descend(key, value, f) char *key, *value; FILE *f;
 
 		read_value(f, p, n);
 
-		skip_spaces(f);
+		skip_ews(f);
 		c = getc(f);
 		if (c == EOF)
 			return;
@@ -121,7 +119,7 @@ void conf_descend(key, value, f) char *key, *value; FILE *f;
 			read_value(f, value, n);
 			do_cb(key, value);
 
-			skip_spaces(f);
+			skip_ews(f);
 			c = getc(f);
 		}
 
@@ -142,7 +140,7 @@ void u_conf_read(f) FILE *f;
 
 	key[0] = value[0] = '\0';
 
-	skip_spaces(f);
+	skip_ews(f);
 	conf_descend(key, value, f);
 }
 
