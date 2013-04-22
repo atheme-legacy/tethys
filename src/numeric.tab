@@ -173,3 +173,6 @@ ERR_USERSDONTMATCH	502	":Can't change mode for other users"
 RPL_HELPSTART	704
 RPL_HELPTXT	705
 RPL_ENDOFHELP	706
+
+RPL_QUIETLIST	728	"%C %s %s %u"
+RPL_ENDOFQUIETLIST	729	"%C :End of Channel Quiet List"

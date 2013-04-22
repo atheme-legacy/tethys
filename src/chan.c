@@ -40,6 +40,7 @@ uint cmode_default = CMODE_TOPIC | CMODE_NOEXTERNAL;
 static int cm_on;
 static char *cm_buf_p, cm_buf[128];
 static char *cm_data_p, cm_data[512];
+static char *cm_list_p, cm_list[16];
 
 void u_chan_m_start(u, c) u_user *u; u_chan *c;
 {
@@ -48,14 +49,24 @@ void u_chan_m_start(u, c) u_user *u; u_chan *c;
 	cm_on = -1;
 	cm_buf_p = cm_buf;
 	cm_data_p = cm_data;
+	cm_list_p = cm_list;
+	*cm_list_p = '\0';
 }
 
 void u_chan_m_end(u, c) u_user *u; u_chan *c;
 {
+	u_cmode_info *cur;
+
 	*cm_buf_p = '\0';
 	*cm_data_p = '\0';
 
 	u_sendto_chan(c, NULL, ":%H MODE %C %s%s", u, c, cm_buf, cm_data);
+
+	for (cur=cmodes; cur->ch; cur++) {
+		if (!strchr(cm_list, cur->ch))
+			continue;
+		u_chan_send_list(c, u, memberp(c, cur->data));
+	}
 }
 
 static void cm_put(on, ch, arg) char ch, *arg;
@@ -67,6 +78,14 @@ static void cm_put(on, ch, arg) char ch, *arg;
 	*cm_buf_p++ = ch;
 	if (arg != NULL)
 		cm_data_p += sprintf(cm_data_p, " %s", arg);
+}
+
+static void cm_put_list(ch) char ch;
+{
+	if (strchr(cm_list, ch))
+		return;
+	*cm_list_p++ = ch;
+	*cm_list_p = '\0';
 }
 
 static void cb_flag(info, c, u, on, getarg)
@@ -90,7 +109,8 @@ u_cmode_info *info; u_chan *c; u_user *u; char *(*getarg)();
 	char *arg = getarg();
 
 	if (arg == NULL) {
-		/* TODO: send list in this case */
+		if (on)
+			cm_put_list(info->ch);
 		return;
 	}
 
@@ -330,6 +350,34 @@ void u_chan_send_names(c, u) u_chan *c; u_user *u;
 	if (priv.s != priv.buf)
 		u_user_num(u, RPL_NAMREPLY, priv.pfx, c, priv.buf);
 	u_user_num(u, RPL_ENDOFNAMES, c);
+}
+
+void u_chan_send_list(c, u, list) u_chan *c; u_user *u; u_list *list;
+{
+	u_list *n;
+	u_chanban *ban;
+	int entry, end;
+
+	if (list == &c->quiet) {
+		entry = RPL_QUIETLIST;
+		end = RPL_ENDOFQUIETLIST;
+	} else if (list == &c->invex) {
+		entry = RPL_INVITELIST;
+		end = RPL_ENDOFINVITELIST;
+	} else if (list == &c->banex) {
+		entry = RPL_EXCEPTLIST;
+		end = RPL_ENDOFEXCEPTLIST;
+	} else {
+		/* shrug */
+		entry = RPL_BANLIST;
+		end = RPL_ENDOFBANLIST;
+	}
+
+	U_LIST_EACH(n, list) {
+		ban = n->data;
+		u_user_num(u, entry, c, ban->mask, ban->setter, ban->time);
+	}
+	u_user_num(u, end, c);
 }
 
 /* XXX: assumes the chanuser doesn't already exist */

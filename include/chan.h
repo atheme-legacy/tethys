@@ -84,6 +84,7 @@ extern void u_chan_mode(); /* u_chan*, u_user*, char chr, int on, getarg() */
 
 extern void u_chan_send_topic(); /* u_chan*, u_user* */
 extern void u_chan_send_names(); /* u_chan*, u_user* */
+extern void u_chan_send_list(); /* u_chan*, u_user*, u_list* */
 
 extern u_chanuser *u_chan_user_add(); /* u_chan*, u_user* */
 extern void u_chan_user_del(); /* u_chanuser* */
