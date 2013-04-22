@@ -15,8 +15,7 @@ static void m_pass(conn, msg) u_conn *conn; u_msg *msg;
 {
 	if (conn->pass != NULL)
 		free(conn->pass);
-	conn->pass = (char*)malloc(strlen(msg->argv[0])+1);
-	strcpy(conn->pass, msg->argv[0]);
+	conn->pass = u_strdup(msg->argv[0]);
 }
 
 static void try_reg(conn) u_conn *conn;
@@ -26,6 +25,17 @@ static void try_reg(conn) u_conn *conn;
 	if (u_user_state(u, 0) != USER_REGISTERING || !u->nick[0]
 			|| !u->ident[0] || !u->gecos[0])
 		return;
+
+	conn->auth = u_find_auth(conn);
+	if (conn->auth == NULL) {
+		if (conn->pass) {
+			u_conn_num(conn, ERR_PASSWDMISMATCH);
+		} else {
+			u_conn_f(conn, ":%S NOTICE %U :*** %s",
+			         &me, u, "No auth blocks for your host");
+		}
+		return;
+	}
 
 	u_user_welcome(u);
 }

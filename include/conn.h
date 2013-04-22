@@ -7,6 +7,8 @@
 #ifndef __INC_CONN_H__
 #define __INC_CONN_H__
 
+#include "ircd.h"
+
 #define U_CONN_OBUFSIZE 32768
 #define U_CONN_HOSTSIZE 256
 
@@ -30,6 +32,7 @@ typedef struct u_conn_origin u_conn_origin;
 struct u_conn {
 	uint flags;
 	int ctx;
+	u_auth *auth;
 
 	u_io_fd *sock;
 	char ip[INET_ADDRSTRLEN];
