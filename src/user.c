@@ -302,7 +302,7 @@ static void do_join_chan(c, u) u_chan *c; u_user *u;
 
 	u_sendto_chan(c, NULL, ":%H JOIN %C", u, c);
 	if (c->members->size == 1) /* idk why charybdis does it this way */
-		u_conn_f(conn, ":%S MODE %C %s", &me, c, u_chan_modes(c));
+		u_conn_f(conn, ":%S MODE %C %s", &me, c, u_chan_modes(c, cu));
 	u_chan_send_topic(c, u);
 	u_chan_send_names(c, u);
 }

@@ -79,7 +79,7 @@ extern u_chan *u_chan_get(); /* char* */
 extern u_chan *u_chan_get_or_create(); /* char* */
 extern void u_chan_drop(); /* u_chan* */
 
-extern char *u_chan_modes(); /* u_chan* */
+extern char *u_chan_modes(); /* u_chan*, u_chanuser* */
 extern void u_chan_mode(); /* u_chan*, u_user*, char chr, int on, getarg() */
 
 extern void u_chan_send_topic(); /* u_chan*, u_user* */

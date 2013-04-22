@@ -10,8 +10,9 @@ u_trie *all_chans;
 
 static void cb_flag();
 static void cb_list();
-static void cb_string();
 static void cb_prefix();
+static void cb_fwd();
+static void cb_key();
 
 static u_cmode_info __cmodes[] = {
 	{ 'c', cb_flag,   CMODE_NOCOLOR              },
@@ -23,8 +24,8 @@ static u_cmode_info __cmodes[] = {
 	{ 's', cb_flag,   CMODE_SECRET               },
 	{ 't', cb_flag,   CMODE_TOPIC                },
 	{ 'z', cb_flag,   CMODE_OPMOD                },
-	{ 'f', cb_string, offsetof(u_chan, forward)  },
-	{ 'k', cb_string, offsetof(u_chan, key)      },
+	{ 'f', cb_fwd,                               },
+	{ 'k', cb_key,                               },
 	{ 'b', cb_list,   offsetof(u_chan, ban)      },
 	{ 'q', cb_list,   offsetof(u_chan, quiet)    },
 	{ 'e', cb_list,   offsetof(u_chan, banex)    },
@@ -185,28 +186,6 @@ u_cmode_info *info; u_chan *c; u_user *u; char *(*getarg)();
 	return;
 }
 
-static void cb_string(info, c, u, on, getarg)
-u_cmode_info *info; u_chan *c; u_user *u; char *(*getarg)();
-{
-	char *arg, **val;
-
-	val = (char**)memberp(c, info->data);
-
-	if (!on) {
-		free(*val);
-		*val = NULL;
-		cm_put(on, info->ch, NULL);
-	} else {
-		arg = getarg();
-		if (arg == NULL)
-			return;
-		if (*val)
-			free(*val);
-		*val = u_strdup(arg);
-		cm_put(on, info->ch, arg);
-	}
-}
-
 static void cb_prefix(info, c, u, on, getarg)
 u_cmode_info *info; u_chan *c; u_user *u; char *(*getarg)();
 {
@@ -235,6 +214,67 @@ u_cmode_info *info; u_chan *c; u_user *u; char *(*getarg)();
 	else
 		cu->flags &= ~info->data;
 	cm_put(on, info->ch, tu->nick);
+}
+
+static void cb_fwd(info, c, u, on, getarg)
+u_cmode_info *info; u_chan *c; u_user *u; char *(*getarg)();
+{
+	u_chan *tc;
+	u_chanuser *tcu;
+	char *arg;
+
+	if (!on) {
+		if (c->forward) {
+			free(c->forward);
+			c->forward = NULL;
+			cm_put(on, info->ch, NULL);
+		}
+		return;
+	}
+
+	arg = getarg();
+	if (arg == NULL)
+		return;
+
+	if (!(tc = u_chan_get(arg))) {
+		u_user_num(u, ERR_NOSUCHCHANNEL, arg);
+		return;
+	}
+
+	tcu = u_chan_user_find(tc, u);
+	/* TODO: +F */
+	if (tcu == NULL || !(tcu->flags & CU_PFX_OP)) {
+		u_user_num(u, ERR_CHANOPRIVSNEEDED, tc);
+		return;
+	}
+
+	if (c->forward)
+		free(c->forward);
+	c->forward = u_strdup(arg);
+
+	cm_put(on, info->ch, arg);
+}
+
+static void cb_key(info, c, u, on, getarg)
+u_cmode_info *info; u_chan *c; u_user *u; char *(*getarg)();
+{
+	/* always getarg(), but send * on -k */
+	char *arg = getarg();
+
+	if (!on) {
+		if (c->key) {
+			free(c->key);
+			c->key = NULL;
+			cm_put(on, info->ch, "*");
+		}
+		return;
+	}
+
+	if (c->key)
+		free(c->key);
+	c->key = u_strdup(arg);
+
+	cm_put(on, info->ch, arg);
 }
 
 u_chan *u_chan_get(name) char *name;
@@ -302,7 +342,7 @@ void u_chan_drop(chan) u_chan *chan;
 	free(chan);
 }
 
-char *u_chan_modes(c) u_chan *c;
+char *u_chan_modes(c, cu) u_chan *c; u_chanuser *cu;
 {
 	static char buf[512];
 	char chs[64], args[512];
@@ -311,18 +351,20 @@ char *u_chan_modes(c) u_chan *c;
 
 	*s++ = '+';
 	for (info=cmodes; info->ch; info++) {
-		if (info->cb == cb_flag) {
-			if (c->mode & info->data)
-				*s++ = info->ch;
-		} else if (info->cb == cb_string) {
-			char *arg = member(char*, c, info->data);
-
-			if (arg != NULL) {
-				*s++ = info->ch;
-				p += sprintf(p, " %s", arg);
-			}
-		}
+		if (info->cb == cb_flag && (c->mode & info->data))
+			*s++ = info->ch;
 	}
+
+	if (c->forward) {
+		*s++ = 'f';
+		p += sprintf(p, " %s", c->forward);
+	}
+	if (c->key) {
+		*s++ = 'k';
+		if (cu != NULL)
+			p += sprintf(p, " %s", c->key);
+	}
+
 	*s = *p = '\0';
 
 	sprintf(buf, "%s%s", chs, args);
