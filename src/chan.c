@@ -101,7 +101,7 @@ u_cmode_info *info; u_chan *c; u_user *u; char *(*getarg)();
 		if (!strcmp(ban->mask, arg)) {
 			if (!on) {
 				cm_put(on, info->ch, ban->mask);
-				free(u_list_del_n(n));
+				free(u_list_del_n(list, n));
 			}
 			return;
 		}
@@ -212,7 +212,7 @@ static void drop_list(list) u_list *list;
 
 	U_LIST_EACH_SAFE(n, tn, list) {
 		free(n->data);
-		u_list_del_n(n);
+		u_list_del_n(list, n);
 	}
 }
 

@@ -198,7 +198,7 @@ void cache_add(req, status, res, expires) char *req, *res; ulong expires;
 		cache_size++;
 	} else {
 		u_log(LG_FINE, "***** REUSING CACHE ENT");
-		u_list_del_n(cached->n);
+		u_list_del_n(&cache_by_recent, cached->n);
 	}
 
 	cached->n = u_list_add(&cache_by_recent, cached);
@@ -213,7 +213,7 @@ void cache_add(req, status, res, expires) char *req, *res; ulong expires;
 	cached->expires = expires;
 
 	if (cache_size > DNS_CACHE_SIZE) {
-		cached = u_list_del_n(cache_by_recent.next);
+		cached = u_list_del_n(&cache_by_recent, cache_by_recent.next);
 		if (cached != NULL) {
 			u_log(LG_FINE, "DNS:CACHE: (full) dropping %s=>%s",
 			      cached->req, cached->res);
@@ -252,7 +252,7 @@ int cache_find(req, res) char *req, *res;
 	if (cached->expires < NOW.tv_sec) {
 		u_log(LG_FINE, "DNS:CACHE: (expiry) dropping %s=>%s, status %d",
 		      cached->req, cached->res, cached->status);
-		u_list_del_n(cached->n);
+		u_list_del_n(&cache_by_recent, cached->n);
 		u_map_del(cache_by_name, cached->req);
 		free(cached);
 		cache_size--;
@@ -380,7 +380,7 @@ void req_del(req) dns_req_t *req;
 {
 	id_free(req->id);
 	u_io_del_timer(req->timeout);
-	u_list_del_n(req->n);
+	u_list_del_n(&reqs, req->n);
 	req_cb_del_all(req);
 	free(req);
 }

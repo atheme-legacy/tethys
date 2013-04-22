@@ -25,6 +25,7 @@ extern void u_list_init(); /* u_list* */
 extern u_list *u_list_add(); /* u_list*, void* */
 extern u_list *u_list_contains(); /* u_list*, void* */
 extern int u_list_is_empty(); /* u_list* */
-extern void *u_list_del_n(); /* u_list *node */
+extern int u_list_size(); /* u_list* */
+extern void *u_list_del_n(); /* u_list *list, *node */
 
 #endif

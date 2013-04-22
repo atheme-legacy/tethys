@@ -28,7 +28,7 @@
 VOID u_list_init(list)
 NODE PTR list;
 BEGIN
-	list FIELD data ASSIGN NULL;
+	list FIELD data ASSIGN (REF)0;
 	list FIELD prev ASSIGN list;
 	list FIELD next ASSIGN list;
 END
@@ -50,6 +50,8 @@ BEGIN
 	n FIELD prev            ASSIGN list FIELD prev;
 	n FIELD next FIELD prev ASSIGN n;
 	n FIELD prev FIELD next ASSIGN n;
+
+	list FIELD data         ASSIGN (REF)((INTEGER)(list FIELD data) + 1);
 
 	YIELD n;
 END
@@ -77,13 +79,20 @@ BEGIN
 	YIELD list FIELD next EQ list;
 END 
 
-REF u_list_del_n(n)
-NODE PTR n;
+INTEGER u_list_size(list)
+NODE PTR list;
+BEGIN
+	YIELD (INTEGER)(list FIELD data);
+END
+
+REF u_list_del_n(list, n)
+NODE PTR list, PTR n;
 BEGIN
 	REF data;
 	n FIELD next FIELD prev ASSIGN n FIELD prev;
 	n FIELD prev FIELD next ASSIGN n FIELD next;
 	data ASSIGN n FIELD data;
 	RELEASE n CELL;
+	list FIELD data ASSIGN (REF)((INTEGER)(list FIELD data) - 1);
 	YIELD data;
 END

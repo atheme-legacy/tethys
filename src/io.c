@@ -109,7 +109,7 @@ u_io_fd *u_io_add_fd(io, fd) u_io *io;
 void u_io_del_fd(io, iofd) u_io *io; u_io_fd *iofd;
 {
 	u_log(LG_FINE, "IO: --- FD=%3d [%p]", iofd->fd, iofd);
-	u_list_del_n(iofd->n);
+	u_list_del_n(&io->fds, iofd->n);
 	free(iofd);
 }
 
@@ -212,7 +212,7 @@ void u_io_poll_once(io) u_io *io;
 	U_LIST_EACH_SAFE(n, tn, &io->timers) {
 		iot = n->data;
 		if (!tv_isset(&iot->time)) {
-			u_list_del_n(n);
+			u_list_del_n(&io->timers, n);
 			free(iot);
 		}
 	}

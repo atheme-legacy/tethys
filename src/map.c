@@ -114,7 +114,7 @@ static void delete_pending(map) u_map *map;
 		u_log(LG_FINE, "DEL PENDING %p (n=%p)", cur->data, n);
 		if (n != NULL)
 			rb_delete(map, n);
-		u_list_del_n(cur);
+		u_list_del_n(&map->pending, cur);
 	}
 }
 
