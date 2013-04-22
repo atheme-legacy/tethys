@@ -101,12 +101,48 @@ u_cmode_info *info; u_chan *c; u_user *u; char *(*getarg)();
 	return;
 }
 
+/* foo -> foo!*@*, aji@ -> *!aji@*, etc */
+static char *full_hostmask(mask) char *mask;
+{
+	static char buf[512];
+	char *nick, *ident, *host, *ex, *at;
+
+	nick = ident = host = "*";
+
+	ex = strchr(mask, '!');
+	at = strchr(mask, '@');
+
+	if (ex) *ex++ = '\0';
+	if (at) *at++ = '\0';
+
+	if (!ex && !at) { /* foo */
+		nick = mask;
+	} else if (!ex) { /* foo@bar, @bar, foo@ */
+		ident = mask;
+		host = at;
+	} else if (!at) { /* aji!ex, aji!, !ex */
+		nick = mask;
+		ident = ex;
+	} else { /* aji!i@host, !@host, etc. */
+		nick = mask;
+		ident = ex;
+		host = at;
+	}
+
+	if (!*nick) nick = "*";
+	if (!*ident) ident = "*";
+	if (!*host) host = "*";
+
+	sprintf(buf, "%s!%s@%s", nick, ident, host);
+	return buf;
+}
+
 static void cb_list(info, c, u, on, getarg)
 u_cmode_info *info; u_chan *c; u_user *u; char *(*getarg)();
 {
 	u_list *list, *n;
 	u_chanban *ban;
-	char *arg = getarg();
+	char *mask, *arg = getarg();
 
 	if (arg == NULL) {
 		if (on)
@@ -115,10 +151,11 @@ u_cmode_info *info; u_chan *c; u_user *u; char *(*getarg)();
 	}
 
 	list = (u_list*)memberp(c, info->data);
+	mask = full_hostmask(arg);
 
 	U_LIST_EACH(n, list) {
 		ban = n->data;
-		if (!strcmp(ban->mask, arg)) {
+		if (!strcmp(ban->mask, mask)) {
 			if (!on) {
 				cm_put(on, info->ch, ban->mask);
 				free(u_list_del_n(list, n));
@@ -130,11 +167,11 @@ u_cmode_info *info; u_chan *c; u_user *u; char *(*getarg)();
 	if (on) {
 		ban = malloc(sizeof(*ban));
 
-		u_strlcpy(ban->mask, arg, 256);
+		u_strlcpy(ban->mask, mask, 256);
 		snf(FMT_USER, ban->setter, 256, "%H", u);
 		ban->time = NOW.tv_sec;
 
-		cm_put(on, info->ch, arg);
+		cm_put(on, info->ch, mask);
 		u_list_add(list, ban);
 	}
 
