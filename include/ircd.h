@@ -111,4 +111,7 @@ typedef unsigned long u_ts_t;
 #include "vsnf.h"
 #include "version.h"
 
+extern u_io base_io;
+extern u_ts_t started;
+
 #endif

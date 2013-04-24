@@ -16,9 +16,9 @@ static u_class class_default =
 static u_auth auth_default =
 	{ "default", "default", &class_default, { 0, 0 }, "" };
 
-static u_map *all_classes;
-static u_map *all_auths;
-static u_map *all_opers;
+u_map *all_classes;
+u_map *all_auths;
+u_map *all_opers;
 
 static u_list auth_list;
 

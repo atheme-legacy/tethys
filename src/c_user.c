@@ -571,6 +571,56 @@ static void m_42(conn, msg) u_conn *conn; u_msg *msg;
 	         &me, u, (u->flags & UMODE_OPER) ? "matthew" : "Everything");
 }
 
+static void stats_o_cb(map, k, o, u) u_map *map; char *k; u_oper *o; u_user *u;
+{
+	char *auth = o->authname[0] ? o->authname : "<any>";
+	u_user_num(u, RPL_STATSOLINE, o->name, o->pass, auth);
+}
+
+static void stats_i_cb(map, k, v, u) u_map *map; char *k; u_auth *v; u_user *u;
+{
+	char buf[CIDR_ADDRSTRLEN];
+	u_cidr_to_str(&v->cidr, buf);
+	u_user_num(u, RPL_STATSILINE, v->name, v->classname, buf);
+}
+
+static void m_stats(conn, msg) u_conn *conn; u_msg *msg;
+{
+	u_user *u = conn->priv;
+	int c, days, hr, min, sec;
+
+	if (!(c = msg->argv[0][0])) { /* "STATS :" will do this */
+		u_user_num(u, ERR_NEEDMOREPARAMS, "STATS");
+		return;
+	}
+
+	if (strchr("oi", c) && !(u->flags & UMODE_OPER)) {
+		u_user_num(u, ERR_NOPRIVILEGES);
+		u_user_num(u, RPL_ENDOFSTATS, c);
+		return;
+	}
+
+	switch (c) {
+	case 'o':
+		u_map_each(all_opers, stats_o_cb, u);
+		break;
+	case 'i':
+		u_map_each(all_auths, stats_i_cb, u);
+		break;
+
+	case 'u':
+		sec = NOW.tv_sec - started;
+		min = sec / 60; sec %= 60;
+		hr = min / 60; min %= 60;
+		days = hr / 24; hr %= 24;
+
+		u_user_num(u, RPL_STATSUPTIME, days, hr, min, sec);
+		break;
+	}
+
+	u_user_num(u, RPL_ENDOFSTATS, c);
+}
+
 u_cmd c_user[] = {
 	{ "ECHO",    CTX_USER, m_echo,    0 },
 	{ "PRIVMSG", CTX_USER, m_message, 2 },
@@ -593,5 +643,6 @@ u_cmd c_user[] = {
 	{ "LIST",    CTX_USER, m_list,    0 },
 	{ "NICK",    CTX_USER, m_nick,    1 },
 	{ "42",      CTX_USER, m_42,      0 },
+	{ "STATS",   CTX_USER, m_stats,   1 },
 	{ "" },
 };

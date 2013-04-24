@@ -7,6 +7,7 @@
 #include "ircd.h"
 
 u_io base_io;
+u_ts_t started;
 
 short opt_port = 6667;
 
@@ -65,6 +66,7 @@ int main(argc, argv) char *argv[];
 	int c;
 
 	u_log(LG_INFO, "%s starting...", PACKAGE_FULLNAME);
+	started = time(NULL);
 
 	while ((c = getopt(argc, argv, "vhp:")) != -1) {
 		switch(c) {

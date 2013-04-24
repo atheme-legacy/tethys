@@ -39,6 +39,10 @@ struct u_oper {
 	u_auth *auth;
 };
 
+extern u_map *all_classes;
+extern u_map *all_auths;
+extern u_map *all_opers;
+
 extern u_auth *u_find_auth(); /* u_conn *conn */
 extern u_oper *u_find_oper(); /* u_auth*; char *name, *pass */
 
