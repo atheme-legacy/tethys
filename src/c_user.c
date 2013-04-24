@@ -284,6 +284,10 @@ u_map *map; u_chan *c; u_chanuser *cu; struct m_whois_cb_priv *priv;
 	char *p, buf[MAXCHANNAME+3];
 	int retrying = 0;
 
+	if ((c->mode & (CMODE_PRIVATE | CMODE_SECRET))
+	    && !u_chan_user_find(c, priv->u))
+		return;
+
 	p = buf;
 	if (cu->flags & CU_PFX_OP)
 		*p++ = '@';
@@ -502,7 +506,11 @@ static void list_entry(u, c) u_user *u; u_chan *c;
 
 static void m_list_chan_cb(c, u) u_chan *c; u_user *u;
 {
-	/* TODO: filtering etc */
+	if (c->members->size < 3)
+		return;
+	if ((c->mode & (CMODE_PRIVATE | CMODE_SECRET))
+	    && !u_chan_user_find(c, u))
+		return;
 	list_entry(u, c);
 }
 
