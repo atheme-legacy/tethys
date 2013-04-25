@@ -266,7 +266,7 @@ struct isupport {
 	{ "CHANTYPES",    "#"                     },
 	{ "CHANMODES",    "beIq,f,k,cgimnpstz"    },
 	{ "MODES",        NULL, 4                 },
-	{ "MAXLIST",      NULL, 50                }, /* TODO: enforce this */
+	{ "MAXLIST",      NULL, MAXBANLIST        },
 	{ "CASEMAPPING",  "rfc1459"               },
 	{ "NICKLEN",      NULL, MAXNICKLEN        },
 	{ "TOPICLEN",     NULL, MAXTOPICLEN       },

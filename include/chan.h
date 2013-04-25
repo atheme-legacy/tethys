@@ -9,6 +9,7 @@
 
 #define MAXCHANNAME 50
 #define MAXTOPICLEN 250
+#define MAXBANLIST  50
 
 /* channel modes */
 #define CMODE_PRIVATE      0x00000001  /* +p */

@@ -173,6 +173,13 @@ u_cmode_info *info; u_chan *c; u_user *u; char *(*getarg)();
 	}
 
 	if (on) {
+		if (u_list_size(list) >= MAXBANLIST) {
+			u_log(LG_DEBUG, "%C +%c full, not adding %s",
+		              c, info->ch, mask);
+			u_user_num(u, ERR_BANLISTFULL, c, mask);
+			return;
+		}
+
 		ban = malloc(sizeof(*ban));
 
 		u_strlcpy(ban->mask, mask, 256);

@@ -161,6 +161,8 @@ ERR_INVITEONLYCHAN	473	"%C :Cannot join channel (+i)"
 ERR_BANNEDFROMCHAN	474	"%C :Cannot join channel (+b)"
 ERR_BADCHANNELKEY	475	"%C :Cannot join channel (+k)"
 
+ERR_BANLISTFULL	478	"%C %s :Channel ban list is full"
+
 ERR_NOPRIVILEGES	481	":You're not an IRC operator"
 ERR_CHANOPRIVSNEEDED	482	"%C :You're not a channel operator"
 ERR_CANTKILLSERVER	483	":You don't kill a server, moron. Try /DIE. Who gave you your O-line?"
