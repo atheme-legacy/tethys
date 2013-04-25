@@ -165,7 +165,7 @@ u_cmode_info *info; u_chan *c; u_user *u; char *(*getarg)();
 
 	U_LIST_EACH(n, list) {
 		ban = n->data;
-		if (!strcmp(ban->mask, mask)) {
+		if (streq(ban->mask, mask)) {
 			if (!on) {
 				cm_put(on, info->ch, ban->mask);
 				free(u_list_del_n(list, n));
@@ -659,7 +659,7 @@ int u_entry_blocked(c, u, key) u_chan *c; u_user *u; char *key;
 	}
 
 	if (c->key != NULL) {
-		if (key == NULL || strcmp(c->key, key) != 0)
+		if (key == NULL || streq(c->key, key) != 0)
 			return ERR_BADCHANNELKEY;
 	}
 

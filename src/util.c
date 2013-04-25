@@ -114,7 +114,7 @@ int matchhash(hash, string) char *hash, *string;
 {
 	char buf[CRYPTLEN];
 	u_crypto_hash(buf, string, hash);
-	return !strcmp(buf, hash);
+	return streq(buf, hash);
 }
 
 int mapcmp(s1, s2, map) char *s1, *s2, *map;

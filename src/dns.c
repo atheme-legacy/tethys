@@ -370,7 +370,7 @@ dns_req_t *req_find_by_name(name) char *name;
 	dns_req_t *req;
 	U_LIST_EACH(n, &reqs) {
 		req = n->data;
-		if (!strcmp(req->name, name))
+		if (streq(req->name, name))
 			return req;
 	}
 	return NULL;

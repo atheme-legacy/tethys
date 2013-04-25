@@ -91,9 +91,9 @@ static int cap_add(u, cap) u_user *u; char *cap;
 	for (s=cap; *s; s++)
 		*s = isupper(*s) ? tolower(*s) : *s;
 
-	if (!strcmp(cap, "multi-prefix"))
+	if (streq(cap, "multi-prefix"))
 		u->flags |= CAP_MULTI_PREFIX;
-	else if (!strcmp(cap, "away-notify"))
+	else if (streq(cap, "away-notify"))
 		u->flags |= CAP_AWAY_NOTIFY;
 	else
 		return 0;
@@ -114,10 +114,10 @@ static void m_cap(conn, msg) u_conn *conn; u_msg *msg;
 
 	ascii_canonize(msg->argv[0]);
 
-	if (!strcmp(msg->argv[0], "LS")) {
+	if (streq(msg->argv[0], "LS")) {
 		u_conn_f(conn, ":%S CAP * LS :multi-prefix away-notify", &me);
 
-	} else if (!strcmp(msg->argv[0], "REQ")) {
+	} else if (streq(msg->argv[0], "REQ")) {
 		if (msg->argc != 2) {
 			u_conn_num(conn, ERR_NEEDMOREPARAMS, "CAP");
 			return;
@@ -139,7 +139,7 @@ static void m_cap(conn, msg) u_conn *conn; u_msg *msg;
 		if (nakbuf[1])
 			u_conn_f(conn, ":%S CAP * NAK :%s", &me, nakbuf+1);
 
-	} else if (!strcmp(msg->argv[0], "END")) {
+	} else if (streq(msg->argv[0], "END")) {
 		u_user_state(USER(ul), USER_REGISTERING);
 
 	}

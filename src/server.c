@@ -18,16 +18,16 @@ void server_conf(key, val) char *key, *val;
 	}
 	key += 3;
 
-	if (!strcmp(key, "name")) {
+	if (streq(key, "name")) {
 		u_strlcpy(me.name, val, MAXSERVNAME+1);
 		u_log(LG_DEBUG, "server_conf: me.name=%s", me.name);
-	} else if (!strcmp(key, "net")) {
+	} else if (streq(key, "net")) {
 		u_strlcpy(my_net_name, val, MAXNETNAME+1);
 		u_log(LG_DEBUG, "server_conf: me.net=%s", my_net_name);
-	} else if (!strcmp(key, "sid")) {
+	} else if (streq(key, "sid")) {
 		u_strlcpy(me.sid, val, 4);
 		u_log(LG_DEBUG, "server_conf: me.sid=%s", me.sid);
-	} else if (!strcmp(key, "desc")) {
+	} else if (streq(key, "desc")) {
 		u_strlcpy(me.desc, val, MAXSERVDESC+1);
 		u_log(LG_DEBUG, "server_conf: me.desc=%s", me.desc);
 	} else {

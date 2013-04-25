@@ -584,7 +584,7 @@ static void m_nick(conn, msg) u_conn *conn; u_msg *msg;
 	}
 
 	/* ignore changes to the exact same nick */
-	if (!strcmp(u->nick, newnick))
+	if (streq(u->nick, newnick))
 		return;
 
 	/* Send these BEFORE clobbered --Elizabeth */

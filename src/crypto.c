@@ -34,7 +34,7 @@ static int hash_posix(buf, key, salt) char *buf, *key, *salt;
 	char *h;
 
 	u_strlcpy(buf, salt, 4);
-	if (strlen(salt) < 5 && strcmp(buf, "$p$") != 0)
+	if (strlen(salt) < 5 || !streq(buf, "$p$"))
 		return -1;
 
 	h = crypt(key, salt + 3);

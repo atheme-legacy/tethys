@@ -27,6 +27,8 @@ extern int matchcase(); /* ascii casemapping */
 
 extern int matchhash(); /* char *hash, char *string */
 
+#define streq(a,b) (!strcmp((a),(b)))
+
 extern int mapcmp(); /* char *s1, char *s2, char *map */
 extern int casecmp(); /* char *s1, char *s2 */
 extern int irccmp(); /* char *s1, char *s2 */
