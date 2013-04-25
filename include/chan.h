@@ -52,6 +52,7 @@ struct u_chan {
 	u_map *members;
 	u_list ban, quiet, banex, invex;
 	char *forward, *key;
+	int limit;
 };
 
 struct u_chanuser {

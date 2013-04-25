@@ -13,6 +13,7 @@ static void cb_list();
 static void cb_prefix();
 static void cb_fwd();
 static void cb_key();
+static void cb_limit();
 
 static u_cmode_info __cmodes[] = {
 	{ 'c', cb_flag,   CMODE_NOCOLOR              },
@@ -26,6 +27,7 @@ static u_cmode_info __cmodes[] = {
 	{ 'z', cb_flag,   CMODE_OPMOD                },
 	{ 'f', cb_fwd,                               },
 	{ 'k', cb_key,                               },
+	{ 'l', cb_limit,                             },
 	{ 'b', cb_list,   offsetof(u_chan, ban)      },
 	{ 'q', cb_list,   offsetof(u_chan, quiet)    },
 	{ 'e', cb_list,   offsetof(u_chan, banex)    },
@@ -268,8 +270,6 @@ u_cmode_info *info; u_chan *c; u_user *u; char *(*getarg)();
 	/* always getarg(), but send * on -k */
 	char *arg = getarg();
 
-	/* TODO: un-bork this. arg can be NULL in this case */
-
 	if (!on) {
 		if (c->key) {
 			free(c->key);
@@ -279,11 +279,40 @@ u_cmode_info *info; u_chan *c; u_user *u; char *(*getarg)();
 		return;
 	}
 
+	if (!arg)
+		return;
+
 	if (c->key)
 		free(c->key);
 	c->key = u_strdup(arg);
 
 	cm_put(on, info->ch, arg);
+}
+
+static void cb_limit(info, c, u, on, getarg)
+u_cmode_info *info; u_chan *c; u_user *u; char *(*getarg)();
+{
+	char buf[32];
+	char *arg;
+	int lim;
+
+	if (!on) {
+		if (c->limit > 0)
+			cm_put(0, 'l', NULL);
+		c->limit = -1;
+		return;
+	}
+
+	arg = getarg();
+	if (arg == NULL)
+		return;
+	lim = atoi(arg);
+	if (lim < 1)
+		return;
+	c->limit = lim;
+
+	snf(FMT_USER, buf, 32, "%d", c->limit);
+	cm_put(1, 'l', buf);
 }
 
 u_chan *u_chan_get(name) char *name;
@@ -313,6 +342,7 @@ u_chan *u_chan_get_or_create(name) char *name;
 	u_list_init(&chan->invex);
 	chan->forward = NULL;
 	chan->key = NULL;
+	chan->limit = -1;
 
 	u_trie_set(all_chans, chan->name, chan);
 
@@ -373,6 +403,10 @@ char *u_chan_modes(c, cu) u_chan *c; u_chanuser *cu;
 		if (cu != NULL)
 			p += sprintf(p, " %s", c->key);
 	}
+	if (c->limit >= 0) {
+		*s++ = 'l';
+		p += sprintf(p, " %d", c->limit);
+	}
 
 	*s = *p = '\0';
 
@@ -402,7 +436,7 @@ void u_chan_send_topic(c, u) u_chan *c; u_user *u;
 		u_user_num(u, RPL_TOPIC, c, c->topic);
 		u_user_num(u, RPL_TOPICWHOTIME, c, c->topic_setter,
 		           c->topic_time);
-	} else {
+	
 		u_user_num(u, RPL_NOTOPIC, c);
 	}
 }
@@ -634,7 +668,8 @@ int u_entry_blocked(c, u, key) u_chan *c; u_user *u; char *key;
 			return ERR_BANNEDFROMCHAN;
 	}
 
-	/* TODO: check +l */
+	if (c->limit > 0 && c->members->size >= c->limit)
+		return ERR_CHANNELISFULL;
 
 	return 0;
 }
