@@ -22,18 +22,24 @@ static int hash_3des(buf, key, salt) char *buf, *key, *salt;
 
 static int gen_salt_posix(buf) char *buf;
 {
-	buf[0] = crypt_alpha[rand() % crypt_alpha_len];
-	buf[1] = crypt_alpha[rand() % crypt_alpha_len];
+	strcpy(buf, "$p$");
+	buf[3] = crypt_alpha[rand() % crypt_alpha_len];
+	buf[4] = crypt_alpha[rand() % crypt_alpha_len];
+	buf[5] = 0;
 	return 0;
 }
 
 static int hash_posix(buf, key, salt) char *buf, *key, *salt;
 {
 	char *h;
-	if (strlen(salt) != 2)
+
+	u_strlcpy(buf, salt, 4);
+	if (strlen(salt) < 5 && strcmp(buf, "$p$") != 0)
 		return -1;
-	h = crypt(key, salt);
-	u_strlcpy(buf, h, CRYPTLEN);
+
+	h = crypt(key, salt + 3);
+	strcpy(buf, "$p$");
+	u_strlcpy(buf + 3, h, CRYPTLEN - 3);
 	return 0;
 }
 
@@ -90,5 +96,6 @@ void u_crypto_hash(buf, key, salt) char *buf, *key, *salt;
 
 	u_log(LG_WARN, "Could not hash! (salt %s)", salt);
 	buf[0] = 0;
+
 	return;
 }

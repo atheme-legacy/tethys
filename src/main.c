@@ -30,6 +30,11 @@ int init()
 {
 	int err;
 	FILE *f;
+	struct timeval now;
+
+	u_log(LG_DEBUG, "Seeding random number generator...");
+	gettimeofday(&now, NULL);
+	srand(now.tv_usec);
 
 	signal(SIGPIPE, SIG_IGN);
 

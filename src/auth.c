@@ -37,7 +37,7 @@ u_auth *u_find_auth(conn) u_conn *conn;
 		if (!u_cidr_match(&auth->cidr, conn->ip))
 			continue;
 		if (auth->pass[0]) {
-			if (!conn->pass || strcmp(auth->pass, conn->pass))
+			if (!conn->pass || !matchhash(auth->pass, conn->pass))
 				continue;
 		}
 
@@ -75,7 +75,7 @@ u_oper *u_find_oper(auth, name, pass) u_auth *auth; char *name, *pass;
 	if (oper->auth != NULL && oper->auth != auth)
 		return NULL;
 
-	if (strcmp(oper->pass, pass))
+	if (!matchhash(oper->pass, pass))
 		return NULL;
 
 	return oper;
