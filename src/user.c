@@ -264,7 +264,7 @@ struct isupport {
 } isupport[] = {
 	{ "PREFIX",       "(ov)@+"                },
 	{ "CHANTYPES",    "#"                     },
-	{ "CHANMODES",    "beIq,f,k,cgimnpstz"    },
+	{ "CHANMODES",    "beIq,k,fl,cgimnpstz"   },
 	{ "MODES",        NULL, 4                 },
 	{ "MAXLIST",      NULL, MAXBANLIST        },
 	{ "CASEMAPPING",  "rfc1459"               },
