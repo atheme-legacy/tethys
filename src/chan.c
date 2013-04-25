@@ -261,6 +261,8 @@ u_cmode_info *info; u_chan *c; u_user *u; char *(*getarg)();
 	/* always getarg(), but send * on -k */
 	char *arg = getarg();
 
+	/* TODO: un-bork this. arg can be NULL in this case */
+
 	if (!on) {
 		if (c->key) {
 			free(c->key);

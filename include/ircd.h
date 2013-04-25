@@ -39,9 +39,6 @@
 #define memberp(base, offs) ((void*)((int)(base) + (int)(offs)))
 #define member(mtype, base, offs) (*((mtype*)memberp(base, offs)))
 
-#define _stringify(x) #x
-#define stringify(x) _stringify(x)
-
 typedef unsigned long ulong;
 typedef unsigned int uint;
 typedef unsigned char uchar;
@@ -66,6 +63,9 @@ typedef unsigned char uchar;
 # define u_va_start(va, arg) va_start(va, arg)
 # define u_va_copy(a1, a2) va_copy(a1, a2)
 
+# define _stringify(x) #x
+# define stringify(x) _stringify(x)
+
 typedef unsigned short ushort;
 
 #else
@@ -83,6 +83,9 @@ typedef unsigned short ushort;
 
 # define u_va_start(va, arg) va_start(va)
 # define u_va_copy(a1, a2) (a1) = (a2)
+
+# define _stringify(x) "x"
+# define stringify(x) _stringify(x)
 
 extern void *malloc();
 
