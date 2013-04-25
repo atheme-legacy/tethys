@@ -257,23 +257,27 @@ void u_user_num(u, num, va_alist) u_user *u; va_dcl
 	va_end(va);
 }
 
-static char *isupport[] = {
-	"PREFIX",       "(ov)@+",
-	"CHANTYPES",    "#",
-	"CHANMODES",    "beIq,f,k,cgimnpstz",
-	"MODES",        "4",
-	"MAXLIST",      "50", /* TODO: enforce this */
-	"CASEMAPPING",  "rfc1459",
-	"NICKLEN",      stringify(MAXNICKLEN),
-	"TOPICLEN",     stringify(MAXTOPICLEN),
-	"CHANNELLEN",   stringify(MAXCHANNAME),
-	"AWAYLEN",      stringify(MAXAWAY),
-	"MAXTARGETS",   "1",
-	"EXCEPTS",      NULL,
-	"INVEX",        NULL,
-	"FNC",          NULL,
-	"WHOX",         NULL, /* TODO: add this */
-	NULL
+struct isupport {
+	char *name;
+	char *s;
+	int i;
+} isupport[] = {
+	{ "PREFIX",       "(ov)@+"                },
+	{ "CHANTYPES",    "#"                     },
+	{ "CHANMODES",    "beIq,f,k,cgimnpstz"    },
+	{ "MODES",        NULL, 4                 },
+	{ "MAXLIST",      NULL, 50                }, /* TODO: enforce this */
+	{ "CASEMAPPING",  "rfc1459"               },
+	{ "NICKLEN",      NULL, MAXNICKLEN        },
+	{ "TOPICLEN",     NULL, MAXTOPICLEN       },
+	{ "CHANNELLEN",   NULL, MAXCHANNAME       },
+	{ "AWAYLEN",      NULL, MAXAWAY           },
+	{ "MAXTARGETS",   NULL, 1                 },
+	{ "EXCEPTS"                               },
+	{ "INVEX"                                 },
+	{ "FNC"                                   },
+	{ "WHOX" /* TODO: this */                 },
+	{ NULL },
 };
 
 void u_user_send_isupport(ul) u_user_local *ul;
@@ -281,18 +285,21 @@ void u_user_send_isupport(ul) u_user_local *ul;
 	/* :host.irc 005 nick ... :are supported by this server
 	   *        *****    *   *....*....*....*....*....*.... = 37 */
 	u_user *u = USER(ul);
-	char **cur, *s, *p, buf[512], tmp[512];
+	struct isupport *cur;
+	char *s, *p, buf[512], tmp[512];
 	int w;
 
 	w = 475 - strlen(me.name) - strlen(u->nick);
 
 	s = buf;
-	for (cur=isupport; cur[0]; cur+=2) {
-		if (cur[1]) {
-			sprintf(tmp, "%s=%s", cur[0], cur[1]);
-			p = tmp;
+	for (cur=isupport; cur->name; cur++) {
+		p = tmp;
+		if (cur->s) {
+			sprintf(tmp, "%s=%s", cur->name, cur->s);
+		} else if (cur->i) {
+			sprintf(tmp, "%s=%d", cur->name, cur->i);
 		} else {
-			p = cur[0];
+			p = cur->name;
 		}
 
 again:
