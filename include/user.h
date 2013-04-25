@@ -45,6 +45,7 @@ typedef struct u_user_remote u_user_remote;
 struct u_umode_info {
 	char ch;
 	uint mask;
+	void (*cb)(); /* info, u, on */
 };
 
 struct u_user {
@@ -72,10 +73,15 @@ struct u_user_remote {
 };
 
 #define USER(U) ((u_user*)(U))
+#define USER_LOCAL(U) ((u_user_local*)(U))
 #define USER_REMOTE(U) ((u_user_remote*)(U))
 
 extern u_umode_info *umodes;
 extern uint umode_default;
+
+extern void u_user_m_start(); /* u_user* */
+extern void u_user_m_end(); /* u_user* */
+extern void u_user_mode(); /* u_user*, char ch, int on */
 
 extern void u_user_make_ureg(); /* u_conn* */
 extern void u_user_unlink(); /* u_user*, char* */

@@ -207,6 +207,27 @@ static void m_names(conn, msg) u_conn *conn; u_msg *msg;
 	u_chan_send_names(c, u);
 }
 
+static void mode_user(u, s) u_user *u; char *s;
+{
+	int on = 1;
+
+	u_user_m_start(u);
+
+	for (; *s; s++) {
+		switch (*s) {
+		case '+':
+		case '-':
+			on = (*s == '+');
+			break;
+
+		default:
+			u_user_mode(u, *s, on);
+		}
+	}
+
+	u_user_m_end(u);
+}
+
 static void m_mode(conn, msg) u_conn *conn; u_msg *msg;
 {
 	int on = 1;
@@ -223,7 +244,7 @@ static void m_mode(conn, msg) u_conn *conn; u_msg *msg;
 		} else if (u != tu) {
 			u_user_num(u, ERR_USERSDONTMATCH);
 		} else {
-			u_user_num(u, ERR_GENERIC, "Can't change user modes yet!");
+			mode_user(u, msg->argv[1]);
 		}
 		return;
 	}

@@ -6,17 +6,6 @@
 
 #include "ircd.h"
 
-static u_umode_info __umodes[32] = {
-	{ 'o', UMODE_OPER },
-	{ 'i', UMODE_INVISIBLE },
-	{ 'w', UMODE_WALLOPS },
-	{ 'x', UMODE_CLOAKED },
-	{ 0, 0 }
-};
-
-u_umode_info *umodes = __umodes;
-uint umode_default = UMODE_INVISIBLE;
-
 u_trie *users_by_nick;
 u_trie *users_by_uid;
 
@@ -38,6 +27,79 @@ char *id_next()
 	}
 	id_buf[6] = '\0';
 	return id_buf;
+}
+
+static void cb_oper();
+static void cb_flag();
+
+static u_umode_info __umodes[32] = {
+	{ 'o', UMODE_OPER,      cb_oper },
+	{ 'i', UMODE_INVISIBLE, cb_flag },
+	{ 'w', UMODE_WALLOPS,   cb_flag },
+	{ 0 }
+};
+
+u_umode_info *umodes = __umodes;
+uint umode_default = 0;
+
+static int um_on;
+static char *um_buf_p, um_buf[128];
+
+void u_user_m_start(u) u_user *u;
+{
+	um_on = -1;
+	um_buf_p = um_buf;
+}
+
+void u_user_m_end(u) u_user *u;
+{
+	*um_buf_p = '\0';
+	if (um_buf_p != um_buf)
+		u_conn_f(u_user_conn(u), ":%U MODE %U :%s", u, u, um_buf);
+	else if (um_on < 0)
+		u_user_num(u, ERR_UMODEUNKNOWNFLAG);
+}
+
+static void um_put(on, ch) char ch;
+{
+	if (on != um_on) {
+		um_on = on;
+		*um_buf_p++ = on ? '+' : '-';
+	}
+	*um_buf_p++ = ch;
+}
+
+static void cb_oper(info, u, on) u_umode_info *info; u_user *u;
+{
+	if (on)
+		return;
+
+	u->flags &= ~info->mask;
+	um_put(on, info->ch);
+}
+
+static void cb_flag(info, u, on) u_umode_info *info; u_user *u;
+{
+	uint oldm = u->flags;
+	if (on)
+		u->flags |= info->mask;
+	else
+		u->flags &= ~info->mask;
+	if (oldm != u->flags)
+		um_put(on, info->ch);
+}
+
+void u_user_mode(u, ch, on) u_user *u; char ch;
+{
+	u_umode_info *info = umodes;
+
+	while (info->ch && info->ch != ch)
+		info++;
+
+	if (!info->ch)
+		return;
+
+	info->cb(info, u, on);
 }
 
 /* used to simplify user_local_event */
