@@ -16,6 +16,7 @@ OBJS = numeric.o \
 	conf.o \
 	conn.o \
 	cookie.o \
+	crypto.o \
 	dns.o \
 	io.o \
 	linebuf.o \
@@ -33,6 +34,7 @@ OBJS = numeric.o \
 	main.o
 
 CFLAGS = -Wall -g -I. -I../include
+LIBS = -lcrypt
 CC = cc
 LD = cc
 
@@ -43,7 +45,7 @@ clean:
 	rm -f $(OUTPUT)
 
 $(OUTPUT): $(EXTRA) $(OBJS)
-	$(LD) -o $@ $(OBJS)
+	$(LD) -o $@ $(OBJS) $(LIBS)
 .c.o:
 	$(CC) -c $(CFLAGS) -o $@ $<
 numeric.h numeric.c: numeric.tab

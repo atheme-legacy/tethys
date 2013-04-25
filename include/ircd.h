@@ -54,6 +54,7 @@ typedef unsigned char uchar;
 # include <unistd.h>
 # include <sys/time.h>
 # include <time.h>
+# include <crypt.h>
 
 # define A2(x,y) x,y
 # define A3(x,y,z) x,y,z
@@ -94,6 +95,7 @@ extern void *malloc();
 typedef unsigned long u_ts_t;
 
 #include "util.h"
+#include "crypto.h"
 #include "log.h"
 #include "list.h"
 #include "trie.h"

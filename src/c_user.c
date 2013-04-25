@@ -650,6 +650,16 @@ static void m_stats(conn, msg) u_conn *conn; u_msg *msg;
 	u_user_num(u, RPL_ENDOFSTATS, c);
 }
 
+static void m_mkpass(conn, msg) u_conn *conn; u_msg *msg;
+{
+	char buf[CRYPTLEN], salt[CRYPTLEN];
+
+	u_crypto_gen_salt(salt);
+	u_crypto_hash(buf, msg->argv[0], salt);
+
+	u_conn_f(conn, ":%S NOTICE %U :%s", &me, conn->priv, buf);
+}
+
 u_cmd c_user[] = {
 	{ "ECHO",    CTX_USER, m_echo,    0 },
 	{ "PRIVMSG", CTX_USER, m_message, 2 },
@@ -673,5 +683,6 @@ u_cmd c_user[] = {
 	{ "NICK",    CTX_USER, m_nick,    1 },
 	{ "42",      CTX_USER, m_42,      0 },
 	{ "STATS",   CTX_USER, m_stats,   1 },
+	{ "MKPASS",  CTX_USER, m_mkpass,  1 },
 	{ "" },
 };
