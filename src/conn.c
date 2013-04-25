@@ -185,7 +185,7 @@ u_io *io; u_long addr; u_short port;
 {
 	struct sockaddr_in sa;
 	u_conn_origin *orig;
-	int fd;
+	int fd, one=1;
 
 	if ((fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
 		goto out;
@@ -197,10 +197,11 @@ u_io *io; u_long addr; u_short port;
 	if (bind(fd, (struct sockaddr*)&sa, sizeof(sa)) < 0)
 		goto out;
 
-	if (listen(fd, 5) < 0)
+	if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one)) < 0)
 		goto out;
 
-	/* TODO: setsockopt */
+	if (listen(fd, 5) < 0)
+		goto out;
 
 	if (!(orig = malloc(sizeof(*orig))))
 		goto out_close;
