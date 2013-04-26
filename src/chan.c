@@ -40,7 +40,8 @@ static u_cmode_info __cmodes[] = {
 u_cmode_info *cmodes = __cmodes;
 uint cmode_default = CMODE_TOPIC | CMODE_NOEXTERNAL;
 
-static int cm_on;
+static int cm_on, cm_denied;
+static u_chanuser *cm_cu;
 static char *cm_buf_p, cm_buf[128];
 static char *cm_data_p, cm_data[512];
 static char *cm_list_p, cm_list[16];
@@ -50,6 +51,8 @@ void u_chan_m_start(u, c) u_user *u; u_chan *c;
 	u_cookie_inc(&c->ck_flags);
 
 	cm_on = -1;
+	cm_denied = 0;
+	cm_cu = u_chan_user_find(c, u);
 	cm_buf_p = cm_buf;
 	cm_data_p = cm_data;
 	cm_list_p = cm_list;
@@ -71,6 +74,9 @@ void u_chan_m_end(u, c) u_user *u; u_chan *c;
 			continue;
 		u_chan_send_list(c, u, memberp(c, cur->data));
 	}
+
+	if (cm_denied)
+		u_user_num(u, ERR_CHANOPRIVSNEEDED, c);
 }
 
 static void cm_put(on, ch, arg) char ch, *arg;
@@ -92,10 +98,21 @@ static void cm_put_list(ch) char ch;
 	*cm_list_p = '\0';
 }
 
+static int cm_deny()
+{
+	if (cm_denied || !cm_cu || !(cm_cu->flags & CU_PFX_OP))
+		cm_denied = 1;
+	return cm_denied;
+}
+
 static void cb_flag(info, c, u, on, getarg)
 u_cmode_info *info; u_chan *c; u_user *u; char *(*getarg)();
 {
 	uint oldm = c->mode;
+	if (!cm_cu || !(cm_cu->flags & CU_PFX_OP)) {
+		cm_denied = 1;
+		return;
+	}
 	if (on)
 		c->mode |= info->data;
 	else
@@ -155,10 +172,13 @@ u_cmode_info *info; u_chan *c; u_user *u; char *(*getarg)();
 	char *mask, *arg = getarg();
 
 	if (arg == NULL) {
-		if (on)
+		if (on && (!strchr("eI", info->ch) || !cm_deny()))
 			cm_put_list(info->ch);
 		return;
 	}
+
+	if (cm_deny())
+		return;
 
 	list = (u_list*)memberp(c, info->data);
 	mask = full_hostmask(arg);
@@ -202,7 +222,7 @@ u_cmode_info *info; u_chan *c; u_user *u; char *(*getarg)();
 	u_user *tu;
 	char *arg = getarg();
 
-	if (arg == NULL)
+	if (cm_deny() || arg == NULL)
 		return;
 
 	tu = u_user_by_nick(arg);
@@ -231,6 +251,9 @@ u_cmode_info *info; u_chan *c; u_user *u; char *(*getarg)();
 	u_chan *tc;
 	u_chanuser *tcu;
 	char *arg;
+
+	if (cm_deny())
+		return;
 
 	if (!on) {
 		if (c->forward) {
@@ -270,6 +293,9 @@ u_cmode_info *info; u_chan *c; u_user *u; char *(*getarg)();
 	/* always getarg(), but send * on -k */
 	char *arg = getarg();
 
+	if (cm_deny())
+		return;
+
 	if (!on) {
 		if (c->key) {
 			free(c->key);
@@ -295,6 +321,9 @@ u_cmode_info *info; u_chan *c; u_user *u; char *(*getarg)();
 	char buf[32];
 	char *arg;
 	int lim;
+
+	if (cm_deny())
+		return;
 
 	if (!on) {
 		if (c->limit > 0)

@@ -4,6 +4,8 @@ RPL_CREATED	3	":This server was born on %s"
 RPL_MYINFO	4	"%s %s %s %s idfk"
 RPL_ISUPPORT	5	"%s :are supported by this server"
 
+RPL_YOUREJAMESBOND	7	":You are now Bond. James Bond."
+
 RPL_STATSLINKINFO	211
 RPL_STATSCOMMANDS	212
 RPL_STATSCLINE	213
@@ -176,5 +178,5 @@ RPL_HELPSTART	704
 RPL_HELPTXT	705
 RPL_ENDOFHELP	706
 
-RPL_QUIETLIST	728	"%C %s %s %u"
-RPL_ENDOFQUIETLIST	729	"%C :End of Channel Quiet List"
+RPL_QUIETLIST	728	"%C q %s %s %u"
+RPL_ENDOFQUIETLIST	729	"%C q :End of Channel Quiet List"

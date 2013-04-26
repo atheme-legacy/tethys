@@ -255,19 +255,9 @@ static void m_mode(conn, msg) u_conn *conn; u_msg *msg;
 		return;
 	}
 
-	cu = u_chan_user_find(c, u);
-
 	if (msg->argv[1] == NULL) {
+		cu = u_chan_user_find(c, u);
 		u_user_num(u, RPL_CHANNELMODEIS, c, u_chan_modes(c, cu));
-		return;
-	}
-
-	if (cu == NULL) {
-		u_user_num(u, ERR_NOTONCHANNEL, c);
-		return;
-	}
-	if (!(cu->flags & CU_PFX_OP)) {
-		u_user_num(u, ERR_CHANOPRIVSNEEDED, c);
 		return;
 	}
 
