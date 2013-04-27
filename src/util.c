@@ -53,11 +53,13 @@ int u_cidr_match(cidr, s) u_cidr *cidr; char *s;
 	return (addr | mask) == (cidr->addr | mask);
 }
 
+#define CT_NICK   001
+#define CT_IDENT  002
+
+static uint ctype_map[256];
 static char null_casemap[256];
 static char rfc1459_casemap[256];
 static char ascii_casemap[256];
-static int valid_nick_map[256];
-static int valid_ident_map[256];
 
 int matchmap(mask, string, casemap) char *mask, *string, *casemap;
 {
@@ -277,10 +279,10 @@ void ascii_canonize(s) char *s;
 
 int is_valid_nick(s) char *s;
 {
-	if (isdigit(*s))
+	if (isdigit(*s) || *s == '-')
 		return 0;
 	for (; *s; s++) {
-		if (!valid_nick_map[(uchar)*s])
+		if (!(ctype_map[(uchar)*s] & CT_NICK))
 			return 0;
 	}
 	return 1;
@@ -289,7 +291,7 @@ int is_valid_nick(s) char *s;
 int is_valid_ident(s) char *s;
 {
 	for (; *s; s++) {
-		if (!valid_ident_map[(uchar)*s])
+		if (!(ctype_map[(uchar)*s] & CT_IDENT))
 			return 0;
 	}
 	return 1;
@@ -300,21 +302,21 @@ int init_util()
 	int i;
 
 	for (i=0; i<256; i++) {
+		ctype_map[i] = 0;
+		if (isalnum(i) || strchr("[]{}|\\^-_`", i))
+			ctype_map[i] |= CT_NICK;
+		if (isalnum(i) || strchr("[]{}-_", i))
+			ctype_map[i] |= CT_IDENT;
+
 		null_casemap[i] = i;
 		rfc1459_casemap[i] = islower(i) ? toupper(i) : i;
 		ascii_casemap[i] = islower(i) ? toupper(i) : i;
 	}
+
 	rfc1459_casemap['['] = '{';
 	rfc1459_casemap[']'] = '}';
 	rfc1459_casemap['\\'] = '|';
 	rfc1459_casemap['~'] = '^';
-
-	for (i=0; i<256; i++)
-		valid_nick_map[i] = isalnum(i) || strchr("[]{}|\\^-_`", i);
-
-	/* TODO: decide */
-	for (i=0; i<256; i++)
-		valid_ident_map[i] = isalnum(i) || strchr("[]{}-_", i);
 
 	return 0;
 }
