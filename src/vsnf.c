@@ -106,6 +106,10 @@ int vsnf(type, s, size, fmt, va) char *s, *fmt; uint size; va_list va;
 		type = FMT_LOG;
 	}
 
+	if (type != FMT_LOG)
+		u_log(LG_FINE, "vsnf(%s, %s)",
+		      type == FMT_USER ? "USER" : "SERVER", fmt);
+
 	buf.p = buf.base = s;
 	buf.size = size - 1; /* null byte */
 	buf.len = 0;
