@@ -19,6 +19,10 @@ me.desc             "Yesterday's Tech Tomorrow"
 me.net              AJITEK
 me.motd             etc/micro.motd
 
+admin.loc1          "Alex Iadicicco"
+admin.loc2          "http://github.com/aji"
+admin.email         "yes@hello"
+
 class               users
 class.timeout       300
 

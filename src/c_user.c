@@ -650,6 +650,14 @@ static void m_mkpass(conn, msg) u_conn *conn; u_msg *msg;
 	u_conn_f(conn, ":%S NOTICE %U :%s", &me, conn->priv, buf);
 }
 
+static void m_admin(conn, msg) u_conn *conn; u_msg *msg;
+{
+	u_conn_num(conn, RPL_ADMINME, &me);
+	u_conn_num(conn, RPL_ADMINLOC1, my_admin_loc1);
+	u_conn_num(conn, RPL_ADMINLOC2, my_admin_loc2);
+	u_conn_num(conn, RPL_ADMINEMAIL, my_admin_email);
+}
+
 u_cmd c_user[] = {
 	{ "ECHO",    CTX_USER, m_echo,    0 },
 	{ "PRIVMSG", CTX_USER, m_message, 2 },
@@ -674,5 +682,6 @@ u_cmd c_user[] = {
 	{ "42",      CTX_USER, m_42,      0 },
 	{ "STATS",   CTX_USER, m_stats,   1 },
 	{ "MKPASS",  CTX_USER, m_mkpass,  1 },
+	{ "ADMIN",   CTX_USER, m_admin,   0 },
 	{ "" },
 };

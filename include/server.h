@@ -7,9 +7,10 @@
 #ifndef __INC_SERVER_H__
 #define __INC_SERVER_H__
 
-#define MAXSERVNAME 40
-#define MAXSERVDESC 80
-#define MAXNETNAME 30
+#define MAXSERVNAME  40
+#define MAXSERVDESC  80
+#define MAXNETNAME   30
+#define MAXADMIN    512
 
 typedef struct u_server u_server;
 
@@ -23,6 +24,9 @@ struct u_server {
 extern u_server me;
 extern u_list my_motd;
 extern char my_net_name[MAXNETNAME+1];
+extern char my_admin_loc1[MAXADMIN+1];
+extern char my_admin_loc2[MAXADMIN+1];
+extern char my_admin_email[MAXADMIN+1];
 
 extern int init_server();
 

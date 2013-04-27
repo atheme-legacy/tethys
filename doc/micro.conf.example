@@ -24,6 +24,15 @@ me {
 	motd etc/micro.motd
 }
 
+# admin{} - admin info. the value of these fields
+# should be pretty clear from their names
+
+admin {
+	loc1 "Alex Iadicicco"
+	loc2 "http://github.com/aji"
+	email "yes@hello"
+}
+
 
 # class{} - these blocks define connection
 # classes, which specify certain parameters and

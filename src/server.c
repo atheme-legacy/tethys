@@ -9,6 +9,9 @@
 u_server me;
 u_list my_motd;
 char my_net_name[MAXNETNAME+1];
+char my_admin_loc1[MAXADMIN+1] = "-";
+char my_admin_loc2[MAXADMIN+1] = "-";
+char my_admin_email[MAXADMIN+1] = "-";
 
 void server_conf(key, val) char *key, *val;
 {
@@ -61,6 +64,30 @@ void load_motd(key, val) char *key, *val;
 	fclose(f);
 }
 
+void admin_conf(key, val) char *key, *val;
+{
+	char *dest;
+
+	if (strlen(key) < 6 || memcmp(key, "admin.", 6) != 0) {
+		u_log(LG_WARN, "admin_conf: Can't use %s", key);
+		return;
+	}
+	key += 6;
+
+	if (streq(key, "loc1")) {
+		dest = my_admin_loc1;
+	} else if (streq(key, "loc2")) {
+		dest = my_admin_loc2;
+	} else if (streq(key, "email")) {
+		dest = my_admin_email;
+	} else {
+		u_log(LG_WARN, "admin_conf: Can't use %s", key-6);
+		return;
+	}
+
+	u_strlcpy(dest, val, MAXADMIN);
+}
+
 int init_server()
 {
 	u_list_init(&my_motd);
@@ -77,6 +104,10 @@ int init_server()
 	u_trie_set(u_conf_handlers, "me.sid", server_conf);
 	u_trie_set(u_conf_handlers, "me.desc", server_conf);
 	u_trie_set(u_conf_handlers, "me.motd", load_motd);
+
+	u_trie_set(u_conf_handlers, "admin.loc1", admin_conf);
+	u_trie_set(u_conf_handlers, "admin.loc2", admin_conf);
+	u_trie_set(u_conf_handlers, "admin.email", admin_conf);
 
 	return 1;
 }
