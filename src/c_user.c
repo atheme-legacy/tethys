@@ -6,6 +6,15 @@
 
 #include "ircd.h"
 
+/* TODO: some of these will eventually have to be split off into a file
+   i'll probably call c_chased.c or so, which are commands that could come
+   from either a user OR a server, and which have a "chased" parameter. One
+   example is /STATS, for which the s2s and client handling code will have
+   enough overlaps to justify the extra code needed to put them in one
+   function. (Though /STATS could eventually get large enough to justify the
+   addition of a completely new command source file c_stats.c, but that's
+   a long ways off) */
+
 int ga_argc = 0;
 static char **ga_argv;
 static char *getarg()
