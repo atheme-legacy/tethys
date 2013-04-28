@@ -465,7 +465,7 @@ void u_chan_send_topic(c, u) u_chan *c; u_user *u;
 		u_user_num(u, RPL_TOPIC, c, c->topic);
 		u_user_num(u, RPL_TOPICWHOTIME, c, c->topic_setter,
 		           c->topic_time);
-	
+	} else {
 		u_user_num(u, RPL_NOTOPIC, c);
 	}
 }
