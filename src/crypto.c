@@ -37,7 +37,7 @@ static int hash_posix(buf, key, salt) char *buf, *key, *salt;
 	if (strlen(salt) < 5 || !streq(buf, "$p$"))
 		return -1;
 
-	h = crypt(key, salt + 3);
+	h = (char*)crypt(key, salt + 3);
 	strcpy(buf, "$p$");
 	u_strlcpy(buf + 3, h, CRYPTLEN - 3);
 	return 0;

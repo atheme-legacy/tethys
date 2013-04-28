@@ -34,7 +34,7 @@ OBJS = numeric.o \
 	main.o
 
 CFLAGS = -Wall -g -I. -I../include
-LIBS = -lcrypt
+LIBS = $(shell ld -lcrypt -o /dev/null 2>/dev/null && echo -lcrypt)
 CC = cc
 LD = cc
 
