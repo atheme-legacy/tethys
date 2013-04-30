@@ -84,12 +84,12 @@ static void m_message_chan(conn, msg) u_conn *conn; u_msg *msg;
 	cu = u_chan_user_find(tgt, src);
 	if (!cu) {
 		if (tgt->mode & CMODE_NOEXTERNAL) {
-			u_user_num(src, ERR_CANNOTSENDTOCHAN, tgt);
+			u_user_num(src, ERR_CANNOTSENDTOCHAN, tgt, 'n');
 			return;
 		}
 	} else if (u_is_muted(cu)) {
 		/* TODO: +z */
-		u_user_num(src, ERR_CANNOTSENDTOCHAN, tgt);
+		u_user_num(src, ERR_CANNOTSENDTOCHAN, tgt, 'm');
 		return;
 	}
 
