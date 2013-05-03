@@ -23,11 +23,7 @@ void default_handler(level, line) char *line;
 void (*u_log_handler)() = default_handler;
 int u_log_level = LG_INFO;
 
-#ifdef STDARG
-void u_log(int level, char *fmt, ...)
-#else
-void u_log(level, fmt, va_alist) char *fmt; va_dcl
-#endif
+void u_log(T(int) level, T(char*) fmt, u_va_alist) A(char *fmt; va_dcl)
 {
 	char buf[BUFSIZE];
 	va_list va;

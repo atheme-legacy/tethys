@@ -22,9 +22,9 @@ void u_cookie_inc(ck) u_cookie *ck;
 	ck->low = 0;
 }
 
-void u_cookie_cpy(A, B) u_cookie *A, *B;
+void u_cookie_cpy(a, b) u_cookie *a, *b;
 {
-	memcpy(A, B, sizeof(*A));
+	memcpy(a, b, sizeof(*a));
 }
 
 static int norm(x)

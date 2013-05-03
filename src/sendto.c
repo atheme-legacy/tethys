@@ -162,11 +162,8 @@ u_map *map; u_user_local *ul; u_conn *conn; struct sendto_priv *priv;
 	u_cookie_cpy(&conn->ck_sendto, &ck_sendto);
 }
 
-#ifdef STDARG
-void u_roster_f(unsigned char c, char *fmt, ...)
-#else
-void u_roster_f(c, fmt, va_alist) unsigned char c, *fmt; va_dcl
-#endif
+void u_roster_f(T(unsigned char) c, T(char*) fmt, u_va_alist)
+A(unsigned char c; char **fmt; va_dcl)
 {
 	struct sendto_priv priv;
 
@@ -181,11 +178,7 @@ void u_roster_f(c, fmt, va_alist) unsigned char c, *fmt; va_dcl
 	va_end(priv.va);
 }
 
-#ifdef STDARG
-void u_wallops(char *fmt, ...)
-#else
-void u_wallops(fmt, va_alist) char *fmt; va_dcl
-#endif
+void u_wallops(T(char*) fmt, u_va_alist) A(char *fmt; va_dcl)
 {
 	char buf[512];
 	va_list va;

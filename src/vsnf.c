@@ -257,11 +257,8 @@ bottom:
 	return buf.len;
 }
 
-#ifdef STDARG
-int snf(int type, char *s, uint size, char *fmt, ...)
-#else
-int snf(type, s, size, fmt, va_alist) char *s, *fmt; uint size; va_dcl
-#endif
+int snf(T(int) type, T(char*) s, T(uint) size, T(char*) fmt, u_va_alist)
+A(char *s; char *fmt; uint size; va_dcl)
 {
 	va_list va;
 	int ret;

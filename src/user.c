@@ -263,11 +263,7 @@ void u_user_vnum(u, num, va) u_user *u; va_list va;
 	u_conn_vnum(conn, nick, num, va);
 }
 
-#ifdef STDARG
-void u_user_num(u_user *u, int num, ...)
-#else
-void u_user_num(u, num, va_alist) u_user *u; va_dcl
-#endif
+void u_user_num(T(u_user*) u, T(int) num, u_va_alist) A(u_user *u; va_dcl)
 {
 	va_list va; 
 	u_va_start(va, num);

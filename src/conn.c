@@ -117,11 +117,8 @@ void u_conn_vf(conn, fmt, va) u_conn *conn; char *fmt; va_list va;
 	conn->obuflen = p - conn->obuf;
 }
 
-#ifdef STDARG
-void u_conn_f(u_conn *conn, char *fmt, ...)
-#else
-void u_conn_f(conn, fmt, va_alist) u_conn *conn; char *fmt; va_dcl
-#endif
+void u_conn_f(T(u_conn*) conn, T(char*) fmt, u_va_alist)
+A(u_conn *conn; char *fmt; va_dcl)
 {
 	va_list va;
 	u_va_start(va, fmt);
@@ -147,11 +144,8 @@ void u_conn_vnum(conn, nick, num, va) u_conn *conn; char *nick; va_list va;
 	u_conn_f(conn, ":%s %03d %s %s", me.name, num, nick, buf);
 }
 
-#ifdef STDARG
-void u_conn_num(u_conn *conn, int num, ...)
-#else
-void u_conn_num(conn, num, va_alist) u_conn *conn; va_dcl
-#endif
+void u_conn_num(T(u_conn*) conn, T(int) num, u_va_alist)
+A(u_conn *conn; va_dcl)
 {
 	va_list va;
 
