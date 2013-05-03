@@ -31,11 +31,12 @@ char *id_next()
 
 static void cb_oper();
 static void cb_flag();
+static void cb_wallops();
 
 static u_umode_info __umodes[32] = {
-	{ 'o', UMODE_OPER,      cb_oper },
-	{ 'i', UMODE_INVISIBLE, cb_flag },
-	{ 'w', UMODE_WALLOPS,   cb_flag },
+	{ 'o', UMODE_OPER,      cb_oper         },
+	{ 'i', UMODE_INVISIBLE, cb_flag         },
+	{ 'w', UMODE_WALLOPS,   cb_wallops      },
 	{ 0 }
 };
 
@@ -87,6 +88,20 @@ static void cb_flag(info, u, on) u_umode_info *info; u_user *u;
 		u->flags &= ~info->mask;
 	if (oldm != u->flags)
 		um_put(on, info->ch);
+}
+
+static void cb_wallops(info, u, on) u_umode_info *info; u_user *u;
+{
+	cb_flag(info, u, on);
+
+	/* only add to wallops roster if local user */
+	if (!(u->flags & USER_IS_LOCAL))
+		return;
+
+	if (on)
+		u_roster_add(R_WALLOPS, USER_LOCAL(u));
+	else
+		u_roster_del(R_WALLOPS, USER_LOCAL(u));
 }
 
 void u_user_mode(u, ch, on) u_user *u; char ch;

@@ -8,6 +8,8 @@
 
 static u_cookie ck_sendto;
 
+static u_map *rosters[256];
+
 char buf_serv[1024];
 char buf_user[1024];
 
@@ -102,8 +104,7 @@ u_map *map; u_chan *c; u_chanuser *cu; struct sendto_priv *priv;
 #ifdef STDARG
 void u_sendto_visible(u_user *u, char *fmt, ...)
 #else
-void u_sendto_visible(u, fmt, va_alist)
-u_user *u; char *fmt; va_dcl
+void u_sendto_visible(u, fmt, va_alist) u_user *u; char *fmt; va_dcl
 #endif
 {
 	struct sendto_priv priv;
@@ -119,8 +120,74 @@ u_user *u; char *fmt; va_dcl
 	va_end(priv.va);
 }
 
+static char *roster_to_str(c) unsigned char c;
+{
+	static char buf[16];
+	char *high = (c / 0x80) ? "+0x80" : "";
+
+	c &= 0x7f;
+	if (c < 0x20)
+		snf(FMT_LOG, buf, 16, "\\%d%s", c, high);
+	else
+		snf(FMT_LOG, buf, 16, "'%c'%s", c, high);
+
+	return buf;
+}
+
+void u_roster_add(r, ul) unsigned char r; u_user_local *ul;
+{
+	if (!r) return;
+	u_log(LG_DEBUG, "Adding %U to roster %s", USER(ul), roster_to_str(r));
+	u_map_set(rosters[r], ul, ul->conn);
+}
+
+void u_roster_del(r, ul) unsigned char r; u_user_local *ul;
+{
+	if (!r) return;
+	u_log(LG_DEBUG, "Removing %U from roster %s", USER(ul), roster_to_str(r));
+	u_map_del(rosters[r], ul);
+}
+
+void roster_f_cb(map, ul, conn, priv)
+u_map *map; u_user_local *ul; u_conn *conn; struct sendto_priv *priv;
+{
+	char *s;
+
+	if (!u_cookie_cmp(&conn->ck_sendto, &ck_sendto))
+		return;
+
+	s = ln(priv, conn);
+	u_conn_f(conn, "%s", s);
+	u_cookie_cpy(&conn->ck_sendto, &ck_sendto);
+}
+
+#ifdef STDARG
+void u_roster_f(unsigned char c, char *fmt, ...)
+#else
+void u_roster_f(c, fmt, va_alist) unsigned char c, *fmt; va_dcl
+#endif
+{
+	struct sendto_priv priv;
+
+	start();
+
+	u_log(LG_DEBUG, "Sending '%s' to roster %s", fmt, roster_to_str(c));
+
+	priv.user = priv.serv = NULL;
+	priv.fmt = fmt;
+	u_va_start(priv.va, fmt);
+	u_map_each(rosters[(unsigned)c], roster_f_cb, &priv);
+	va_end(priv.va);
+}
+
 int init_sendto()
 {
+	int i;
+
+	for (i=0; i<256; i++)
+		rosters[i] = u_map_new(0);
+
 	u_cookie_reset(&ck_sendto);
+
 	return 0;
 }
