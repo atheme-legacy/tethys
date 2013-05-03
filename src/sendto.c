@@ -163,7 +163,7 @@ u_map *map; u_user_local *ul; u_conn *conn; struct sendto_priv *priv;
 }
 
 void u_roster_f(T(unsigned char) c, T(char*) fmt, u_va_alist)
-A(unsigned char c; char **fmt; va_dcl)
+A(unsigned char c; char *fmt; va_dcl)
 {
 	struct sendto_priv priv;
 
