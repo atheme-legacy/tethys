@@ -150,7 +150,7 @@ void u_roster_del(r, ul) unsigned char r; u_user_local *ul;
 
 void u_roster_del_all(ul) u_user_local *ul;
 {
-	unsigned char c;
+	unsigned int c;
 	u_log(LG_DEBUG, "Removing %U from all rosters", USER(ul));
 	for (c=1; c<256; c++)
 		u_map_del(rosters[c], ul);
@@ -186,6 +186,22 @@ void u_roster_f(c, fmt, va_alist) unsigned char c, *fmt; va_dcl
 	u_va_start(priv.va, fmt);
 	u_map_each(rosters[(unsigned)c], roster_f_cb, &priv);
 	va_end(priv.va);
+}
+
+#ifdef STDARG
+void u_wallops(char *fmt, ...)
+#else
+void u_wallops(fmt, va_alist) char *fmt; va_dcl
+#endif
+{
+	char buf[512];
+	va_list va;
+
+	u_va_start(va, fmt);
+	vsnf(FMT_USER, buf, 512, fmt, va);
+	va_end(va);
+
+	u_roster_f(R_WALLOPS, ":%S WALLOPS :%s", &me, buf);
 }
 
 int init_sendto()

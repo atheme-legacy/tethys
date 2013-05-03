@@ -193,6 +193,7 @@ void u_user_unlink(u, msg) u_user *u; char *msg;
 	if (conn->ctx == CTX_USER) {
 		u_sendto_visible(u, ":%H QUIT :%s", u, msg);
 		u_conn_f(conn, ":%H QUIT :%s", u, msg);
+		u_wallops("Disconnect: %H (%s)", u, msg);
 	} else {
 		u_conn_f(conn, "ERROR :%s", msg);
 	}
@@ -334,6 +335,7 @@ void u_user_welcome(ul) u_user_local *ul;
 	u_user *u = USER(ul);
 
 	u_log(LG_DEBUG, "user: welcoming %s", u->nick);
+	u_wallops("Connect: %H [%s]", u, ul->conn->ip);
 
 	u_user_state(u, USER_CONNECTED);
 	ul->conn->ctx = CTX_USER;

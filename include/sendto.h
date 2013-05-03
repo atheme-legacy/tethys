@@ -34,6 +34,8 @@ extern void u_roster_del(); /* unsigned char r, u_user_local* */
 extern void u_roster_del_all(); /* u_user_local* */
 extern void u_roster_f(A3(unsigned char, char*, ...));
 
+extern void u_wallops(A2(char*, ...));
+
 extern int init_sendto();
 
 #endif
