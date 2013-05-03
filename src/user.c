@@ -204,6 +204,8 @@ void u_user_unlink(u, msg) u_user *u; char *msg;
 	if (u->nick[0])
 		u_trie_del(users_by_nick, u->nick);
 	u_trie_del(users_by_uid, u->uid);
+
+	u_roster_del_all(USER_LOCAL(conn->priv));
 }
 
 u_conn *u_user_conn(u) u_user *u;

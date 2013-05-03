@@ -148,6 +148,14 @@ void u_roster_del(r, ul) unsigned char r; u_user_local *ul;
 	u_map_del(rosters[r], ul);
 }
 
+void u_roster_del_all(ul) u_user_local *ul;
+{
+	unsigned char c;
+	u_log(LG_DEBUG, "Removing %U from all rosters", USER(ul));
+	for (c=1; c<256; c++)
+		u_map_del(rosters[c], ul);
+}
+
 void roster_f_cb(map, ul, conn, priv)
 u_map *map; u_user_local *ul; u_conn *conn; struct sendto_priv *priv;
 {
