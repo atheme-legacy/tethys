@@ -74,12 +74,8 @@ u_map *map; u_user *u; u_chanuser *cu; struct sendto_priv *priv;
 	u_cookie_cpy(&conn->ck_sendto, &ck_sendto);
 }
 
-#ifdef STDARG
-void u_sendto_chan(u_chan *c, u_conn *conn, char *fmt, ...)
-#else
-void u_sendto_chan(c, conn, fmt, va_alist)
-u_chan *c; u_conn *conn; char *fmt; va_dcl
-#endif
+void u_sendto_chan(T(u_chan*) c, T(u_conn*) conn, T(char*) fmt, u_va_alist)
+A(u_chan *c; u_conn *conn; char *fmt; va_dcl)
 {
 	struct sendto_priv priv;
 
@@ -101,11 +97,8 @@ u_map *map; u_chan *c; u_chanuser *cu; struct sendto_priv *priv;
 	u_map_each(c->members, sendto_chan_cb, priv);
 }
 
-#ifdef STDARG
-void u_sendto_visible(u_user *u, char *fmt, ...)
-#else
-void u_sendto_visible(u, fmt, va_alist) u_user *u; char *fmt; va_dcl
-#endif
+void u_sendto_visible(T(u_user*) u, T(char*) fmt, u_va_alist)
+A(u_user *u; char *fmt; va_dcl)
 {
 	struct sendto_priv priv;
 

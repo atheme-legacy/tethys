@@ -56,11 +56,14 @@ typedef unsigned char uchar;
 # include <time.h>
 # include <crypt.h>
 
+# define A(x)
 # define A2(x,y) x,y
 # define A3(x,y,z) x,y,z
 # define A4(w,x,y,z) w,x,y,z
 # define A5(v,w,x,y,z) v,w,x,y,z
+# define T(x) x
 
+# define u_va_alist ...
 # define u_va_start(va, arg) va_start(va, arg)
 # define u_va_copy(a1, a2) va_copy(a1, a2)
 
@@ -77,11 +80,14 @@ typedef unsigned short ushort;
 # include <varargs.h>
 # include <sys/time.h>
 
+# define A(x) x
 # define A2(x,y)
 # define A3(x,y,z)
 # define A4(w,x,y,z)
 # define A5(v,w,x,y,z)
+# define T(x)
 
+# define u_va_alist va_alist
 # define u_va_start(va, arg) va_start(va)
 # define u_va_copy(a1, a2) (a1) = (a2)
 
