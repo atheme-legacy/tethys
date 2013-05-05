@@ -13,9 +13,29 @@ static void err_already(conn, msg) u_conn *conn; u_msg *msg;
 
 static void m_pass(conn, msg) u_conn *conn; u_msg *msg;
 {
+	if (msg->argc != 1 && msg->argc != 4) {
+		u_conn_num(conn, ERR_NEEDMOREPARAMS, msg->command);
+		return;
+	}
+
 	if (conn->pass != NULL)
 		free(conn->pass);
 	conn->pass = u_strdup(msg->argv[0]);
+
+	if (msg->argc == 1)
+		return;
+
+	if (!streq(msg->argv[1], "TS") || !streq(msg->argv[2], "6")) {
+		u_conn_error(conn, "Invalid TS version");
+		return;
+	}
+
+	if (!is_valid_sid(msg->argv[3])) {
+		u_conn_error(conn, "Invalid SID");
+		return;
+	}
+
+	u_server_make_sreg(conn, msg->argv[3]);
 }
 
 static void try_reg(conn) u_conn *conn;

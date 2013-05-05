@@ -49,6 +49,7 @@ extern void ascii_canonize();
 
 extern int is_valid_nick();
 extern int is_valid_ident();
+extern int is_valid_sid();
 
 extern int init_util();
 

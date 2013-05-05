@@ -12,6 +12,22 @@
 #define MAXNETNAME   30
 #define MAXADMIN    512
 
+#define CAPAB_QS              0x1
+#define CAPAB_EX              0x2
+#define CAPAB_CHW             0x4
+#define CAPAB_IE              0x8
+#define CAPAB_EOB            0x10
+#define CAPAB_KLN            0x20
+#define CAPAB_UNKLN          0x40
+#define CAPAB_KNOCK          0x80
+#define CAPAB_TB            0x100
+#define CAPAB_ENCAP         0x200
+#define CAPAB_SERVICES      0x400
+#define CAPAB_SAVE          0x800
+#define CAPAB_RSFNC        0x1000
+#define CAPAB_EUID         0x2000
+#define CAPAB_CLUSTER      0x4000
+
 typedef struct u_server u_server;
 
 struct u_server {
@@ -19,6 +35,7 @@ struct u_server {
 	char sid[4];
 	char name[MAXSERVNAME+1];
 	char desc[MAXSERVDESC+1];
+	uint capab;
 };
 
 extern u_server me;
@@ -27,6 +44,8 @@ extern char my_net_name[MAXNETNAME+1];
 extern char my_admin_loc1[MAXADMIN+1];
 extern char my_admin_loc2[MAXADMIN+1];
 extern char my_admin_email[MAXADMIN+1];
+
+extern void u_server_make_sreg(); /* u_conn* */
 
 extern int init_server();
 

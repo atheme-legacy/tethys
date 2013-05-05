@@ -88,6 +88,63 @@ void admin_conf(key, val) char *key, *val;
 	u_strlcpy(dest, val, MAXADMIN);
 }
 
+struct capab_info {
+	char capab[16];
+	uint mask;
+} capabs[] = {
+	{ "QS",       CAPAB_QS       },
+	{ "EX",       CAPAB_EX       },
+	{ "CHW",      CAPAB_CHW      },
+	{ "IE",       CAPAB_IE       },
+	{ "EOB",      CAPAB_EOB      },
+	{ "KLN",      CAPAB_KLN      },
+	{ "UNKLN",    CAPAB_UNKLN    },
+	{ "KNOCK",    CAPAB_KNOCK    },
+	{ "TB",       CAPAB_TB       },
+	{ "ENCAP",    CAPAB_ENCAP    },
+	{ "SERVICES", CAPAB_SERVICES },
+	{ "SAVE",     CAPAB_SAVE     },
+	{ "RSFNC",    CAPAB_RSFNC    },
+	{ "EUID",     CAPAB_EUID     },
+	{ "CLUSTER",  CAPAB_CLUSTER  },
+	{ "", 0 }
+};
+
+static void capab_to_str(capab, buf) uint capab; char *buf;
+{
+	struct capab_info *info = capabs;
+	char *s = buf;
+
+	for (; info->capab[0]; info++) {
+		if (!(capab & info->mask))
+			continue;
+		s += sprintf(s, "%s%s", s == buf ? "" : " ", info->capab);
+	}
+}
+
+static uint str_to_capab(buf) char *buf;
+{
+	struct capab_info *info;
+	char *s;
+	uint capab = 0;
+
+	while ((s = cut(&buf, " ")) != NULL) {
+		for (info=capabs; info->capab[0]; info++) {
+			if (streq(info->capab, s))
+				break;
+		}
+		if (!info->capab[0])
+			continue;
+		capab |= info->mask;
+	}
+
+	return capab;
+}
+
+void u_server_make_sreg(conn, sid) u_conn *conn; char *sid;
+{
+}
+
 int init_server()
 {
 	u_list_init(&my_motd);
@@ -97,6 +154,11 @@ int init_server()
 	strcpy(me.sid, "22U");
 	u_strlcpy(me.name, "micro.irc", MAXSERVNAME+1);
 	u_strlcpy(me.desc, "The Tiny IRC Server", MAXSERVDESC+1);
+	me.capab = CAPAB_QS | CAPAB_EX | CAPAB_CHW | CAPAB_IE
+	         | CAPAB_EOB | CAPAB_KLN | CAPAB_UNKLN | CAPAB_KNOCK
+	         | CAPAB_TB | CAPAB_ENCAP | CAPAB_SERVICES
+	         | CAPAB_SAVE | CAPAB_EUID;
+
 	u_strlcpy(my_net_name, "MicroIRC", MAXNETNAME+1);
 
 	u_trie_set(u_conf_handlers, "me.name", server_conf);

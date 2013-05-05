@@ -55,6 +55,7 @@ int u_cidr_match(cidr, s) u_cidr *cidr; char *s;
 
 #define CT_NICK   001
 #define CT_IDENT  002
+#define CT_SID    004
 
 static uint ctype_map[256];
 static char null_casemap[256];
@@ -297,6 +298,19 @@ int is_valid_ident(s) char *s;
 	return 1;
 }
 
+int is_valid_sid(s) char *s;
+{
+	if (strlen(s) != 3)
+		return 0;
+	if (!isdigit(s[0]))
+		return 0;
+	for (; *s; s++) {
+		if (!(ctype_map[(uchar)*s] & CT_SID))
+			return 0;
+	}
+	return 1;
+}
+
 int init_util()
 {
 	int i;
@@ -307,6 +321,8 @@ int init_util()
 			ctype_map[i] |= CT_NICK;
 		if (isalnum(i) || strchr("[]{}-_", i))
 			ctype_map[i] |= CT_IDENT;
+		if (isalnum(i))
+			ctype_map[i] |= CT_SID;
 
 		null_casemap[i] = i;
 		rfc1459_casemap[i] = islower(i) ? toupper(i) : i;
