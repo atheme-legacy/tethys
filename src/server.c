@@ -6,6 +6,9 @@
 
 #include "ircd.h"
 
+u_trie *servers_by_sid;
+u_trie *servers_by_name;
+
 u_server me;
 u_list my_motd;
 char my_net_name[MAXNETNAME+1];
@@ -141,13 +144,83 @@ static uint str_to_capab(buf) char *buf;
 	return capab;
 }
 
+void u_server_add_capabs(sv, s) u_server *sv; char *s;
+{
+	sv->capab |= str_to_capab(s);
+}
+
+void u_my_capabs(buf) char *buf;
+{
+	capab_to_str(me.capab, buf);
+}
+
+void server_local_die(conn, msg) u_conn *conn; char *msg;
+{
+	u_server *sv = conn->priv;
+	u_server_unlink(sv, msg);
+}
+
+void server_local_event(conn, event) u_conn *conn;
+{
+	switch (event) {
+	case EV_ERROR:
+		server_local_die(conn, conn->error);
+		break;
+	default:
+		server_local_die(conn, "unknown error");
+		break;
+
+	case EV_DESTROYING:
+		free(conn->priv);
+	}
+}
+
 void u_server_make_sreg(conn, sid) u_conn *conn; char *sid;
 {
+	u_server *sv;
+
+	if (conn->ctx != CTX_UNREG && conn->ctx != CTX_SREG)
+		return;
+
+	conn->ctx = CTX_SREG;
+
+	if (conn->priv != NULL)
+		return;
+
+	conn->priv = sv = malloc(sizeof(*sv));
+	sv->conn = conn;
+
+	strcpy(sv->sid, sid);
+	u_trie_set(servers_by_sid, sv->sid, sv);
+
+	sv->name[0] = '\0';
+	sv->desc[0] = '\0';
+	sv->conn = conn;
+	sv->capab = 0;
+
+	conn->event = server_local_event;
+
+	u_log(LG_INFO, "New server sid=%s", sv->sid);
+}
+
+void u_server_unlink(sv, msg) u_server *sv; char *msg;
+{
+	if (sv == &me) {
+		u_log(LG_ERROR, "Can't unlink self!");
+		return;
+	}
+
+	u_log(LG_INFO, "Unlinking server sid=%s (%s)", sv->sid, msg);
+
+	if (sv->name[0])
+		u_trie_del(servers_by_name, sv->name);
+	u_trie_del(servers_by_sid, sv->sid);
 }
 
 int init_server()
 {
-	u_list_init(&my_motd);
+	servers_by_sid = u_trie_new(ascii_canonize);
+	servers_by_name = u_trie_new(ascii_canonize);
 
 	/* default settings! */
 	me.conn = NULL;
@@ -158,6 +231,8 @@ int init_server()
 	         | CAPAB_EOB | CAPAB_KLN | CAPAB_UNKLN | CAPAB_KNOCK
 	         | CAPAB_TB | CAPAB_ENCAP | CAPAB_SERVICES
 	         | CAPAB_SAVE | CAPAB_EUID;
+
+	u_list_init(&my_motd);
 
 	u_strlcpy(my_net_name, "MicroIRC", MAXNETNAME+1);
 
