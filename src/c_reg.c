@@ -11,6 +11,11 @@ static void err_already(conn, msg) u_conn *conn; u_msg *msg;
 	u_conn_num(conn, ERR_ALREADYREGISTERED);
 }
 
+static void gtfo(conn, msg) u_conn *conn; u_msg *msg;
+{
+	u_conn_error(conn, "Server doesn't know what it's doing");
+}
+
 static void m_pass(conn, msg) u_conn *conn; u_msg *msg;
 {
 	if (msg->argc != 1 && msg->argc != 4) {
@@ -167,17 +172,54 @@ static void m_cap(conn, msg) u_conn *conn; u_msg *msg;
 	try_reg(conn);
 }
 
+static void try_serv(conn) u_conn *conn;
+{
+	u_server *sv = conn->priv;
+	uint capab_need = CAPAB_QS | CAPAB_EX | CAPAB_IE | CAPAB_EUID
+	                | CAPAB_SAVE | CAPAB_ENCAP;
+
+	if ((sv->capab & capab_need) != capab_need) {
+		u_conn_error(conn, "Don't have all needed CAPABs!");
+		return;
+	}
+
+	u_server_burst(sv);
+}
+
+static void m_capab(conn, msg) u_conn *conn; u_msg *msg;
+{
+	u_server *sv = conn->priv;
+	u_server_add_capabs(sv, msg->argv[0]);
+}
+
+static void m_server(conn, msg) u_conn *conn; u_msg *msg;
+{
+	u_server *sv = conn->priv;
+
+	u_strlcpy(sv->name, msg->argv[0], MAXSERVNAME+1);
+	u_strlcpy(sv->desc, msg->argv[2], MAXSERVDESC+1);
+
+	try_serv(conn);
+}
+
 u_cmd c_reg[] = {
-	{ "PASS", CTX_UNREG,  m_pass, 1 },
-	{ "PASS", CTX_UREG,   m_pass, 1 },
-	{ "PASS", CTX_USER,   err_already, 0 },
-	{ "NICK", CTX_UNREG,  m_nick, 1 },
-	{ "NICK", CTX_UREG,   m_nick, 1 },
-	{ "USER", CTX_UNREG,  m_user, 4 },
-	{ "USER", CTX_UREG,   m_user, 4 },
-	{ "USER", CTX_USER,   err_already, 0 },
-	{ "CAP",  CTX_UNREG,  m_cap,  1 },
-	{ "CAP",  CTX_UREG,   m_cap,  1 },
-	{ "CAP",  CTX_USER,   err_already, 0 },
+	{ "PASS",    CTX_UNREG,  m_pass, 1 },
+
+	{ "PASS",    CTX_UREG,   m_pass, 1 },
+	{ "PASS",    CTX_USER,   err_already, 0 },
+	{ "NICK",    CTX_UNREG,  m_nick, 1 },
+	{ "NICK",    CTX_UREG,   m_nick, 1 },
+	{ "USER",    CTX_UNREG,  m_user, 4 },
+	{ "USER",    CTX_UREG,   m_user, 4 },
+	{ "USER",    CTX_USER,   err_already, 0 },
+	{ "CAP",     CTX_UNREG,  m_cap,  1 },
+	{ "CAP",     CTX_UREG,   m_cap,  1 },
+	{ "CAP",     CTX_USER,   err_already, 0 },
+
+	{ "CAPAB",   CTX_SREG,   m_capab, 1 },
+	{ "CAPAB",   CTX_UNREG,  gtfo, 0 },
+	{ "SERVER",  CTX_SREG,   m_server, 3 },
+	{ "SERVER",  CTX_UNREG,  gtfo, 0 },
+
 	{ "" }
 };

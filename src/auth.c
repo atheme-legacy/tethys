@@ -7,7 +7,8 @@
 #include "ircd.h"
 
 static char *msg_noauthblocks = "No auth{} blocks; using default auth settings";
-static char *msg_classnotfound = "Auth block %s asks for class %s, but no such class exists! Using default class";
+static char *msg_nolinkblocks = "Attempted to find link{} block, but no such blocks! Unexpected server connect attempt?";
+static char *msg_classnotfound = "%s block %s asks for class %s, but no such class exists! Using default class";
 static char *msg_authnotfound = "Oper block %s asks for auth %s, but no such auth exists! Ignoring auth setting";
 static char *msg_timeouttooshort = "Timeout of %d seconds for class %s too short. Setting to %d seconds";
 
@@ -19,15 +20,17 @@ static u_auth auth_default =
 u_map *all_classes;
 u_map *all_auths;
 u_map *all_opers;
+u_map *all_links;
 
 static u_list auth_list;
+static u_list link_list;
 
 u_auth *u_find_auth(conn) u_conn *conn;
 {
 	u_list *n;
 	u_auth *auth;
 
-	if (u_list_size(&all_auths) == 0) {
+	if (u_list_size(&auth_list) == 0) {
 		u_log(LG_WARN, msg_noauthblocks);
 		return &auth_default;
 	}
@@ -45,7 +48,7 @@ u_auth *u_find_auth(conn) u_conn *conn;
 			auth->cls = u_map_get(all_classes, auth->classname);
 			if (auth->cls == NULL) {
 				u_log(LG_WARN, msg_classnotfound,
-				      auth->name, auth->classname);
+				      "Auth", auth->name, auth->classname);
 				auth->cls = &class_default;
 			}
 		}
@@ -79,6 +82,41 @@ u_oper *u_find_oper(auth, name, pass) u_auth *auth; char *name, *pass;
 		return NULL;
 
 	return oper;
+}
+
+u_link *u_find_link(conn) u_conn *conn;
+{
+	u_list *n;
+	u_link *link;
+
+	if (u_list_size(&link_list) == 0) {
+		u_log(LG_WARN, msg_nolinkblocks);
+		return NULL;
+	}
+
+	U_LIST_EACH(n, &link_list) {
+		link = n->data;
+
+		if (!streq(link->host, conn->ip))
+			continue;
+		if (link->recvpass[0]) {
+			if (!conn->pass || !streq(link->recvpass, conn->pass))
+				continue;
+		}
+
+		if (link->cls == NULL) {
+			link->cls = u_map_get(all_classes, link->classname);
+			if (link->cls == NULL) {
+				u_log(LG_WARN, msg_classnotfound,
+				      "Link", link->name, link->classname);
+				link->cls = &class_default;
+			}
+		}
+
+		return link;
+	}
+
+	return NULL;
 }
 
 #define CONF_CHECK(var, key, need) do { \
@@ -167,16 +205,55 @@ void conf_oper_auth(key, val) char *key, *val;
 	u_strlcpy(cur_oper->authname, val, MAXAUTHNAME+1);
 }
 
+static u_link *cur_link = NULL;
+
+void conf_link(key, val) char *key, *val;
+{
+	cur_link = malloc(sizeof(*cur_link));
+
+	memset(cur_link, 0, sizeof(*cur_link));
+	u_strlcpy(cur_link->name, val, MAXSERVERNAME+1);
+
+	u_map_set(all_links, val, cur_link);
+	cur_link->n = u_list_add(&link_list, cur_link);
+}
+
+void conf_link_host(key, val) char *key, *val;
+{
+	CONF_CHECK(cur_link, key, "link");
+	u_strlcpy(cur_link->host, val, INET_ADDRSTRLEN);
+}
+
+void conf_link_sendpass(key, val) char *key, *val;
+{
+	CONF_CHECK(cur_link, key, "link");
+	u_strlcpy(cur_link->sendpass, val, MAXPASSWORD+1);
+}
+
+void conf_link_recvpass(key, val) char *key, *val;
+{
+	CONF_CHECK(cur_link, key, "link");
+	u_strlcpy(cur_link->recvpass, val, MAXPASSWORD+1);
+}
+
+void conf_link_class(key, val) char *key, *val;
+{
+	CONF_CHECK(cur_link, key, "link");
+	u_strlcpy(cur_link->classname, val, MAXCLASSNAME+1);
+}
+
 int init_auth()
 {
 	all_classes = u_map_new(1);
 	all_auths = u_map_new(1);
 	all_opers = u_map_new(1);
+	all_links = u_map_new(1);
 
-	if (!all_classes || !all_auths || !all_opers)
+	if (!all_classes || !all_auths || !all_opers || !all_links)
 		return -1;
 
 	u_list_init(&auth_list);
+	u_list_init(&link_list);
 
 	u_trie_set(u_conf_handlers, "class", conf_class);
 	u_trie_set(u_conf_handlers, "class.timeout", conf_class_timeout);
@@ -189,6 +266,12 @@ int init_auth()
 	u_trie_set(u_conf_handlers, "oper", conf_oper);
 	u_trie_set(u_conf_handlers, "oper.password", conf_oper_password);
 	u_trie_set(u_conf_handlers, "oper.auth", conf_oper_auth);
+
+	u_trie_set(u_conf_handlers, "link", conf_link);
+	u_trie_set(u_conf_handlers, "link.host", conf_link_host);
+	u_trie_set(u_conf_handlers, "link.sendpass", conf_link_sendpass);
+	u_trie_set(u_conf_handlers, "link.recvpass", conf_link_recvpass);
+	u_trie_set(u_conf_handlers, "link.class", conf_link_class);
 
 	return 0;
 }

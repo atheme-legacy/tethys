@@ -13,10 +13,12 @@
 #define MAXAUTHNAME 64
 #define MAXPASSWORD 256
 #define MAXOPERNAME 64
+#define MAXSERVERNAME 128
 
 typedef struct u_class u_class;
 typedef struct u_auth u_auth;
 typedef struct u_oper u_oper;
+typedef struct u_link u_link;
 
 struct u_class {
 	char name[MAXCLASSNAME+1];
@@ -39,12 +41,24 @@ struct u_oper {
 	u_auth *auth;
 };
 
+struct u_link {
+	char name[MAXSERVERNAME+1];
+	char host[INET_ADDRSTRLEN];
+	char recvpass[MAXPASSWORD+1];
+	char sendpass[MAXPASSWORD+1];
+	char classname[MAXCLASSNAME+1];
+	u_class *cls;
+	u_list *n;
+};
+
 extern u_map *all_classes;
 extern u_map *all_auths;
 extern u_map *all_opers;
+extern u_map *all_links;
 
 extern u_auth *u_find_auth(); /* u_conn *conn */
 extern u_oper *u_find_oper(); /* u_auth*; char *name, *pass */
+extern u_link *u_find_link(); /* u_conn *conn */
 
 extern int init_auth();
 

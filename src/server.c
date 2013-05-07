@@ -205,6 +205,8 @@ void u_server_make_sreg(conn, sid) u_conn *conn; char *sid;
 
 void u_server_unlink(sv, msg) u_server *sv; char *msg;
 {
+	u_conn *conn = sv->conn;
+
 	if (sv == &me) {
 		u_log(LG_ERROR, "Can't unlink self!");
 		return;
@@ -212,9 +214,27 @@ void u_server_unlink(sv, msg) u_server *sv; char *msg;
 
 	u_log(LG_INFO, "Unlinking server sid=%s (%s)", sv->sid, msg);
 
+	if (conn->ctx == CTX_SERVER) {
+		/* ... */
+	} else {
+		u_conn_f(conn, "ERROR :%s", msg);
+	}
+
 	if (sv->name[0])
 		u_trie_del(servers_by_name, sv->name);
 	u_trie_del(servers_by_sid, sv->sid);
+}
+
+void u_server_burst(sv) u_server *sv;
+{
+	u_conn *conn = sv->conn;
+
+	if (conn == NULL) {
+		u_log(LG_ERROR, "Attempted to burst to %S, which has no conn!", sv);
+		return;
+	}
+
+	u_conn_error(conn, "Can't do servers yet! :(");
 }
 
 int init_server()

@@ -12,6 +12,8 @@
 #define MAXNETNAME   30
 #define MAXADMIN    512
 
+#define SERVER_OBUFSIZE 262144
+
 #define CAPAB_QS              0x1
 #define CAPAB_EX              0x2
 #define CAPAB_CHW             0x4
@@ -45,11 +47,13 @@ extern char my_admin_loc1[MAXADMIN+1];
 extern char my_admin_loc2[MAXADMIN+1];
 extern char my_admin_email[MAXADMIN+1];
 
-extern void u_server_add_capabs(); /* u_server* */
+extern void u_server_add_capabs(); /* u_server*, char *caps */
 extern void u_my_capabs(); /* char *buf */
 
 extern void u_server_make_sreg(); /* u_conn* */
 extern void u_server_unlink(); /* u_server*, char *msg */
+
+extern void u_server_burst(); /* u_server* */
 
 extern int init_server();
 
