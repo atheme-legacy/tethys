@@ -225,16 +225,32 @@ void u_server_unlink(sv, msg) u_server *sv; char *msg;
 	u_trie_del(servers_by_sid, sv->sid);
 }
 
-void u_server_burst(sv) u_server *sv;
+void u_server_burst(sv, link) u_server *sv; u_link *link;
 {
 	u_conn *conn = sv->conn;
+	char buf[512];
 
 	if (conn == NULL) {
 		u_log(LG_ERROR, "Attempted to burst to %S, which has no conn!", sv);
 		return;
 	}
 
-	u_conn_error(conn, "Can't do servers yet! :(");
+	conn->ctx = CTX_SBURST;
+
+	u_conn_f(conn, "PASS %s TS 6 :%s", link->sendpass, me.sid);
+	u_my_capabs(buf);
+	u_conn_f(conn, "CAPAB :%s", buf);
+	u_conn_f(conn, "SERVER %s 1 :%s", me.name, me.desc);
+
+	/* TODO: "SID and SERVER messages for all known servers" */
+
+	/* TODO: "BAN messages for all propagated bans" */
+
+	/* TODO: "EUID for all known users (possibly followed by ENCAP
+	   REALHOST, ENCAP LOGIN, and/or AWAY)" */
+
+	/* TODO: "and SJOIN messages for all known channels (possibly followed
+	   by BMASK and/or TB)" */
 }
 
 int init_server()

@@ -175,6 +175,7 @@ static void m_cap(conn, msg) u_conn *conn; u_msg *msg;
 static void try_serv(conn) u_conn *conn;
 {
 	u_server *sv = conn->priv;
+	u_link *link;
 	uint capab_need = CAPAB_QS | CAPAB_EX | CAPAB_IE | CAPAB_EUID
 	                | CAPAB_SAVE | CAPAB_ENCAP;
 
@@ -183,12 +184,12 @@ static void try_serv(conn) u_conn *conn;
 		return;
 	}
 
-	if (!u_find_link(conn)) {
+	if (!(link = u_find_link(conn))) {
 		u_conn_error(conn, "No link{} blocks for your host");
 		return;
 	}
 
-	u_server_burst(sv);
+	u_server_burst(sv, link);
 }
 
 static void m_capab(conn, msg) u_conn *conn; u_msg *msg;

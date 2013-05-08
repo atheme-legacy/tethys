@@ -94,9 +94,16 @@ void u_conn_vf(conn, fmt, va) u_conn *conn; char *fmt; va_list va;
 	p = conn->obuf + conn->obuflen;
 	end = conn->obuf + conn->obufsize - 2; /* -2 for \r\n */
 
-	type = FMT_USER;
-	if (conn->ctx == CTX_SERVER || conn->ctx == CTX_SREG)
+	switch (conn->ctx) {
+	default:
+		type = FMT_USER;
+		break;
+	case CTX_SREG:
+	case CTX_SERVER:
+	case CTX_SBURST:
 		type = FMT_SERVER;
+		break;
+	}
 
 	vsnf(type, buf, 4096, fmt, va);
 	buf[512] = '\0'; /* i guess it works... */

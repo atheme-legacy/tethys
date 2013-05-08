@@ -53,7 +53,7 @@ extern void u_my_capabs(); /* char *buf */
 extern void u_server_make_sreg(); /* u_conn* */
 extern void u_server_unlink(); /* u_server*, char *msg */
 
-extern void u_server_burst(); /* u_server* */
+extern void u_server_burst(); /* u_server*, u_link* */
 
 extern int init_server();
 
