@@ -38,6 +38,9 @@ struct u_server {
 	char name[MAXSERVNAME+1];
 	char desc[MAXSERVDESC+1];
 	uint capab;
+
+	uint hops;
+	u_server *parent;
 };
 
 extern u_server me;

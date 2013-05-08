@@ -7,7 +7,7 @@
 #include "ircd.h"
 
 u_trie *servers_by_sid;
-u_trie *servers_by_name;
+u_map *servers_by_name;
 
 u_server me;
 u_list my_motd;
@@ -198,6 +198,9 @@ void u_server_make_sreg(conn, sid) u_conn *conn; char *sid;
 	sv->conn = conn;
 	sv->capab = 0;
 
+	sv->hops = 1;
+	sv->parent = &me;
+
 	conn->event = server_local_event;
 
 	u_log(LG_INFO, "New server sid=%s", sv->sid);
@@ -221,7 +224,7 @@ void u_server_unlink(sv, msg) u_server *sv; char *msg;
 	}
 
 	if (sv->name[0])
-		u_trie_del(servers_by_name, sv->name);
+		u_map_del(servers_by_name, sv->name);
 	u_trie_del(servers_by_sid, sv->sid);
 }
 
@@ -232,6 +235,11 @@ void u_server_burst(sv, link) u_server *sv; u_link *link;
 
 	if (conn == NULL) {
 		u_log(LG_ERROR, "Attempted to burst to %S, which has no conn!", sv);
+		return;
+	}
+
+	if (sv->hops != 1) {
+		u_log(LG_ERROR, "Attempted to burst to %S, which is not local!", sv);
 		return;
 	}
 
@@ -251,6 +259,9 @@ void u_server_burst(sv, link) u_server *sv; u_link *link;
 
 	/* TODO: "and SJOIN messages for all known channels (possibly followed
 	   by BMASK and/or TB)" */
+
+	u_log(LG_DEBUG, "Adding %S to servers_by_name", sv);
+	u_map_set(servers_by_name, sv->name, sv);
 }
 
 int init_server()
@@ -267,6 +278,8 @@ int init_server()
 	         | CAPAB_EOB | CAPAB_KLN | CAPAB_UNKLN | CAPAB_KNOCK
 	         | CAPAB_TB | CAPAB_ENCAP | CAPAB_SERVICES
 	         | CAPAB_SAVE | CAPAB_EUID;
+	me.hops = 0;
+	me.parent = NULL;
 
 	u_list_init(&my_motd);
 
