@@ -183,6 +183,11 @@ static void try_serv(conn) u_conn *conn;
 		return;
 	}
 
+	if (!u_find_link(conn)) {
+		u_conn_error(conn, "No link{} blocks for your host");
+		return;
+	}
+
 	u_server_burst(sv);
 }
 
