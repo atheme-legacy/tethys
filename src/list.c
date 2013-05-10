@@ -27,7 +27,7 @@ u_list *u_list_add(list, data) u_list *list; void *data;
 	n->next->prev = n;
 	n->prev->next = n;
 
-	list->data = (void*)((int)(list->data) + 1);
+	list->data = (void*)((ulong)(list->data) + 1);
 
 	return n;
 }
@@ -49,9 +49,9 @@ int u_list_is_empty(list) u_list *list;
 	return list->next == list;
 } 
 
-int u_list_size(list) u_list *list;
+ulong u_list_size(list) u_list *list;
 {
-	return (int)(list->data);
+	return (ulong)(list->data);
 }
 
 void *u_list_del_n(list, n) u_list *list, *n;
@@ -63,7 +63,8 @@ void *u_list_del_n(list, n) u_list *list, *n;
 	data = n->data;
 
 	free(n);
-	list->data = (void*)((int)(list->data) - 1);
+	if (list->data)
+		list->data = (void*)((ulong)(list->data) - 1);
 
 	return data;
 }

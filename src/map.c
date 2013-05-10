@@ -29,7 +29,7 @@ static int n_cmp(map, k1, k2) u_map *map; void *k1, *k2;
 	if (map->flags & MAP_STRING_KEYS)
 		return strcmp((char*)k1, (char*)k2);
 
-	return (int)k1 - (int)k2;
+	return (long)k1 - (long)k2;
 }
 
 static u_map_n *u_map_n_new(map, key, data, color)
@@ -338,13 +338,16 @@ static void map_dump_real(map, n, depth) u_map *map; u_map_n *n;
 		return;
 	}
 
+/*
+	too many compiler warnings to bother with this...
 	if (map->flags & MAP_STRING_KEYS) {
 		printf("\e[%sm%s=%d\e[0m[", n->color == RED ? "31;1" : "36;1",
-		       (char*)n->key, (int)n->data);
+		       (char*)n->key, (long)n->data);
 	} else {
 		printf("\e[%sm%d=%d\e[0m[", n->color == RED ? "31;1" : "36;1",
-		       (int)n->key, (int)n->data);
+		       (long)n->key, (long)n->data);
 	}
+*/
 
 	if (n->child[LEFT] == NULL && n->child[RIGHT] == NULL) {
 		printf("]");
