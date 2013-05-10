@@ -7,7 +7,7 @@
 #include "ircd.h"
 
 u_trie *servers_by_sid;
-u_map *servers_by_name;
+u_trie *servers_by_name;
 
 u_server me;
 u_list my_motd;
@@ -224,7 +224,7 @@ void u_server_unlink(sv, msg) u_server *sv; char *msg;
 	}
 
 	if (sv->name[0])
-		u_map_del(servers_by_name, sv->name);
+		u_trie_del(servers_by_name, sv->name);
 	u_trie_del(servers_by_sid, sv->sid);
 }
 
@@ -261,7 +261,7 @@ void u_server_burst(sv, link) u_server *sv; u_link *link;
 	   by BMASK and/or TB)" */
 
 	u_log(LG_DEBUG, "Adding %S to servers_by_name", sv);
-	u_map_set(servers_by_name, sv->name, sv);
+	u_trie_set(servers_by_name, sv->name, sv);
 }
 
 int init_server()

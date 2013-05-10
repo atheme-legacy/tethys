@@ -33,15 +33,15 @@
 /* size of string buffers allocated on the stack */
 #define BUFSIZE 4096
 
-#define offsetof(st, m) ((unsigned)(&((st *)0)->m))
-#define containerof(ptr, st, m) ((void*)((ptr) - offsetof(st, m)))
-
-#define memberp(base, offs) ((void*)((int)(base) + (int)(offs)))
-#define member(mtype, base, offs) (*((mtype*)memberp(base, offs)))
-
 typedef unsigned long ulong;
 typedef unsigned int uint;
 typedef unsigned char uchar;
+
+#define offsetof(st, m) ((ulong)(&((st *)0)->m))
+#define containerof(ptr, st, m) ((void*)((ptr) - offsetof(st, m)))
+
+#define memberp(base, offs) ((void*)((ulong)(base) + (ulong)(offs)))
+#define member(mtype, base, offs) (*((mtype*)memberp(base, offs)))
 
 #ifdef __GNUC__
 
