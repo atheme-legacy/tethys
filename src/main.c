@@ -97,7 +97,8 @@ int main(argc, argv) char *argv[];
 	}
 
 	if (!u_conn_origin_create(&base_io, INADDR_ANY, opt_port)) {
-		u_log(LG_SEVERE, "Could not create connection origin. Bailing");
+		u_log(LG_SEVERE, "Could not create listener on port %d. Bailing",
+		      opt_port);
 		return 1;
 	}
 
