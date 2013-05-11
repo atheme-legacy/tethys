@@ -106,6 +106,7 @@ typedef unsigned long u_ts_t;
 #include "list.h"
 #include "trie.h"
 #include "map.h"
+#include "upgrade.h"
 #include "conf.h"
 #include "auth.h"
 #include "io.h"

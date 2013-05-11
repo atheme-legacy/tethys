@@ -27,8 +27,9 @@ OBJS = numeric.o \
 	sendto.o \
 	server.o \
 	trie.o \
-	util.o \
+	upgrade.o \
 	user.o \
+	util.o \
 	version.o \
 	vsnf.o \
 	main.o
