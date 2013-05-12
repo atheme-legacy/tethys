@@ -316,6 +316,8 @@ void u_server_burst(sv, link) u_server *sv; u_link *link;
 	u_conn_f(conn, "CAPAB :%s", buf);
 	u_conn_f(conn, "SERVER %s 1 :%s", me.name, me.desc);
 
+	u_conn_f(conn, "SVINFO 6 6 0 :%u", NOW.tv_sec);
+
 	/* TODO: "SID and SERVER messages for all known servers" */
 
 	/* TODO: "BAN messages for all propagated bans" */
@@ -327,6 +329,8 @@ void u_server_burst(sv, link) u_server *sv; u_link *link;
 	/* TODO: "and SJOIN messages for all known channels (possibly followed
 	   by BMASK and/or TB)" */
 	u_trie_each(all_chans, burst_chan, conn);
+
+	u_conn_f(conn, ":%S PING %s :%d %d", &me, sv->name, NOW.tv_sec, NOW.tv_usec);
 
 	u_log(LG_DEBUG, "Adding %S to servers_by_name", sv);
 	u_trie_set(servers_by_name, sv->name, sv);
