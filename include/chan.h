@@ -43,6 +43,7 @@ struct u_cmode_info {
 };
 
 struct u_chan {
+	u_ts_t ts;
 	char name[MAXCHANNAME+1];
 	char topic[MAXTOPICLEN+1];
 	char topic_setter[MAXNICKLEN+1];

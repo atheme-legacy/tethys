@@ -228,6 +228,65 @@ void u_server_unlink(sv, msg) u_server *sv; char *msg;
 	u_trie_del(servers_by_sid, sv->sid);
 }
 
+static void burst_user(u, conn) u_user *u; u_conn *conn;
+{
+	/* THIS IS WRONG!        nick     modes    ip       acct
+	                            hops     ident    uid      gecos
+	                               nickts   host     rlhost       */
+	u_conn_f(conn, ":%S EUID %s %d %u %s %s %s %s %s %s %s %s",
+	         &me, u->nick, 0, 0, "+", u->ident, u->host, "0", u->uid,
+	         u->host, "*", u->gecos);
+
+	if (u->away[0])
+		u_conn_f(conn, ":%U AWAY :%s", u, u->away);
+}
+
+struct burst_chan_priv {
+	u_chan *c;
+	u_conn *conn;
+	char *rest, *s, buf[512];
+	uint w;
+};
+
+static void burst_chan_cb(map, u, cu, priv)
+u_map *map; u_user *u; u_chanuser *cu; struct burst_chan_priv *priv;
+{
+	char *p, nbuf[12];
+
+	p = nbuf;
+	if (cu->flags & CU_PFX_OP)
+		*p++ = '@';
+	if (cu->flags & CU_PFX_VOICE)
+		*p++ = '+';
+	strcpy(p, u->uid);
+
+try_again:
+	if (!wrap(priv->buf, &priv->s, priv->w, nbuf)) {
+		u_conn_f(priv->conn, "%s%s", priv->rest, priv->buf);
+		goto try_again;
+	}
+}
+
+static void burst_chan(c, conn) u_chan *c; u_conn *conn;
+{
+	struct burst_chan_priv priv;
+	char buf[512];
+	int sz;
+
+	sz = snf(FMT_SERVER, buf, 512, ":%S SJOIN %u %s %s :",
+	         &me, c->ts, c->name, u_chan_modes(c, NULL));
+
+	priv.c = c;
+	priv.conn = conn;
+	priv.rest = buf;
+	priv.s = priv.buf;
+	priv.w = 512 - sz;
+
+	u_map_each(c->members, burst_chan_cb, &priv);
+	if (priv.s != priv.buf)
+		u_conn_f(conn, "%s%s", buf, priv.buf);
+}
+
 void u_server_burst(sv, link) u_server *sv; u_link *link;
 {
 	u_conn *conn = sv->conn;
@@ -256,9 +315,11 @@ void u_server_burst(sv, link) u_server *sv; u_link *link;
 
 	/* TODO: "EUID for all known users (possibly followed by ENCAP
 	   REALHOST, ENCAP LOGIN, and/or AWAY)" */
+	u_trie_each(users_by_uid, burst_user, conn);
 
 	/* TODO: "and SJOIN messages for all known channels (possibly followed
 	   by BMASK and/or TB)" */
+	u_trie_each(all_chans, burst_chan, conn);
 
 	u_log(LG_DEBUG, "Adding %S to servers_by_name", sv);
 	u_trie_set(servers_by_name, sv->name, sv);

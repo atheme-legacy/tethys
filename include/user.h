@@ -76,6 +76,9 @@ struct u_user_remote {
 #define USER_LOCAL(U) ((u_user_local*)(U))
 #define USER_REMOTE(U) ((u_user_remote*)(U))
 
+extern u_trie *users_by_nick;
+extern u_trie *users_by_uid;
+
 extern u_umode_info *umodes;
 extern uint umode_default;
 
