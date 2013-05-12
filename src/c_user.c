@@ -266,7 +266,7 @@ static void m_mode(conn, msg) u_conn *conn; u_msg *msg;
 
 	if (msg->argv[1] == NULL) {
 		cu = u_chan_user_find(c, u);
-		u_user_num(u, RPL_CHANNELMODEIS, c, u_chan_modes(c, cu));
+		u_user_num(u, RPL_CHANNELMODEIS, c, u_chan_modes(c, !!cu));
 		return;
 	}
 

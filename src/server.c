@@ -274,7 +274,7 @@ static void burst_chan(c, conn) u_chan *c; u_conn *conn;
 	int sz;
 
 	sz = snf(FMT_SERVER, buf, 512, ":%S SJOIN %u %s %s :",
-	         &me, c->ts, c->name, u_chan_modes(c, NULL));
+	         &me, c->ts, c->name, u_chan_modes(c, 1));
 
 	priv.c = c;
 	priv.conn = conn;

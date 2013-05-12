@@ -359,6 +359,7 @@ u_chan *u_chan_get_or_create(name) char *name;
 
 	chan = malloc(sizeof(*chan));
 	u_strlcpy(chan->name, name, MAXCHANNAME+1);
+	chan->ts = NOW.tv_sec;
 	chan->topic[0] = '\0';
 	chan->topic_setter[0] = '\0';
 	chan->topic_time = 0;
@@ -410,7 +411,7 @@ void u_chan_drop(chan) u_chan *chan;
 	free(chan);
 }
 
-char *u_chan_modes(c, cu) u_chan *c; u_chanuser *cu;
+char *u_chan_modes(c, on_chan) u_chan *c;
 {
 	static char buf[512];
 	char chs[64], args[512];
@@ -429,7 +430,7 @@ char *u_chan_modes(c, cu) u_chan *c; u_chanuser *cu;
 	}
 	if (c->key) {
 		*s++ = 'k';
-		if (cu != NULL)
+		if (on_chan)
 			p += sprintf(p, " %s", c->key);
 	}
 	if (c->limit >= 0) {
