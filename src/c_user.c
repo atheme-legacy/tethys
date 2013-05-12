@@ -25,6 +25,12 @@ static char *getarg()
 	return *ga_argv++;
 }
 
+static void not_implemented(conn, msg) u_conn *conn; u_msg *msg;
+{
+	u_conn_f(conn, ":%S NOTICE %U :*** %s is not yet implemented!",
+	         &me, conn->priv, msg->command);
+}
+
 static void m_echo(conn, msg) u_conn *conn; u_msg *msg;
 {
 	u_user *u = conn->priv;
@@ -668,29 +674,46 @@ static void m_admin(conn, msg) u_conn *conn; u_msg *msg;
 }
 
 u_cmd c_user[] = {
-	{ "ECHO",    CTX_USER, m_echo,    0 },
-	{ "PRIVMSG", CTX_USER, m_message, 2 },
-	{ "NOTICE",  CTX_USER, m_message, 2 },
-	{ "PING",    CTX_USER, m_ping,    1 },
-	{ "PONG",    CTX_USER, m_ping,    0 },
-	{ "QUIT",    CTX_USER, m_quit,    0 },
-	{ "VERSION", CTX_USER, m_version, 0 },
-	{ "MOTD",    CTX_USER, m_motd,    0 },
-	{ "JOIN",    CTX_USER, m_join,    1 },
-	{ "PART",    CTX_USER, m_part,    1 },
-	{ "TOPIC",   CTX_USER, m_topic,   1 },
-	{ "NAMES",   CTX_USER, m_names,   0 },
-	{ "MODE",    CTX_USER, m_mode,    1 },
-	{ "WHOIS",   CTX_USER, m_whois,   1 },
-	{ "USERHOST",CTX_USER, m_userhost,1 },
-	{ "AWAY",    CTX_USER, m_away,    0 },
-	{ "WHO",     CTX_USER, m_who,     1 },
-	{ "OPER",    CTX_USER, m_oper,    2 },
-	{ "LIST",    CTX_USER, m_list,    0 },
-	{ "NICK",    CTX_USER, m_nick,    1 },
-	{ "42",      CTX_USER, m_42,      0 },
-	{ "STATS",   CTX_USER, m_stats,   1 },
-	{ "MKPASS",  CTX_USER, m_mkpass,  1 },
-	{ "ADMIN",   CTX_USER, m_admin,   0 },
+	{ "ECHO",      CTX_USER, m_echo,    0 },
+	{ "PRIVMSG",   CTX_USER, m_message, 2 },
+	{ "NOTICE",    CTX_USER, m_message, 2 },
+	{ "PING",      CTX_USER, m_ping,    1 },
+	{ "PONG",      CTX_USER, m_ping,    0 },
+	{ "QUIT",      CTX_USER, m_quit,    0 },
+	{ "VERSION",   CTX_USER, m_version, 0 },
+	{ "MOTD",      CTX_USER, m_motd,    0 },
+	{ "JOIN",      CTX_USER, m_join,    1 },
+	{ "PART",      CTX_USER, m_part,    1 },
+	{ "TOPIC",     CTX_USER, m_topic,   1 },
+	{ "NAMES",     CTX_USER, m_names,   0 },
+	{ "MODE",      CTX_USER, m_mode,    1 },
+	{ "WHOIS",     CTX_USER, m_whois,   1 },
+	{ "USERHOST",  CTX_USER, m_userhost,1 },
+	{ "AWAY",      CTX_USER, m_away,    0 },
+	{ "WHO",       CTX_USER, m_who,     1 },
+	{ "OPER",      CTX_USER, m_oper,    2 },
+	{ "LIST",      CTX_USER, m_list,    0 },
+	{ "NICK",      CTX_USER, m_nick,    1 },
+	{ "42",        CTX_USER, m_42,      0 },
+	{ "STATS",     CTX_USER, m_stats,   1 },
+	{ "MKPASS",    CTX_USER, m_mkpass,  1 },
+	{ "ADMIN",     CTX_USER, m_admin,   0 },
+
+	{ "SQUIT",     CTX_USER, not_implemented, 0 },
+	{ "INVITE",    CTX_USER, not_implemented, 0 },
+	{ "KICK",      CTX_USER, not_implemented, 0 },
+	{ "LINKS",     CTX_USER, not_implemented, 0 },
+	{ "TIME",      CTX_USER, not_implemented, 0 },
+	{ "CONNECT",   CTX_USER, not_implemented, 0 },
+	{ "TRACE",     CTX_USER, not_implemented, 0 },
+	{ "INFO",      CTX_USER, not_implemented, 0 },
+	{ "WHOWAS",    CTX_USER, not_implemented, 0 },
+	{ "KILL",      CTX_USER, not_implemented, 0 },
+	{ "REHASH",    CTX_USER, not_implemented, 0 },
+	{ "RESTART",   CTX_USER, not_implemented, 0 },
+	{ "USERS",     CTX_USER, not_implemented, 0 },
+	{ "OPERWALL",  CTX_USER, not_implemented, 0 },
+	{ "ISON",      CTX_USER, not_implemented, 0 },
+
 	{ "" },
 };
