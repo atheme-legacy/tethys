@@ -1,0 +1,100 @@
+The information in this document is not guaranteed to be correct. It is
+just my attempt at summarizing jilles' ts6-protocol.txt into a concise
+tabular representation. Refer to ts6-protocol.txt, or even just the
+charybdis source, for the most correct information.
+
+                    source
+                    |   local only
+                    |   |  server (I don't use this column)
+                    |   |  |  ENCAP only
+                    |   |  |  |  hunted parameter
+ RFC1459            |   |  |  |  |  (restricted) broadcast propagation
+ |                  |   |  |  |  |  |  has CLUSTER variant
+ |                  |   |  |  |  |  |  |
+ * NAME             *  ul sv EN hu br CL     Comment
+ - ---------------  -  -- -- -- -- -- --     ---------------------
+ ? ADMIN            u           hu
+ * AWAY             u              br
+   BAN              *              b         CAPAB BAN
+   BMASK            s              br
+   CAPAB            s      
+   CHGHOST          *              br
+ ? CONNECT          *           hu
+ * DIE                 ul
+   DLINE            u        EN
+   ENCAP            *              br
+ * ERROR            s       
+   ETRACE           o        EN
+   EUID             s                        CAPAB EUID
+   GCAP             s        EN
+   GLINE            u              br
+   GUNGLINE         u        EN      
+   HELP                ul
+ ? INFO             u           hu
+ * INVITE           u
+ * ISON                ul
+ * JOIN             u              br
+   JUPE             *              b 
+ * KICK             *              br
+ * KILL             *              br
+   KLINE            u        EN              CAPAB KLN (for non-ENCAP)
+ ? KNOCK            u              br
+ ? LINKS            u           hu
+ * LIST                ul
+   LOGIN            u        EN
+ ? LUSERS           u           hu
+   MAP                 ul
+   MLOCK            s              b 
+ * MODE (1)         u              br        umode change
+ * MODE (2)         u                        cmode change, propagate as TMODE
+ * MOTD             u           hu
+ * NAMES               ul
+ * NICK (1)         u              br
+   NICK (2)         s                        TS5 user introduction
+   NICKDELAY        s        EN
+ * NOTICE           *
+ * OPER                ul
+   OPERSPY          u        EN
+   OPERWALL         u              br
+ * PART             u              br
+   PASS             s                        (TS6 version, not RFC1459)
+ * PING             *           hu           (not typical hunting)
+ * PONG             s           hu             "      "       "
+ * PRIVMSG          u
+   PRIVS            o        EN
+ * QUIT             u              br        don't send for KILL
+   REALHOST         u        EN              used in burst
+ ? REHASH           u        EN
+   RESV             u        EN       CL
+   RSFNC            s        EN
+   SASL             s        EN
+   SAVE             s              br        CAPAB SAVE
+ ? SERVER (1)       s                        registration, propagate as SID.
+ ? SERVER (2)       s              br        TS5 server introduction
+   SID              s              br
+   SIGNON           u              br        only sent after SVSLOGIN
+   SJOIN            s              br
+   SNOTE            s        EN    
+ * SQUIT            -                        refer to RFC, I guess
+ * STATS            u           hu
+   SU               s        EN
+   SVINFO           s
+   SVSLOGIN         s        EN
+   TB               s              br
+ ? TIME             u           hu
+   TMODE            *              br
+ * TOPIC            u              br
+ ? TRACE            u           hu
+   UID              s              br
+   UNDLINE          u        EN      
+   UNKLINE          u        EN       CL
+   UNRESV           u        EN       CL
+   UNXLINE          u        EN       CL
+ * VERSION          *           hu
+ * WALLOPS (1)      u              br
+   WALLOPS (2)      s              br
+ * WHO                 ul
+ * WHOIS            u           hu
+ * WHOWAS              ul
+   XLINE            u        EN       CL
+
