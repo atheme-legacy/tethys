@@ -230,12 +230,19 @@ void u_server_unlink(sv, msg) u_server *sv; char *msg;
 
 static void burst_user(u, conn) u_user *u; u_conn *conn;
 {
-	/* THIS IS WRONG!        nick     modes    ip       acct
+	u_server *sv = u_user_server(u);
+
+	/* THIS IS RIDICULOUS!   nick     modes    ip       acct
 	                            hops     ident    uid      gecos
 	                               nickts   host     rlhost       */
 	u_conn_f(conn, ":%S EUID %s %d %u %s %s %s %s %s %s %s %s",
-	         &me, u->nick, 0, 0, "+", u->ident, u->host, "0", u->uid,
-	         u->host, "*", u->gecos);
+	         sv,
+	         /* XXX: not sure if hops + 1 is correct */
+	         u->nick, sv->hops + 1, u->nickts,
+	         "+", u->ident, u->host,
+	         u->ip, u->uid, u->realhost,
+	         u->acct[0] ? u->acct : "*",
+	         u->gecos);
 
 	if (u->away[0])
 		u_conn_f(conn, ":%U AWAY :%s", u, u->away);

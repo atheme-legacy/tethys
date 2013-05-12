@@ -160,12 +160,14 @@ void u_user_make_ureg(conn) u_conn *conn;
 	u_strlcpy(u->uid, me.sid, 4);
 	u_strlcpy(u->uid + 3, id_next(), 7);
 	u_trie_set(users_by_uid, u->uid, u);
+	u->flags = umode_default | USER_IS_LOCAL;
+	u->channels = u_map_new(0);
 
+	u_strlcpy(u->ip, conn->ip, MAXHOST+1);
+	u_strlcpy(u->realhost, conn->host, MAXHOST+1);
 	u_strlcpy(u->host, conn->host, MAXHOST+1);
 
-	u->flags = umode_default | USER_IS_LOCAL;
 	u_user_state(u, USER_REGISTERING);
-	u->channels = u_map_new(0);
 
 	ul->conn = conn;
 	ul->oper = NULL;
@@ -211,11 +213,18 @@ void u_user_unlink(u, msg) u_user *u; char *msg;
 
 u_conn *u_user_conn(u) u_user *u;
 {
-	if (u->flags & USER_IS_LOCAL) {
-		return ((u_user_local*)u)->conn;
-	} else {
-		return ((u_user_remote*)u)->server->conn;
-	}
+	if (u->flags & USER_IS_LOCAL)
+		return USER_LOCAL(u)->conn;
+	else
+		return USER_REMOTE(u)->server->conn;
+}
+
+u_server *u_user_server(u) u_user *u;
+{
+	if (u->flags & USER_IS_LOCAL)
+		return &me;
+	else
+		return USER_REMOTE(u)->server;
 }
 
 u_user *u_user_by_nick(nick) char *nick;
@@ -234,6 +243,7 @@ void u_user_set_nick(u, nick) u_user *u; char *nick;
 		u_trie_del(users_by_nick, u->nick);
 	u_strlcpy(u->nick, nick, MAXNICKLEN+1);
 	u_trie_set(users_by_nick, u->nick, u);
+	u->nickts = NOW.tv_sec;
 }
 
 uint u_user_state(u, state) u_user *u; uint state;
