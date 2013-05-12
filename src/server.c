@@ -228,14 +228,14 @@ void u_server_unlink(sv, msg) u_server *sv; char *msg;
 	u_trie_del(servers_by_sid, sv->sid);
 }
 
-static void burst_user(u, conn) u_user *u; u_conn *conn;
+static void burst_euid(u, conn) u_user *u; u_conn *conn;
 {
 	u_server *sv = u_user_server(u);
 
 	/* THIS IS RIDICULOUS!   nick     modes    ip       acct
 	                            hops     ident    uid      gecos
 	                               nickts   host     rlhost       */
-	u_conn_f(conn, ":%S EUID %s %d %u %s %s %s %s %s %s %s %s",
+	u_conn_f(conn, ":%S EUID %s %d %u %s %s %s %s %s %s %s :%s",
 	         sv,
 	         /* XXX: not sure if hops + 1 is correct */
 	         u->nick, sv->hops + 1, u->nickts,
@@ -246,6 +246,28 @@ static void burst_user(u, conn) u_user *u; u_conn *conn;
 
 	if (u->away[0])
 		u_conn_f(conn, ":%U AWAY :%s", u, u->away);
+}
+
+static void burst_uid(u, conn) u_user *u; u_conn *conn;
+{
+	u_server *sv = u_user_server(u);
+
+	/* EQUALLY RIDICULOUS!  nick     modes    ip
+                                   hops     ident    uid
+                                      nickts   host     gecos    */
+	u_conn_f(conn, ":%S UID %s %d %u %s %s %s %s %s :%s",
+	         sv,
+	         /* XXX: see above */
+	         u->nick, sv->hops + 1, u->nickts,
+	         "+", u->ident, u->host,
+	         u->ip, u->uid, u->gecos);
+
+	u_conn_f(conn, ":%U ENCAP * REALHOST :%s", u, u->realhost);
+
+	if (u->acct[0])
+		u_conn_f(conn, ":%U ENCAP * LOGIN :%s", u, u->acct);
+
+	u_conn_f(conn, ":%U AWAY :%s", u, u->away);
 }
 
 struct burst_chan_priv {
@@ -324,7 +346,10 @@ void u_server_burst(sv, link) u_server *sv; u_link *link;
 
 	/* TODO: "EUID for all known users (possibly followed by ENCAP
 	   REALHOST, ENCAP LOGIN, and/or AWAY)" */
-	u_trie_each(users_by_uid, burst_user, conn);
+	if (sv->capab & CAPAB_EUID)
+		u_trie_each(users_by_uid, burst_euid, conn);
+	else
+		u_trie_each(users_by_uid, burst_uid, conn);
 
 	/* TODO: "and SJOIN messages for all known channels (possibly followed
 	   by BMASK and/or TB)" */
