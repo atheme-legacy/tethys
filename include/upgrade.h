@@ -9,8 +9,8 @@
 
 typedef struct u_udb u_udb;
 
-/* save hook args: u_udb*
-   load hook args: u_udb* */
+/* void save_hook(u_udb*)
+   void load_hook(u_udb*) */
 
 extern u_list *u_udb_save_hooks;
 extern u_trie *u_udb_load_hooks;
