@@ -26,6 +26,7 @@ int usage(argv0, code) char *argv0;
 #define COMMAND(cmds) if ((err = u_cmds_reg(cmds)) < 0) return err
 COMMAND_DEF(c_reg);
 COMMAND_DEF(c_user);
+COMMAND_DEF(c_server);
 int init()
 {
 	int err;
@@ -50,6 +51,7 @@ int init()
 	INIT(init_sendto);
 	COMMAND(c_reg);
 	COMMAND(c_user);
+	COMMAND(c_server);
 
 	u_io_init(&base_io);
 	u_dns_use_io(&base_io);

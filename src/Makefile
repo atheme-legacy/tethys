@@ -12,6 +12,7 @@ OBJS = numeric.o \
 	auth.o \
 	c_reg.o \
 	c_user.o \
+	c_server.o \
 	chan.o \
 	conf.o \
 	conn.o \

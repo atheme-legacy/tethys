@@ -176,8 +176,7 @@ static void try_serv(conn) u_conn *conn;
 {
 	u_server *sv = conn->priv;
 	u_link *link;
-	uint capab_need = CAPAB_QS | CAPAB_EX | CAPAB_IE | CAPAB_EUID
-	                | CAPAB_SAVE | CAPAB_ENCAP;
+	uint capab_need = CAPAB_QS | CAPAB_EX | CAPAB_IE | CAPAB_EUID | CAPAB_ENCAP;
 
 	if ((sv->capab & capab_need) != capab_need) {
 		u_conn_error(conn, "Don't have all needed CAPABs!");
