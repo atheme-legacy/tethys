@@ -24,6 +24,28 @@ static void m_error(conn, msg) u_conn *conn; u_msg *msg;
 	u_conn_error(conn, "Peer sent ERROR!");
 }
 
+static void m_svinfo(conn, msg) u_conn *conn; u_msg *msg;
+{
+	int tsdelta;
+
+	if (atoi(msg->argv[0]) < 6) {
+		u_conn_error(conn, "Max TS version is not 6!");
+		return;
+	}
+
+	tsdelta = atoi(msg->argv[3]) - (int)NOW.tv_sec;
+	if (tsdelta < 0)
+		tsdelta = -tsdelta;
+
+	if (tsdelta > 10)
+		u_log(LG_WARN, "%S has TS delta of %d", conn->priv, tsdelta);
+	if (tsdelta > 60) {
+		u_log(LG_ERROR, "%S has excessive TS delta, killing", conn->priv);
+		u_conn_error(conn, "Excessive TS delta");
+		return;
+	}
+}
+
 static u_user *uid_generic(conn, msg) u_conn *conn; u_msg *msg;
 {
 	u_server *sv;
@@ -69,6 +91,14 @@ static void m_uid(conn, msg) u_conn *conn; u_msg *msg;
 }
 
 u_cmd c_server[] = {
+	{ "ERROR",       CTX_SERVER, m_error,         0 },
+	{ "SVINFO",      CTX_SBURST, m_svinfo,        4 },
+
+	{ "EUID",        CTX_SERVER, m_euid,         11 },
+	{ "EUID",        CTX_SBURST, m_euid,         11 },
+	{ "UID",         CTX_SERVER, m_uid,           9 },
+	{ "UID",         CTX_SBURST, m_uid,           9 },
+
 	{ "ADMIN",       CTX_SERVER, not_implemented, 0 }, /* hunted */
 	{ "AWAY",        CTX_SERVER, not_implemented, 0 },
 	{ "BAN",         CTX_SERVER, not_implemented, 0 },
@@ -76,9 +106,6 @@ u_cmd c_server[] = {
 	{ "CHGHOST",     CTX_SERVER, not_implemented, 0 },
 	{ "CONNECT",     CTX_SERVER, not_implemented, 0 },
 	{ "ENCAP",       CTX_SERVER, not_implemented, 0 },
-	{ "ERROR",       CTX_SERVER, m_error,         0 },
-	{ "EUID",        CTX_SERVER, m_euid,         11 },
-	{ "EUID",        CTX_SBURST, m_euid,         11 },
 	{ "GLINE",       CTX_SERVER, not_implemented, 0 },
 	{ "GUNGLINE",    CTX_SERVER, not_implemented, 0 },
 	{ "INFO",        CTX_SERVER, not_implemented, 0 }, /* hunted */
@@ -116,15 +143,12 @@ u_cmd c_server[] = {
 	{ "SJOIN",       CTX_SBURST, not_implemented, 0 },
 	{ "SQUIT",       CTX_SERVER, not_implemented, 0 },
 	{ "STATS",       CTX_SERVER, not_implemented, 0 }, /* hunted */
-	{ "SVINFO",      CTX_SBURST, not_implemented, 0 },
 	{ "TB",          CTX_SBURST, not_implemented, 0 },
 	{ "TB",          CTX_SERVER, not_implemented, 0 },
 	{ "TIME",        CTX_SERVER, not_implemented, 0 }, /* hunted */
 	{ "TMODE",       CTX_SERVER, not_implemented, 0 },
 	{ "TOPIC",       CTX_SERVER, not_implemented, 0 },
 	{ "TRACE",       CTX_SERVER, not_implemented, 0 }, /* hunted */
-	{ "UID",         CTX_SERVER, m_uid,           9 },
-	{ "UID",         CTX_SBURST, m_uid,           9 },
 	{ "UNKLINE",     CTX_SERVER, not_implemented, 0 },
 	{ "UNRESV",      CTX_SERVER, not_implemented, 0 },
 	{ "UNXLINE",     CTX_SERVER, not_implemented, 0 },
