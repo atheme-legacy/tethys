@@ -73,6 +73,9 @@ static void m_pong(conn, msg) u_conn *conn; u_msg *msg;
 		return;
 	}
 
+	if (from->conn == to)
+		return;
+
 	u_conn_f(to, ":%S PONG %s %s", from, from->name, msg->argv[1]);
 }
 
