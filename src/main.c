@@ -75,8 +75,10 @@ int main(argc, argv) char *argv[];
 {
 	int c;
 
+	gettimeofday(&NOW, NULL);
+	started = NOW.tv_sec;
+
 	u_log(LG_INFO, "%s starting...", PACKAGE_FULLNAME);
-	started = time(NULL);
 
 	while ((c = getopt(argc, argv, "vhp:")) != -1) {
 		switch(c) {

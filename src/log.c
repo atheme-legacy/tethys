@@ -6,18 +6,18 @@
 
 #include "ircd.h"
 
-void default_handler(level, line) char *line;
+void default_handler(level, tm, line) char *tm, *line;
 {
 	static char *prefix[] =
-		{ "=!= | SEVERE: ",
-		  "=!= | ERROR: ",
-		  "=!= | ",
-		  " -- | ",
-		  "    | ",
-		  "    |   ",
-		  "    |     "
+		{ "!!! SEVERE: ",
+		  "!!! ERROR: ",
+		  "Warning: ",
+		  "",
+		  "    ",
+		  "       ",
+		  "        "
 	};
-	printf("%s%s\n", prefix[level], line);
+	printf("[%s] %s%s\n", tm, prefix[level], line);
 }
 
 void (*u_log_handler)() = default_handler;
@@ -25,6 +25,8 @@ int u_log_level = LG_INFO;
 
 void u_log(T(int) level, T(char*) fmt, u_va_alist) A(char *fmt; va_dcl)
 {
+	struct tm *tm;
+	char *s, tmbuf[512];
 	char buf[BUFSIZE];
 	va_list va;
 
@@ -35,5 +37,10 @@ void u_log(T(int) level, T(char*) fmt, u_va_alist) A(char *fmt; va_dcl)
 	vsnf(FMT_LOG, buf, BUFSIZE, fmt, va);
 	va_end(va);
 
-	u_log_handler(level, buf);
+	tm = localtime(&NOW.tv_sec);
+	u_strlcpy(tmbuf, asctime(tm), 512);
+	if ((s = strchr(tmbuf, '\n')))
+		*s = '\0';
+
+	u_log_handler(level, tmbuf, buf);
 }
