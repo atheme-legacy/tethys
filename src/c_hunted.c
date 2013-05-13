@@ -10,7 +10,7 @@ static void m_ping(conn, msg) u_conn *conn; u_msg *msg;
 {
 	u_server *sv;
 	u_user *u;
-	char *tgt;
+	char *tgt, *origin;
 
 	if (msg->command[1] == 'O') /* user PONG */
 		return;
@@ -27,22 +27,11 @@ static void m_ping(conn, msg) u_conn *conn; u_msg *msg;
 			u = conn->priv;
 			tgt = u->nick;
 		} else {
-			switch(strlen(msg->source)) {
-			case 9:
-				u = u_user_by_uid(msg->source);
-				if (u != NULL)
-					tgt = u->nick;
-				break;
-			case 3:
-				sv = u_server_by_sid(msg->source);
-				if (sv != NULL)
-					tgt = sv->name;
-				break;
-			}
+			tgt = id_to_name(msg->source);
 		}
 
 		if (tgt == NULL)
-			u_log(LG_ERROR, "Useless PING", conn->priv);
+			u_log(LG_ERROR, "Useless PING from %G", conn);
 		else
 			u_conn_f(conn, ":%S PONG %s %s", &me, me.name, tgt);
 
@@ -52,17 +41,39 @@ static void m_ping(conn, msg) u_conn *conn; u_msg *msg;
 	if (!(sv = u_server_by_name(msg->argv[1]))) {
 		if (conn->ctx == CTX_USER)
 			u_conn_num(conn, ERR_NOSUCHSERVER, msg->argv[1]);
-		u_log(LG_ERROR, "%G sent PING for nonexistent %s",
-		      conn, msg->argv[1]);
+		else
+			u_log(LG_ERROR, "%G sent PING for nonexistent %s",
+			      conn, msg->argv[1]);
 		return;
 	}
 
-	u_conn_f(sv->conn, ":%G PING %s %s",
-	         conn, msg->argv[0], msg->argv[1]);
+	origin = msg->source;
+	if (origin == NULL || conn->ctx == CTX_USER)
+		origin = conn_id(conn);
+
+	u_conn_f(sv->conn, ":%s PING %s %s", ref_to_id(origin),
+	         ref_to_name(origin), msg->argv[1]);
 }
 
 static void m_pong(conn, msg) u_conn *conn; u_msg *msg;
 {
+	u_server *from;
+	u_conn *to;
+
+	if (!(from = u_server_by_sid(msg->source)))
+		return;
+
+	if (streq(msg->argv[1], me.name))
+		return;
+
+	to = u_conn_by_name(msg->argv[1]);
+	if (to == NULL) {
+		u_log(LG_ERROR, "%G sent PONG for nonexistent %s",
+		      conn, msg->argv[1]);
+		return;
+	}
+
+	u_conn_f(to, ":%S PONG %s %s", from, from->name, msg->argv[1]);
 }
 
 u_cmd c_hunted[] = {

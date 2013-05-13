@@ -52,6 +52,9 @@ extern char *name_to_id(); /* char *nick_or_server */
 extern char *ref_to_name(); /* char *ref */
 extern char *ref_to_id(); /* char *ref */
 
+extern char *conn_name(); /* u_conn* */
+extern char *conn_id(); /* u_conn* */
+
 extern int is_valid_nick();
 extern int is_valid_ident();
 extern int is_valid_sid();

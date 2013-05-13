@@ -43,6 +43,8 @@ struct u_server {
 	u_server *parent;
 };
 
+#define SERVER(sv) ((u_server*)(sv))
+
 extern u_server me;
 extern u_list my_motd;
 extern char my_net_name[MAXNETNAME+1];
