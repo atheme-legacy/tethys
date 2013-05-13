@@ -162,12 +162,15 @@ u_map *map; u_conn *unused, *conn; struct sendto_priv *priv;
 	u_cookie_cpy(&conn->ck_sendto, &ck_sendto);
 }
 
-void u_roster_f(T(unsigned char) c, T(char*) fmt, u_va_alist)
-A(unsigned char c; char *fmt; va_dcl)
+void u_roster_f(T(unsigned char) c, T(u_conn*) conn, T(char*) fmt, u_va_alist)
+A(unsigned char c; u_conn *conn; char *fmt; va_dcl)
 {
 	struct sendto_priv priv;
 
 	start();
+
+	if (conn != NULL)
+		exclude(conn);
 
 	u_log(LG_DEBUG, "Sending '%s' to roster %s", fmt, roster_to_str(c));
 
@@ -187,7 +190,7 @@ void u_wallops(T(char*) fmt, u_va_alist) A(char *fmt; va_dcl)
 	vsnf(FMT_USER, buf, 512, fmt, va);
 	va_end(va);
 
-	u_roster_f(R_WALLOPS, ":%S WALLOPS :%s", &me, buf);
+	u_roster_f(R_WALLOPS, NULL, ":%S WALLOPS :%s", &me, buf);
 }
 
 int init_sendto()

@@ -35,7 +35,7 @@ extern void u_sendto_visible(A3(u_user*, char*, ...));
 extern void u_roster_add(); /* unsigned char r, u_conn* */
 extern void u_roster_del(); /* unsigned char r, u_conn* */
 extern void u_roster_del_all(); /* u_conn* */
-extern void u_roster_f(A3(unsigned char, char*, ...));
+extern void u_roster_f(A4(unsigned char, u_conn*, char*, ...));
 
 extern void u_wallops(A2(char*, ...));
 
