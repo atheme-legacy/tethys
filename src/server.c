@@ -243,6 +243,8 @@ void u_server_unlink(sv, msg) u_server *sv; char *msg;
 	if (sv->name[0])
 		u_trie_del(servers_by_name, sv->name);
 	u_trie_del(servers_by_sid, sv->sid);
+
+	u_roster_del_all(conn);
 }
 
 static void burst_euid(u, conn) u_user *u; u_conn *conn;
@@ -386,7 +388,9 @@ void u_server_eob(sv) u_server *sv;
 	}
 
 	u_log(LG_VERBOSE, "End of burst with %S", sv);
+
 	sv->conn->ctx = CTX_SERVER;
+	u_roster_add(R_SERVERS, sv->conn);
 }
 
 int init_server()
