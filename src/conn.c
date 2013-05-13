@@ -69,6 +69,17 @@ void u_conn_obufsize(conn, obufsize) u_conn *conn;
 	conn->obufsize = obufsize;
 }
 
+u_conn *u_conn_by_name(s) char *s;
+{
+	if (strchr(s, '.')) {
+		u_server *sv = u_server_by_name(s);
+		return sv ? sv->conn : NULL;
+	} else {
+		u_user *u = u_user_by_nick(s);
+		return u ? u_user_conn(u) : NULL;
+	}
+}
+
 void conn_out_clear(conn) u_conn *conn;
 {
 	char *s;

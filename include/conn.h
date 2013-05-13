@@ -61,6 +61,8 @@ extern void u_conn_init(); /* u_conn* */
 extern void u_conn_close(); /* u_conn* */
 extern void u_conn_obufsize(); /* u_conn*, int obufsize */
 
+extern u_conn *u_conn_by_name(); /* char *nick_or_server */
+
 extern void u_conn_vf(); /* u_conn*, char *fmt, va_list */
 extern void u_conn_f(A3(u_conn *conn, char *fmt, ...));
 
