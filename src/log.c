@@ -26,7 +26,7 @@ int u_log_level = LG_INFO;
 void u_log(T(int) level, T(char*) fmt, u_va_alist) A(char *fmt; va_dcl)
 {
 	struct tm *tm;
-	char *s, tmbuf[512];
+	char tmbuf[512];
 	char buf[BUFSIZE];
 	va_list va;
 
@@ -38,9 +38,9 @@ void u_log(T(int) level, T(char*) fmt, u_va_alist) A(char *fmt; va_dcl)
 	va_end(va);
 
 	tm = localtime(&NOW.tv_sec);
-	u_strlcpy(tmbuf, asctime(tm), 512);
-	if ((s = strchr(tmbuf, '\n')))
-		*s = '\0';
+	snf(FMT_LOG, tmbuf, 512, "%04d/%02d/%02d %02d:%02d:%02d",
+	    tm->tm_year+1900, tm->tm_mon+1, tm->tm_mday,
+	    tm->tm_hour, tm->tm_min, tm->tm_sec);
 
 	u_log_handler(level, tmbuf, buf);
 }
