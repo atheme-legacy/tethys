@@ -372,7 +372,7 @@ void u_server_burst(sv, link) u_server *sv; u_link *link;
 	   by BMASK and/or TB)" */
 	u_trie_each(all_chans, burst_chan, conn);
 
-	u_conn_f(conn, ":%S PING %s :%d %d", &me, sv->name, NOW.tv_sec, NOW.tv_usec);
+	u_conn_f(conn, "PING :%d.%06d", NOW.tv_sec, NOW.tv_usec);
 
 	u_log(LG_DEBUG, "Adding %s to servers_by_name", sv->name);
 	u_trie_set(servers_by_name, sv->name, sv);
