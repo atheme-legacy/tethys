@@ -97,6 +97,7 @@ int vsnf(type, s, size, fmt, va) char *s, *fmt; uint size; va_list va;
 	u_user *user;
 	u_chan *chan;
 	u_server *server;
+	u_conn *conn;
 
 	struct buffer buf;
 	struct spec spec;
@@ -213,6 +214,30 @@ top:
 				character(&buf, ']');
 			}
 		}
+		break;
+
+	case 'G': /* generic connection */
+		conn = va_arg(va, u_conn*);
+		user = conn->priv;
+		server = conn->priv;
+
+		switch (conn->ctx) {
+		case CTX_USER:
+		case CTX_UREG:
+			s_arg = (type == FMT_SERVER ? user->uid : user->nick);
+			break;
+
+		case CTX_SERVER:
+		case CTX_SREG:
+		case CTX_SBURST:
+			s_arg = (type == FMT_SERVER ? server->sid : server->name);
+			break;
+
+		default:
+			s_arg = "*";
+		}
+
+		string(&buf, s_arg, -1, &spec);
 		break;
 
 	/* standard printf-family formats */
