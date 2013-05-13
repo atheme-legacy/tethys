@@ -11,6 +11,7 @@ EXTRA = numeric.h \
 OBJS = numeric.o \
 	auth.o \
 	c_hunted.o \
+	c_message.o \
 	c_reg.o \
 	c_server.o \
 	c_user.o \
