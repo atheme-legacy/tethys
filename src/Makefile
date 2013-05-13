@@ -10,9 +10,10 @@ EXTRA = numeric.h \
 	version.c
 OBJS = numeric.o \
 	auth.o \
+	c_hunted.o \
 	c_reg.o \
-	c_user.o \
 	c_server.o \
+	c_user.o \
 	chan.o \
 	conf.o \
 	conn.o \

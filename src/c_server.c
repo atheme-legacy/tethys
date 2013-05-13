@@ -52,7 +52,7 @@ static u_user *uid_generic(conn, msg) u_conn *conn; u_msg *msg;
 	u_user_remote *ur;
 	u_user *u;
 
-	if (!(sv = u_server_find(msg->source)))
+	if (!(sv = u_server_by_sid(msg->source)))
 		return NULL;
 
 	/* TODO: check for collision! */
@@ -127,10 +127,6 @@ u_cmd c_server[] = {
 	{ "NOTICE",      CTX_SERVER, not_implemented, 0 },
 	{ "OPERWALL",    CTX_SERVER, not_implemented, 0 },
 	{ "PART",        CTX_SERVER, not_implemented, 0 },
-	{ "PING",        CTX_SERVER, not_implemented, 0 }, /* hunted? */
-	{ "PING",        CTX_SBURST, not_implemented, 0 },
-	{ "PONG",        CTX_SERVER, not_implemented, 0 }, /* hunted? */
-	{ "PONG",        CTX_SBURST, not_implemented, 0 },
 	{ "PRIVMSG",     CTX_SERVER, not_implemented, 0 },
 	{ "PRIVS",       CTX_SERVER, not_implemented, 0 }, /* hunted */
 	{ "QUIT",        CTX_SERVER, not_implemented, 0 },

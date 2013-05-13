@@ -47,15 +47,6 @@ static void m_echo(conn, msg) u_conn *conn; u_msg *msg;
 		u_conn_f(conn, "%s %3d. ^%s$", buf, i, msg->argv[i]);
 }
 
-/* XXX this is wrong */
-static void m_ping(conn, msg) u_conn *conn; u_msg *msg;
-{
-	if (msg->command[1] == 'O') /* PONG */
-		return;
-
-	u_conn_f(conn, ":%S PONG %S :%s", &me, &me, msg->argv[0]);
-}
-
 static void m_quit(conn, msg) u_conn *conn; u_msg *msg;
 {
 	u_user_unlink(conn->priv, msg->argc > 0 ? msg->argv[0] : "Client quit");
@@ -677,8 +668,6 @@ u_cmd c_user[] = {
 	{ "ECHO",      CTX_USER, m_echo,    0 },
 	{ "PRIVMSG",   CTX_USER, m_message, 2 },
 	{ "NOTICE",    CTX_USER, m_message, 2 },
-	{ "PING",      CTX_USER, m_ping,    1 },
-	{ "PONG",      CTX_USER, m_ping,    0 },
 	{ "QUIT",      CTX_USER, m_quit,    0 },
 	{ "VERSION",   CTX_USER, m_version, 0 },
 	{ "MOTD",      CTX_USER, m_motd,    0 },
