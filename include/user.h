@@ -37,6 +37,7 @@
 #define USER_CAP_NEGOTIATION   0x02000000
 #define USER_CONNECTED         0x03000000
 #define USER_DISCONNECTED      0x04000000
+#define USER_NO_STATE          0xff000000  /* remote users */
 
 typedef struct u_umode_info u_umode_info;
 typedef struct u_user u_user;
@@ -95,6 +96,7 @@ extern void u_user_m_end(); /* u_user* */
 extern void u_user_mode(); /* u_user*, char ch, int on */
 
 extern void u_user_make_ureg(); /* u_conn* */
+extern u_user_remote *u_user_new_remote(); /* u_server*, char *uid */
 extern void u_user_unlink(); /* u_user*, char* */
 
 extern u_conn *u_user_conn(); /* u_user* */

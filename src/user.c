@@ -174,7 +174,36 @@ void u_user_make_ureg(conn) u_conn *conn;
 
 	conn->event = user_local_event;
 
-	u_log(LG_DEBUG, "New user uid=%s host=%s", u->uid, u->host);
+	u_log(LG_VERBOSE, "New local user uid=%s host=%s", u->uid, u->host);
+}
+
+u_user_remote *u_user_new_remote(sv, uid) u_server *sv; char *uid;
+{
+	u_user_remote *ur;
+	u_user *u;
+
+	ur = malloc(sizeof(*ur));
+	memset(ur, 0, sizeof(*ur));
+
+	u = USER(ur);
+
+	u_strlcpy(u->uid, sv->sid, 4);
+	if (strncmp(uid, sv->sid, 3) != 0) {
+		u_log(LG_WARN, "Tried to add remote user with wrong SID!");
+		u_log(LG_INFO, "     uid=%s, sv->sid=%s", uid, sv->sid);
+	}
+	u_strlcpy(u->uid + 3, uid + 3, 7);
+	u_trie_set(users_by_uid, u->uid, u);
+	u->flags = 0; /* modes are in EUID command */
+	u->channels = u_map_new(0);
+
+	u_user_state(u, USER_NO_STATE);
+
+	ur->server = sv;
+
+	u_log(LG_VERBOSE, "New remote user uid=%s", u->uid);
+
+	return ur;
 }
 
 void user_quit_cb(map, c, cu, priv)
@@ -186,6 +215,8 @@ u_map *map; u_chan *c; u_chanuser *cu; void *priv;
 void u_user_unlink(u, msg) u_user *u; char *msg;
 {
 	u_conn *conn = u_user_conn(u);
+
+	/* TODO: refit this for remote users?! */
 
 	if (u_user_state(u, 0) == USER_DISCONNECTED)
 		return;
