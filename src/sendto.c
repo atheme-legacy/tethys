@@ -127,30 +127,30 @@ static char *roster_to_str(c) unsigned char c;
 	return buf;
 }
 
-void u_roster_add(r, ul) unsigned char r; u_user_local *ul;
+void u_roster_add(r, conn) unsigned char r; u_conn *conn;
 {
 	if (!r) return;
-	u_log(LG_DEBUG, "Adding %U to roster %s", USER(ul), roster_to_str(r));
-	u_map_set(rosters[r], ul, ul->conn);
+	u_log(LG_DEBUG, "Adding %G to roster %s", conn, roster_to_str(r));
+	u_map_set(rosters[r], conn, conn);
 }
 
-void u_roster_del(r, ul) unsigned char r; u_user_local *ul;
+void u_roster_del(r, conn) unsigned char r; u_conn *conn;
 {
 	if (!r) return;
-	u_log(LG_DEBUG, "Removing %U from roster %s", USER(ul), roster_to_str(r));
-	u_map_del(rosters[r], ul);
+	u_log(LG_DEBUG, "Removing %G from roster %s", conn, roster_to_str(r));
+	u_map_del(rosters[r], conn);
 }
 
-void u_roster_del_all(ul) u_user_local *ul;
+void u_roster_del_all(conn) u_conn *conn;
 {
 	unsigned int c;
-	u_log(LG_DEBUG, "Removing %U from all rosters", USER(ul));
+	u_log(LG_DEBUG, "Removing %G from all rosters", conn);
 	for (c=1; c<256; c++)
-		u_map_del(rosters[c], ul);
+		u_map_del(rosters[c], conn);
 }
 
-void roster_f_cb(map, ul, conn, priv)
-u_map *map; u_user_local *ul; u_conn *conn; struct sendto_priv *priv;
+void roster_f_cb(map, unused, conn, priv)
+u_map *map; u_conn *unused, *conn; struct sendto_priv *priv;
 {
 	char *s;
 

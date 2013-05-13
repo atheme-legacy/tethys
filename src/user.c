@@ -99,9 +99,9 @@ static void cb_wallops(info, u, on) u_umode_info *info; u_user *u;
 		return;
 
 	if (on)
-		u_roster_add(R_WALLOPS, USER_LOCAL(u));
+		u_roster_add(R_WALLOPS, USER_LOCAL(u)->conn);
 	else
-		u_roster_del(R_WALLOPS, USER_LOCAL(u));
+		u_roster_del(R_WALLOPS, USER_LOCAL(u)->conn);
 }
 
 void u_user_mode(u, ch, on) u_user *u; char ch;
@@ -239,7 +239,7 @@ void u_user_unlink(u, msg) u_user *u; char *msg;
 		u_trie_del(users_by_nick, u->nick);
 	u_trie_del(users_by_uid, u->uid);
 
-	u_roster_del_all(USER_LOCAL(conn->priv));
+	u_roster_del_all(conn);
 }
 
 u_conn *u_user_conn(u) u_user *u;

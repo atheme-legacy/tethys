@@ -16,8 +16,8 @@ extern void u_sendto_visible(A3(u_user*, char*, ...));
 /*
       +-----------------------------------------------+
    00 |XX|+w|                                         |
-      +--+--+          SIMPLE ROSTERS                 |
-      |                                               | 1f
+      +--+--+          SIMPLE ROSTERS              +--+
+      |                                            |sv| 1f
       +-----------------------------------------------+
       /                   (UNUSED)                    /
       +-----------------------------------------------+
@@ -26,12 +26,15 @@ extern void u_sendto_visible(A3(u_user*, char*, ...));
       |                                               | ff
       +-----------------------------------------------+
  */
-#define R_WALLOPS      1
+
+#define R_WALLOPS      0x01  /* local +w users */
+#define R_SERVERS      0x1f  /* locally connected servers */
+
 #define R_SNOTICE(c)   (0xc0 | ((c) & 0x3f))
 
-extern void u_roster_add(); /* unsigned char r, u_user_local* */
-extern void u_roster_del(); /* unsigned char r, u_user_local* */
-extern void u_roster_del_all(); /* u_user_local* */
+extern void u_roster_add(); /* unsigned char r, u_conn* */
+extern void u_roster_del(); /* unsigned char r, u_conn* */
+extern void u_roster_del_all(); /* u_conn* */
 extern void u_roster_f(A3(unsigned char, char*, ...));
 
 extern void u_wallops(A2(char*, ...));
