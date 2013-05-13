@@ -91,9 +91,21 @@ void admin_conf(key, val) char *key, *val;
 	u_strlcpy(dest, val, MAXADMIN);
 }
 
-u_server *u_server_find(sid) char *sid;
+u_server *u_server_by_sid(sid) char *sid;
 {
 	return u_trie_get(servers_by_sid, sid);
+}
+
+u_server *u_server_by_name(name) char *name;
+{
+	return u_trie_get(servers_by_name, name);
+}
+
+u_server *u_server_find(str) char *str;
+{
+	if (strchr(str, '.'))
+		return u_server_by_name(str);
+	return u_server_by_sid(str);
 }
 
 struct capab_info {

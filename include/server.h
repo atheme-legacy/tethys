@@ -50,7 +50,9 @@ extern char my_admin_loc1[MAXADMIN+1];
 extern char my_admin_loc2[MAXADMIN+1];
 extern char my_admin_email[MAXADMIN+1];
 
-extern u_server *u_server_find(); /* char *sid */
+extern u_server *u_server_by_sid(); /* char *sid */
+extern u_server *u_server_by_name(); /* char *name */
+extern u_server *u_server_find(); /* char *str */
 
 extern void u_server_add_capabs(); /* u_server*, char *caps */
 extern void u_my_capabs(); /* char *buf */
