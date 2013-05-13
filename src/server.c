@@ -91,6 +91,11 @@ void admin_conf(key, val) char *key, *val;
 	u_strlcpy(dest, val, MAXADMIN);
 }
 
+u_server *u_server_find(sid) char *sid;
+{
+	return u_trie_get(servers_by_sid, sid);
+}
+
 struct capab_info {
 	char capab[16];
 	uint mask;
@@ -357,7 +362,7 @@ void u_server_burst(sv, link) u_server *sv; u_link *link;
 
 	u_conn_f(conn, ":%S PING %s :%d %d", &me, sv->name, NOW.tv_sec, NOW.tv_usec);
 
-	u_log(LG_DEBUG, "Adding %S to servers_by_name", sv);
+	u_log(LG_DEBUG, "Adding %s to servers_by_name", sv->name);
 	u_trie_set(servers_by_name, sv->name, sv);
 }
 

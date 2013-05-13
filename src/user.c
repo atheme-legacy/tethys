@@ -268,13 +268,14 @@ u_user *u_user_by_uid(uid) char *uid;
 	return u_trie_get(users_by_uid, uid);
 }
 
-void u_user_set_nick(u, nick) u_user *u; char *nick;
+void u_user_set_nick(u, nick, ts) u_user *u; char *nick; uint ts;
 {
+	/* TODO: check collision? */
 	if (u->nick[0])
 		u_trie_del(users_by_nick, u->nick);
 	u_strlcpy(u->nick, nick, MAXNICKLEN+1);
 	u_trie_set(users_by_nick, u->nick, u);
-	u->nickts = NOW.tv_sec;
+	u->nickts = ts;
 }
 
 uint u_user_state(u, state) u_user *u; uint state;

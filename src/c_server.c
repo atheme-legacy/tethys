@@ -12,11 +12,60 @@ static void not_implemented(conn, msg) u_conn *conn; u_msg *msg;
 	      conn->priv, msg->command);
 }
 
+static void idfk(conn, msg) u_conn *conn; u_msg *msg;
+{
+	u_log(LG_WARN, "%S sent bad %s, it seems", conn->priv, msg->command);
+}
+
 static void m_error(conn, msg) u_conn *conn; u_msg *msg;
 {
 	u_log(LG_ERROR, "%S is closing connection via ERROR (%s)", conn->priv,
 	      msg->argc > 0 ? msg->argv[0] : "no message");
 	u_conn_error(conn, "Peer sent ERROR!");
+}
+
+static u_user *uid_generic(conn, msg) u_conn *conn; u_msg *msg;
+{
+	u_server *sv;
+	u_user_remote *ur;
+	u_user *u;
+
+	if (!(sv = u_server_find(msg->source)))
+		return NULL;
+
+	/* TODO: check for collision! */
+
+	ur = u_user_new_remote(sv, msg->argv[7]);
+	u = USER(ur);
+
+	u_user_set_nick(ur, msg->argv[0], atoi(msg->argv[2]));
+
+	/* TODO: set umodes */
+
+	u_strlcpy(u->ident, msg->argv[4], MAXIDENT+1);
+	u_strlcpy(u->host, msg->argv[5], MAXHOST+1);
+	u_strlcpy(u->ip, msg->argv[6], INET_ADDRSTRLEN);
+	u_strlcpy(u->gecos, msg->argv[msg->argc - 1], MAXGECOS+1);
+
+	return u;
+}
+
+static void m_euid(conn, msg) u_conn *conn; u_msg *msg;
+{
+	u_user *u;
+
+	if (!(u = uid_generic(conn, msg)))
+		return idfk(conn, msg);
+
+	u_strlcpy(u->realhost, msg->argv[8], MAXHOST+1);
+	if (msg->argv[9][0] != '*')
+		u_strlcpy(u->acct, msg->argv[9], MAXACCOUNT+1);
+}
+
+static void m_uid(conn, msg) u_conn *conn; u_msg *msg;
+{
+	if (!uid_generic(conn, msg))
+		return idfk(conn, msg);
 }
 
 u_cmd c_server[] = {
@@ -28,8 +77,8 @@ u_cmd c_server[] = {
 	{ "CONNECT",     CTX_SERVER, not_implemented, 0 },
 	{ "ENCAP",       CTX_SERVER, not_implemented, 0 },
 	{ "ERROR",       CTX_SERVER, m_error,         0 },
-	{ "EUID",        CTX_SERVER, not_implemented, 0 },
-	{ "EUID",        CTX_SBURST, not_implemented, 0 },
+	{ "EUID",        CTX_SERVER, m_euid,         11 },
+	{ "EUID",        CTX_SBURST, m_euid,         11 },
 	{ "GLINE",       CTX_SERVER, not_implemented, 0 },
 	{ "GUNGLINE",    CTX_SERVER, not_implemented, 0 },
 	{ "INFO",        CTX_SERVER, not_implemented, 0 }, /* hunted */
@@ -74,7 +123,8 @@ u_cmd c_server[] = {
 	{ "TMODE",       CTX_SERVER, not_implemented, 0 },
 	{ "TOPIC",       CTX_SERVER, not_implemented, 0 },
 	{ "TRACE",       CTX_SERVER, not_implemented, 0 }, /* hunted */
-	{ "UID",         CTX_SERVER, not_implemented, 0 },
+	{ "UID",         CTX_SERVER, m_uid,           9 },
+	{ "UID",         CTX_SBURST, m_uid,           9 },
 	{ "UNKLINE",     CTX_SERVER, not_implemented, 0 },
 	{ "UNRESV",      CTX_SERVER, not_implemented, 0 },
 	{ "UNXLINE",     CTX_SERVER, not_implemented, 0 },

@@ -595,7 +595,7 @@ static void m_nick(conn, msg) u_conn *conn; u_msg *msg;
 	/* Send these BEFORE clobbered --Elizabeth */
 	u_sendto_visible(u, ":%H NICK :%s", u, newnick);
 	u_conn_f(conn, ":%H NICK :%s", u, newnick);
-	u_user_set_nick(u, newnick);
+	u_user_set_nick(u, newnick, NOW.tv_sec);
 }
 
 static void m_42(conn, msg) u_conn *conn; u_msg *msg;

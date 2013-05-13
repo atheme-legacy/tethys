@@ -85,7 +85,7 @@ static void m_nick(conn, msg) u_conn *conn; u_msg *msg;
 		return;
 	}
 
-	u_user_set_nick(USER(ul), buf);
+	u_user_set_nick(USER(ul), buf, NOW.tv_sec);
 
 	try_reg(conn);
 }

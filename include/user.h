@@ -105,7 +105,7 @@ extern u_server *u_user_server(); /* u_user* */
 extern u_user *u_user_by_nick(); /* char* */
 extern u_user *u_user_by_uid(); /* char* */
 
-extern void u_user_set_nick(); /* u_user*, char* */
+extern void u_user_set_nick(); /* u_user*, char*, uint */
 extern uint u_user_state(); /* u_user*, uint */
 
 extern void u_user_vnum(); /* u_user*, int, va_list */
