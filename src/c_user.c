@@ -63,18 +63,13 @@ static void m_message_chan(conn, msg) u_conn *conn; u_msg *msg;
 	u_chan *tgt;
 	u_chanuser *cu;
 
-	tgt = u_chan_get(msg->argv[0]);
-	if (tgt == NULL) {
-		u_user_num(src, ERR_NOSUCHCHANNEL, msg->argv[0]);
-		return;
-	}
+	if (!(tgt = u_chan_get(msg->argv[0])))
+		return u_user_num(src, ERR_NOSUCHCHANNEL, msg->argv[0]);
 
 	cu = u_chan_user_find(tgt, src);
 	if (!cu) {
-		if (tgt->mode & CMODE_NOEXTERNAL) {
-			u_user_num(src, ERR_CANNOTSENDTOCHAN, tgt, 'n');
-			return;
-		}
+		if (tgt->mode & CMODE_NOEXTERNAL)
+			return u_user_num(src, ERR_CANNOTSENDTOCHAN, tgt, 'n');
 	} else if (u_is_muted(cu)) {
 		/* TODO: +z */
 		u_user_num(src, ERR_CANNOTSENDTOCHAN, tgt, 'm');
@@ -92,11 +87,8 @@ static void m_message_user(conn, msg) u_conn *conn; u_msg *msg;
 	u_user *src = conn->priv;
 	u_user *tgt;
 
-	tgt = u_user_by_nick(msg->argv[0]);
-	if (tgt == NULL) {
-		u_user_num(src, ERR_NOSUCHNICK, msg->argv[0]);
-		return;
-	}
+	if (!(tgt = u_user_by_nick(msg->argv[0])))
+		return u_user_num(src, ERR_NOSUCHNICK, msg->argv[0]);
 
 	u_log(LG_DEBUG, "[%U -> %U] %s", src, tgt, msg->argv[1]);
 
@@ -159,25 +151,16 @@ static void m_topic(conn, msg) u_conn *conn; u_msg *msg;
 {
 	u_user *u = conn->priv;
 	u_chan *c;
+	u_chanuser *cu;
 
-	c = u_chan_get(msg->argv[0]);
-	if (c == NULL) {
-		u_user_num(u, ERR_NOSUCHCHANNEL, msg->argv[0]);
-		return;
-	}
-
-	if (msg->argc == 1) {
-		u_chan_send_topic(c, u);
-		return;
-	}
-
-	if (c->mode & CMODE_TOPIC) {
-		u_chanuser *cu = u_chan_user_find(c, u);
-		if (!(cu->flags & CU_PFX_OP)) {
-			u_user_num(u, ERR_CHANOPRIVSNEEDED, c);
-			return;
-		}
-	}
+	if (!(c = u_chan_get(msg->argv[0])))
+		return u_user_num(u, ERR_NOSUCHCHANNEL, msg->argv[0]);
+	if (msg->argc == 1)
+		return u_chan_send_topic(c, u);
+	if (!(cu = u_chan_user_find(c, u)))
+		return u_user_num(u, ERR_NOTONCHANNEL, c);
+	if ((c->mode & CMODE_TOPIC) && !(cu->flags & CU_PFX_OP))
+		return u_user_num(u, ERR_CHANOPRIVSNEEDED, c);
 
 	u_strlcpy(c->topic, msg->argv[1], MAXTOPICLEN+1);
 	u_strlcpy(c->topic_setter, u->nick, MAXNICKLEN+1);
@@ -195,11 +178,8 @@ static void m_names(conn, msg) u_conn *conn; u_msg *msg;
 	if (msg->argc == 0)
 		return;
 
-	c = u_chan_get(msg->argv[0]);
-	if (c == NULL) {
-		u_user_num(u, ERR_NOSUCHCHANNEL, msg->argv[0]);
-		return;
-	}
+	if (!(c = u_chan_get(msg->argv[0])))
+		return u_user_num(u, ERR_NOSUCHCHANNEL, msg->argv[0]);
 
 	u_chan_send_names(c, u);
 }
@@ -247,10 +227,8 @@ static void m_mode(conn, msg) u_conn *conn; u_msg *msg;
 	}
 
 	c = u_chan_get(msg->argv[0]);
-	if (c == NULL) {
-		u_user_num(u, ERR_NOSUCHCHANNEL, msg->argv[0]);
-		return;
-	}
+	if (!(c = u_chan_get(msg->argv[0])))
+		return u_user_num(u, ERR_NOSUCHCHANNEL, msg->argv[0]);
 
 	if (msg->argv[1] == NULL) {
 		cu = u_chan_user_find(c, u);
@@ -342,12 +320,8 @@ static void m_whois(conn, msg) u_conn *conn; u_msg *msg;
 		*nick = '\0';
 	nick = msg->argv[0];
 
-	tu = u_user_by_nick(nick);
-
-	if (tu == NULL) {
-		u_user_num(u, ERR_NOSUCHNICK, nick);
-		return;
-	}
+	if (!(tu = u_user_by_nick(nick)))
+		return u_user_num(u, ERR_NOSUCHNICK, nick);
 
 	if (tu->flags & USER_IS_LOCAL)
 		serv = &me;
@@ -494,12 +468,8 @@ static void m_oper(conn, msg) u_conn *conn; u_msg *msg;
 	u_user *u = USER(ul);
 	u_oper *oper;
 
-	oper = u_find_oper(conn->auth, msg->argv[0], msg->argv[1]);
-
-	if (oper == NULL) {
-		u_conn_num(conn, ERR_NOOPERHOST);
-		return;
-	}
+	if (!(oper = u_find_oper(conn->auth, msg->argv[0], msg->argv[1])))
+		return u_conn_num(conn, ERR_NOOPERHOST);
 
 	ul->oper = oper;
 	u->flags |= UMODE_OPER;
@@ -525,13 +495,11 @@ static void m_list_chan_cb(c, u) u_chan *c; u_user *u;
 static void m_list(conn, msg) u_conn *conn; u_msg *msg;
 {
 	u_user *u = conn->priv;
+	u_chan *c;
 
 	if (msg->argc > 0) {
-		u_chan *c = u_chan_get(msg->argv[0]);
-		if (c == NULL) {
-			u_user_num(u, ERR_NOSUCHCHANNEL, msg->argv[0]);
-			return;
-		}
+		if (!(c = u_chan_get(msg->argv[0])))
+			return u_user_num(u, ERR_NOSUCHCHANNEL, msg->argv[0]);
 		u_user_num(u, RPL_LISTSTART);
 		list_entry(u, c);
 		u_user_num(u, RPL_LISTEND);
@@ -552,10 +520,8 @@ static void m_nick(conn, msg) u_conn *conn; u_msg *msg;
 	if (strlen(newnick) > MAXNICKLEN)
 		newnick[MAXNICKLEN] = '\0';
 
-	if (!is_valid_nick(newnick)) {
-		u_user_num(u, ERR_ERRONEOUSNICKNAME, newnick);
-		return;
-	}
+	if (!is_valid_nick(newnick))
+		return u_user_num(u, ERR_ERRONEOUSNICKNAME, newnick);
 
 	/* due to the scandalous origins, (~ being uppercase of ^) and ~
 	 * being disallowed as a nick char, we need to chop the first ~
@@ -565,10 +531,8 @@ static void m_nick(conn, msg) u_conn *conn; u_msg *msg;
 		*s = '\0';
 
 	/* Check for case change */
-	if (irccmp(u->nick, newnick) && u_user_by_nick(newnick)) {
-		u_user_num(u, ERR_NICKNAMEINUSE, newnick);
-		return;
-	}
+	if (irccmp(u->nick, newnick) && u_user_by_nick(newnick))
+		return u_user_num(u, ERR_NICKNAMEINUSE, newnick);
 
 	/* ignore changes to the exact same nick */
 	if (streq(u->nick, newnick))
@@ -605,10 +569,8 @@ static void m_stats(conn, msg) u_conn *conn; u_msg *msg;
 	u_user *u = conn->priv;
 	int c, days, hr, min, sec;
 
-	if (!(c = msg->argv[0][0])) { /* "STATS :" will do this */
-		u_user_num(u, ERR_NEEDMOREPARAMS, "STATS");
-		return;
-	}
+	if (!(c = msg->argv[0][0])) /* "STATS :" will do this */
+		return u_user_num(u, ERR_NEEDMOREPARAMS, "STATS");
 
 	if (strchr("oi", c) && !(u->flags & UMODE_OPER)) {
 		u_user_num(u, ERR_NOPRIVILEGES);
@@ -661,20 +623,12 @@ static void m_kill(conn, msg) u_conn *conn; u_msg *msg;
 	char *reason = msg->argv[1] ? msg->argv[1] : "<No reason given>";
 	char buf[512];
 
-	if (!(u->flags & UMODE_OPER)) {
-		u_user_num(u, ERR_NOPRIVILEGES);
-		return;
-	}
-
-	if (!(tu = u_user_by_nick(msg->argv[0]))) {
-		u_user_num(u, ERR_NOSUCHNICK, msg->argv[0]);
-		return;
-	}
-
-	if (!(tu->flags & USER_IS_LOCAL)) {
-		u_user_num(u, ERR_GENERIC, "Can't kill remote users yet");
-		return;
-	}
+	if (!(u->flags & UMODE_OPER))
+		return u_user_num(u, ERR_NOPRIVILEGES);
+	if (!(tu = u_user_by_nick(msg->argv[0])))
+		return u_user_num(u, ERR_NOSUCHNICK, msg->argv[0]);
+	if (!(tu->flags & USER_IS_LOCAL))
+		return u_user_num(u, ERR_GENERIC, "Can't kill remote users yet");
 
 	snf(FMT_USER, buf, 512, "Killed (%U (%s))", u, reason);
 	u_user_unlink(tu, buf);
@@ -688,26 +642,16 @@ static void m_kick(conn, msg) u_conn *conn; u_msg *msg;
 	u_chanuser *tcu, *cu;
 	char *r = msg->argv[2];
 
-	if (!(c = u_chan_get(msg->argv[0]))) {
-		u_user_num(u, ERR_NOSUCHCHANNEL, msg->argv[0]);
-		return;
-	}
-	if (!(tu = u_user_by_nick(msg->argv[1]))) {
-		u_user_num(u, ERR_NOSUCHNICK, msg->argv[1]);
-		return;
-	}
-	if (!(cu = u_chan_user_find(c, u))) {
-		u_user_num(u, ERR_NOTONCHANNEL, c);
-		return;
-	}
-	if (!(tcu = u_chan_user_find(c, tu))) {
-		u_user_num(u, ERR_USERNOTINCHANNEL, tu, c);
-		return;
-	}
-	if (!(cu->flags & CU_PFX_OP)) {
-		u_user_num(u, ERR_CHANOPRIVSNEEDED, c);
-		return;
-	}
+	if (!(c = u_chan_get(msg->argv[0])))
+		return u_user_num(u, ERR_NOSUCHCHANNEL, msg->argv[0]);
+	if (!(tu = u_user_by_nick(msg->argv[1])))
+		return u_user_num(u, ERR_NOSUCHNICK, msg->argv[1]);
+	if (!(cu = u_chan_user_find(c, u)))
+		return u_user_num(u, ERR_NOTONCHANNEL, c);
+	if (!(tcu = u_chan_user_find(c, tu)))
+		return u_user_num(u, ERR_USERNOTINCHANNEL, tu, c);
+	if (!(cu->flags & CU_PFX_OP))
+		return u_user_num(u, ERR_CHANOPRIVSNEEDED, c);
 
 	u_log(LG_FINE, "%U KICK %U from %C (reason=%s)", u, tu, c, r);
 	u_sendto_chan(c, NULL, ":%H KICK %C %U :%s", u, c, tu, r?r:tu->nick);
