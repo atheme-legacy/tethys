@@ -100,12 +100,20 @@ void u_cmd_invoke(conn, msg) u_conn *conn; u_msg *msg;
 	cmd = u_trie_get(commands[conn->ctx], msg->command);
 
 	if (!cmd) {
-		u_conn_num(conn, ERR_UNKNOWNCOMMAND, msg->command);
+		if (conn->ctx == CTX_USER)
+			u_conn_num(conn, ERR_UNKNOWNCOMMAND, msg->command);
+		else
+			u_log(LG_ERROR, "%G used unknown command %s",
+			      conn, msg->command);
 		return;
 	}
 
 	if (msg->argc < cmd->nargs) {
-		u_conn_num(conn, ERR_NEEDMOREPARAMS, msg->command);
+		if (conn->ctx == CTX_USER)
+			u_conn_num(conn, ERR_NEEDMOREPARAMS, msg->command);
+		else
+			u_log(LG_ERROR, "%G did not provide enough args to %s",
+			      conn, msg->command);
 		return;
 	}
 
