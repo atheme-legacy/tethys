@@ -278,6 +278,80 @@ void ascii_canonize(s) char *s;
 		*s = ascii_casemap[(uchar)*s];
 }
 
+char *id_to_name(s) char *s;
+{
+	if (s[4]) { /* uid */
+		u_user *u = u_user_by_uid(s);
+		return u ? u->nick : "*";
+	} else { /* sid */
+		u_server *sv = u_server_by_sid(s);
+		return sv ? sv->name : "*";
+	}
+}
+
+char *name_to_id(s) char *s;
+{
+	if (strchr(s, '.')) { /* server */
+		u_server *sv = u_server_by_name(s);
+		return sv ? sv->sid : NULL;
+	} else {
+		u_user *u = u_user_by_nick(s);
+		return u ? u->uid : NULL;
+	}
+}
+
+char *ref_to_name(s) char *s;
+{
+	if (isdigit(s[0]))
+		return id_to_name(s);
+	return s;
+}
+
+char *ref_to_id(s) char *s;
+{
+	if (isdigit(s[0]))
+		return s;
+	return name_to_id(s);
+}
+
+char *conn_name(conn) u_conn *conn;
+{
+	char *name = NULL;
+
+	switch (conn->ctx) {
+	case CTX_USER:
+	case CTX_UREG:
+		name = USER(conn->priv)->nick;
+		break;
+	case CTX_SREG:
+	case CTX_SERVER:
+	case CTX_SBURST:
+		name = SERVER(conn->priv)->name;
+		break;
+	}
+
+	return (name && name[0]) ? name : "*";
+}
+
+char *conn_id(conn) u_conn *conn;
+{
+	char *id = NULL;
+
+	switch (conn->ctx) {
+	case CTX_USER:
+	case CTX_UREG:
+		id = USER(conn->priv)->uid;
+		break;
+	case CTX_SREG:
+	case CTX_SERVER:
+	case CTX_SBURST:
+		id = SERVER(conn->priv)->sid;
+		break;
+	}
+
+	return (id && id[0]) ? id : NULL;
+}
+
 int is_valid_nick(s) char *s;
 {
 	if (isdigit(*s) || *s == '-')

@@ -47,6 +47,11 @@ extern void null_canonize();
 extern void rfc1459_canonize();
 extern void ascii_canonize();
 
+extern char *id_to_name(); /* char *sid_or_uid */
+extern char *name_to_id(); /* char *nick_or_server */
+extern char *ref_to_name(); /* char *ref */
+extern char *ref_to_id(); /* char *ref */
+
 extern int is_valid_nick();
 extern int is_valid_ident();
 extern int is_valid_sid();
