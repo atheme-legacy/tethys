@@ -655,6 +655,32 @@ static void m_admin(conn, msg) u_conn *conn; u_msg *msg;
 	u_conn_num(conn, RPL_ADMINEMAIL, my_admin_email);
 }
 
+static void m_kill(conn, msg) u_conn *conn; u_msg *msg;
+{
+	u_user *tu, *u = conn->priv;
+	char *reason = msg->argv[1] ? msg->argv[1] : "<No reason given>";
+	char buf[512];
+
+	if (!(u->flags & UMODE_OPER)) {
+		u_user_num(u, ERR_NOPRIVILEGES);
+		return;
+	}
+
+	if (!(tu = u_user_by_nick(msg->argv[0]))) {
+		u_user_num(u, ERR_NOSUCHNICK, msg->argv[0]);
+		return;
+	}
+
+	if (!(tu->flags & USER_IS_LOCAL)) {
+		u_user_num(u, ERR_GENERIC, "Can't kill remote users yet");
+		return;
+	}
+
+	snf(FMT_USER, buf, 512, "Killed (%U (%s))", u, reason);
+	u_user_unlink(tu, buf);
+	u_conn_close(USER_LOCAL(tu)->conn);
+}
+
 u_cmd c_user[] = {
 	{ "ECHO",      CTX_USER, m_echo,    0 },
 	{ "PRIVMSG",   CTX_USER, m_message, 2 },
@@ -678,6 +704,7 @@ u_cmd c_user[] = {
 	{ "STATS",     CTX_USER, m_stats,   1 },
 	{ "MKPASS",    CTX_USER, m_mkpass,  1 },
 	{ "ADMIN",     CTX_USER, m_admin,   0 },
+	{ "KILL",      CTX_USER, m_kill,    1 },
 
 	{ "SQUIT",     CTX_USER, not_implemented, 0 },
 	{ "INVITE",    CTX_USER, not_implemented, 0 },
@@ -688,7 +715,6 @@ u_cmd c_user[] = {
 	{ "TRACE",     CTX_USER, not_implemented, 0 },
 	{ "INFO",      CTX_USER, not_implemented, 0 },
 	{ "WHOWAS",    CTX_USER, not_implemented, 0 },
-	{ "KILL",      CTX_USER, not_implemented, 0 },
 	{ "REHASH",    CTX_USER, not_implemented, 0 },
 	{ "RESTART",   CTX_USER, not_implemented, 0 },
 	{ "USERS",     CTX_USER, not_implemented, 0 },
