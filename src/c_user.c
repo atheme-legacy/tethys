@@ -681,6 +681,39 @@ static void m_kill(conn, msg) u_conn *conn; u_msg *msg;
 	u_conn_close(USER_LOCAL(tu)->conn);
 }
 
+static void m_kick(conn, msg) u_conn *conn; u_msg *msg;
+{
+	u_user *tu, *u = conn->priv;
+	u_chan *c;
+	u_chanuser *tcu, *cu;
+	char *r = msg->argv[2];
+
+	if (!(c = u_chan_get(msg->argv[0]))) {
+		u_user_num(u, ERR_NOSUCHCHANNEL, msg->argv[0]);
+		return;
+	}
+	if (!(tu = u_user_by_nick(msg->argv[1]))) {
+		u_user_num(u, ERR_NOSUCHNICK, msg->argv[1]);
+		return;
+	}
+	if (!(cu = u_chan_user_find(c, u))) {
+		u_user_num(u, ERR_NOTONCHANNEL, c);
+		return;
+	}
+	if (!(tcu = u_chan_user_find(c, tu))) {
+		u_user_num(u, ERR_USERNOTINCHANNEL, tu, c);
+		return;
+	}
+	if (!(cu->flags & CU_PFX_OP)) {
+		u_user_num(u, ERR_CHANOPRIVSNEEDED, c);
+		return;
+	}
+
+	u_log(LG_FINE, "%U KICK %U from %C (reason=%s)", u, tu, c, r);
+	u_sendto_chan(c, NULL, ":%H KICK %C %U :%s", u, c, tu, r?r:tu->nick);
+	u_chan_user_del(tcu);
+}
+
 u_cmd c_user[] = {
 	{ "ECHO",      CTX_USER, m_echo,    0 },
 	{ "PRIVMSG",   CTX_USER, m_message, 2 },
@@ -705,10 +738,10 @@ u_cmd c_user[] = {
 	{ "MKPASS",    CTX_USER, m_mkpass,  1 },
 	{ "ADMIN",     CTX_USER, m_admin,   0 },
 	{ "KILL",      CTX_USER, m_kill,    1 },
+	{ "KICK",      CTX_USER, m_kick,    2 },
 
 	{ "SQUIT",     CTX_USER, not_implemented, 0 },
 	{ "INVITE",    CTX_USER, not_implemented, 0 },
-	{ "KICK",      CTX_USER, not_implemented, 0 },
 	{ "LINKS",     CTX_USER, not_implemented, 0 },
 	{ "TIME",      CTX_USER, not_implemented, 0 },
 	{ "CONNECT",   CTX_USER, not_implemented, 0 },
