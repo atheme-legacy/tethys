@@ -371,6 +371,7 @@ again:
 void u_user_welcome(ul) u_user_local *ul;
 {
 	u_user *u = USER(ul);
+	char buf[512];
 
 	u_log(LG_DEBUG, "user: welcoming %s", u->nick);
 	u_wallops("Connect: %H [%s]", u, ul->conn->ip);
@@ -383,6 +384,9 @@ void u_user_welcome(ul) u_user_local *ul;
 	u_user_num(u, RPL_CREATED, date);
 	u_user_send_isupport((u_user_local*)u);
 	u_user_send_motd((u_user_local*)u);
+
+	u_user_make_euid(u, buf);
+	u_roster_f(R_SERVERS, NULL, "%s", buf);
 }
 
 void u_user_send_motd(ul) u_user_local *ul;
@@ -522,6 +526,20 @@ int u_user_in_list(u, list) u_user *u; u_list *list;
 	char buf[512];
 	snf(FMT_USER, buf, 512, "%H", u);
 	return is_in_list(buf, list);
+}
+
+void u_user_make_euid(u, buf) u_user *u; char *buf;
+{
+	u_server *sv = u_user_server(u);
+
+	/* still ridiculous...              nick  nickts   host  uid   acct
+                                               hops  modes    ip    rlhost gecos
+                                                        ident                    */
+	snf(FMT_SERVER, buf, 512, ":%S EUID %s %d %u %s %s %s %s %s %s %s :%s",
+	    sv, u->nick, sv->hops + 1, u->nickts,
+	    "+", /* TODO: this */
+	    u->ident, u->host, u->ip, u->uid, u->realhost,
+	    u->acct[0] ? u->acct : "*", u->gecos);
 }
 
 int init_user()

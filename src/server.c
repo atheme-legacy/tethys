@@ -249,19 +249,10 @@ void u_server_unlink(sv, msg) u_server *sv; char *msg;
 
 static void burst_euid(u, conn) u_user *u; u_conn *conn;
 {
-	u_server *sv = u_user_server(u);
+	char buf[512];
 
-	/* THIS IS RIDICULOUS!   nick     modes    ip       acct
-	                            hops     ident    uid      gecos
-	                               nickts   host     rlhost       */
-	u_conn_f(conn, ":%S EUID %s %d %u %s %s %s %s %s %s %s :%s",
-	         sv,
-	         /* XXX: not sure if hops + 1 is correct */
-	         u->nick, sv->hops + 1, u->nickts,
-	         "+", u->ident, u->host,
-	         u->ip, u->uid, u->realhost,
-	         u->acct[0] ? u->acct : "*",
-	         u->gecos);
+	u_user_make_euid(u, buf);
+	u_conn_f(conn, "%s", buf);
 
 	if (u->away[0])
 		u_conn_f(conn, ":%U AWAY :%s", u, u->away);
@@ -271,12 +262,13 @@ static void burst_uid(u, conn) u_user *u; u_conn *conn;
 {
 	u_server *sv = u_user_server(u);
 
+	/* NOTE: this is legacy, but I'm keeping it around anyway */
+
 	/* EQUALLY RIDICULOUS!  nick     modes    ip
                                    hops     ident    uid
                                       nickts   host     gecos    */
 	u_conn_f(conn, ":%S UID %s %d %u %s %s %s %s %s :%s",
 	         sv,
-	         /* XXX: see above */
 	         u->nick, sv->hops + 1, u->nickts,
 	         "+", u->ident, u->host,
 	         u->ip, u->uid, u->gecos);

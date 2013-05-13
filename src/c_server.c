@@ -51,6 +51,7 @@ static u_user *uid_generic(conn, msg) u_conn *conn; u_msg *msg;
 	u_server *sv;
 	u_user_remote *ur;
 	u_user *u;
+	char buf[512];
 
 	if (!(sv = u_server_by_sid(msg->source)))
 		return NULL;
@@ -68,6 +69,10 @@ static u_user *uid_generic(conn, msg) u_conn *conn; u_msg *msg;
 	u_strlcpy(u->host, msg->argv[5], MAXHOST+1);
 	u_strlcpy(u->ip, msg->argv[6], INET_ADDRSTRLEN);
 	u_strlcpy(u->gecos, msg->argv[msg->argc - 1], MAXGECOS+1);
+
+	/* servers are required to have EUID */
+	u_user_make_euid(u, buf);
+	u_roster_f(R_SERVERS, conn, "%s", buf);
 
 	return u;
 }
