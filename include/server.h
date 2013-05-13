@@ -63,6 +63,7 @@ extern void u_server_make_sreg(); /* u_conn* */
 extern void u_server_unlink(); /* u_server*, char *msg */
 
 extern void u_server_burst(); /* u_server*, u_link* */
+extern void u_server_eob(); /* u_server* */
 
 extern int init_server();
 

@@ -63,8 +63,11 @@ static void m_pong(conn, msg) u_conn *conn; u_msg *msg;
 	if (!(from = u_server_by_sid(msg->source)))
 		return;
 
-	if (streq(msg->argv[1], me.name))
+	if (streq(msg->argv[1], me.name)) {
+		if (conn->ctx == CTX_SBURST)
+			u_server_eob(conn->priv);
 		return;
+	}
 
 	to = u_conn_by_name(msg->argv[1]);
 	if (to == NULL) {

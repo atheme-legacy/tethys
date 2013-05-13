@@ -372,10 +372,21 @@ void u_server_burst(sv, link) u_server *sv; u_link *link;
 	   by BMASK and/or TB)" */
 	u_trie_each(all_chans, burst_chan, conn);
 
-	u_conn_f(conn, "PING :%d.%06d", NOW.tv_sec, NOW.tv_usec);
+	u_conn_f(conn, ":%S PING %s %s", &me, me.name, sv->name);
 
 	u_log(LG_DEBUG, "Adding %s to servers_by_name", sv->name);
 	u_trie_set(servers_by_name, sv->name, sv);
+}
+
+void u_server_eob(sv) u_server *sv;
+{
+	if (sv->hops != 1) {
+		u_log(LG_ERROR, "u_server_eob called for remote server %S!", sv);
+		return;
+	}
+
+	u_log(LG_VERBOSE, "End of burst with %S", sv);
+	sv->conn->ctx = CTX_SERVER;
 }
 
 int init_server()
