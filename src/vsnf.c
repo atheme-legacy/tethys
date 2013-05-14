@@ -243,9 +243,9 @@ top:
 
 	case 'E': /* entity */
 		e = va_arg(va, u_entity*);
-		s_arg = e->id;
-		if (conn->ctx == CTX_USER || conn->ctx == CTX_UREG)
-			s_arg = e->name;
+		s_arg = e->name;
+		if (type == FMT_SERVER)
+			s_arg = e->id;
 		string(&buf, s_arg, -1, &spec);
 		break;
 
