@@ -98,6 +98,7 @@ int vsnf(type, s, size, fmt, va) char *s, *fmt; uint size; va_list va;
 	u_chan *chan;
 	u_server *server;
 	u_conn *conn;
+	u_entity *e;
 
 	struct buffer buf;
 	struct spec spec;
@@ -237,6 +238,14 @@ top:
 			s_arg = "*";
 		}
 
+		string(&buf, s_arg, -1, &spec);
+		break;
+
+	case 'E': /* entity */
+		e = va_arg(va, u_entity*);
+		s_arg = e->id;
+		if (conn->ctx == CTX_USER || conn->ctx == CTX_UREG)
+			s_arg = e->name;
 		string(&buf, s_arg, -1, &spec);
 		break;
 
