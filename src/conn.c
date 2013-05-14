@@ -249,7 +249,7 @@ static void dispatch_lines(conn) u_conn *conn;
 			u_conn_error(conn, "Read error");
 			break;
 		}
-		u_log(LG_DEBUG, "[%G] <- %s", conn, buf);
+		u_log(LG_DEBUG, "[%G] -> %s", conn, buf);
 		u_msg_parse(&msg, buf);
 		u_cmd_invoke(conn, &msg);
 	}
