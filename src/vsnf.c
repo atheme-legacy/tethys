@@ -242,10 +242,12 @@ top:
 		break;
 
 	case 'E': /* entity */
-		e = va_arg(va, u_entity*);
-		s_arg = e->name;
-		if (type == FMT_SERVER)
-			s_arg = e->id;
+		s_arg = "(none)"; 
+		if ((e = va_arg(va, u_entity*))) {
+			s_arg = e->name;
+			if (type == FMT_SERVER)
+				s_arg = e->id;
+		}
 		string(&buf, s_arg, -1, &spec);
 		break;
 
