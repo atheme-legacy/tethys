@@ -13,7 +13,8 @@
 typedef struct u_msg u_msg;
 
 struct u_msg {
-	char *source;
+	u_entity *src;
+	char *srcstr;
 	char *command;
 	char *argv[U_MSG_MAXARGS];
 	int argc;

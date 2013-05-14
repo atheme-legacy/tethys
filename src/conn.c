@@ -119,7 +119,7 @@ void u_conn_vf(conn, fmt, va) u_conn *conn; char *fmt; va_list va;
 	vsnf(type, buf, 4096, fmt, va);
 	buf[512] = '\0'; /* i guess it works... */
 
-	u_log(LG_FINE, "[%p] <- %s", conn, buf);
+	u_log(LG_DEBUG, "[%G] <- %s", conn, buf);
 
 	for (s=buf; p<end && *s;)
 		*p++ = *s++;
@@ -206,10 +206,10 @@ u_io *io; u_long addr; u_short port;
 	sa.sin_port = htons(port);
 	sa.sin_addr.s_addr = addr;
 
-	if (bind(fd, (struct sockaddr*)&sa, sizeof(sa)) < 0)
+	if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one)) < 0)
 		goto out;
 
-	if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one)) < 0)
+	if (bind(fd, (struct sockaddr*)&sa, sizeof(sa)) < 0)
 		goto out;
 
 	if (listen(fd, 5) < 0)
@@ -249,7 +249,7 @@ static void dispatch_lines(conn) u_conn *conn;
 			u_conn_error(conn, "Read error");
 			break;
 		}
-		u_log(LG_FINE, "[%p] -> %s", conn, buf);
+		u_log(LG_DEBUG, "[%G] <- %s", conn, buf);
 		u_msg_parse(&msg, buf);
 		u_cmd_invoke(conn, &msg);
 	}

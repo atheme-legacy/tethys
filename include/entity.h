@@ -38,11 +38,11 @@ struct u_entity {
 	} v;
 };
 
-extern int u_entity_from_name(); /* u_entity *e, char *name */
-extern int u_entity_from_id(); /* u_entity *e, char *id */
-extern int u_entity_from_ref(); /* u_entity *e, char *ref */
+extern u_entity *u_entity_from_name(); /* u_entity *e, char *name */
+extern u_entity *u_entity_from_id(); /* u_entity *e, char *id */
+extern u_entity *u_entity_from_ref(); /* u_entity *e, char *ref */
 
-extern int u_entity_from_user(); /* u_entity *e, u_user *u */
-extern int u_entity_from_server(); /* u_entity *e, u_server *sv */
+extern u_entity *u_entity_from_user(); /* u_entity *e, u_user *u */
+extern u_entity *u_entity_from_server(); /* u_entity *e, u_server *sv */
 
 #endif

@@ -53,7 +53,7 @@ static u_user *uid_generic(conn, msg) u_conn *conn; u_msg *msg;
 	u_user *u;
 	char buf[512];
 
-	if (!(sv = u_server_by_sid(msg->source)))
+	if (!(sv = u_server_by_sid(msg->srcstr)))
 		return NULL;
 
 	/* TODO: check for collision! */
@@ -129,10 +129,8 @@ u_cmd c_server[] = {
 	{ "MOTD",        CTX_SERVER, not_implemented, 0 }, /* hunted */
 	{ "NICK",        CTX_SERVER, not_implemented, 0 },
 	{ "NICKDELAY",   CTX_SERVER, not_implemented, 0 },
-	{ "NOTICE",      CTX_SERVER, not_implemented, 0 },
 	{ "OPERWALL",    CTX_SERVER, not_implemented, 0 },
 	{ "PART",        CTX_SERVER, not_implemented, 0 },
-	{ "PRIVMSG",     CTX_SERVER, not_implemented, 0 },
 	{ "PRIVS",       CTX_SERVER, not_implemented, 0 }, /* hunted */
 	{ "QUIT",        CTX_SERVER, not_implemented, 0 },
 	{ "RESV",        CTX_SERVER, not_implemented, 0 },

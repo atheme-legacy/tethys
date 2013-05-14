@@ -27,7 +27,7 @@ static void m_ping(conn, msg) u_conn *conn; u_msg *msg;
 			u = conn->priv;
 			tgt = u->nick;
 		} else {
-			tgt = id_to_name(msg->source);
+			tgt = id_to_name(msg->srcstr);
 		}
 
 		if (tgt == NULL)
@@ -47,7 +47,7 @@ static void m_ping(conn, msg) u_conn *conn; u_msg *msg;
 		return;
 	}
 
-	origin = msg->source;
+	origin = msg->srcstr;
 	if (origin == NULL || conn->ctx == CTX_USER)
 		origin = conn_id(conn);
 
@@ -60,7 +60,7 @@ static void m_pong(conn, msg) u_conn *conn; u_msg *msg;
 	u_server *from;
 	u_conn *to;
 
-	if (!(from = u_server_by_sid(msg->source)))
+	if (!(from = u_server_by_sid(msg->srcstr)))
 		return;
 
 	if (streq(msg->argv[1], me.name)) {

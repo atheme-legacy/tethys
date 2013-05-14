@@ -280,7 +280,7 @@ void ascii_canonize(s) char *s;
 
 char *id_to_name(s) char *s;
 {
-	if (s[4]) { /* uid */
+	if (s[3]) { /* uid */
 		u_user *u = u_user_by_uid(s);
 		return u ? u->nick : "*";
 	} else { /* sid */

@@ -30,7 +30,7 @@ static void m_echo(conn, msg) u_conn *conn; u_msg *msg;
 
 	snf(FMT_USER, buf, 512, ":%S NOTICE %U :***", &me, u);
 
-	u_conn_f(conn, "%s Source: %s", buf, msg->source ? msg->source : "(none)");
+	u_conn_f(conn, "%s Source: %E", buf, msg->src);
 	u_conn_f(conn, "%s Command: %s", buf, msg->command);
 	u_conn_f(conn, "%s Recieved %d arguments:", buf, msg->argc);
 

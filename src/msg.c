@@ -29,11 +29,11 @@ int u_msg_parse(msg, s) u_msg *msg; char *s;
 	if (!*s) return -1;
 
 	if (*s == ':') {
-		msg->source = ++s;
+		msg->srcstr = ++s;
 		s = ws_cut(s);
 		if (!*s) return -1;
 	} else {
-		msg->source = NULL;
+		msg->srcstr = NULL;
 	}
 
 	msg->command = s;
@@ -96,11 +96,12 @@ int u_cmds_reg(cmds) u_cmd *cmds;
 void u_cmd_invoke(conn, msg) u_conn *conn; u_msg *msg;
 {
 	u_cmd *cmd;
+	u_entity e;
 
 	cmd = u_trie_get(commands[conn->ctx], msg->command);
 
 	if (!cmd) {
-		if (conn->ctx == CTX_USER)
+		if (conn->ctx == CTX_USER || conn->ctx == CTX_UREG)
 			u_conn_num(conn, ERR_UNKNOWNCOMMAND, msg->command);
 		else
 			u_log(LG_ERROR, "%G used unknown command %s",
@@ -117,7 +118,24 @@ void u_cmd_invoke(conn, msg) u_conn *conn; u_msg *msg;
 		return;
 	}
 
-	u_log(LG_FINE, "INVOKE %s [%p]", cmd->name, cmd->cb);
+	msg->src = NULL;
+	switch (conn->ctx) {
+	case CTX_USER:
+	case CTX_UREG:
+		msg->src = u_entity_from_user(&e, conn->priv);
+		break;
+
+	case CTX_SERVER:
+	case CTX_SBURST:
+	case CTX_SREG:
+		if (msg->srcstr)
+			msg->src = u_entity_from_id(&e, msg->srcstr);
+		else
+			msg->src = u_entity_from_server(&e, conn->priv);
+		break;
+	}
+
+	u_log(LG_FINE, "%E INVOKE %s [%p]", msg->src, cmd->name, cmd->cb);
 
 	cmd->cb(conn, msg);
 }
