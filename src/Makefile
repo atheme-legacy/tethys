@@ -21,6 +21,7 @@ OBJS = numeric.o \
 	cookie.o \
 	crypto.o \
 	dns.o \
+	entity.o \
 	io.o \
 	linebuf.o \
 	list.o \

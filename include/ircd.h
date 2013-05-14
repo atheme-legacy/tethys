@@ -119,6 +119,7 @@ typedef unsigned long u_ts_t;
 #include "server.h"
 #include "user.h"
 #include "chan.h"
+#include "entity.h"
 #include "sendto.h"
 #include "vsnf.h"
 #include "version.h"
