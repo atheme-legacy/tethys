@@ -148,7 +148,7 @@ static void m_sjoin(conn, msg) u_conn *conn; u_msg *msg;
 		}
 	}
 
-	u_roster_f(ST_SERVERS, conn, ":%E SJOIN %s %s %s :%s",
+	u_roster_f(R_SERVERS, conn, ":%E SJOIN %s %s %s :%s",
 	           msg->src, msg->argv[0], msg->argv[1],
 	           msg->argv[2], msg->argv[3]);
 }
@@ -156,20 +156,19 @@ static void m_sjoin(conn, msg) u_conn *conn; u_msg *msg;
 static void m_join(conn, msg) u_conn *conn; u_msg *msg;
 {
 	u_chan *c;
-	u_user *u;
 
 	if (!msg->src || !ENT_IS_USER(msg->src)) {
 		return u_log(LG_ERROR, "Can't use JOIN source %s from %G",
 		             msg->srcstr, conn);
 	}
 	if (!(c = u_chan_get(msg->argv[1]))) {
-		return u_log(LG_ERROR, "%G tried to JOIN %E to nonexistent chan %s"
+		return u_log(LG_ERROR, "%G tried to JOIN %E to nonexistent chan %s",
 		             conn, msg->src, msg->argv[1]);
 	}
 
 	/* TODO: check TS */
 
-	u_user_join_chan(u, c);
+	u_user_join_chan(msg->src->v.u, c);
 }
 
 u_cmd c_server[] = {
