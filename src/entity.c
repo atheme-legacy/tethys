@@ -15,9 +15,6 @@ void make_server(e) u_entity *e;
 	e->name = sv->name;
 	e->id = sv->sid;
 
-	u_log(LG_FINE, "*** make_server(): e->name=%s", e->name);
-	u_log(LG_FINE, "*** make_server(): e->id=%s", e->id);
-
 	e->link = sv->conn;
 	e->loc = NULL;
 	if (sv->hops == 1)
@@ -33,9 +30,6 @@ void make_user(e) u_entity *e;
 	e->name = u->nick;
 	e->id = u->uid;
 
-	u_log(LG_FINE, "*** make_user(): e->name=%s", e->name);
-	u_log(LG_FINE, "*** make_user(): e->id=%s", e->id);
-
 	if (u->flags & USER_IS_LOCAL) {
 		e->loc = USER_LOCAL(u)->conn;
 		e->link = e->loc;
@@ -47,8 +41,6 @@ void make_user(e) u_entity *e;
 
 u_entity *u_entity_from_name(e, s) u_entity *e; char *s;
 {
-	u_log(LG_FINE, "u_entity_from_name(%s)", s);
-
 	if (strchr(s, '.')) {
 		if (!(e->v.sv = u_server_by_name(s)))
 			return NULL;
@@ -64,8 +56,6 @@ u_entity *u_entity_from_name(e, s) u_entity *e; char *s;
 
 u_entity *u_entity_from_id(e, s) u_entity *e; char *s;
 {
-	u_log(LG_FINE, "u_entity_from_id(%s)", s);
-
 	if (s[3]) {
 		if (!(e->v.u = u_user_by_uid(s)))
 			return NULL;

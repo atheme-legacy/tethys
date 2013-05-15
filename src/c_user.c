@@ -540,8 +540,10 @@ static void m_nick(conn, msg) u_conn *conn; u_msg *msg;
 		return;
 
 	/* Send these BEFORE clobbered --Elizabeth */
-	u_sendto_visible(u, ST_ALL, ":%H NICK :%s", u, newnick);
+	u_sendto_visible(u, ST_USERS, ":%H NICK :%s", u, newnick);
+	u_roster_f(R_SERVERS, NULL, ":%H NICK %s %u", u, newnick, NOW.tv_sec);
 	u_conn_f(conn, ":%H NICK :%s", u, newnick);
+
 	u_user_set_nick(u, newnick, NOW.tv_sec);
 }
 
@@ -655,8 +657,10 @@ static void m_kick(conn, msg) u_conn *conn; u_msg *msg;
 		return u_user_num(u, ERR_CHANOPRIVSNEEDED, c);
 
 	u_log(LG_FINE, "%U KICK %U from %C (reason=%s)", u, tu, c, r);
-	u_sendto_chan(c, NULL, ST_ALL, ":%H KICK %C %U :%s", u, c,
-	              tu, r?r:tu->nick);
+	r = r ? r : tu->nick;
+	u_sendto_chan(c, NULL, ST_USERS, ":%H KICK %C %U :%s", u, c, tu, r);
+	u_roster_f(R_SERVERS, NULL, ":%H KICK %C %U :%s", u, c, tu, r);
+
 	u_chan_user_del(tcu);
 }
 
