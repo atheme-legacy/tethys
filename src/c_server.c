@@ -177,6 +177,55 @@ static void m_join(conn, msg) u_conn *conn; u_msg *msg;
 	u_roster_f(R_SERVERS, conn, ":%U JOIN %s %C +", cu->u, msg->argv[0], c);
 }
 
+static void m_tmode(conn, msg) u_conn *conn; u_msg *msg;
+{
+	int parc;
+	char **parv;
+	u_chan *c;
+	u_modes m;
+
+	if (!msg->src) {
+		u_entity_from_server(msg->src, &me);
+		u_log(LG_WARN, "Can't use TMODE source %s from %G, using %E.",
+		             msg->srcstr, conn, msg->src);
+	}
+
+	if (!(c = u_chan_get(msg->argv[1]))) {
+		return u_log(LG_ERROR, "%G tried to TMODE nonexistent chan %s",
+		             conn, msg->argv[1]);
+	}
+
+	/* TODO: check TS */
+
+	parc = msg->argc - 2;
+	parv = msg->argv + 2;
+
+	m.setter = NULL;
+	if (ENT_IS_USER(msg->src))
+		m.setter = msg->src->v.u;
+	m.target = c;
+	m.perms = &me;
+	m.flags = 0;
+
+	u_mode_process(&m, cmodes, parc, parv);
+
+	if (m.u.buf[0] || m.u.data[0]) {
+		if (ENT_IS_USER(msg->src)) {
+			u_sendto_chan(c, NULL, ST_USERS,
+				      ":%H MODE %C %s%s", msg->src->v.u, c,
+			              m.u.buf, m.u.data);
+		} else {
+			u_sendto_chan(c, NULL, ST_USERS,
+				      ":%E MODE %C %s%s", msg->src, c,
+			              m.u.buf, m.u.data);
+		}
+	}
+	if (m.s.buf[0] || m.s.data[0]) {
+		u_roster_f(R_SERVERS, conn, ":%E TMODE %u %C %s%s",
+		           msg->src, c->ts, c, m.s.buf, m.s.data);
+	}
+}
+
 u_cmd c_server[] = {
 	{ "ERROR",       CTX_SERVER, m_error,         0 },
 	{ "SVINFO",      CTX_SBURST, m_svinfo,        4 },
@@ -189,6 +238,8 @@ u_cmd c_server[] = {
 	{ "SJOIN",       CTX_SERVER, m_sjoin,         4 },
 	{ "SJOIN",       CTX_SBURST, m_sjoin,         4 },
 	{ "JOIN",        CTX_SERVER, m_join,          3 },
+
+	{ "TMODE",       CTX_SERVER, m_tmode,         3 },
 
 	{ "ADMIN",       CTX_SERVER, not_implemented, 0 }, /* hunted */
 	{ "AWAY",        CTX_SERVER, not_implemented, 0 },
@@ -228,7 +279,6 @@ u_cmd c_server[] = {
 	{ "TB",          CTX_SBURST, not_implemented, 0 },
 	{ "TB",          CTX_SERVER, not_implemented, 0 },
 	{ "TIME",        CTX_SERVER, not_implemented, 0 }, /* hunted */
-	{ "TMODE",       CTX_SERVER, not_implemented, 0 },
 	{ "TOPIC",       CTX_SERVER, not_implemented, 0 },
 	{ "TRACE",       CTX_SERVER, not_implemented, 0 }, /* hunted */
 	{ "UNKLINE",     CTX_SERVER, not_implemented, 0 },

@@ -42,8 +42,12 @@ uint cmode_default = CMODE_TOPIC | CMODE_NOEXTERNAL;
 
 static int cm_deny(m) u_modes *m;
 {
-	u_chanuser *cu = m->perms;
+	u_chanuser *cu;
 
+	if (m->perms == &me) /* dirty but clever but dirty */
+		return 0;
+
+	cu = m->perms;
 	if ((m->flags & CM_DENY) || !cu || !(cu->flags & CU_PFX_OP))
 		m->flags |= CM_DENY;
 	return m->flags & CM_DENY;
@@ -172,12 +176,18 @@ static int cb_prefix(m, on, arg) u_modes *m; char *arg;
 	if (cm_deny(m) || arg == NULL)
 		return 1;
 
-	tu = u_user_by_nick(arg);
-	if (tu == NULL) {
-		/* TODO: u_user_by_nick_history */
-		u_user_num(u, ERR_NOSUCHNICK, arg);
-		return 1;
+	if (isdigit(arg[0])) {
+		tu = u_user_by_uid(arg);
+	} else {
+		tu = u_user_by_nick(arg);
+		if (tu == NULL) {
+			/* TODO: u_user_by_nick_history */
+			u_user_num(u, ERR_NOSUCHNICK, arg);
+			return 1;
+		}
 	}
+	if (tu == NULL)
+		return 1;
 
 	cu = u_chan_user_find(c, tu);
 	if (cu == NULL) {
