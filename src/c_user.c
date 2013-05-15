@@ -47,7 +47,8 @@ static void m_quit(conn, msg) u_conn *conn; u_msg *msg;
 static void m_version(conn, msg) u_conn *conn; u_msg *msg;
 {
 	u_user *u = conn->priv;
-	u_user_num(u, RPL_VERSION, PACKAGE_FULLNAME, me.name, "hi");
+	u_user_num(u, RPL_VERSION, PACKAGE_FULLNAME, me.name,
+	           PACKAGE_COPYRIGHT);
 	u_user_send_isupport(u);
 }
 

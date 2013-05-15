@@ -10,6 +10,7 @@
 #define PACKAGE_NAME "ircd-micro"
 #define PACKAGE_VERSION "0.1-dev"
 #define PACKAGE_FULLNAME "ircd-micro-0.1-dev"
+#define PACKAGE_COPYRIGHT "Copyright (C) 2013 Alex Iadicicco and ircd-micro contributors"
 
 #include <stdio.h>
 #include <sys/types.h>
