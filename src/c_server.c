@@ -156,11 +156,13 @@ static void m_sjoin(conn, msg) u_conn *conn; u_msg *msg;
 static void m_join(conn, msg) u_conn *conn; u_msg *msg;
 {
 	u_chan *c;
+	u_chanuser *cu;
 
 	if (!msg->src || !ENT_IS_USER(msg->src)) {
 		return u_log(LG_ERROR, "Can't use JOIN source %s from %G",
 		             msg->srcstr, conn);
 	}
+
 	if (!(c = u_chan_get(msg->argv[1]))) {
 		return u_log(LG_ERROR, "%G tried to JOIN %E to nonexistent chan %s",
 		             conn, msg->src, msg->argv[1]);
@@ -168,7 +170,11 @@ static void m_join(conn, msg) u_conn *conn; u_msg *msg;
 
 	/* TODO: check TS */
 
-	u_user_join_chan(msg->src->v.u, c);
+	cu = u_chan_user_add(c, msg->src->v.u);
+	u_log(LG_DEBUG, "%U (remote) join %C", cu->u, c);
+
+	u_sendto_chan(c, NULL, ST_USERS, ":%H JOIN %C", cu->u, c);
+	u_roster_f(R_SERVERS, conn, ":%U JOIN %s %C +", cu->u, msg->argv[0], c);
 }
 
 u_cmd c_server[] = {

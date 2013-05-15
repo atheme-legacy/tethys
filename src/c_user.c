@@ -60,10 +60,12 @@ static void m_motd(conn, msg) u_conn *conn; u_msg *msg;
 
 static void try_join_chan(ul, chan, key) u_user_local *ul; char *chan, *key;
 {
+	u_conn *conn = ul->conn;
 	u_user *u = USER(ul);
 	u_chan *c, *fwd;
 	u_chanuser *cu;
 	int num;
+	char *modes;
 
 	c = u_chan_get_or_create(chan);
 
@@ -86,7 +88,25 @@ static void try_join_chan(ul, chan, key) u_user_local *ul; char *chan, *key;
 		c = fwd;
 	}
 
-	u_user_join_chan(u, c);
+	cu = u_chan_user_add(c, u);
+	u_sendto_chan(c, NULL, ST_USERS, ":%H JOIN %C", u, c);
+
+	if (c->members->size == 1) {
+		modes = u_chan_modes(c, 1);
+
+		u_log(LG_VERBOSE, "Channel %C %s created by %U", c, modes, u);
+		cu->flags |= CU_PFX_OP;
+
+		u_roster_f(R_SERVERS, NULL, ":%S SJOIN %u %C %s :@%U",
+		           &me, c->ts, c, modes, u);
+		u_conn_f(conn, ":%S MODE %C %s", &me, c, modes);
+	} else {
+		u_log(LG_DEBUG, "%U (local) join %C", u, c);
+		u_roster_f(R_SERVERS, NULL, ":%U JOIN %u %C +", u, c->ts, c);
+	}
+
+	u_chan_send_topic(c, u);
+	u_chan_send_names(c, u);
 }
 
 static void m_join(conn, msg) u_conn *conn; u_msg *msg;

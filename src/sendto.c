@@ -198,11 +198,12 @@ A(unsigned char c; u_conn *conn; char *fmt; va_dcl)
 	if (conn != NULL)
 		exclude(conn);
 
-	u_log(LG_DEBUG, "Sending '%s' to roster %s", fmt, roster_to_str(c));
-
 	priv.user = priv.serv = NULL;
 	priv.fmt = fmt;
 	priv.flags = ST_ALL;
+
+	u_log(LG_DEBUG, "roster[%s]: %s", roster_to_str(c), fmt);
+
 	u_va_start(priv.va, fmt);
 	u_map_each(rosters[(unsigned)c], roster_f_cb, &priv);
 	va_end(priv.va);

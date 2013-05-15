@@ -419,36 +419,6 @@ static int is_in_list(host, list) char *host; u_list *list;
 	return 0;
 }
 
-void u_user_join_chan(u, c) u_user *u; u_chan *c;
-{
-	u_conn *conn = u_user_conn(u);
-	u_chanuser *cu;
-	char *modes;
-
-	cu = u_chan_user_add(c, u);
-	modes = u_chan_modes(c, 1);
-	u_sendto_chan(c, NULL, ST_USERS, ":%H JOIN %C", u, c);
-
-	if (c->members->size == 1) {
-		u_log(LG_DEBUG, "Channel %C created by %U", c, u);
-		cu->flags |= CU_PFX_OP;
-
-		u_roster_f(R_SERVERS, conn, ":%S SJOIN %u %C %s :@%U",
-		           &me, c->ts, c, modes, u);
-		if (u->flags & USER_IS_LOCAL)
-			u_conn_f(conn, ":%S MODE %C %s", &me, c, modes);
-	} else {
-		u_log(LG_DEBUG, "%U join %C", u, c);
-		u_roster_f(R_SERVERS, conn, ":%S JOIN %u %C +",
-		           &me, c->ts, c);
-	}
-
-	if (u->flags & USER_IS_LOCAL) {
-		u_chan_send_topic(c, u);
-		u_chan_send_names(c, u);
-	}
-}
-
 void u_user_part_chan(ul, chan, reason) u_user_local *ul; char *chan, *reason;
 {
 	char buf[512];
