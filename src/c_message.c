@@ -37,12 +37,12 @@ static void m_message_chan(conn, msg) u_conn *conn; u_msg *msg;
 	u_log(LG_DEBUG, "[%E -> %C] %s", msg->src, tgt, msg->argv[1]);
 
 	if (ENT_IS_SERVER(msg->src)) {
-		u_sendto_chan(tgt, conn, ":%S NOTICE %C :%s",
+		u_sendto_chan(tgt, conn, ST_ALL, ":%S NOTICE %C :%s",
 		              msg->src->v.sv, tgt, msg->argv[1]);
 		return;
 	}
 
-	u_sendto_chan(tgt, conn, ":%H %s %C :%s", msg->src->v.u,
+	u_sendto_chan(tgt, conn, ST_ALL, ":%H %s %C :%s", msg->src->v.u,
 	              msg->command, tgt, msg->argv[1]);
 }
 

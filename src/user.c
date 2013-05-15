@@ -224,7 +224,7 @@ void u_user_unlink(u, msg) u_user *u; char *msg;
 	u_user_state(u, USER_DISCONNECTED);
 
 	if (conn->ctx == CTX_USER) {
-		u_sendto_visible(u, ":%H QUIT :%s", u, msg);
+		u_sendto_visible(u, ST_ALL, ":%H QUIT :%s", u, msg);
 		u_conn_f(conn, ":%H QUIT :%s", u, msg);
 		u_wallops("Disconnect: %H (%s)", u, msg);
 	} else {
@@ -431,7 +431,7 @@ static void do_join_chan(c, u) u_chan *c; u_user *u;
 		cu->flags |= CU_PFX_OP;
 	}
 
-	u_sendto_chan(c, NULL, ":%H JOIN %C", u, c);
+	u_sendto_chan(c, NULL, ST_ALL, ":%H JOIN %C", u, c);
 	if (c->members->size == 1) /* idk why charybdis does it this way */
 		u_conn_f(conn, ":%S MODE %C %s", &me, c, u_chan_modes(c, 1));
 	u_chan_send_topic(c, u);
@@ -511,7 +511,7 @@ void u_user_part_chan(ul, chan, reason) u_user_local *ul; char *chan, *reason;
 	if (reason)
 		sprintf(buf, " :%s", reason);
 
-	u_sendto_chan(c, NULL, ":%H PART %C%s", u, c, buf);
+	u_sendto_chan(c, NULL, ST_ALL, ":%H PART %C%s", u, c, buf);
 
 	u_chan_user_del(cu);
 

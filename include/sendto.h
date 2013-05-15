@@ -7,11 +7,16 @@
 #ifndef __INC_SENDTO_H__
 #define __INC_SENDTO_H__
 
+#define ST_ALL        0xffffffff
+
+#define ST_SERVERS             1
+#define ST_USERS               2
+
 /* second argument is excluded from message */
-extern void u_sendto_chan(A4(u_chan*, u_conn*, char*, ...));
+extern void u_sendto_chan(A5(u_chan*, u_conn*, uint, char*, ...));
 
 /* sends to all connections a user is visible to */
-extern void u_sendto_visible(A3(u_user*, char*, ...));
+extern void u_sendto_visible(A4(u_user*, uint, char*, ...));
 
 /*
       +-----------------------------------------------+

@@ -16,6 +16,7 @@ char buf_user[1024];
 struct sendto_priv {
 	char *serv, *user;
 	char *fmt;
+	uint flags;
 	va_list va;
 };
 
@@ -28,6 +29,23 @@ static void exclude(conn) u_conn *conn;
 {
 	if (u_cookie_cmp(&conn->ck_sendto, &ck_sendto) < 0)
 		u_cookie_cpy(&conn->ck_sendto, &ck_sendto);
+}
+
+static int want_send(pv, conn) struct sendto_priv *pv; u_conn *conn;
+{
+	switch (conn->ctx) {
+	case CTX_USER:
+	case CTX_UNREG:
+	case CTX_UREG:
+		return pv->flags & ST_USERS;
+
+	case CTX_SERVER:
+	case CTX_SBURST:
+	case CTX_SREG:
+		return pv->flags & ST_SERVERS;
+	}
+
+	return 0;
 }
 
 static char *ln(pv, conn) struct sendto_priv *pv; u_conn *conn;
@@ -47,6 +65,7 @@ static char *ln(pv, conn) struct sendto_priv *pv; u_conn *conn;
 		return pv->user;
 
 	case CTX_SERVER:
+	case CTX_SBURST:
 	case CTX_SREG:
 		if (!pv->serv) {
 			pv->serv = buf_serv;
@@ -68,14 +87,17 @@ u_map *map; u_user *u; u_chanuser *cu; struct sendto_priv *priv;
 
 	if (!u_cookie_cmp(&conn->ck_sendto, &ck_sendto))
 		return;
-
-	s = ln(priv, conn);
-	u_conn_f(conn, "%s", s);
 	u_cookie_cpy(&conn->ck_sendto, &ck_sendto);
+
+	if (want_send(priv, conn)) {
+		s = ln(priv, conn);
+		u_conn_f(conn, "%s", s);
+	}
 }
 
-void u_sendto_chan(T(u_chan*) c, T(u_conn*) conn, T(char*) fmt, u_va_alist)
-A(u_chan *c; u_conn *conn; char *fmt; va_dcl)
+void u_sendto_chan(T(u_chan*) c, T(u_conn*) conn, T(uint) flags,
+                   T(char*) fmt, u_va_alist)
+A(u_chan *c; u_conn *conn; uint flags; char *fmt; va_dcl)
 {
 	struct sendto_priv priv;
 
@@ -86,6 +108,7 @@ A(u_chan *c; u_conn *conn; char *fmt; va_dcl)
 
 	priv.user = priv.serv = NULL;
 	priv.fmt = fmt;
+	priv.flags = flags;
 	u_va_start(priv.va, fmt);
 	u_map_each(c->members, sendto_chan_cb, &priv);
 	va_end(priv.va);
@@ -97,8 +120,8 @@ u_map *map; u_chan *c; u_chanuser *cu; struct sendto_priv *priv;
 	u_map_each(c->members, sendto_chan_cb, priv);
 }
 
-void u_sendto_visible(T(u_user*) u, T(char*) fmt, u_va_alist)
-A(u_user *u; char *fmt; va_dcl)
+void u_sendto_visible(T(u_user*) u, T(uint) flags, T(char*) fmt, u_va_alist)
+A(u_user *u; uint flags; char *fmt; va_dcl)
 {
 	struct sendto_priv priv;
 
@@ -108,6 +131,7 @@ A(u_user *u; char *fmt; va_dcl)
 
 	priv.user = priv.serv = NULL;
 	priv.fmt = fmt;
+	priv.flags = flags;
 	u_va_start(priv.va, fmt);
 	u_map_each(u->channels, sendto_visible_cb, &priv);
 	va_end(priv.va);
@@ -156,10 +180,12 @@ u_map *map; u_conn *unused, *conn; struct sendto_priv *priv;
 
 	if (!u_cookie_cmp(&conn->ck_sendto, &ck_sendto))
 		return;
-
-	s = ln(priv, conn);
-	u_conn_f(conn, "%s", s);
 	u_cookie_cpy(&conn->ck_sendto, &ck_sendto);
+
+	if (want_send(priv, conn)) {
+		s = ln(priv, conn);
+		u_conn_f(conn, "%s", s);
+	}
 }
 
 void u_roster_f(T(unsigned char) c, T(u_conn*) conn, T(char*) fmt, u_va_alist)
@@ -176,6 +202,7 @@ A(unsigned char c; u_conn *conn; char *fmt; va_dcl)
 
 	priv.user = priv.serv = NULL;
 	priv.fmt = fmt;
+	priv.flags = ST_ALL;
 	u_va_start(priv.va, fmt);
 	u_map_each(rosters[(unsigned)c], roster_f_cb, &priv);
 	va_end(priv.va);

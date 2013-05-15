@@ -67,7 +67,8 @@ void u_chan_m_end(u, c) u_user *u; u_chan *c;
 	*cm_data_p = '\0';
 
 	if (cm_buf[0] || cm_data[0])
-		u_sendto_chan(c, NULL, ":%H MODE %C %s%s", u, c, cm_buf, cm_data);
+		u_sendto_chan(c, NULL, ST_ALL, ":%H MODE %C %s%s", u, c,
+		              cm_buf, cm_data);
 
 	for (cur=cmodes; cur->ch; cur++) {
 		if (!strchr(cm_list, cur->ch))
