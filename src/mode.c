@@ -8,6 +8,15 @@
 
 static void changes_reset(c) u_mode_changes *c;
 {
+	c->setting = -1;
+	*(c->b = c->buf) = '\0';
+	*(c->d = c->data) = '\0';
+}
+
+static void changes_end(c) u_mode_changes *c;
+{
+	*c->b = '\0';
+	*c->d = '\0';
 }
 
 static void mode_put(c, on, ch, type, fmt, p)
@@ -60,7 +69,6 @@ u_modes *m; u_mode_info *infos; int parc; char **parv;
 {
 	int used, on = 1;
 	char *s;
-	u_mode_info *inf;
 
 	changes_reset(&m->u);
 	changes_reset(&m->s);
@@ -77,11 +85,14 @@ u_modes *m; u_mode_info *infos; int parc; char **parv;
 		}
 
 		/* TODO: *SAY SOMETHING* */
-		if (!(inf = find_info(infos, *s)))
+		if (!(m->info = find_info(infos, *s)))
 			continue;
 
-		used = inf->cb(m, on, parc, parv);
+		used = m->info->cb(m, on, parc > 0 ? parv[0] : NULL);
 		parc -= used;
 		parv += used;
 	}
+
+	changes_end(&m->u);
+	changes_end(&m->s);
 }

@@ -15,7 +15,7 @@ typedef struct u_modes u_modes;
 
 struct u_mode_info {
 	char ch;
-	int (*cb)(); /* modes, on, parc, char **parv; returns used pars */
+	int (*cb)(); /* modes, on, char *arg; return if used arg */
 	ulong data;
 };
 
@@ -29,6 +29,7 @@ struct u_modes {
 	/* opaque, untouched by mode */
 	void *setter;
 	void *target;
+	void *perms;
 	ulong flags;
 
 	/* in callback, currently-processed info */

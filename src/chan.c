@@ -8,14 +8,14 @@
 
 u_trie *all_chans;
 
-static void cb_flag();
-static void cb_list();
-static void cb_prefix();
-static void cb_fwd();
-static void cb_key();
-static void cb_limit();
+static int cb_flag();
+static int cb_list();
+static int cb_prefix();
+static int cb_fwd();
+static int cb_key();
+static int cb_limit();
 
-static u_cmode_info __cmodes[] = {
+static u_mode_info __cmodes[] = {
 	{ 'c', cb_flag,   CMODE_NOCOLOR              },
 	{ 'g', cb_flag,   CMODE_FREEINVITE           },
 	{ 'i', cb_flag,   CMODE_INVITEONLY           },
@@ -37,90 +37,35 @@ static u_cmode_info __cmodes[] = {
 	{ 0 }
 };
 
-u_cmode_info *cmodes = __cmodes;
+u_mode_info *cmodes = __cmodes;
 uint cmode_default = CMODE_TOPIC | CMODE_NOEXTERNAL;
 
-static int cm_on, cm_denied;
-static u_chanuser *cm_cu;
-static char *cm_buf_p, cm_buf[128];
-static char *cm_data_p, cm_data[512];
-static char *cm_list_p, cm_list[16];
-
-void u_chan_m_start(u, c) u_user *u; u_chan *c;
+static int cm_deny(m) u_modes *m;
 {
-	u_cookie_inc(&c->ck_flags);
+	u_chanuser *cu = m->perms;
 
-	cm_on = -1;
-	cm_denied = 0;
-	cm_cu = u_chan_user_find(c, u);
-	cm_buf_p = cm_buf;
-	cm_data_p = cm_data;
-	cm_list_p = cm_list;
-	*cm_list_p = '\0';
+	if ((m->flags & CM_DENY) || !cu || !(cu->flags & CU_PFX_OP))
+		m->flags |= CM_DENY;
+	return m->flags & CM_DENY;
 }
 
-void u_chan_m_end(u, c) u_user *u; u_chan *c;
+static int cb_flag(m, on, arg) u_modes *m; char *arg;
 {
-	u_cmode_info *cur;
-
-	*cm_buf_p = '\0';
-	*cm_data_p = '\0';
-
-	if (cm_buf[0] || cm_data[0])
-		u_sendto_chan(c, NULL, ST_ALL, ":%H MODE %C %s%s", u, c,
-		              cm_buf, cm_data);
-
-	for (cur=cmodes; cur->ch; cur++) {
-		if (!strchr(cm_list, cur->ch))
-			continue;
-		u_chan_send_list(c, u, memberp(c, cur->data));
-	}
-
-	if (cm_denied)
-		u_user_num(u, ERR_CHANOPRIVSNEEDED, c);
-}
-
-static void cm_put(on, ch, arg) char ch, *arg;
-{
-	if (on != cm_on) {
-		cm_on = on;
-		*cm_buf_p++ = on ? '+' : '-';
-	}
-	*cm_buf_p++ = ch;
-	if (arg != NULL)
-		cm_data_p += sprintf(cm_data_p, " %s", arg);
-}
-
-static void cm_put_list(ch) char ch;
-{
-	if (strchr(cm_list, ch))
-		return;
-	*cm_list_p++ = ch;
-	*cm_list_p = '\0';
-}
-
-static int cm_deny()
-{
-	if (cm_denied || !cm_cu || !(cm_cu->flags & CU_PFX_OP))
-		cm_denied = 1;
-	return cm_denied;
-}
-
-static void cb_flag(info, c, u, on, getarg)
-u_cmode_info *info; u_chan *c; u_user *u; char *(*getarg)();
-{
+	u_chan *c = m->target;
 	uint oldm = c->mode;
-	if (!cm_cu || !(cm_cu->flags & CU_PFX_OP)) {
-		cm_denied = 1;
-		return;
-	}
+
+	if (cm_deny(m))
+		return 0;
+
 	if (on)
-		c->mode |= info->data;
+		c->mode |= m->info->data;
 	else
-		c->mode &= ~info->data;
+		c->mode &= ~m->info->data;
+
 	if (oldm != c->mode)
-		cm_put(on, info->ch, NULL);
-	return;
+		u_mode_put(m, on, m->info->ch, NULL, NULL);
+
+	return 0;
 }
 
 /* foo -> foo!*@*, aji@ -> *!aji@*, etc */
@@ -165,42 +110,43 @@ static char *full_hostmask(mask) char *mask;
 	return buf;
 }
 
-static void cb_list(info, c, u, on, getarg)
-u_cmode_info *info; u_chan *c; u_user *u; char *(*getarg)();
+static int cb_list(m, on, arg) u_modes *m; char *arg;
 {
+	u_chan *c = m->target;
+	u_user *u = m->setter;
 	u_list *list, *n;
 	u_chanban *ban;
-	char *mask, *arg = getarg();
+	char *mask;
 
 	if (arg == NULL) {
-		if (on && (!strchr("eI", info->ch) || !cm_deny()))
-			cm_put_list(info->ch);
-		return;
+		if (on && (!strchr("eI", m->info->ch) || !cm_deny(m)))
+			u_mode_put_l(m, m->info->ch);
+		return 0;
 	}
 
-	if (cm_deny())
-		return;
+	if (cm_deny(m))
+		return 1;
 
-	list = (u_list*)memberp(c, info->data);
+	list = (u_list*)memberp(c, m->info->data);
 	mask = full_hostmask(arg);
 
 	U_LIST_EACH(n, list) {
 		ban = n->data;
 		if (streq(ban->mask, mask)) {
 			if (!on) {
-				cm_put(on, info->ch, ban->mask);
+				u_mode_put(m, on, m->info->ch, " %s", ban->mask);
 				free(u_list_del_n(list, n));
 			}
-			return;
+			return 1;
 		}
 	}
 
 	if (on) {
 		if (u_list_size(list) >= MAXBANLIST) {
-			u_log(LG_DEBUG, "%C +%c full, not adding %s",
-		              c, info->ch, mask);
+			u_log(LG_VERBOSE, "%C +%c full, not adding %s",
+		              c, m->info->ch, mask);
 			u_user_num(u, ERR_BANLISTFULL, c, mask);
-			return;
+			return 1;
 		}
 
 		ban = malloc(sizeof(*ban));
@@ -209,140 +155,138 @@ u_cmode_info *info; u_chan *c; u_user *u; char *(*getarg)();
 		snf(FMT_USER, ban->setter, 256, "%H", u);
 		ban->time = NOW.tv_sec;
 
-		cm_put(on, info->ch, mask);
+		u_mode_put(m, on, m->info->ch, " %s", mask);
 		u_list_add(list, ban);
 	}
 
-	return;
+	return 1;
 }
 
-static void cb_prefix(info, c, u, on, getarg)
-u_cmode_info *info; u_chan *c; u_user *u; char *(*getarg)();
+static int cb_prefix(m, on, arg) u_modes *m; char *arg;
 {
+	u_chan *c = m->target;
+	u_user *u = m->setter;
 	u_chanuser *cu;
 	u_user *tu;
-	char *arg = getarg();
 
-	if (cm_deny() || arg == NULL)
-		return;
+	if (cm_deny(m) || arg == NULL)
+		return 1;
 
 	tu = u_user_by_nick(arg);
 	if (tu == NULL) {
 		/* TODO: u_user_by_nick_history */
 		u_user_num(u, ERR_NOSUCHNICK, arg);
-		return;
+		return 1;
 	}
 
 	cu = u_chan_user_find(c, tu);
 	if (cu == NULL) {
 		u_user_num(u, ERR_USERNOTINCHANNEL, tu, c);
-		return;
+		return 1;
 	}
 
 	if (on)
-		cu->flags |= info->data;
+		cu->flags |= m->info->data;
 	else
-		cu->flags &= ~info->data;
-	cm_put(on, info->ch, tu->nick);
+		cu->flags &= ~m->info->data;
+	u_mode_put(m, on, m->info->ch, " %U", tu);
+
+	return 1;
 }
 
-static void cb_fwd(info, c, u, on, getarg)
-u_cmode_info *info; u_chan *c; u_user *u; char *(*getarg)();
+static int cb_fwd(m, on, arg) u_modes *m; char *arg;
 {
-	u_chan *tc;
+	u_user *u = m->setter;
+	u_chan *tc, *c = m->target;
 	u_chanuser *tcu;
-	char *arg;
 
-	if (cm_deny())
-		return;
+	if (cm_deny(m))
+		return on;
 
 	if (!on) {
 		if (c->forward) {
 			free(c->forward);
 			c->forward = NULL;
-			cm_put(on, info->ch, NULL);
+			u_mode_put(m, on, m->info->ch, NULL, NULL);
 		}
-		return;
+		return 0;
 	}
 
-	arg = getarg();
 	if (arg == NULL)
-		return;
+		return 0;
 
 	if (!(tc = u_chan_get(arg))) {
 		u_user_num(u, ERR_NOSUCHCHANNEL, arg);
-		return;
+		return 1;
 	}
 
 	tcu = u_chan_user_find(tc, u);
 	/* TODO: +F */
 	if (tcu == NULL || !(tcu->flags & CU_PFX_OP)) {
 		u_user_num(u, ERR_CHANOPRIVSNEEDED, tc);
-		return;
+		return 1;
 	}
 
 	if (c->forward)
 		free(c->forward);
 	c->forward = u_strdup(arg);
 
-	cm_put(on, info->ch, arg);
+	u_mode_put(m, on, m->info->ch, " %C", tc);
+	return 1;
 }
 
-static void cb_key(info, c, u, on, getarg)
-u_cmode_info *info; u_chan *c; u_user *u; char *(*getarg)();
+static int cb_key(m, on, arg) u_modes *m; char *arg;
 {
-	/* always getarg(), but send * on -k */
-	char *arg = getarg();
+	u_chan *c = m->target;
 
-	if (cm_deny())
-		return;
+	if (cm_deny(m))
+		return 1;
 
 	if (!on) {
 		if (c->key) {
 			free(c->key);
 			c->key = NULL;
-			cm_put(on, info->ch, "*");
+			u_mode_put(m, on, m->info->ch, " %s", "*");
 		}
-		return;
+		return 1;
 	}
 
 	if (!arg)
-		return;
+		return 1;
 
 	if (c->key)
 		free(c->key);
 	c->key = u_strdup(arg);
 
-	cm_put(on, info->ch, arg);
+	u_mode_put(m, on, m->info->ch, " %s", arg);
+
+	return 1;
 }
 
-static void cb_limit(info, c, u, on, getarg)
-u_cmode_info *info; u_chan *c; u_user *u; char *(*getarg)();
+static int cb_limit(m, on, arg) u_modes *m; char *arg;
 {
-	char buf[32];
-	char *arg;
+	u_chan *c = m->target;
 	int lim;
 
-	if (cm_deny())
-		return;
+	if (cm_deny(m))
+		return on;
 
 	if (!on) {
 		if (c->limit > 0)
-			cm_put(0, 'l', NULL);
+			u_mode_put(m, 0, 'l', NULL, NULL);
 		c->limit = -1;
-		return;
+		return 0;
 	}
 
-	arg = getarg();
 	if (arg == NULL)
-		return;
+		return 0;
 	lim = atoi(arg);
 	if (lim < 1)
-		return;
+		return 1;
 	c->limit = lim;
 
-	snf(FMT_USER, buf, 32, "%d", c->limit);
-	cm_put(1, 'l', buf);
+	u_mode_put(m, 1, 'l', " %d", c->limit);
+	return 1;
 }
 
 u_chan *u_chan_get(name) char *name;
@@ -416,7 +360,7 @@ char *u_chan_modes(c, on_chan) u_chan *c;
 {
 	static char buf[512];
 	char chs[64], args[512];
-	u_cmode_info *info;
+	u_mode_info *info;
 	char *s = chs, *p = args;
 
 	*s++ = '+';
@@ -443,22 +387,6 @@ char *u_chan_modes(c, on_chan) u_chan *c;
 
 	sprintf(buf, "%s%s", chs, args);
 	return buf;
-}
-
-void u_chan_mode(c, u, ch, on, getarg)
-u_chan *c; u_user *u; char ch; char *(*getarg)();
-{
-	u_cmode_info *info = cmodes;
-
-	while (info->ch && info->ch != ch)
-		info++;
-
-	if (!info->ch) {
-		u_user_num(u, ERR_UNKNOWNMODE, ch);
-		return;
-	}
-
-	info->cb(info, c, u, on, getarg);
 }
 
 void u_chan_send_topic(c, u) u_chan *c; u_user *u;

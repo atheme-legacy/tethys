@@ -22,6 +22,8 @@
 #define CMODE_NOCOLOR      0x00000080  /* +c */
 #define CMODE_FREEINVITE   0x00000100  /* +g */
 
+#define CM_DENY   0x01
+
 /* prefixes */
 #define CU_PFX_OP          0x00000001
 #define CU_PFX_VOICE       0x00000002
@@ -71,19 +73,14 @@ struct u_chanban {
 
 extern u_trie *all_chans;
 
-extern u_cmode_info *cmodes;
+extern u_mode_info *cmodes;
 extern uint cmode_default;
-
-/* start and end of mode processing */
-extern void u_chan_m_start(); /* u_user*, u_chan* */
-extern void u_chan_m_end(); /* u_user*, u_chan* */
 
 extern u_chan *u_chan_get(); /* char* */
 extern u_chan *u_chan_get_or_create(); /* char* */
 extern void u_chan_drop(); /* u_chan* */
 
 extern char *u_chan_modes(); /* u_chan*, int on_chan */
-extern void u_chan_mode(); /* u_chan*, u_user*, char chr, int on, getarg() */
 
 extern void u_chan_send_topic(); /* u_chan*, u_user* */
 extern void u_chan_send_names(); /* u_chan*, u_user* */

@@ -6,16 +6,6 @@
 
 #include "ircd.h"
 
-int ga_argc = 0;
-static char **ga_argv;
-static char *getarg()
-{
-	if (ga_argc <= 0)
-		return NULL;
-	ga_argc--;
-	return *ga_argv++;
-}
-
 static void not_implemented(conn, msg) u_conn *conn; u_msg *msg;
 {
 	u_conn_f(conn, ":%S NOTICE %U :*** %s is not yet implemented!",
@@ -208,11 +198,12 @@ static void mode_user(u, s) u_user *u; char *s;
 
 static void m_mode(conn, msg) u_conn *conn; u_msg *msg;
 {
-	int on = 1;
-	char *p;
+	int parc;
+	char **parv;
 	u_user *tu, *u = conn->priv;
 	u_chan *c;
-	u_chanuser *cu;
+	u_modes m;
+	u_mode_info *info;
 
 	if (msg->argv[0][0] != '#') {
 		tu = u_user_by_nick(msg->argv[0]);
@@ -231,32 +222,37 @@ static void m_mode(conn, msg) u_conn *conn; u_msg *msg;
 	if (!(c = u_chan_get(msg->argv[0])))
 		return u_user_num(u, ERR_NOSUCHCHANNEL, msg->argv[0]);
 
+	m.perms = u_chan_user_find(c, u);
+
 	if (msg->argv[1] == NULL) {
-		cu = u_chan_user_find(c, u);
-		u_user_num(u, RPL_CHANNELMODEIS, c, u_chan_modes(c, !!cu));
+		u_user_num(u, RPL_CHANNELMODEIS, c, u_chan_modes(c, !!m.perms));
 		return;
 	}
 
-	ga_argc = msg->argc - 2;
-	ga_argv = msg->argv + 2;
-	if (ga_argc > 4)
-		ga_argc = 4;
+	parc = msg->argc - 1;
+	parv = msg->argv + 1;
+	if (parc > 5)
+		parc = 5;
 
-	u_chan_m_start(u, c);
+	m.setter = u;
+	m.target = c;
+	m.flags = 0;
 
-	for (p=msg->argv[1]; *p; p++) {
-		switch (*p) {
-		case '+':
-		case '-':
-			on = *p == '+';
-			break;
+	u_mode_process(&m, cmodes, parc, parv);
 
-		default:
-			u_chan_mode(c, u, *p, on, getarg);
-		}
+	if (m.u.buf[0] || m.u.data[0]) {
+		u_sendto_chan(c, NULL, ST_USERS,
+		              ":%H MODE %C %s%s", u, c, m.u.buf, m.u.data);
 	}
 
-	u_chan_m_end(u, c);
+	for (info=cmodes; info->ch; info++) {
+		if (!strchr(m.list, info->ch))
+			continue;
+		u_chan_send_list(c, u, memberp(c, info->data));
+	}
+
+	if (m.flags & CM_DENY)
+		u_user_num(u, ERR_CHANOPRIVSNEEDED, c);
 }
 
 struct m_whois_cb_priv {
