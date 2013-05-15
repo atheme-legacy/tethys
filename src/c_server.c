@@ -95,6 +95,83 @@ static void m_uid(conn, msg) u_conn *conn; u_msg *msg;
 		return idfk(conn, msg);
 }
 
+static void m_sjoin(conn, msg) u_conn *conn; u_msg *msg;
+{
+	u_chan *c;
+	u_user *u;
+	u_chanuser *cu;
+	char *p, *s;
+	char *m, mbuf[16];
+	uint flags;
+
+	if (!ENT_IS_SERVER(msg->src))
+		return u_log(LG_ERROR, "Got SJOIN from non-server, wtf");
+	if (!(c = u_chan_get_or_create(msg->argv[1])))
+		return u_log(LG_ERROR, "Could not get/create %s for SJOIN!",
+		             msg->argv[1]);
+
+	/* TODO: check TS */
+	/* TODO: apply channel modes?! */
+
+	p = msg->argv[msg->argc-1];
+	while ((s = cut(&p, " "))) {
+		/* TODO: verify user is behind source! */
+
+		m = mbuf;
+		for (flags=0; !isdigit(*s); s++) {
+			if (*s == '@') {
+				*m++ = 'o';
+				flags |= CU_PFX_OP;
+			} else if (*s == '+') {
+				*m++ = 'v';
+				flags |= CU_PFX_VOICE;
+			}
+		}
+		*m++ = '\0';
+
+		if (!(u = u_user_by_uid(s))) {
+			u_log(LG_ERROR, "%E tried to SJOIN nonexistent %s!",
+			      msg->src, s);
+			continue;
+		}
+
+		cu = u_chan_user_add(c, u);
+		cu->flags = flags;
+
+		u_sendto_chan(c, NULL, ST_USERS, ":%H JOIN :%C", u, c);
+		if (flags != 0) {
+			u_sendto_chan(c, NULL, ST_USERS,
+			              ":%E MODE %C +%s %s%s%s",
+			              msg->src, c, mbuf, u->nick,
+			              mbuf[1] ? " " : "",
+			              mbuf[1] ? u->nick : "");
+		}
+	}
+
+	u_roster_f(ST_SERVERS, conn, ":%E SJOIN %s %s %s :%s",
+	           msg->src, msg->argv[0], msg->argv[1],
+	           msg->argv[2], msg->argv[3]);
+}
+
+static void m_join(conn, msg) u_conn *conn; u_msg *msg;
+{
+	u_chan *c;
+	u_user *u;
+
+	if (!msg->src || !ENT_IS_USER(msg->src)) {
+		return u_log(LG_ERROR, "Can't use JOIN source %s from %G",
+		             msg->srcstr, conn);
+	}
+	if (!(c = u_chan_get(msg->argv[1]))) {
+		return u_log(LG_ERROR, "%G tried to JOIN %E to nonexistent chan %s"
+		             conn, msg->src, msg->argv[1]);
+	}
+
+	/* TODO: check TS */
+
+	u_user_join_chan(u, c);
+}
+
 u_cmd c_server[] = {
 	{ "ERROR",       CTX_SERVER, m_error,         0 },
 	{ "SVINFO",      CTX_SBURST, m_svinfo,        4 },
@@ -103,6 +180,10 @@ u_cmd c_server[] = {
 	{ "EUID",        CTX_SBURST, m_euid,         11 },
 	{ "UID",         CTX_SERVER, m_uid,           9 },
 	{ "UID",         CTX_SBURST, m_uid,           9 },
+
+	{ "SJOIN",       CTX_SERVER, m_sjoin,         4 },
+	{ "SJOIN",       CTX_SBURST, m_sjoin,         4 },
+	{ "JOIN",        CTX_SERVER, m_join,          3 },
 
 	{ "ADMIN",       CTX_SERVER, not_implemented, 0 }, /* hunted */
 	{ "AWAY",        CTX_SERVER, not_implemented, 0 },
@@ -115,7 +196,6 @@ u_cmd c_server[] = {
 	{ "GUNGLINE",    CTX_SERVER, not_implemented, 0 },
 	{ "INFO",        CTX_SERVER, not_implemented, 0 }, /* hunted */
 	{ "INVITE",      CTX_SERVER, not_implemented, 0 },
-	{ "JOIN",        CTX_SERVER, not_implemented, 0 },
 	{ "JUPE",        CTX_SERVER, not_implemented, 0 },
 	{ "KICK",        CTX_SERVER, not_implemented, 0 },
 	{ "KILL",        CTX_SERVER, not_implemented, 0 },
@@ -138,8 +218,6 @@ u_cmd c_server[] = {
 	{ "SERVER",      CTX_SERVER, not_implemented, 0 },
 	{ "SID",         CTX_SERVER, not_implemented, 0 },
 	{ "SIGNON",      CTX_SERVER, not_implemented, 0 },
-	{ "SJOIN",       CTX_SERVER, not_implemented, 0 },
-	{ "SJOIN",       CTX_SBURST, not_implemented, 0 },
 	{ "SQUIT",       CTX_SERVER, not_implemented, 0 },
 	{ "STATS",       CTX_SERVER, not_implemented, 0 }, /* hunted */
 	{ "TB",          CTX_SBURST, not_implemented, 0 },
