@@ -28,7 +28,7 @@ u_mode_changes *c; char ch, *fmt; void *p;
 	}
 	*c->b++ = ch;
 	if (fmt != NULL)
-		c->d += snf(type, c->data, c->data+512-c->d, fmt, p);
+		c->d += snf(type, c->d, c->data+512-c->d, fmt, p);
 }
 
 void u_mode_put(m, on, ch, fmt, p) u_modes *m; char ch, *fmt; void *p;

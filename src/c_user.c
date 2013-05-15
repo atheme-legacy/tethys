@@ -244,6 +244,10 @@ static void m_mode(conn, msg) u_conn *conn; u_msg *msg;
 		u_sendto_chan(c, NULL, ST_USERS,
 		              ":%H MODE %C %s%s", u, c, m.u.buf, m.u.data);
 	}
+	if (m.s.buf[0] || m.s.data[0]) {
+		u_roster_f(R_SERVERS, NULL,
+		           ":%U TMODE %T %C %s%s", u, c, m.s.buf, m.s.data);
+	}
 
 	for (info=cmodes; info->ch; info++) {
 		if (!strchr(m.list, info->ch))
