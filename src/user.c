@@ -419,7 +419,7 @@ static int is_in_list(host, list) char *host; u_list *list;
 	return 0;
 }
 
-static void do_join_chan(c, u) u_chan *c; u_user *u;
+void u_user_join_chan(u, c) u_user *u; u_chan *c;
 {
 	u_conn *conn = u_user_conn(u);
 	u_chanuser *cu;
@@ -433,7 +433,7 @@ static void do_join_chan(c, u) u_chan *c; u_user *u;
 		u_log(LG_DEBUG, "Channel %C created by %U", c, u);
 		cu->flags |= CU_PFX_OP;
 
-		u_roster_f(R_SERVERS, conn, ":%S SJOIN %u %C +%s :@%U",
+		u_roster_f(R_SERVERS, conn, ":%S SJOIN %u %C %s :@%U",
 		           &me, c->ts, c, modes, u);
 		if (u->flags & USER_IS_LOCAL)
 			u_conn_f(conn, ":%S MODE %C %s", &me, c, modes);
@@ -447,56 +447,6 @@ static void do_join_chan(c, u) u_chan *c; u_user *u;
 		u_chan_send_topic(c, u);
 		u_chan_send_names(c, u);
 	}
-}
-
-static u_chan *find_forward(c, u, key) u_chan *c; u_user *u; char *key;
-{
-	int forwards_left = 30;
-
-	while (forwards_left-- > 0) {
-		if (c->forward == NULL)
-			return NULL;
-
-		c = u_chan_get(c->forward);
-
-		if (c == NULL)
-			return NULL;
-		if (!u_entry_blocked(c, u, key))
-			return c;
-	}
-
-	return NULL;
-}
-
-void u_user_try_join_chan(ul, chan, key) u_user_local *ul; char *chan, *key;
-{
-	u_user *u = USER(ul);
-	u_chan *c, *fwd;
-	u_chanuser *cu;
-	int num;
-
-	c = u_chan_get_or_create(chan);
-	
-	if (c == NULL) {
-		u_user_num(u, ERR_GENERIC, "Can't get or create channel!");
-		return;
-	}
-
-	cu = u_chan_user_find(c, u);
-	if (cu != NULL)
-		return;
-
-	num = u_entry_blocked(c, u, key);
-	if (num != 0) {
-		fwd = find_forward(c, u, key);
-		if (fwd == NULL) {
-			u_user_num(u, num, c);
-			return;
-		}
-		c = fwd;
-	}
-
-	do_join_chan(c, u);
 }
 
 void u_user_part_chan(ul, chan, reason) u_user_local *ul; char *chan, *reason;

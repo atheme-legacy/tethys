@@ -690,7 +690,7 @@ int u_entry_blocked(c, u, key) u_chan *c; u_user *u; char *key;
 	}
 
 	if (c->key != NULL) {
-		if (key == NULL || streq(c->key, key) != 0)
+		if (key == NULL || !streq(c->key, key))
 			return ERR_BADCHANNELKEY;
 	}
 
@@ -703,6 +703,25 @@ int u_entry_blocked(c, u, key) u_chan *c; u_user *u; char *key;
 		return ERR_CHANNELISFULL;
 
 	return 0;
+}
+
+u_chan *u_find_forward(c, u, key) u_chan *c; u_user *u; char *key;
+{
+	int forwards_left = 30;
+
+	while (forwards_left-- > 0) {
+		if (c->forward == NULL)
+			return NULL;
+
+		c = u_chan_get(c->forward);
+
+		if (c == NULL)
+			return NULL;
+		if (!u_entry_blocked(c, u, key))
+			return c;
+	}
+
+	return NULL;
 }
 
 int u_is_muted(cu) u_chanuser *cu;

@@ -94,6 +94,7 @@ extern void u_chan_user_del(); /* u_chanuser* */
 extern u_chanuser *u_chan_user_find(); /* u_chan*, u_user* */
 
 extern int u_entry_blocked(); /* u_chan*, u_user*, char *key */
+extern u_chan *u_find_forward(); /* u_chan*, u_user*, char *key */
 extern int u_is_muted(); /* u_chanuser* */
 
 extern int init_chan();

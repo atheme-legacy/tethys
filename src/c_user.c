@@ -58,6 +58,37 @@ static void m_motd(conn, msg) u_conn *conn; u_msg *msg;
 	u_user_send_motd(u);
 }
 
+static void try_join_chan(ul, chan, key) u_user_local *ul; char *chan, *key;
+{
+	u_user *u = USER(ul);
+	u_chan *c, *fwd;
+	u_chanuser *cu;
+	int num;
+
+	c = u_chan_get_or_create(chan);
+
+	if (c == NULL) {
+		u_user_num(u, ERR_GENERIC, "Can't get or create channel!");
+		return;
+	}
+
+	cu = u_chan_user_find(c, u);
+	if (cu != NULL)
+		return;
+
+	num = u_entry_blocked(c, u, key);
+	if (num != 0) {
+		fwd = u_find_forward(c, u, key);
+		if (fwd == NULL) {
+			u_user_num(u, num, c);
+			return;
+		}
+		c = fwd;
+	}
+
+	u_user_join_chan(u, c);
+}
+
 static void m_join(conn, msg) u_conn *conn; u_msg *msg;
 {
 	char *keys[128], **keys_p;
@@ -80,7 +111,7 @@ static void m_join(conn, msg) u_conn *conn; u_msg *msg;
 			continue;
 		}
 
-		u_user_try_join_chan(u, s, *keys_p++);
+		try_join_chan(u, s, *keys_p++);
 	}
 }
 
