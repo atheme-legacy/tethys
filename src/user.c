@@ -423,19 +423,30 @@ static void do_join_chan(c, u) u_chan *c; u_user *u;
 {
 	u_conn *conn = u_user_conn(u);
 	u_chanuser *cu;
+	char *modes;
 
 	cu = u_chan_user_add(c, u);
+	modes = u_chan_modes(c, 1);
+	u_sendto_chan(c, NULL, ST_USERS, ":%H JOIN %C", u, c);
 
 	if (c->members->size == 1) {
-		u_log(LG_DEBUG, "Channel %C created", c);
+		u_log(LG_DEBUG, "Channel %C created by %U", c, u);
 		cu->flags |= CU_PFX_OP;
+
+		u_roster_f(R_SERVERS, conn, ":%S SJOIN %u %C +%s :@%U",
+		           &me, c->ts, c, modes, u);
+		if (u->flags & USER_IS_LOCAL)
+			u_conn_f(conn, ":%S MODE %C %s", &me, c, modes);
+	} else {
+		u_log(LG_DEBUG, "%U join %C", u, c);
+		u_roster_f(R_SERVERS, conn, ":%S JOIN %u %C +",
+		           &me, c->ts, c);
 	}
 
-	u_sendto_chan(c, NULL, ST_ALL, ":%H JOIN %C", u, c);
-	if (c->members->size == 1) /* idk why charybdis does it this way */
-		u_conn_f(conn, ":%S MODE %C %s", &me, c, u_chan_modes(c, 1));
-	u_chan_send_topic(c, u);
-	u_chan_send_names(c, u);
+	if (u->flags & USER_IS_LOCAL) {
+		u_chan_send_topic(c, u);
+		u_chan_send_names(c, u);
+	}
 }
 
 static u_chan *find_forward(c, u, key) u_chan *c; u_user *u; char *key;
