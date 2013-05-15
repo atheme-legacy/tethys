@@ -27,6 +27,7 @@ OBJS = numeric.o \
 	list.o \
 	log.o \
 	map.o \
+	mode.o \
 	msg.o \
 	sendto.o \
 	server.o \

@@ -114,6 +114,7 @@ typedef unsigned long u_ts_t;
 #include "dns.h"
 #include "cookie.h"
 #include "linebuf.h"
+#include "mode.h"
 #include "numeric.h"
 #include "conn.h"
 #include "server.h"
