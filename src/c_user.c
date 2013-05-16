@@ -664,6 +664,11 @@ static void m_kick(conn, msg) u_conn *conn; u_msg *msg;
 	u_chan_user_del(tcu);
 }
 
+static void m_summon(conn, msg) u_conn *conn; u_msg *msg;
+{
+	u_conn_num(conn, ERR_SUMMONDISABLED);
+}
+
 u_cmd c_user[] = {
 	{ "ECHO",      CTX_USER, m_echo,    0 },
 	{ "QUIT",      CTX_USER, m_quit,    0 },
@@ -687,6 +692,7 @@ u_cmd c_user[] = {
 	{ "ADMIN",     CTX_USER, m_admin,   0 },
 	{ "KILL",      CTX_USER, m_kill,    1 },
 	{ "KICK",      CTX_USER, m_kick,    2 },
+	{ "SUMMON",    CTX_USER, m_summon,  0 },
 
 	{ "SQUIT",     CTX_USER, not_implemented, 0 },
 	{ "INVITE",    CTX_USER, not_implemented, 0 },
