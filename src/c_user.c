@@ -71,7 +71,7 @@ static void try_join_chan(ul, chan, key) u_user_local *ul; char *chan, *key;
 	num = u_entry_blocked(c, u, key);
 	if (num != 0) {
 		fwd = u_find_forward(c, u, key);
-		if (fwd == NULL) {
+		if (fwd == NULL || u_chan_user_find(fwd, u)) {
 			u_user_num(u, num, c);
 			return;
 		}
