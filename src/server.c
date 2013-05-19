@@ -229,6 +229,12 @@ void u_server_make_sreg(conn, sid) u_conn *conn; char *sid;
 	u_log(LG_INFO, "New server sid=%s", sv->sid);
 }
 
+static void delete_links(tsv, sv) u_server *tsv, *sv;
+{
+	if (tsv->parent == sv)
+		u_server_unlink(tsv);
+}
+
 static void user_delete(u, priv) u_user *u; void *priv;
 {
 	u_sendto_visible(u, ST_USERS, ":%H QUIT :*.net *.split", u);
@@ -251,14 +257,15 @@ void u_server_unlink(sv) u_server *sv;
 		conn->priv = NULL;
 	}
 
-	/* TODO: recursive unlink */
-
 	/* delete all users */
 	u_trie_each(users_by_uid, sv->sid, user_delete, NULL);
 
 	if (sv->name[0])
 		u_trie_del(servers_by_name, sv->name);
 	u_trie_del(servers_by_sid, sv->sid);
+
+	/* delete any servers linked to this one */
+	u_trie_each(servers_by_sid, NULL, delete_links, sv);
 
 	free(sv);
 }
