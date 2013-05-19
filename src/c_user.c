@@ -683,11 +683,6 @@ static void m_summon(conn, msg) u_conn *conn; u_msg *msg;
 	u_conn_num(conn, ERR_SUMMONDISABLED);
 }
 
-static void debug_cb(u, conn) u_user *u; u_conn *conn;
-{
-	u_conn_f(conn, ":%S NOTICE * :  %s %s", &me, u->uid, u->nick);
-}
-
 u_cmd c_user[] = {
 	{ "ECHO",      CTX_USER, m_echo,    0 },
 	{ "QUIT",      CTX_USER, m_quit,    0 },

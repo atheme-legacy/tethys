@@ -43,6 +43,8 @@ struct u_server {
 	u_server *parent;
 };
 
+#define IS_LOCAL_SERVER(sv) ((sv)->hops == 1)
+
 #define SERVER(sv) ((u_server*)(sv))
 
 extern u_server me;
@@ -60,7 +62,7 @@ extern void u_server_add_capabs(); /* u_server*, char *caps */
 extern void u_my_capabs(); /* char *buf */
 
 extern void u_server_make_sreg(); /* u_conn* */
-extern void u_server_unlink(); /* u_server*, char *msg */
+extern void u_server_unlink(); /* u_server* */
 
 extern void u_server_burst(); /* u_server*, u_link* */
 extern void u_server_eob(); /* u_server* */

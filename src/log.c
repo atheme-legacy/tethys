@@ -13,9 +13,9 @@ void default_handler(level, tm, line) char *tm, *line;
 		  "!!! ERROR: ",
 		  "Warning: ",
 		  "",
-		  "    ",
-		  "       ",
-		  "        "
+		  "",
+		  "  ",
+		  "    "
 	};
 	printf("[%s] %s%s\n", tm, prefix[level], line);
 }

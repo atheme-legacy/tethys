@@ -174,7 +174,13 @@ void u_my_capabs(buf) char *buf;
 void server_local_die(conn, msg) u_conn *conn; char *msg;
 {
 	u_server *sv = conn->priv;
-	u_server_unlink(sv, msg);
+	if (sv == NULL)
+		return;
+	if (conn->ctx == CTX_SERVER) {
+		/* TODO: send SQUIT or something */
+	}
+	u_conn_f(conn, "ERROR :%s", msg);
+	u_server_unlink(sv);
 }
 
 void server_local_event(conn, event) u_conn *conn;
@@ -188,7 +194,7 @@ void server_local_event(conn, event) u_conn *conn;
 		break;
 
 	case EV_DESTROYING:
-		free(conn->priv);
+		break;
 	}
 }
 
@@ -223,28 +229,38 @@ void u_server_make_sreg(conn, sid) u_conn *conn; char *sid;
 	u_log(LG_INFO, "New server sid=%s", sv->sid);
 }
 
-void u_server_unlink(sv, msg) u_server *sv; char *msg;
+static void user_delete(u, priv) u_user *u; void *priv;
 {
-	u_conn *conn = sv->conn;
+	u_sendto_visible(u, ST_USERS, ":%H QUIT :*.net *.split", u);
+	u_user_unlink(u);
+}
 
+void u_server_unlink(sv) u_server *sv;
+{
 	if (sv == &me) {
 		u_log(LG_ERROR, "Can't unlink self!");
 		return;
 	}
 
-	u_log(LG_INFO, "Unlinking server sid=%s (%s)", sv->sid, msg);
+	u_log(LG_INFO, "Unlinking server sid=%s (%S)", sv->sid, sv);
 
-	if (conn->ctx == CTX_SERVER) {
-		/* ... */
-	} else {
-		u_conn_f(conn, "ERROR :%s", msg);
+	if (sv->hops == 1) {
+		u_conn *conn = sv->conn;
+		u_roster_del_all(conn);
+		conn->ctx = CTX_CLOSED;
+		conn->priv = NULL;
 	}
+
+	/* TODO: recursive unlink */
+
+	/* delete all users */
+	u_trie_each(users_by_uid, sv->sid, user_delete, NULL);
 
 	if (sv->name[0])
 		u_trie_del(servers_by_name, sv->name);
 	u_trie_del(servers_by_sid, sv->sid);
 
-	u_roster_del_all(conn);
+	free(sv);
 }
 
 static void burst_euid(u, conn) u_user *u; u_conn *conn;
