@@ -69,6 +69,7 @@ extern void u_server_add_capabs(); /* u_server*, char *caps */
 extern void u_my_capabs(); /* char *buf */
 
 extern void u_server_make_sreg(); /* u_conn* */
+extern u_server *u_server_new_remote(); /* see m_sid in c_server.c */
 extern void u_server_unlink(); /* u_server* */
 
 extern void u_server_burst(); /* u_server*, u_link* */

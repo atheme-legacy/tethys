@@ -290,6 +290,22 @@ static void m_quit(conn, msg) u_conn *conn; u_msg *msg;
 	u_user_unlink(u);
 }
 
+static void m_sid(conn, msg) u_conn *conn; u_msg *msg;
+{
+	if (!ENT_IS_SERVER(msg->src)) {
+		return u_log(LG_WARN, "Can't use SID source %s from %G!",
+		             msg->srcstr, conn);
+	}
+
+	u_server_new_remote(msg->src->v.sv,
+	                    msg->argv[2], /* sid */
+	                    msg->argv[0], /* name */
+	                    msg->argv[3]); /* description */
+	u_roster_f(R_SERVERS, conn, ":%E SID %s %s %s :%s",
+	           msg->src, msg->argv[0], msg->argv[1],
+	           msg->argv[2], msg->argv[3]);
+}
+
 u_cmd c_server[] = {
 	{ "ERROR",       CTX_SERVER, m_error,         0 },
 	{ "SVINFO",      CTX_SBURST, m_svinfo,        4 },
@@ -307,6 +323,8 @@ u_cmd c_server[] = {
 
 	{ "KILL",        CTX_SERVER, m_kill,          1 },
 	{ "QUIT",        CTX_SERVER, m_quit,          0 },
+
+	{ "SID",         CTX_SERVER, m_sid,           4 },
 
 	{ "ADMIN",       CTX_SERVER, not_implemented, 0 }, /* hunted */
 	{ "AWAY",        CTX_SERVER, not_implemented, 0 },
@@ -337,7 +355,6 @@ u_cmd c_server[] = {
 	{ "RESV",        CTX_SERVER, not_implemented, 0 },
 	{ "SAVE",        CTX_SERVER, not_implemented, 0 },
 	{ "SERVER",      CTX_SERVER, not_implemented, 0 },
-	{ "SID",         CTX_SERVER, not_implemented, 0 },
 	{ "SIGNON",      CTX_SERVER, not_implemented, 0 },
 	{ "SQUIT",       CTX_SERVER, not_implemented, 0 },
 	{ "STATS",       CTX_SERVER, not_implemented, 0 }, /* hunted */

@@ -229,9 +229,37 @@ void u_server_make_sreg(conn, sid) u_conn *conn; char *sid;
 
 	conn->event = server_local_event;
 
-	u_log(LG_INFO, "New server sid=%s", sv->sid);
+	u_log(LG_INFO, "New local server sid=%s", sv->sid);
 
 	sv->parent->nlinks++;
+}
+
+u_server *u_server_new_remote(parent, sid, name, desc)
+u_server *parent; char *sid, *name, *desc;
+{
+	u_server *sv;
+
+	sv = malloc(sizeof(*sv));
+
+	sv->conn = parent->conn;
+	strcpy(sv->sid, sid);
+	u_strlcpy(sv->name, name, MAXSERVNAME+1);
+	u_strlcpy(sv->desc, desc, MAXSERVDESC+1);
+	sv->capab = 0;
+	sv->hops = parent->hops + 1;
+	sv->parent = parent;
+
+	sv->nusers = 0;
+	sv->nlinks = 0;
+
+	u_trie_set(servers_by_sid, sv->sid, sv);
+	u_trie_set(servers_by_name, sv->name, sv);
+
+	u_log(LG_INFO, "New remote server sid=%s", sv->sid);
+
+	sv->parent->nlinks++;
+
+	return sv;
 }
 
 static void delete_links(tsv, sv) u_server *tsv, *sv;
