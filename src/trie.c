@@ -103,9 +103,15 @@ static void each(e, cb, priv) u_trie_e *e; void (*cb)(); void *priv;
 	}
 }
 
-void u_trie_each(trie, cb, priv) u_trie *trie; void (*cb)(); void *priv;
+void u_trie_each(trie, pfx, cb, priv)
+u_trie *trie; char *pfx; void (*cb)(); void *priv;
 {
-	each(&trie->n, cb, priv);
+	u_trie_e *e = &trie->n;
+	if (pfx && pfx[0]) {
+		e = retrieval(trie, pfx, 0);
+		if (!e) return;
+	}
+	each(e, cb, priv);
 }
 
 void *u_trie_del(trie, key) u_trie *trie; char *key;

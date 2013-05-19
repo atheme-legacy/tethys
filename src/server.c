@@ -358,13 +358,13 @@ void u_server_burst(sv, link) u_server *sv; u_link *link;
 	/* TODO: "EUID for all known users (possibly followed by ENCAP
 	   REALHOST, ENCAP LOGIN, and/or AWAY)" */
 	if (sv->capab & CAPAB_EUID)
-		u_trie_each(users_by_uid, burst_euid, conn);
+		u_trie_each(users_by_uid, NULL, burst_euid, conn);
 	else
-		u_trie_each(users_by_uid, burst_uid, conn);
+		u_trie_each(users_by_uid, NULL, burst_uid, conn);
 
 	/* TODO: "and SJOIN messages for all known channels (possibly followed
 	   by BMASK and/or TB)" */
-	u_trie_each(all_chans, burst_chan, conn);
+	u_trie_each(all_chans, NULL, burst_chan, conn);
 
 	u_conn_f(conn, ":%S PING %s %s", &me, me.name, sv->name);
 

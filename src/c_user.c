@@ -515,7 +515,7 @@ static void m_list(conn, msg) u_conn *conn; u_msg *msg;
 	}
 
 	u_user_num(u, RPL_LISTSTART);
-	u_trie_each(all_chans, m_list_chan_cb, u);
+	u_trie_each(all_chans, NULL, m_list_chan_cb, u);
 	u_user_num(u, RPL_LISTEND);
 }
 
@@ -681,6 +681,11 @@ static void m_kick(conn, msg) u_conn *conn; u_msg *msg;
 static void m_summon(conn, msg) u_conn *conn; u_msg *msg;
 {
 	u_conn_num(conn, ERR_SUMMONDISABLED);
+}
+
+static void debug_cb(u, conn) u_user *u; u_conn *conn;
+{
+	u_conn_f(conn, ":%S NOTICE * :  %s %s", &me, u->uid, u->nick);
 }
 
 u_cmd c_user[] = {

@@ -30,7 +30,7 @@ extern u_trie *u_trie_new(); /* canonize cb, or NULL */
 extern void u_trie_set(); /* u_trie*, char*, void* */
 extern void *u_trie_get(); /* u_trie*, char* */
 /* void cb(void *value, void *priv); */
-extern void u_trie_each(); /* u_trie*, cb, void* */
+extern void u_trie_each(); /* u_trie*, char*, cb, void* */
 extern void *u_trie_del(); /* u_trie*, char* */
 
 #endif
