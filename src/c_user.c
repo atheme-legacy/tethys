@@ -688,7 +688,7 @@ struct map_priv {
 	u_user *u;
 
 	u_server *sv;
-	int depth;
+	int depth, left;
 };
 static void do_map();
 static void map_find_children(sv, p) u_server *sv; struct map_priv *p;
@@ -702,21 +702,37 @@ static void map_find_children(sv, p) u_server *sv; struct map_priv *p;
 }
 static void do_map(p) struct map_priv *p;
 {
-	int depth = p->depth;
+	int len, left, depth = p->depth << 2;
 	u_server *sv = p->sv;
 
-	memset(p->indent, ' ', 512);
-	p->indent[depth * 4] = '\0';
+	p->indent[depth] = '\0';
+	if (depth != 0) {
+		p->left--;
+		p->indent[depth - 3] = p->left ? '|' : '`';
+		p->indent[depth - 2] = '-';
+	}
 
-	snf(FMT_USER, p->buf, 512, "%s%s[%s] %d users",
-	    p->indent, sv->name, sv->sid, sv->nusers);
+	len = snf(FMT_USER, p->buf, 512, "%s%s[%s] ",
+	          p->indent, sv->name, sv->sid);
+	memset(p->buf + len, '-', 512 - len);
+	snf(FMT_USER, p->buf + 50, 462, " | Users: %5d", sv->nusers);
+
+	/* send! */
 	u_user_num(p->u, RPL_MAP, p->buf);
 
+	p->indent[depth] = ' ';
+
 	if (sv->nlinks > 0) {
-		p->depth = depth + 1;
+		left = p->left;
+		p->left = sv->nlinks;
+		p->depth = (depth >> 2) + 1;
 		u_trie_each(servers_by_sid, NULL, map_find_children, p);
-		p->depth = depth;
+		p->depth = (depth >> 2);
+		p->left = left;
 	}
+
+	p->indent[depth - 3] = ' ';
+	p->indent[depth - 2] = ' ';
 }
 
 static void m_map(conn, msg) u_conn *conn; u_msg *msg;
@@ -727,6 +743,7 @@ static void m_map(conn, msg) u_conn *conn; u_msg *msg;
 	if (!(u->flags & UMODE_OPER))
 		return u_user_num(u, ERR_NOPRIVILEGES);
 
+	memset(p.indent, ' ', 512);
 	p.sv = &me;
 	p.depth = 0;
 	p.u = u;
