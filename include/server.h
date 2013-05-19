@@ -41,6 +41,10 @@ struct u_server {
 
 	uint hops;
 	u_server *parent;
+
+	/* statistics */
+	uint nusers;
+	uint nlinks;
 };
 
 #define IS_LOCAL_SERVER(sv) ((sv)->hops == 1)

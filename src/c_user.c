@@ -708,12 +708,15 @@ static void do_map(p) struct map_priv *p;
 	memset(p->indent, ' ', 512);
 	p->indent[depth * 4] = '\0';
 
-	snf(FMT_USER, p->buf, 512, "%s%s[%s]", p->indent, sv->name, sv->sid);
+	snf(FMT_USER, p->buf, 512, "%s%s[%s] %d users",
+	    p->indent, sv->name, sv->sid, sv->nusers);
 	u_user_num(p->u, RPL_MAP, p->buf);
 
-	p->depth = depth + 1;
-	u_trie_each(servers_by_sid, NULL, map_find_children, p);
-	p->depth = depth;
+	if (sv->nlinks > 0) {
+		p->depth = depth + 1;
+		u_trie_each(servers_by_sid, NULL, map_find_children, p);
+		p->depth = depth;
+	}
 }
 
 static void m_map(conn, msg) u_conn *conn; u_msg *msg;

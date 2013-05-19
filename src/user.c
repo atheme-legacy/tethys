@@ -179,6 +179,8 @@ void u_user_make_ureg(conn) u_conn *conn;
 
 	conn->event = user_local_event;
 
+	me.nusers++;
+
 	u_log(LG_VERBOSE, "New local user uid=%s host=%s", u->uid, u->host);
 }
 
@@ -205,6 +207,7 @@ u_user_remote *u_user_new_remote(sv, uid) u_server *sv; char *uid;
 	u_user_state(u, USER_NO_STATE);
 
 	ur->server = sv;
+	ur->server->nusers++;
 
 	u_log(LG_VERBOSE, "New remote user uid=%s", u->uid);
 
@@ -219,6 +222,8 @@ u_map *map; u_chan *c; u_chanuser *cu; void *priv;
 
 void u_user_unlink(u) u_user *u;
 {
+	u_server *sv = u_user_server(u);
+
 	if (u->flags & USER_IS_LOCAL) {
 		u_user_local *ul = USER_LOCAL(u);
 		u_roster_del_all(ul->conn);
@@ -235,6 +240,9 @@ void u_user_unlink(u) u_user *u;
 	if (u->nick[0])
 		u_trie_del(users_by_nick, u->nick);
 	u_trie_del(users_by_uid, u->uid);
+
+	if (sv != NULL)
+		sv->nusers--;
 
 	free(u);
 }

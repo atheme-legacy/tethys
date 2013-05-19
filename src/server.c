@@ -224,9 +224,14 @@ void u_server_make_sreg(conn, sid) u_conn *conn; char *sid;
 	sv->hops = 1;
 	sv->parent = &me;
 
+	sv->nusers = 0;
+	sv->nlinks = 0;
+
 	conn->event = server_local_event;
 
 	u_log(LG_INFO, "New server sid=%s", sv->sid);
+
+	sv->parent->nlinks++;
 }
 
 static void delete_links(tsv, sv) u_server *tsv, *sv;
@@ -256,6 +261,8 @@ void u_server_unlink(sv) u_server *sv;
 		conn->ctx = CTX_CLOSED;
 		conn->priv = NULL;
 	}
+
+	sv->parent->nlinks--;
 
 	/* delete all users */
 	u_trie_each(users_by_uid, sv->sid, user_delete, NULL);
@@ -424,6 +431,9 @@ int init_server()
 	         | CAPAB_SAVE | CAPAB_EUID;
 	me.hops = 0;
 	me.parent = NULL;
+
+	me.nusers = 0;
+	me.nlinks = 0;
 
 	u_list_init(&my_motd);
 
