@@ -30,7 +30,14 @@ static void m_echo(conn, msg) u_conn *conn; u_msg *msg;
 
 static void m_quit(conn, msg) u_conn *conn; u_msg *msg;
 {
-	u_user_unlink(conn->priv, msg->argc > 0 ? msg->argv[0] : "Client quit");
+	const char *r = msg->argc > 0 ? msg->argv[0] : "Client quit";
+	u_user *u = conn->priv;
+
+	u_sendto_visible(u, ST_USERS, ":%H QUIT :%s", u, r);
+	u_conn_f(conn, ":%H QUIT :%s", u, r);
+	u_roster_f(R_SERVERS, NULL, ":%H QUIT :%s", u, r);
+
+	u_user_unlink(u);
 	u_conn_close(conn);
 }
 
@@ -633,9 +640,16 @@ static void m_kill(conn, msg) u_conn *conn; u_msg *msg;
 	if (!(tu->flags & USER_IS_LOCAL))
 		return u_user_num(u, ERR_GENERIC, "Can't kill remote users yet");
 
-	snf(FMT_USER, buf, 512, "Killed (%U (%s))", u, reason);
-	u_user_unlink(tu, buf);
-	u_conn_close(USER_LOCAL(tu)->conn);
+	snf(FMT_USER, buf, 512, "%U (%s)", u, reason);
+
+	u_sendto_visible(tu, ST_USERS, ":%H QUIT :Killed (%s)", tu, buf);
+	u_roster_f(R_SERVERS, NULL, ":%U KILL %U :%s", u, tu, buf);
+
+	if (tu->flags & USER_IS_LOCAL) {
+		u_conn_f(USER_LOCAL(tu)->conn, ":%H QUIT :Killed (%s)", tu, buf);
+		u_conn_close(USER_LOCAL(tu)->conn);
+	}
+	u_user_unlink(tu);
 }
 
 static void m_kick(conn, msg) u_conn *conn; u_msg *msg;

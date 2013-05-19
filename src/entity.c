@@ -41,6 +41,8 @@ void make_user(e) u_entity *e;
 
 u_entity *u_entity_from_name(e, s) u_entity *e; char *s;
 {
+	if (!s) return NULL;
+
 	if (strchr(s, '.')) {
 		if (!(e->v.sv = u_server_by_name(s)))
 			return NULL;
@@ -56,6 +58,8 @@ u_entity *u_entity_from_name(e, s) u_entity *e; char *s;
 
 u_entity *u_entity_from_id(e, s) u_entity *e; char *s;
 {
+	if (!s) return NULL;
+
 	if (s[3]) {
 		if (!(e->v.u = u_user_by_uid(s)))
 			return NULL;
@@ -71,6 +75,8 @@ u_entity *u_entity_from_id(e, s) u_entity *e; char *s;
 
 u_entity *u_entity_from_ref(e, s) u_entity *e; char *s;
 {
+	if (!s) return NULL;
+
 	return u_entity_from_id(e, ref_to_id(s));
 }
 

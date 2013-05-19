@@ -121,7 +121,12 @@ void u_user_mode(u, ch, on) u_user *u; char ch;
 void user_local_die(conn, msg) u_conn *conn; char *msg;
 {
 	u_user *u = conn->priv;
-	u_user_unlink(u, msg);
+	if (u == NULL)
+		return;
+	if (conn->ctx == CTX_USER)
+		u_sendto_visible(u, ST_ALL, ":%H QUIT :%s", u, msg);
+	u_conn_f(conn, "ERROR :%s", msg);
+	u_user_unlink(u);
 }
 
 void user_local_event(conn, event) u_conn *conn;
@@ -135,7 +140,7 @@ void user_local_event(conn, event) u_conn *conn;
 		break;
 
 	case EV_DESTROYING:
-		free(conn->priv);
+		break;
 	}
 }
 
@@ -206,40 +211,30 @@ u_user_remote *u_user_new_remote(sv, uid) u_server *sv; char *uid;
 	return ur;
 }
 
-void user_quit_cb(map, c, cu, priv)
+void user_unlink_cb(map, c, cu, priv)
 u_map *map; u_chan *c; u_chanuser *cu; void *priv;
 {
 	u_chan_user_del(cu);
 }
 
-void u_user_unlink(u, msg) u_user *u; char *msg;
+void u_user_unlink(u) u_user *u;
 {
-	u_conn *conn = u_user_conn(u);
-
-	/* TODO: refit this for remote users?! */
-
-	if (u_user_state(u, 0) == USER_DISCONNECTED)
-		return;
-
-	u_user_state(u, USER_DISCONNECTED);
-
-	if (conn->ctx == CTX_USER) {
-		u_sendto_visible(u, ST_ALL, ":%H QUIT :%s", u, msg);
-		u_conn_f(conn, ":%H QUIT :%s", u, msg);
-		u_wallops("Disconnect: %H (%s)", u, msg);
-	} else {
-		u_conn_f(conn, "ERROR :%s", msg);
+	if (u->flags & USER_IS_LOCAL) {
+		u_user_local *ul = USER_LOCAL(u);
+		u_roster_del_all(ul->conn);
+		ul->conn->ctx = CTX_CLOSED;
+		ul->conn->priv = NULL;
 	}
 
 	/* part from all channels */
-	u_map_each(u->channels, user_quit_cb, NULL);
+	u_map_each(u->channels, user_unlink_cb, NULL);
 	u_map_free(u->channels);
 
 	if (u->nick[0])
 		u_trie_del(users_by_nick, u->nick);
 	u_trie_del(users_by_uid, u->uid);
 
-	u_roster_del_all(conn);
+	free(u);
 }
 
 u_conn *u_user_conn(u) u_user *u;

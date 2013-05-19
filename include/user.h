@@ -97,7 +97,7 @@ extern void u_user_mode(); /* u_user*, char ch, int on */
 
 extern void u_user_make_ureg(); /* u_conn* */
 extern u_user_remote *u_user_new_remote(); /* u_server*, char *uid */
-extern void u_user_unlink(); /* u_user*, char* */
+extern void u_user_unlink(); /* u_user* */
 
 extern u_conn *u_user_conn(); /* u_user* */
 extern u_server *u_user_server(); /* u_user* */

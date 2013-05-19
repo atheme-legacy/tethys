@@ -25,7 +25,8 @@
 #define CTX_UREG        3
 #define CTX_SREG        4
 #define CTX_SBURST      5
-#define CTX_MAX         6
+#define CTX_CLOSED      6
+#define CTX_MAX         7
 
 typedef struct u_conn u_conn;
 typedef struct u_conn_origin u_conn_origin;
