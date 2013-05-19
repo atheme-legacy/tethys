@@ -120,6 +120,13 @@ int vsnf(type, s, size, fmt, va) char *s, *fmt; uint size; va_list va;
 	buf.size = size - 1; /* null byte */
 	buf.len = 0;
 
+	/* silly little optimization */
+	if (streq(fmt, "%s")) {
+		s_arg = va_arg(va, char*);
+		u_strlcpy(s, s_arg, size);
+		return strlen(s);
+	}
+
 	/* a goto is used to reduce indentation */
 top:
 	if (!*fmt)

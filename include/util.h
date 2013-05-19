@@ -34,7 +34,7 @@ extern int casecmp(); /* char *s1, char *s2 */
 extern int irccmp(); /* char *s1, char *s2 */
 
 extern void u_memmove();
-extern void u_strlcpy();
+extern ulong u_strlcpy();
 extern void u_strlcat();
 extern char *u_strdup();
 extern void u_ntop(); /* in_addr*, char* */

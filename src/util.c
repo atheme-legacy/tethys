@@ -169,7 +169,7 @@ void u_memmove(dest, src, n) char *dest, *src;
 		u_memmove_upper(dest, src, n);
 }
 
-void u_strlcpy(dest, src, n) char *dest, *src;
+ulong u_strlcpy(dest, src, n) char *dest, *src;
 {
 	int len;
 	n--;
@@ -180,6 +180,8 @@ void u_strlcpy(dest, src, n) char *dest, *src;
 
 	memcpy(dest, src, n);
 	dest[n] = '\0';
+
+	return n;
 }
 
 void u_strlcat(dest, src, n) char *dest, *src;
