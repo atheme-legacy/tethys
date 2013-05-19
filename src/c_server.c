@@ -226,6 +226,70 @@ static void m_tmode(conn, msg) u_conn *conn; u_msg *msg;
 	}
 }
 
+static void m_kill(conn, msg) u_conn *conn; u_msg *msg;
+{
+	char *r, buf[512];
+	u_user *u;
+
+	if (!msg->src) {
+		u_entity_from_server(msg->src, &me);
+		u_log(LG_WARN, "Can't use KILL source %s from %G, using %E.",
+		      msg->srcstr, conn, msg->src);
+	}
+
+	if (!(u = u_user_by_uid(msg->argv[0]))) {
+		return u_log(LG_ERROR, "%G tried to KILL nonexistent user %s",
+		             conn, msg->argv[0]);
+	}
+
+	r = "<No reason given>";
+	buf[0] = '\0';
+	if (msg->argc > 1) {
+		r = msg->argv[1];
+		sprintf(buf, " :%s", msg->argv[1]);
+	}
+
+	if (u->flags & USER_IS_LOCAL) {
+		u_user_local *ul = USER_LOCAL(u);
+		u_conn_f(ul->conn, ":%H QUIT :Killed (%s)", u, r);
+		u_conn_close(ul->conn);
+	}
+
+	u_sendto_visible(u, ST_USERS, ":%H QUIT :Killed (%s)", u, r);
+	u_roster_f(R_SERVERS, conn, ":%E KILL %U%s", msg->src, u, buf);
+
+	u_user_unlink(u);
+}
+
+static void m_quit(conn, msg) u_conn *conn; u_msg *msg;
+{
+	char buf[512];
+	u_user *u;
+
+	if (!msg->src || !ENT_IS_USER(msg->src)) {
+		return u_log(LG_WARN, "Can't use QUIT source %s from %G!",
+		             msg->srcstr, conn);
+	}
+
+	u = msg->src->v.u;
+
+	buf[0] = '\0';
+	if (msg->argc > 0)
+		sprintf(buf, " :%s", msg->argv[0]);
+
+	if (u->flags & USER_IS_LOCAL) { /* possible? */
+		u_user_local *ul = USER_LOCAL(ul);
+		u_log(LG_WARN, "%G sent QUIT for my user %U", conn, u);
+		u_conn_f(ul->conn, ":%H QUIT%s", u, buf);
+		u_conn_close(ul->conn);
+	}
+
+	u_sendto_visible(u, ST_USERS, ":%H QUIT%s", u, buf);
+	u_roster_f(R_SERVERS, conn, ":%H QUIT%s", u, buf);
+
+	u_user_unlink(u);
+}
+
 u_cmd c_server[] = {
 	{ "ERROR",       CTX_SERVER, m_error,         0 },
 	{ "SVINFO",      CTX_SBURST, m_svinfo,        4 },
@@ -241,6 +305,9 @@ u_cmd c_server[] = {
 
 	{ "TMODE",       CTX_SERVER, m_tmode,         3 },
 
+	{ "KILL",        CTX_SERVER, m_kill,          1 },
+	{ "QUIT",        CTX_SERVER, m_quit,          0 },
+
 	{ "ADMIN",       CTX_SERVER, not_implemented, 0 }, /* hunted */
 	{ "AWAY",        CTX_SERVER, not_implemented, 0 },
 	{ "BAN",         CTX_SERVER, not_implemented, 0 },
@@ -254,7 +321,6 @@ u_cmd c_server[] = {
 	{ "INVITE",      CTX_SERVER, not_implemented, 0 },
 	{ "JUPE",        CTX_SERVER, not_implemented, 0 },
 	{ "KICK",        CTX_SERVER, not_implemented, 0 },
-	{ "KILL",        CTX_SERVER, not_implemented, 0 },
 	{ "KLINE",       CTX_SERVER, not_implemented, 0 },
 	{ "KNOCK",       CTX_SERVER, not_implemented, 0 },
 	{ "LINKS",       CTX_SERVER, not_implemented, 0 }, /* hunted */
@@ -268,7 +334,6 @@ u_cmd c_server[] = {
 	{ "OPERWALL",    CTX_SERVER, not_implemented, 0 },
 	{ "PART",        CTX_SERVER, not_implemented, 0 },
 	{ "PRIVS",       CTX_SERVER, not_implemented, 0 }, /* hunted */
-	{ "QUIT",        CTX_SERVER, not_implemented, 0 },
 	{ "RESV",        CTX_SERVER, not_implemented, 0 },
 	{ "SAVE",        CTX_SERVER, not_implemented, 0 },
 	{ "SERVER",      CTX_SERVER, not_implemented, 0 },
