@@ -6,6 +6,9 @@ RPL_ISUPPORT	5	"%s :are supported by this server"
 
 RPL_YOUREJAMESBOND	7	":You are now Bond. James Bond."
 
+RPL_MAP	15	":%s"
+RPL_MAPEND	17	":End of /MAP"
+
 RPL_STATSLINKINFO	211
 RPL_STATSCOMMANDS	212
 RPL_STATSCLINE	213

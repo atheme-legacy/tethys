@@ -47,6 +47,9 @@ struct u_server {
 
 #define SERVER(sv) ((u_server*)(sv))
 
+extern u_trie *servers_by_sid;
+extern u_trie *servers_by_name;
+
 extern u_server me;
 extern u_list my_motd;
 extern char my_net_name[MAXNETNAME+1];

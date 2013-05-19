@@ -683,6 +683,55 @@ static void m_summon(conn, msg) u_conn *conn; u_msg *msg;
 	u_conn_num(conn, ERR_SUMMONDISABLED);
 }
 
+struct map_priv {
+	char indent[512], buf[512];
+	u_user *u;
+
+	u_server *sv;
+	int depth;
+};
+static void do_map();
+static void map_find_children(sv, p) u_server *sv; struct map_priv *p;
+{
+	u_server *psv = p->sv;
+	if (sv->parent == psv) {
+		p->sv = sv;
+		do_map(p);
+		p->sv = psv;
+	}
+}
+static void do_map(p) struct map_priv *p;
+{
+	int depth = p->depth;
+	u_server *sv = p->sv;
+
+	memset(p->indent, ' ', 512);
+	p->indent[depth * 4] = '\0';
+
+	snf(FMT_USER, p->buf, 512, "%s%s[%s]", p->indent, sv->name, sv->sid);
+	u_user_num(p->u, RPL_MAP, p->buf);
+
+	p->depth = depth + 1;
+	u_trie_each(servers_by_sid, NULL, map_find_children, p);
+	p->depth = depth;
+}
+
+static void m_map(conn, msg) u_conn *conn; u_msg *msg;
+{
+	struct map_priv p;
+	u_user *u = conn->priv;
+
+	if (!(u->flags & UMODE_OPER))
+		return u_user_num(u, ERR_NOPRIVILEGES);
+
+	p.sv = &me;
+	p.depth = 0;
+	p.u = u;
+	do_map(&p);
+
+	u_user_num(u, RPL_MAPEND);
+}
+
 u_cmd c_user[] = {
 	{ "ECHO",      CTX_USER, m_echo,    0 },
 	{ "QUIT",      CTX_USER, m_quit,    0 },
@@ -707,6 +756,7 @@ u_cmd c_user[] = {
 	{ "KILL",      CTX_USER, m_kill,    1 },
 	{ "KICK",      CTX_USER, m_kick,    2 },
 	{ "SUMMON",    CTX_USER, m_summon,  0 },
+	{ "MAP",       CTX_USER, m_map,     0 },
 
 	{ "SQUIT",     CTX_USER, not_implemented, 0 },
 	{ "INVITE",    CTX_USER, not_implemented, 0 },
