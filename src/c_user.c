@@ -33,9 +33,9 @@ static void m_quit(conn, msg) u_conn *conn; u_msg *msg;
 	const char *r = msg->argc > 0 ? msg->argv[0] : "Client quit";
 	u_user *u = conn->priv;
 
-	u_sendto_visible(u, ST_USERS, ":%H QUIT :%s", u, r);
-	u_conn_f(conn, ":%H QUIT :%s", u, r);
-	u_roster_f(R_SERVERS, NULL, ":%H QUIT :%s", u, r);
+	u_sendto_visible(u, ST_USERS, ":%H QUIT :Quit: %s", u, r);
+	u_conn_f(conn, ":%H QUIT :Quit: %s", u, r);
+	u_roster_f(R_SERVERS, NULL, ":%H QUIT :Quit: %s", u, r);
 
 	u_user_unlink(u);
 	u_conn_close(conn);
