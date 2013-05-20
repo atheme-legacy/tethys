@@ -32,7 +32,7 @@ static int m_echo(conn, msg) u_conn *conn; u_msg *msg;
 
 static int m_quit(conn, msg) u_conn *conn; u_msg *msg;
 {
-	const char *r = msg->argc > 0 ? msg->argv[0] : "Client quit";
+	char *r = msg->argc > 0 ? msg->argv[0] : "Client quit";
 	u_user *u = conn->priv;
 
 	u_sendto_visible(u, ST_USERS, ":%H QUIT :Quit: %s", u, r);
@@ -762,8 +762,10 @@ static void do_map(p) struct map_priv *p;
 		p->left = left;
 	}
 
-	p->indent[depth - 3] = ' ';
-	p->indent[depth - 2] = ' ';
+	if (depth != 0) {
+		p->indent[depth - 3] = ' ';
+		p->indent[depth - 2] = ' ';
+	}
 }
 
 static int m_map(conn, msg) u_conn *conn; u_msg *msg;
