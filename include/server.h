@@ -51,7 +51,7 @@ struct u_server {
 	uint nlinks;
 };
 
-#define IS_LOCAL_SERVER(sv) ((sv)->hops == 1)
+#define IS_SERVER_LOCAL(sv) ((sv)->hops == 1)
 
 #define SERVER(sv) ((u_server*)(sv))
 

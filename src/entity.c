@@ -17,7 +17,7 @@ void make_server(e) u_entity *e;
 
 	e->link = sv->conn;
 	e->loc = NULL;
-	if (sv->hops == 1)
+	if (IS_SERVER_LOCAL(sv))
 		e->loc = e->link;
 }
 

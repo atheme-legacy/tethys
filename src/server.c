@@ -284,7 +284,7 @@ void u_server_unlink(sv) u_server *sv;
 
 	u_log(LG_INFO, "Unlinking server sid=%s (%S)", sv->sid, sv);
 
-	if (sv->hops == 1) {
+	if (IS_SERVER_LOCAL(sv)) {
 		u_conn *conn = sv->conn;
 		u_roster_del_all(conn);
 		conn->ctx = CTX_CLOSED;
