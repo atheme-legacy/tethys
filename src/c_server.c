@@ -6,37 +6,40 @@
 
 #include "ircd.h"
 
-static void not_implemented(conn, msg) u_conn *conn; u_msg *msg;
+static int not_implemented(conn, msg) u_conn *conn; u_msg *msg;
 {
 	u_log(LG_SEVERE, "%S used unimplemented S2S command %s",
 	      conn->priv, msg->command);
+	return 0;
 }
 
-static void idfk(conn, msg) u_conn *conn; u_msg *msg;
+static int idfk(conn, msg) u_conn *conn; u_msg *msg;
 {
 	u_log(LG_WARN, "%S sent bad %s, it seems", conn->priv, msg->command);
+	return 0;
 }
 
-static void m_error(conn, msg) u_conn *conn; u_msg *msg;
+static int m_error(conn, msg) u_conn *conn; u_msg *msg;
 {
 	u_log(LG_ERROR, "%S is closing connection via ERROR (%s)", conn->priv,
 	      msg->argc > 0 ? msg->argv[0] : "no message");
 	u_conn_error(conn, "Peer sent ERROR!");
+	return 0;
 }
 
-static void m_svinfo(conn, msg) u_conn *conn; u_msg *msg;
+static int m_svinfo(conn, msg) u_conn *conn; u_msg *msg;
 {
 	int tsdelta;
 	u_server *sv = conn->priv;
 
 	if (!(sv->flags & SERVER_IS_BURSTING)) {
 		u_log(LG_ERROR, "%S tried to send SVINFO again!", sv);
-		return;
+		return 0;
 	}
 
 	if (atoi(msg->argv[0]) < 6) {
 		u_conn_error(conn, "Max TS version is not 6!");
-		return;
+		return 0;
 	}
 
 	tsdelta = atoi(msg->argv[3]) - (int)NOW.tv_sec;
@@ -48,8 +51,10 @@ static void m_svinfo(conn, msg) u_conn *conn; u_msg *msg;
 	if (tsdelta > 60) {
 		u_log(LG_ERROR, "%S has excessive TS delta, killing", conn->priv);
 		u_conn_error(conn, "Excessive TS delta");
-		return;
+		return 0;
 	}
+
+	return 0;
 }
 
 static u_user *uid_generic(conn, msg) u_conn *conn; u_msg *msg;
@@ -83,7 +88,7 @@ static u_user *uid_generic(conn, msg) u_conn *conn; u_msg *msg;
 	return u;
 }
 
-static void m_euid(conn, msg) u_conn *conn; u_msg *msg;
+static int m_euid(conn, msg) u_conn *conn; u_msg *msg;
 {
 	u_user *u;
 
@@ -93,15 +98,17 @@ static void m_euid(conn, msg) u_conn *conn; u_msg *msg;
 	u_strlcpy(u->realhost, msg->argv[8], MAXHOST+1);
 	if (msg->argv[9][0] != '*')
 		u_strlcpy(u->acct, msg->argv[9], MAXACCOUNT+1);
+	return 0;
 }
 
-static void m_uid(conn, msg) u_conn *conn; u_msg *msg;
+static int m_uid(conn, msg) u_conn *conn; u_msg *msg;
 {
 	if (!uid_generic(conn, msg))
 		return idfk(conn, msg);
+	return 0;
 }
 
-static void m_sjoin(conn, msg) u_conn *conn; u_msg *msg;
+static int m_sjoin(conn, msg) u_conn *conn; u_msg *msg;
 {
 	u_chan *c;
 	u_user *u;
@@ -157,9 +164,10 @@ static void m_sjoin(conn, msg) u_conn *conn; u_msg *msg;
 	u_roster_f(R_SERVERS, conn, ":%E SJOIN %s %s %s :%s",
 	           msg->src, msg->argv[0], msg->argv[1],
 	           msg->argv[2], msg->argv[3]);
+	return 0;
 }
 
-static void m_join(conn, msg) u_conn *conn; u_msg *msg;
+static int m_join(conn, msg) u_conn *conn; u_msg *msg;
 {
 	u_chan *c;
 	u_chanuser *cu;
@@ -181,9 +189,11 @@ static void m_join(conn, msg) u_conn *conn; u_msg *msg;
 
 	u_sendto_chan(c, NULL, ST_USERS, ":%H JOIN %C", cu->u, c);
 	u_roster_f(R_SERVERS, conn, ":%U JOIN %s %C +", cu->u, msg->argv[0], c);
+
+	return 0;
 }
 
-static void m_tmode(conn, msg) u_conn *conn; u_msg *msg;
+static int m_tmode(conn, msg) u_conn *conn; u_msg *msg;
 {
 	int parc;
 	char **parv;
@@ -230,9 +240,11 @@ static void m_tmode(conn, msg) u_conn *conn; u_msg *msg;
 		u_roster_f(R_SERVERS, conn, ":%E TMODE %u %C %s%s",
 		           msg->src, c->ts, c, m.s.buf, m.s.data);
 	}
+
+	return 0;
 }
 
-static void m_kill(conn, msg) u_conn *conn; u_msg *msg;
+static int m_kill(conn, msg) u_conn *conn; u_msg *msg;
 {
 	char *r, buf[512];
 	u_user *u;
@@ -265,9 +277,11 @@ static void m_kill(conn, msg) u_conn *conn; u_msg *msg;
 	u_roster_f(R_SERVERS, conn, ":%E KILL %U%s", msg->src, u, buf);
 
 	u_user_unlink(u);
+
+	return 0;
 }
 
-static void m_quit(conn, msg) u_conn *conn; u_msg *msg;
+static int m_quit(conn, msg) u_conn *conn; u_msg *msg;
 {
 	char buf[512];
 	u_user *u;
@@ -294,9 +308,11 @@ static void m_quit(conn, msg) u_conn *conn; u_msg *msg;
 	u_roster_f(R_SERVERS, conn, ":%H QUIT%s", u, buf);
 
 	u_user_unlink(u);
+
+	return 0;
 }
 
-static void m_sid(conn, msg) u_conn *conn; u_msg *msg;
+static int m_sid(conn, msg) u_conn *conn; u_msg *msg;
 {
 	if (!ENT_IS_SERVER(msg->src)) {
 		return u_log(LG_WARN, "Can't use SID source %s from %G!",
@@ -310,6 +326,8 @@ static void m_sid(conn, msg) u_conn *conn; u_msg *msg;
 	u_roster_f(R_SERVERS, conn, ":%E SID %s %s %s :%s",
 	           msg->src, msg->argv[0], msg->argv[1],
 	           msg->argv[2], msg->argv[3]);
+
+	return 0;
 }
 
 u_cmd c_server[] = {

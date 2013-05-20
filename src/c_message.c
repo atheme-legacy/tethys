@@ -24,7 +24,7 @@ static int message_blocked(c, u) u_chan *c; u_user *u;
 	return 0;
 }
 
-static void m_message_chan(conn, msg) u_conn *conn; u_msg *msg;
+static int m_message_chan(conn, msg) u_conn *conn; u_msg *msg;
 {
 	u_chan *tgt;
 
@@ -32,21 +32,22 @@ static void m_message_chan(conn, msg) u_conn *conn; u_msg *msg;
 		return u_conn_num(conn, ERR_NOSUCHCHANNEL, msg->argv[0]);
 
 	if (conn->ctx == CTX_USER && message_blocked(tgt, conn->priv))
-		return;
+		return 0;
 
 	u_log(LG_DEBUG, "[%E -> %C] %s", msg->src, tgt, msg->argv[1]);
 
 	if (ENT_IS_SERVER(msg->src)) {
 		u_sendto_chan(tgt, conn, ST_ALL, ":%S NOTICE %C :%s",
 		              msg->src->v.sv, tgt, msg->argv[1]);
-		return;
+		return 0;
 	}
 
 	u_sendto_chan(tgt, conn, ST_ALL, ":%H %s %C :%s", msg->src->v.u,
 	              msg->command, tgt, msg->argv[1]);
+	return 0;
 }
 
-static void m_message_user(conn, msg) u_conn *conn; u_msg *msg;
+static int m_message_user(conn, msg) u_conn *conn; u_msg *msg;
 {
 	u_entity tgt;
 
@@ -59,29 +60,29 @@ static void m_message_user(conn, msg) u_conn *conn; u_msg *msg;
 	if (ENT_IS_SERVER(msg->src)) {
 		u_conn_f(tgt.link, ":%S NOTICE %U :%s", msg->src->v.sv,
 		         tgt.v.u, msg->argv[1]);
-		return;
+		return 0;
 	}
 
 	u_conn_f(tgt.link, ":%H %s %U :%s", msg->src->v.u,
 	         msg->command, tgt.v.u, msg->argv[1]);
+	return 0;
 }
 
-static void m_message(conn, msg) u_conn *conn; u_msg *msg;
+static int m_message(conn, msg) u_conn *conn; u_msg *msg;
 {
 	if (ENT_IS_SERVER(msg->src) && msg->command[0] == 'P') {
 		u_log(LG_ERROR, "%E tried to send a PRIVMSG!", msg->src);
-		return;
+		return 0;
 	}
 
 	if (msg->src == NULL) {
 		u_log(LG_ERROR, "%s has no source!", msg->command);
-		return;
+		return 0;
 	}
 
 	if (msg->argv[0][0] == '#')
-		m_message_chan(conn, msg);
-	else
-		m_message_user(conn, msg);
+		return m_message_chan(conn, msg);
+	return m_message_user(conn, msg);
 }
 
 u_cmd c_message[] = {

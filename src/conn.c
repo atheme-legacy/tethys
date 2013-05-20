@@ -161,7 +161,7 @@ void u_conn_vnum(conn, tgt, num, va) u_conn *conn; char *tgt; va_list va;
 	u_conn_f(conn, ":%S %03d %s %s", &me, num, tgt, buf);
 }
 
-void u_conn_num(T(u_conn*) conn, T(int) num, u_va_alist)
+int u_conn_num(T(u_conn*) conn, T(int) num, u_va_alist)
 A(u_conn *conn; va_dcl)
 {
 	va_list va;
@@ -179,6 +179,8 @@ A(u_conn *conn; va_dcl)
 		u_log(LG_SEVERE, "Can't use u_conn_num on context %d!", conn->ctx);
 	}
 	va_end(va);
+
+	return 0;
 }
 
 void u_conn_error(conn, error) u_conn *conn; char *error;

@@ -399,7 +399,7 @@ char *u_chan_modes(c, on_chan) u_chan *c;
 	return buf;
 }
 
-void u_chan_send_topic(c, u) u_chan *c; u_user *u;
+int u_chan_send_topic(c, u) u_chan *c; u_user *u;
 {
 	if (c->topic[0]) {
 		u_user_num(u, RPL_TOPIC, c, c->topic);
@@ -408,6 +408,8 @@ void u_chan_send_topic(c, u) u_chan *c; u_user *u;
 	} else {
 		u_user_num(u, RPL_NOTOPIC, c);
 	}
+
+	return 0;
 }
 
 struct send_names_priv {
@@ -445,7 +447,7 @@ try_again:
 
 /* :my.name 353 nick = #chan :...
    *       *****    ***     **  = 11 */
-void u_chan_send_names(c, u) u_chan *c; u_user *u;
+int u_chan_send_names(c, u) u_chan *c; u_user *u;
 {
 	struct send_names_priv priv;
 
@@ -459,9 +461,11 @@ void u_chan_send_names(c, u) u_chan *c; u_user *u;
 	if (priv.s != priv.buf)
 		u_user_num(u, RPL_NAMREPLY, priv.pfx, c, priv.buf);
 	u_user_num(u, RPL_ENDOFNAMES, c);
+
+	return 0;
 }
 
-void u_chan_send_list(c, u, list) u_chan *c; u_user *u; u_list *list;
+int u_chan_send_list(c, u, list) u_chan *c; u_user *u; u_list *list;
 {
 	u_list *n;
 	u_chanban *ban;
@@ -487,6 +491,8 @@ void u_chan_send_list(c, u, list) u_chan *c; u_user *u; u_list *list;
 		u_user_num(u, entry, c, ban->mask, ban->setter, ban->time);
 	}
 	u_user_num(u, end, c);
+
+	return 0;
 }
 
 /* XXX: assumes the chanuser doesn't already exist */

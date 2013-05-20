@@ -6,7 +6,7 @@
 
 #include "ircd.h"
 
-void default_handler(level, tm, line) char *tm, *line;
+int default_handler(level, tm, line) char *tm, *line;
 {
 	static char *prefix[] =
 		{ "!!! SEVERE: ",
@@ -18,12 +18,13 @@ void default_handler(level, tm, line) char *tm, *line;
 		  "    "
 	};
 	printf("[%s] %s%s\n", tm, prefix[level], line);
+	return 0;
 }
 
-void (*u_log_handler)() = default_handler;
+int (*u_log_handler)() = default_handler;
 int u_log_level = LG_INFO;
 
-void u_log(T(int) level, T(char*) fmt, u_va_alist) A(char *fmt; va_dcl)
+int u_log(T(int) level, T(char*) fmt, u_va_alist) A(char *fmt; va_dcl)
 {
 	struct tm *tm;
 	char tmbuf[512];
@@ -31,7 +32,7 @@ void u_log(T(int) level, T(char*) fmt, u_va_alist) A(char *fmt; va_dcl)
 	va_list va;
 
 	if (level > u_log_level)
-		return;
+		return 0;
 
 	u_va_start(va, fmt);
 	vsnf(FMT_LOG, buf, BUFSIZE, fmt, va);
@@ -42,5 +43,5 @@ void u_log(T(int) level, T(char*) fmt, u_va_alist) A(char *fmt; va_dcl)
 	    tm->tm_year+1900, tm->tm_mon+1, tm->tm_mday,
 	    tm->tm_hour, tm->tm_min, tm->tm_sec);
 
-	u_log_handler(level, tmbuf, buf);
+	return u_log_handler(level, tmbuf, buf);
 }

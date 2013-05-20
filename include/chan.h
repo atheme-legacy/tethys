@@ -82,9 +82,9 @@ extern void u_chan_drop(); /* u_chan* */
 
 extern char *u_chan_modes(); /* u_chan*, int on_chan */
 
-extern void u_chan_send_topic(); /* u_chan*, u_user* */
-extern void u_chan_send_names(); /* u_chan*, u_user* */
-extern void u_chan_send_list(); /* u_chan*, u_user*, u_list* */
+extern int u_chan_send_topic(); /* u_chan*, u_user* */
+extern int u_chan_send_names(); /* u_chan*, u_user* */
+extern int u_chan_send_list(); /* u_chan*, u_user*, u_list* */
 
 extern u_chanuser *u_chan_user_add(); /* u_chan*, u_user* */
 extern void u_chan_user_del(); /* u_chanuser* */

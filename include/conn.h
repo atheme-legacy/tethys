@@ -67,7 +67,7 @@ extern void u_conn_vf(); /* u_conn*, char *fmt, va_list */
 extern void u_conn_f(A3(u_conn *conn, char *fmt, ...));
 
 extern void u_conn_vnum(); /* u_conn*, char *tgt, int num, va_list */
-extern void u_conn_num(A3(u_conn *conn, int num, ...));
+extern int u_conn_num(A3(u_conn *conn, int num, ...));
 
 extern void u_conn_error(); /* u_conn*, char* */
 

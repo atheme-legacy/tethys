@@ -31,7 +31,7 @@ typedef struct u_cmd u_cmd;
 struct u_cmd {
 	char name[MAXCOMMANDLEN+1];
 	int ctx;
-	void (*cb)(); /* u_conn* src, u_msg* */
+	int (*cb)(); /* u_conn* src, u_msg* */
 	int nargs;
 };
 

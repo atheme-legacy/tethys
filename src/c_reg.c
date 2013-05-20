@@ -6,21 +6,22 @@
 
 #include "ircd.h"
 
-static void err_already(conn, msg) u_conn *conn; u_msg *msg;
+static int err_already(conn, msg) u_conn *conn; u_msg *msg;
 {
-	u_conn_num(conn, ERR_ALREADYREGISTERED);
+	return u_conn_num(conn, ERR_ALREADYREGISTERED);
 }
 
-static void gtfo(conn, msg) u_conn *conn; u_msg *msg;
+static int gtfo(conn, msg) u_conn *conn; u_msg *msg;
 {
 	u_conn_error(conn, "Server doesn't know what it's doing");
+	return 0;
 }
 
-static void m_pass(conn, msg) u_conn *conn; u_msg *msg;
+static int m_pass(conn, msg) u_conn *conn; u_msg *msg;
 {
 	if (msg->argc != 1 && msg->argc != 4) {
 		u_conn_num(conn, ERR_NEEDMOREPARAMS, msg->command);
-		return;
+		return 0;
 	}
 
 	if (conn->pass != NULL)
@@ -28,28 +29,29 @@ static void m_pass(conn, msg) u_conn *conn; u_msg *msg;
 	conn->pass = u_strdup(msg->argv[0]);
 
 	if (msg->argc == 1)
-		return;
+		return 0;
 
 	if (!streq(msg->argv[1], "TS") || !streq(msg->argv[2], "6")) {
 		u_conn_error(conn, "Invalid TS version");
-		return;
+		return 0;
 	}
 
 	if (!is_valid_sid(msg->argv[3])) {
 		u_conn_error(conn, "Invalid SID");
-		return;
+		return 0;
 	}
 
 	u_server_make_sreg(conn, msg->argv[3]);
+	return 0;
 }
 
-static void try_reg(conn) u_conn *conn;
+static int try_reg(conn) u_conn *conn;
 {
 	u_user *u = conn->priv;
 
 	if (u_user_state(u, 0) != USER_REGISTERING || !u->nick[0]
 			|| !u->ident[0] || !u->gecos[0])
-		return;
+		return 0;
 
 	conn->auth = u_find_auth(conn);
 	if (conn->auth == NULL) {
@@ -59,13 +61,14 @@ static void try_reg(conn) u_conn *conn;
 			u_conn_f(conn, ":%S NOTICE %U :*** %s",
 			         &me, u, "No auth blocks for your host");
 		}
-		return;
+		return 0;
 	}
 
 	u_user_welcome(u);
+	return 0;
 }
 
-static void m_nick(conn, msg) u_conn *conn; u_msg *msg;
+static int m_nick(conn, msg) u_conn *conn; u_msg *msg;
 {
 	u_user_local *ul;
 	char buf[MAXNICKLEN+1];
@@ -77,20 +80,21 @@ static void m_nick(conn, msg) u_conn *conn; u_msg *msg;
 
 	if (!is_valid_nick(buf)) {
 		u_conn_num(conn, ERR_ERRONEOUSNICKNAME, buf);
-		return;
+		return 0;
 	}
 
 	if (u_user_by_nick(buf)) {
 		u_conn_num(conn, ERR_NICKNAMEINUSE, buf);
-		return;
+		return 0;
 	}
 
 	u_user_set_nick(USER(ul), buf, NOW.tv_sec);
 
 	try_reg(conn);
+	return 0;
 }
 
-static void m_user(conn, msg) u_conn *conn; u_msg *msg;
+static int m_user(conn, msg) u_conn *conn; u_msg *msg;
 {
 	u_user_local *ul;
 	char buf[MAXIDENT+1];
@@ -101,12 +105,13 @@ static void m_user(conn, msg) u_conn *conn; u_msg *msg;
 	u_strlcpy(buf, msg->argv[0], MAXIDENT+1);
 	if (!is_valid_ident(buf)) {
 		u_conn_f(conn, "invalid ident");
-		return;
+		return 0;
 	}
 	strcpy(USER(ul)->ident, buf);
 	u_strlcpy(USER(ul)->gecos, msg->argv[3], MAXGECOS+1);
 
 	try_reg(conn);
+	return 0;
 }
 
 static int cap_add(u, cap) u_user *u; char *cap;
@@ -126,7 +131,7 @@ static int cap_add(u, cap) u_user *u; char *cap;
 	return 1;
 }
 
-static void m_cap(conn, msg) u_conn *conn; u_msg *msg;
+static int m_cap(conn, msg) u_conn *conn; u_msg *msg;
 {
 	char ackbuf[BUFSIZE];
 	char nakbuf[BUFSIZE];
@@ -145,7 +150,7 @@ static void m_cap(conn, msg) u_conn *conn; u_msg *msg;
 	} else if (streq(msg->argv[0], "REQ")) {
 		if (msg->argc != 2) {
 			u_conn_num(conn, ERR_NEEDMOREPARAMS, "CAP");
-			return;
+			return 0;
 		}
 
 		p = msg->argv[1];
@@ -170,9 +175,10 @@ static void m_cap(conn, msg) u_conn *conn; u_msg *msg;
 	}
 
 	try_reg(conn);
+	return 0;
 }
 
-static void try_serv(conn) u_conn *conn;
+static int try_serv(conn) u_conn *conn;
 {
 	u_server *sv = conn->priv;
 	u_link *link;
@@ -180,26 +186,28 @@ static void try_serv(conn) u_conn *conn;
 
 	if ((sv->capab & capab_need) != capab_need) {
 		u_conn_error(conn, "Don't have all needed CAPABs!");
-		return;
+		return 0;
 	}
 
 	if (!(link = u_find_link(conn))) {
 		u_conn_error(conn, "No link{} blocks for your host");
-		return;
+		return 0;
 	}
 
 	u_roster_f(R_SERVERS, conn, ":%S SID %s %d %s :%s", &me,
 	           sv->name, sv->hops, sv->sid, sv->desc);
 	u_server_burst(sv, link);
+	return 0;
 }
 
-static void m_capab(conn, msg) u_conn *conn; u_msg *msg;
+static int m_capab(conn, msg) u_conn *conn; u_msg *msg;
 {
 	u_server *sv = conn->priv;
 	u_server_add_capabs(sv, msg->argv[0]);
+	return 0;
 }
 
-static void m_server(conn, msg) u_conn *conn; u_msg *msg;
+static int m_server(conn, msg) u_conn *conn; u_msg *msg;
 {
 	u_server *sv = conn->priv;
 
@@ -207,6 +215,8 @@ static void m_server(conn, msg) u_conn *conn; u_msg *msg;
 	u_strlcpy(sv->desc, msg->argv[2], MAXSERVDESC+1);
 
 	try_serv(conn);
+
+	return 0;
 }
 
 u_cmd c_reg[] = {

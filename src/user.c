@@ -310,12 +310,13 @@ void u_user_vnum(u, num, va) u_user *u; va_list va;
 	u_conn_vnum(conn, tgt, num, va);
 }
 
-void u_user_num(T(u_user*) u, T(int) num, u_va_alist) A(u_user *u; va_dcl)
+int u_user_num(T(u_user*) u, T(int) num, u_va_alist) A(u_user *u; va_dcl)
 {
 	va_list va; 
 	u_va_start(va, num);
 	u_user_vnum(u, num, va);
 	va_end(va);
+	return 0;
 }
 
 struct isupport {

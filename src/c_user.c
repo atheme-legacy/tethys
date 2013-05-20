@@ -6,13 +6,14 @@
 
 #include "ircd.h"
 
-static void not_implemented(conn, msg) u_conn *conn; u_msg *msg;
+static int not_implemented(conn, msg) u_conn *conn; u_msg *msg;
 {
 	u_conn_f(conn, ":%S NOTICE %U :*** %s is not yet implemented!",
 	         &me, conn->priv, msg->command);
+	return 0;
 }
 
-static void m_echo(conn, msg) u_conn *conn; u_msg *msg;
+static int m_echo(conn, msg) u_conn *conn; u_msg *msg;
 {
 	u_user *u = conn->priv;
 	char buf[512];
@@ -26,9 +27,10 @@ static void m_echo(conn, msg) u_conn *conn; u_msg *msg;
 
 	for (i=0; i<msg->argc; i++)
 		u_conn_f(conn, "%s %3d. ^%s$", buf, i, msg->argv[i]);
+	return 0;
 }
 
-static void m_quit(conn, msg) u_conn *conn; u_msg *msg;
+static int m_quit(conn, msg) u_conn *conn; u_msg *msg;
 {
 	const char *r = msg->argc > 0 ? msg->argv[0] : "Client quit";
 	u_user *u = conn->priv;
@@ -39,23 +41,27 @@ static void m_quit(conn, msg) u_conn *conn; u_msg *msg;
 
 	u_user_unlink(u);
 	u_conn_close(conn);
+
+	return 0;
 }
 
-static void m_version(conn, msg) u_conn *conn; u_msg *msg;
+static int m_version(conn, msg) u_conn *conn; u_msg *msg;
 {
 	u_user *u = conn->priv;
 	u_user_num(u, RPL_VERSION, PACKAGE_FULLNAME, me.name,
 	           PACKAGE_COPYRIGHT);
 	u_user_send_isupport(u);
+	return 0;
 }
 
-static void m_motd(conn, msg) u_conn *conn; u_msg *msg;
+static int m_motd(conn, msg) u_conn *conn; u_msg *msg;
 {
 	u_user *u = conn->priv;
 	u_user_send_motd(u);
+	return 0;
 }
 
-static void try_join_chan(ul, chan, key) u_user_local *ul; char *chan, *key;
+static int try_join_chan(ul, chan, key) u_user_local *ul; char *chan, *key;
 {
 	u_conn *conn = ul->conn;
 	u_user *u = USER(ul);
@@ -68,19 +74,19 @@ static void try_join_chan(ul, chan, key) u_user_local *ul; char *chan, *key;
 
 	if (c == NULL) {
 		u_user_num(u, ERR_GENERIC, "Can't get or create channel!");
-		return;
+		return 0;
 	}
 
 	cu = u_chan_user_find(c, u);
 	if (cu != NULL)
-		return;
+		return 0;
 
 	num = u_entry_blocked(c, u, key);
 	if (num != 0) {
 		fwd = u_find_forward(c, u, key);
 		if (fwd == NULL || u_chan_user_find(fwd, u)) {
 			u_user_num(u, num, c);
-			return;
+			return 0;
 		}
 		c = fwd;
 	}
@@ -104,9 +110,11 @@ static void try_join_chan(ul, chan, key) u_user_local *ul; char *chan, *key;
 
 	u_chan_send_topic(c, u);
 	u_chan_send_names(c, u);
+
+	return 0;
 }
 
-static void m_join(conn, msg) u_conn *conn; u_msg *msg;
+static int m_join(conn, msg) u_conn *conn; u_msg *msg;
 {
 	char *keys[128], **keys_p;
 	char *s, *p;
@@ -130,9 +138,11 @@ static void m_join(conn, msg) u_conn *conn; u_msg *msg;
 
 		try_join_chan(u, s, *keys_p++);
 	}
+
+	return 0;
 }
 
-static void m_part(conn, msg) u_conn *conn; u_msg *msg;
+static int m_part(conn, msg) u_conn *conn; u_msg *msg;
 {
 	struct u_user *u = conn->priv;
 	char *s, *p;
@@ -143,9 +153,11 @@ static void m_part(conn, msg) u_conn *conn; u_msg *msg;
 
 		u_user_part_chan(u, s, msg->argv[1]);
 	}
+
+	return 0;
 }
 
-static void m_topic(conn, msg) u_conn *conn; u_msg *msg;
+static int m_topic(conn, msg) u_conn *conn; u_msg *msg;
 {
 	u_user *u = conn->priv;
 	u_chan *c;
@@ -165,24 +177,27 @@ static void m_topic(conn, msg) u_conn *conn; u_msg *msg;
 	c->topic_time = NOW.tv_sec;
 
 	u_sendto_chan(c, NULL, ST_ALL, ":%H TOPIC %C :%s", u, c, c->topic);
+
+	return 0;
 }
 
-static void m_names(conn, msg) u_conn *conn; u_msg *msg;
+static int m_names(conn, msg) u_conn *conn; u_msg *msg;
 {
 	u_user *u = conn->priv;
 	u_chan *c;
 
 	/* TODO: no arguments version */
 	if (msg->argc == 0)
-		return;
+		return 0;
 
 	if (!(c = u_chan_get(msg->argv[0])))
 		return u_user_num(u, ERR_NOSUCHCHANNEL, msg->argv[0]);
 
 	u_chan_send_names(c, u);
+	return 0;
 }
 
-static void mode_user(u, s) u_user *u; char *s;
+static int mode_user(u, s) u_user *u; char *s;
 {
 	int on = 1;
 
@@ -201,9 +216,11 @@ static void mode_user(u, s) u_user *u; char *s;
 	}
 
 	u_user_m_end(u);
+
+	return 0;
 }
 
-static void m_mode(conn, msg) u_conn *conn; u_msg *msg;
+static int m_mode(conn, msg) u_conn *conn; u_msg *msg;
 {
 	int parc;
 	char **parv;
@@ -220,9 +237,9 @@ static void m_mode(conn, msg) u_conn *conn; u_msg *msg;
 		} else if (u != tu) {
 			u_user_num(u, ERR_USERSDONTMATCH);
 		} else {
-			mode_user(u, msg->argv[1]);
+			return mode_user(u, msg->argv[1]);
 		}
-		return;
+		return 0;
 	}
 
 	c = u_chan_get(msg->argv[0]);
@@ -233,7 +250,7 @@ static void m_mode(conn, msg) u_conn *conn; u_msg *msg;
 
 	if (msg->argv[1] == NULL) {
 		u_user_num(u, RPL_CHANNELMODEIS, c, u_chan_modes(c, !!m.perms));
-		return;
+		return 0;
 	}
 
 	parc = msg->argc - 1;
@@ -264,6 +281,7 @@ static void m_mode(conn, msg) u_conn *conn; u_msg *msg;
 
 	if (m.flags & CM_DENY)
 		u_user_num(u, ERR_CHANOPRIVSNEEDED, c);
+	return 0;
 }
 
 struct m_whois_cb_priv {
@@ -303,7 +321,7 @@ try_again:
 	}
 }
 
-static void m_whois(conn, msg) u_conn *conn; u_msg *msg;
+static int m_whois(conn, msg) u_conn *conn; u_msg *msg;
 {
 	u_user *tu, *u = conn->priv;
 	u_server *serv;
@@ -352,9 +370,10 @@ static void m_whois(conn, msg) u_conn *conn; u_msg *msg;
 		u_user_num(u, RPL_WHOISOPERATOR, tu->nick);
 
 	u_user_num(u, RPL_ENDOFWHOIS, tu->nick);
+	return 0;
 }
 
-static void m_userhost(conn, msg) u_conn *conn; u_msg *msg;
+static int m_userhost(conn, msg) u_conn *conn; u_msg *msg;
 {
 	/* USERHOST user1 user2... usern 
 	 * :host.irc 302 nick :user1=+~user@host user2=+~user@host ...
@@ -392,9 +411,10 @@ static void m_userhost(conn, msg) u_conn *conn; u_msg *msg;
 
 	if (ptr != buf)
 		u_user_num(u, RPL_USERHOST, buf);
+	return 0;
 }
 
-static void m_away(conn, msg) u_conn *conn; u_msg *msg;
+static int m_away(conn, msg) u_conn *conn; u_msg *msg;
 {
 	u_user *u = conn->priv;
 
@@ -405,6 +425,8 @@ static void m_away(conn, msg) u_conn *conn; u_msg *msg;
 		u_strlcpy(u->away, msg->argv[0], MAXAWAY);
 		u_user_num(u, RPL_NOWAWAY);
 	}
+
+	return 0;
 }
 
 /* :serv.irc 352 aji #chan ident my.host serv.irc nick H*@ :hops realname */
@@ -439,7 +461,7 @@ static void m_who_chan_cb(map, tu, cu, u) u_map *map; u_user *tu, *u; u_chanuser
 	who_reply(u, tu, cu->c, cu);
 }
 
-static void m_who(conn, msg) u_conn *conn; u_msg *msg;
+static int m_who(conn, msg) u_conn *conn; u_msg *msg;
 {
 	u_user *tu, *u = conn->priv;
 	u_chan *c = NULL;
@@ -462,9 +484,10 @@ static void m_who(conn, msg) u_conn *conn; u_msg *msg;
 
 end:
 	u_user_num(u, RPL_ENDOFWHO, name);
+	return 0;
 }
 
-static void m_oper(conn, msg) u_conn *conn; u_msg *msg;
+static int m_oper(conn, msg) u_conn *conn; u_msg *msg;
 {
 	u_user_local *ul = conn->priv;
 	u_user *u = USER(ul);
@@ -477,11 +500,14 @@ static void m_oper(conn, msg) u_conn *conn; u_msg *msg;
 	u->flags |= UMODE_OPER;
 	u_conn_f(conn, ":%U MODE %U +o", u, u);
 	u_conn_num(conn, RPL_YOUREOPER);
+
+	return 0;
 }
 
-static void list_entry(u, c) u_user *u; u_chan *c;
+static int list_entry(u, c) u_user *u; u_chan *c;
 {
 	u_user_num(u, RPL_LIST, c->name, c->members->size, c->topic);
+	return 0;
 }
 
 static void m_list_chan_cb(c, u) u_chan *c; u_user *u;
@@ -494,7 +520,7 @@ static void m_list_chan_cb(c, u) u_chan *c; u_user *u;
 	list_entry(u, c);
 }
 
-static void m_list(conn, msg) u_conn *conn; u_msg *msg;
+static int m_list(conn, msg) u_conn *conn; u_msg *msg;
 {
 	u_user *u = conn->priv;
 	u_chan *c;
@@ -505,15 +531,17 @@ static void m_list(conn, msg) u_conn *conn; u_msg *msg;
 		u_user_num(u, RPL_LISTSTART);
 		list_entry(u, c);
 		u_user_num(u, RPL_LISTEND);
-		return;
+		return 0;
 	}
 
 	u_user_num(u, RPL_LISTSTART);
 	u_trie_each(all_chans, NULL, m_list_chan_cb, u);
 	u_user_num(u, RPL_LISTEND);
+
+	return 0;
 }
 
-static void m_nick(conn, msg) u_conn *conn; u_msg *msg;
+static int m_nick(conn, msg) u_conn *conn; u_msg *msg;
 {
 	u_user *u = conn->priv;
 	char *s, *newnick = msg->argv[0];
@@ -538,7 +566,7 @@ static void m_nick(conn, msg) u_conn *conn; u_msg *msg;
 
 	/* ignore changes to the exact same nick */
 	if (streq(u->nick, newnick))
-		return;
+		return 0;
 
 	/* Send these BEFORE clobbered --Elizabeth */
 	u_sendto_visible(u, ST_USERS, ":%H NICK :%s", u, newnick);
@@ -546,13 +574,16 @@ static void m_nick(conn, msg) u_conn *conn; u_msg *msg;
 	u_conn_f(conn, ":%H NICK :%s", u, newnick);
 
 	u_user_set_nick(u, newnick, NOW.tv_sec);
+
+	return 0;
 }
 
-static void m_42(conn, msg) u_conn *conn; u_msg *msg;
+static int m_42(conn, msg) u_conn *conn; u_msg *msg;
 {
 	u_user *u = conn->priv;
 	u_conn_f(conn, ":%S NOTICE %U :The Answer to Life, the Universe, and %s",
 	         &me, u, (u->flags & UMODE_OPER) ? "matthew" : "Everything");
+	return 0;
 }
 
 static void stats_o_cb(map, k, o, u) u_map *map; char *k; u_oper *o; u_user *u;
@@ -568,7 +599,7 @@ static void stats_i_cb(map, k, v, u) u_map *map; char *k; u_auth *v; u_user *u;
 	u_user_num(u, RPL_STATSILINE, v->name, v->classname, buf);
 }
 
-static void m_stats(conn, msg) u_conn *conn; u_msg *msg;
+static int m_stats(conn, msg) u_conn *conn; u_msg *msg;
 {
 	u_user *u = conn->priv;
 	int c, days, hr, min, sec;
@@ -579,7 +610,7 @@ static void m_stats(conn, msg) u_conn *conn; u_msg *msg;
 	if (strchr("oi", c) && !(u->flags & UMODE_OPER)) {
 		u_user_num(u, ERR_NOPRIVILEGES);
 		u_user_num(u, RPL_ENDOFSTATS, c);
-		return;
+		return 0;
 	}
 
 	switch (c) {
@@ -601,9 +632,10 @@ static void m_stats(conn, msg) u_conn *conn; u_msg *msg;
 	}
 
 	u_user_num(u, RPL_ENDOFSTATS, c);
+	return 0;
 }
 
-static void m_mkpass(conn, msg) u_conn *conn; u_msg *msg;
+static int m_mkpass(conn, msg) u_conn *conn; u_msg *msg;
 {
 	char buf[CRYPTLEN], salt[CRYPTLEN];
 
@@ -611,17 +643,19 @@ static void m_mkpass(conn, msg) u_conn *conn; u_msg *msg;
 	u_crypto_hash(buf, msg->argv[0], salt);
 
 	u_conn_f(conn, ":%S NOTICE %U :%s", &me, conn->priv, buf);
+	return 0;
 }
 
-static void m_admin(conn, msg) u_conn *conn; u_msg *msg;
+static int m_admin(conn, msg) u_conn *conn; u_msg *msg;
 {
 	u_conn_num(conn, RPL_ADMINME, &me);
 	u_conn_num(conn, RPL_ADMINLOC1, my_admin_loc1);
 	u_conn_num(conn, RPL_ADMINLOC2, my_admin_loc2);
 	u_conn_num(conn, RPL_ADMINEMAIL, my_admin_email);
+	return 0;
 }
 
-static void m_kill(conn, msg) u_conn *conn; u_msg *msg;
+static int m_kill(conn, msg) u_conn *conn; u_msg *msg;
 {
 	u_user *tu, *u = conn->priv;
 	char *reason = msg->argv[1] ? msg->argv[1] : "<No reason given>";
@@ -642,9 +676,11 @@ static void m_kill(conn, msg) u_conn *conn; u_msg *msg;
 		u_conn_close(USER_LOCAL(tu)->conn);
 	}
 	u_user_unlink(tu);
+
+	return 0;
 }
 
-static void m_kick(conn, msg) u_conn *conn; u_msg *msg;
+static int m_kick(conn, msg) u_conn *conn; u_msg *msg;
 {
 	u_user *tu, *u = conn->priv;
 	u_chan *c;
@@ -668,11 +704,14 @@ static void m_kick(conn, msg) u_conn *conn; u_msg *msg;
 	u_roster_f(R_SERVERS, NULL, ":%H KICK %C %U :%s", u, c, tu, r);
 
 	u_chan_user_del(tcu);
+
+	return 0;
 }
 
-static void m_summon(conn, msg) u_conn *conn; u_msg *msg;
+static int m_summon(conn, msg) u_conn *conn; u_msg *msg;
 {
 	u_conn_num(conn, ERR_SUMMONDISABLED);
+	return 0;
 }
 
 struct map_priv {
@@ -727,7 +766,7 @@ static void do_map(p) struct map_priv *p;
 	p->indent[depth - 2] = ' ';
 }
 
-static void m_map(conn, msg) u_conn *conn; u_msg *msg;
+static int m_map(conn, msg) u_conn *conn; u_msg *msg;
 {
 	struct map_priv p;
 	u_user *u = conn->priv;
@@ -742,6 +781,7 @@ static void m_map(conn, msg) u_conn *conn; u_msg *msg;
 	do_map(&p);
 
 	u_user_num(u, RPL_MAPEND);
+	return 0;
 }
 
 u_cmd c_user[] = {
