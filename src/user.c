@@ -298,7 +298,7 @@ void u_user_vnum(u, num, va) u_user *u; va_list va;
 	u_conn *conn;
 	char *tgt;
 
-	if (u->flags & USER_IS_LOCAL) {
+	if (!(u->flags & USER_IS_LOCAL)) {
 		tgt = u->uid;
 	} else {
 		tgt = u->nick;
