@@ -95,7 +95,7 @@ static void cb_wallops(info, u, on) u_umode_info *info; u_user *u;
 	cb_flag(info, u, on);
 
 	/* only add to wallops roster if local user */
-	if (!(u->flags & USER_IS_LOCAL))
+	if (!IS_LOCAL_USER(u))
 		return;
 
 	if (on)
@@ -224,7 +224,7 @@ void u_user_unlink(u) u_user *u;
 {
 	u_server *sv = u_user_server(u);
 
-	if (u->flags & USER_IS_LOCAL) {
+	if (IS_LOCAL_USER(u)) {
 		u_user_local *ul = USER_LOCAL(u);
 		u_roster_del_all(ul->conn);
 		ul->conn->ctx = CTX_CLOSED;
@@ -249,7 +249,7 @@ void u_user_unlink(u) u_user *u;
 
 u_conn *u_user_conn(u) u_user *u;
 {
-	if (u->flags & USER_IS_LOCAL)
+	if (IS_LOCAL_USER(u))
 		return USER_LOCAL(u)->conn;
 	else
 		return USER_REMOTE(u)->server->conn;
@@ -257,7 +257,7 @@ u_conn *u_user_conn(u) u_user *u;
 
 u_server *u_user_server(u) u_user *u;
 {
-	if (u->flags & USER_IS_LOCAL)
+	if (IS_LOCAL_USER(u))
 		return &me;
 	else
 		return USER_REMOTE(u)->server;
@@ -298,7 +298,7 @@ void u_user_vnum(u, num, va) u_user *u; va_list va;
 	u_conn *conn;
 	char *tgt;
 
-	if (!(u->flags & USER_IS_LOCAL)) {
+	if (!IS_LOCAL_USER(u)) {
 		tgt = u->uid;
 	} else {
 		tgt = u->nick;

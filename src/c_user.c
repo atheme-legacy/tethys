@@ -331,10 +331,7 @@ static void m_whois(conn, msg) u_conn *conn; u_msg *msg;
 	if (!(tu = u_user_by_nick(nick)))
 		return u_user_num(u, ERR_NOSUCHNICK, nick);
 
-	if (tu->flags & USER_IS_LOCAL)
-		serv = &me;
-	else
-		serv = USER_REMOTE(tu)->server;
+	serv = u_user_server(tu);
 
 	u_user_num(u, RPL_WHOISUSER, tu->nick, tu->ident, tu->host, tu->gecos);
 
@@ -422,10 +419,7 @@ static void who_reply(u, tu, c, cu) u_user *u, *tu; u_chan *c; u_chanuser *cu;
 	if (cu == NULL) /* this is an error */
 		c = NULL;
 
-	if (tu->flags & USER_IS_LOCAL)
-		serv = &me;
-	else
-		serv = USER_REMOTE(tu)->server;
+	serv = u_user_server(tu);
 
 	*s++ = tu->away[0] ? 'G' : 'H';
 	if (tu->flags & UMODE_OPER)
@@ -643,7 +637,7 @@ static void m_kill(conn, msg) u_conn *conn; u_msg *msg;
 	u_sendto_visible(tu, ST_USERS, ":%H QUIT :Killed (%s)", tu, buf);
 	u_roster_f(R_SERVERS, NULL, ":%U KILL %U :%s", u, tu, me.name, buf);
 
-	if (tu->flags & USER_IS_LOCAL) {
+	if (IS_LOCAL_USER(tu)) {
 		u_conn_f(USER_LOCAL(tu)->conn, ":%H QUIT :Killed (%s)", tu, buf);
 		u_conn_close(USER_LOCAL(tu)->conn);
 	}

@@ -85,6 +85,8 @@ struct u_user_remote {
 #define USER_LOCAL(U) ((u_user_local*)(U))
 #define USER_REMOTE(U) ((u_user_remote*)(U))
 
+#define IS_LOCAL_USER(u) ((USER(u)->flags & USER_IS_LOCAL) != 0)
+
 extern u_trie *users_by_nick;
 extern u_trie *users_by_uid;
 

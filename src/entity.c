@@ -30,7 +30,7 @@ void make_user(e) u_entity *e;
 	e->name = u->nick;
 	e->id = u->uid;
 
-	if (u->flags & USER_IS_LOCAL) {
+	if (IS_LOCAL_USER(u)) {
 		e->loc = USER_LOCAL(u)->conn;
 		e->link = e->loc;
 	} else {

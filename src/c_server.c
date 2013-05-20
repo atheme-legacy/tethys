@@ -255,7 +255,7 @@ static void m_kill(conn, msg) u_conn *conn; u_msg *msg;
 		sprintf(buf, " :%s", msg->argv[1]);
 	}
 
-	if (u->flags & USER_IS_LOCAL) {
+	if (IS_LOCAL_USER(u)) {
 		u_user_local *ul = USER_LOCAL(u);
 		u_conn_f(ul->conn, ":%H QUIT :Killed (%s)", u, r);
 		u_conn_close(ul->conn);
@@ -283,7 +283,7 @@ static void m_quit(conn, msg) u_conn *conn; u_msg *msg;
 	if (msg->argc > 0)
 		sprintf(buf, " :%s", msg->argv[0]);
 
-	if (u->flags & USER_IS_LOCAL) { /* possible? */
+	if (IS_LOCAL_USER(u)) { /* possible? */
 		u_user_local *ul = USER_LOCAL(ul);
 		u_log(LG_WARN, "%G sent QUIT for my user %U", conn, u);
 		u_conn_f(ul->conn, ":%H QUIT%s", u, buf);
