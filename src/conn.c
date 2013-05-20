@@ -143,7 +143,7 @@ A(u_conn *conn; char *fmt; va_dcl)
 	va_end(va);
 }
 
-void u_conn_vnum(conn, nick, num, va) u_conn *conn; char *nick; va_list va;
+void u_conn_vnum(conn, tgt, num, va) u_conn *conn; char *tgt; va_list va;
 {
 	char buf[4096];
 	char *fmt;
@@ -158,7 +158,7 @@ void u_conn_vnum(conn, nick, num, va) u_conn *conn; char *nick; va_list va;
 	/* numerics are ALWAYS FMT_USER */
 	vsnf(FMT_USER, buf, 4096, fmt, va);
 
-	u_conn_f(conn, ":%s %03d %s %s", me.name, num, nick, buf);
+	u_conn_f(conn, ":%S %03d %s %s", &me, num, tgt, buf);
 }
 
 void u_conn_num(T(u_conn*) conn, T(int) num, u_va_alist)

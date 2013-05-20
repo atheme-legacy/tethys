@@ -296,18 +296,18 @@ uint u_user_state(u, state) u_user *u; uint state;
 void u_user_vnum(u, num, va) u_user *u; va_list va;
 {
 	u_conn *conn;
-	char *nick = u->nick;
-	if (!*nick)
-		nick = "*";
+	char *tgt;
 
 	if (u->flags & USER_IS_LOCAL) {
-		conn = ((u_user_local*)u)->conn;
+		tgt = u->uid;
 	} else {
-		u_log(LG_SEVERE, "Can't send numerics to remote users yet!");
-		return;
+		tgt = u->nick;
+		if (!*tgt)
+			tgt = "*";
 	}
 
-	u_conn_vnum(conn, nick, num, va);
+	conn = u_user_conn(u);
+	u_conn_vnum(conn, tgt, num, va);
 }
 
 void u_user_num(T(u_user*) u, T(int) num, u_va_alist) A(u_user *u; va_dcl)
