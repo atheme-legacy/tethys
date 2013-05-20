@@ -27,6 +27,12 @@ static void m_error(conn, msg) u_conn *conn; u_msg *msg;
 static void m_svinfo(conn, msg) u_conn *conn; u_msg *msg;
 {
 	int tsdelta;
+	u_server *sv = conn->priv;
+
+	if (!(sv->flags & SERVER_IS_BURSTING)) {
+		u_log(LG_ERROR, "%S tried to send SVINFO again!", sv);
+		return;
+	}
 
 	if (atoi(msg->argv[0]) < 6) {
 		u_conn_error(conn, "Max TS version is not 6!");
@@ -308,15 +314,12 @@ static void m_sid(conn, msg) u_conn *conn; u_msg *msg;
 
 u_cmd c_server[] = {
 	{ "ERROR",       CTX_SERVER, m_error,         0 },
-	{ "SVINFO",      CTX_SBURST, m_svinfo,        4 },
+	{ "SVINFO",      CTX_SERVER, m_svinfo,        4 },
 
 	{ "EUID",        CTX_SERVER, m_euid,         11 },
-	{ "EUID",        CTX_SBURST, m_euid,         11 },
 	{ "UID",         CTX_SERVER, m_uid,           9 },
-	{ "UID",         CTX_SBURST, m_uid,           9 },
 
 	{ "SJOIN",       CTX_SERVER, m_sjoin,         4 },
-	{ "SJOIN",       CTX_SBURST, m_sjoin,         4 },
 	{ "JOIN",        CTX_SERVER, m_join,          3 },
 
 	{ "TMODE",       CTX_SERVER, m_tmode,         3 },
@@ -358,7 +361,6 @@ u_cmd c_server[] = {
 	{ "SIGNON",      CTX_SERVER, not_implemented, 0 },
 	{ "SQUIT",       CTX_SERVER, not_implemented, 0 },
 	{ "STATS",       CTX_SERVER, not_implemented, 0 }, /* hunted */
-	{ "TB",          CTX_SBURST, not_implemented, 0 },
 	{ "TB",          CTX_SERVER, not_implemented, 0 },
 	{ "TIME",        CTX_SERVER, not_implemented, 0 }, /* hunted */
 	{ "TOPIC",       CTX_SERVER, not_implemented, 0 },

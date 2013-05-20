@@ -40,7 +40,6 @@ static int want_send(pv, conn) struct sendto_priv *pv; u_conn *conn;
 		return pv->flags & ST_USERS;
 
 	case CTX_SERVER:
-	case CTX_SBURST:
 	case CTX_SREG:
 		return pv->flags & ST_SERVERS;
 	}
@@ -65,7 +64,6 @@ static char *ln(pv, conn) struct sendto_priv *pv; u_conn *conn;
 		return pv->user;
 
 	case CTX_SERVER:
-	case CTX_SBURST:
 	case CTX_SREG:
 		if (!pv->serv) {
 			pv->serv = buf_serv;

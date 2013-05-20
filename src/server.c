@@ -212,6 +212,7 @@ void u_server_make_sreg(conn, sid) u_conn *conn; char *sid;
 
 	conn->priv = sv = malloc(sizeof(*sv));
 	sv->conn = conn;
+	sv->flags = SERVER_IS_BURSTING;
 
 	strcpy(sv->sid, sid);
 	u_trie_set(servers_by_sid, sv->sid, sv);
@@ -400,7 +401,7 @@ void u_server_burst(sv, link) u_server *sv; u_link *link;
 		return;
 	}
 
-	conn->ctx = CTX_SBURST;
+	conn->ctx = CTX_SERVER;
 
 	u_conn_f(conn, "PASS %s TS 6 :%s", link->sendpass, me.sid);
 	u_my_capabs(buf);
@@ -438,8 +439,7 @@ void u_server_eob(sv) u_server *sv;
 	}
 
 	u_log(LG_VERBOSE, "End of burst with %S", sv);
-
-	sv->conn->ctx = CTX_SERVER;
+	sv->flags &= ~SERVER_IS_BURSTING;
 	u_roster_add(R_SERVERS, sv->conn);
 }
 

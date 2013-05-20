@@ -237,7 +237,6 @@ top:
 
 		case CTX_SERVER:
 		case CTX_SREG:
-		case CTX_SBURST:
 			s_arg = (type == FMT_SERVER ? server->sid : server->name);
 			break;
 

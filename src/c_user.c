@@ -637,13 +637,11 @@ static void m_kill(conn, msg) u_conn *conn; u_msg *msg;
 		return u_user_num(u, ERR_NOPRIVILEGES);
 	if (!(tu = u_user_by_nick(msg->argv[0])))
 		return u_user_num(u, ERR_NOSUCHNICK, msg->argv[0]);
-	if (!(tu->flags & USER_IS_LOCAL))
-		return u_user_num(u, ERR_GENERIC, "Can't kill remote users yet");
 
 	snf(FMT_USER, buf, 512, "%U (%s)", u, reason);
 
 	u_sendto_visible(tu, ST_USERS, ":%H QUIT :Killed (%s)", tu, buf);
-	u_roster_f(R_SERVERS, NULL, ":%U KILL %U :%s", u, tu, buf);
+	u_roster_f(R_SERVERS, NULL, ":%U KILL %U :%s", u, tu, me.name, buf);
 
 	if (tu->flags & USER_IS_LOCAL) {
 		u_conn_f(USER_LOCAL(tu)->conn, ":%H QUIT :Killed (%s)", tu, buf);

@@ -327,7 +327,6 @@ char *conn_name(conn) u_conn *conn;
 		break;
 	case CTX_SREG:
 	case CTX_SERVER:
-	case CTX_SBURST:
 		name = SERVER(conn->priv)->name;
 		break;
 	}
@@ -346,7 +345,6 @@ char *conn_id(conn) u_conn *conn;
 		break;
 	case CTX_SREG:
 	case CTX_SERVER:
-	case CTX_SBURST:
 		id = SERVER(conn->priv)->sid;
 		break;
 	}

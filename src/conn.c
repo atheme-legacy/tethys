@@ -111,7 +111,6 @@ void u_conn_vf(conn, fmt, va) u_conn *conn; char *fmt; va_list va;
 		break;
 	case CTX_SREG:
 	case CTX_SERVER:
-	case CTX_SBURST:
 		type = FMT_SERVER;
 		break;
 	}

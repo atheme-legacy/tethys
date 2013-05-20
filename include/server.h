@@ -30,10 +30,14 @@
 #define CAPAB_EUID         0x2000
 #define CAPAB_CLUSTER      0x4000
 
+#define SERVER_IS_BURSTING    0x1
+
 typedef struct u_server u_server;
 
 struct u_server {
 	u_conn *conn;
+	ulong flags;
+
 	char sid[4];
 	char name[MAXSERVNAME+1];
 	char desc[MAXSERVDESC+1];

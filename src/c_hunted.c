@@ -43,14 +43,15 @@ static void m_ping(conn, msg) u_conn *conn; u_msg *msg;
 
 static void m_pong(conn, msg) u_conn *conn; u_msg *msg;
 {
-	u_server *from;
+	u_server *from, *sv = conn->priv;
 	u_conn *to;
 
-	if (!(from = u_server_by_sid(msg->srcstr)))
+	if (!msg->src || !ENT_IS_SERVER(msg->src))
 		return;
+	from = msg->src->v.sv;
 
 	if (streq(msg->argv[1], me.name)) {
-		if (conn->ctx == CTX_SBURST)
+		if (sv->flags & SERVER_IS_BURSTING)
 			u_server_eob(conn->priv);
 		return;
 	}
@@ -62,7 +63,7 @@ static void m_pong(conn, msg) u_conn *conn; u_msg *msg;
 		return;
 	}
 
-	if (from->conn == to)
+	if (sv->conn == to)
 		return;
 
 	u_conn_f(to, ":%S PONG %s %s", from, from->name, msg->argv[1]);
@@ -71,10 +72,7 @@ static void m_pong(conn, msg) u_conn *conn; u_msg *msg;
 u_cmd c_hunted[] = {
 	{ "PING",        CTX_USER,    m_ping,        1 },
 	{ "PONG",        CTX_USER,    m_ping,        0 },
-
-	{ "PING",        CTX_SBURST,  m_ping,        1 },
 	{ "PING",        CTX_SERVER,  m_ping,        1 },
-	{ "PONG",        CTX_SBURST,  m_pong,        2 },
 	{ "PONG",        CTX_SERVER,  m_pong,        2 },
 
 	{ "" }
