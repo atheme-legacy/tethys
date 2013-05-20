@@ -16,7 +16,7 @@ char buf_user[1024];
 struct sendto_priv {
 	char *serv, *user;
 	char *fmt;
-	uint flags;
+	uint type;
 	va_list va;
 };
 
@@ -33,15 +33,23 @@ static void exclude(conn) u_conn *conn;
 
 static int want_send(pv, conn) struct sendto_priv *pv; u_conn *conn;
 {
-	switch (conn->ctx) {
-	case CTX_USER:
-	case CTX_UNREG:
-	case CTX_UREG:
-		return pv->flags & ST_USERS;
+	switch (pv->type) {
+	case ST_ALL:
+		return 1;
 
-	case CTX_SERVER:
-	case CTX_SREG:
-		return pv->flags & ST_SERVERS;
+	case ST_USERS:
+	case ST_SERVERS:
+		switch (conn->ctx) {
+		case CTX_USER:
+		case CTX_UNREG:
+		case CTX_UREG:
+			return pv->type == ST_USERS;
+
+		case CTX_SERVER:
+		case CTX_SREG:
+			return pv->type == ST_SERVERS;
+		}
+		return 0;
 	}
 
 	return 0;
@@ -93,9 +101,9 @@ u_map *map; u_user *u; u_chanuser *cu; struct sendto_priv *priv;
 	}
 }
 
-void u_sendto_chan(T(u_chan*) c, T(u_conn*) conn, T(uint) flags,
+void u_sendto_chan(T(u_chan*) c, T(u_conn*) conn, T(uint) type,
                    T(char*) fmt, u_va_alist)
-A(u_chan *c; u_conn *conn; uint flags; char *fmt; va_dcl)
+A(u_chan *c; u_conn *conn; uint type; char *fmt; va_dcl)
 {
 	struct sendto_priv priv;
 
@@ -106,7 +114,7 @@ A(u_chan *c; u_conn *conn; uint flags; char *fmt; va_dcl)
 
 	priv.user = priv.serv = NULL;
 	priv.fmt = fmt;
-	priv.flags = flags;
+	priv.type = type;
 	u_va_start(priv.va, fmt);
 	u_map_each(c->members, sendto_chan_cb, &priv);
 	va_end(priv.va);
@@ -118,8 +126,8 @@ u_map *map; u_chan *c; u_chanuser *cu; struct sendto_priv *priv;
 	u_map_each(c->members, sendto_chan_cb, priv);
 }
 
-void u_sendto_visible(T(u_user*) u, T(uint) flags, T(char*) fmt, u_va_alist)
-A(u_user *u; uint flags; char *fmt; va_dcl)
+void u_sendto_visible(T(u_user*) u, T(uint) type, T(char*) fmt, u_va_alist)
+A(u_user *u; uint type; char *fmt; va_dcl)
 {
 	struct sendto_priv priv;
 
@@ -129,7 +137,7 @@ A(u_user *u; uint flags; char *fmt; va_dcl)
 
 	priv.user = priv.serv = NULL;
 	priv.fmt = fmt;
-	priv.flags = flags;
+	priv.type = type;
 	u_va_start(priv.va, fmt);
 	u_map_each(u->channels, sendto_visible_cb, &priv);
 	va_end(priv.va);
@@ -198,7 +206,7 @@ A(unsigned char c; u_conn *conn; char *fmt; va_dcl)
 
 	priv.user = priv.serv = NULL;
 	priv.fmt = fmt;
-	priv.flags = ST_ALL;
+	priv.type = ST_ALL;
 
 	u_log(LG_DEBUG, "roster[%s]: %s", roster_to_str(c), fmt);
 
