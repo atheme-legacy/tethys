@@ -54,6 +54,7 @@ struct u_chan {
 	u_cookie ck_flags;
 	u_map *members;
 	u_list ban, quiet, banex, invex;
+	u_map *invites;
 	char *forward, *key;
 	int limit;
 };
@@ -85,6 +86,10 @@ extern char *u_chan_modes(); /* u_chan*, int on_chan */
 extern int u_chan_send_topic(); /* u_chan*, u_user* */
 extern int u_chan_send_names(); /* u_chan*, u_user* */
 extern int u_chan_send_list(); /* u_chan*, u_user*, u_list* */
+
+extern void u_add_invite(); /* u_chan*, u_user* */
+extern void u_clr_invites_chan(); /* u_chan* */
+extern void u_clr_invites_user(); /* u_user* */
 
 extern u_chanuser *u_chan_user_add(); /* u_chan*, u_user* */
 extern void u_chan_user_del(); /* u_chanuser* */

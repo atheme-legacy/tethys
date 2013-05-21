@@ -54,6 +54,7 @@ struct u_user {
 	char uid[10];
 	uint flags;
 	u_map *channels;
+	u_map *invites;
 
 	char nick[MAXNICKLEN+1];
 	char acct[MAXACCOUNT+1];
