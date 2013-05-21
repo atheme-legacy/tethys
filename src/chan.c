@@ -325,6 +325,7 @@ u_chan *u_chan_get_or_create(name) char *name;
 	u_list_init(&chan->quiet);
 	u_list_init(&chan->banex);
 	u_list_init(&chan->invex);
+	chan->invites = u_map_new(0);
 	chan->forward = NULL;
 	chan->key = NULL;
 	chan->limit = -1;
@@ -493,6 +494,37 @@ int u_chan_send_list(c, u, list) u_chan *c; u_user *u; u_list *list;
 	u_user_num(u, end, c);
 
 	return 0;
+}
+
+void u_add_invite(c, u) u_chan *c; u_user *u;
+{
+	/* TODO: check invite limits */
+	u_map_set(c->invites, u, u);
+	u_map_set(u->invites, c, c);
+}
+
+static void del_invite(c, u) u_chan *c; u_user *u;
+{
+	u_map_del(c->invites, u);
+	u_map_del(u->invites, c);
+}
+
+static void inv_chan_cb(map, u, u_, c) u_map *map; u_user *u, *u_; u_chan *c;
+{
+	del_invite(c, u);
+}
+void u_clr_invites_chan(c) u_chan *c;
+{
+	u_map_each(c->invites, inv_chan_cb, c);
+}
+
+static void inv_user_cb(map, c, c_, u) u_map *map; u_chan *c, *c_; u_chan *u;
+{
+	del_invite(c, u);
+}
+void u_clr_invites_user(u) u_user *u;
+{
+	u_map_each(u->invites, inv_user_cb, u);
 }
 
 /* XXX: assumes the chanuser doesn't already exist */
