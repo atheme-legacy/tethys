@@ -167,6 +167,7 @@ void u_user_make_ureg(conn) u_conn *conn;
 	u_trie_set(users_by_uid, u->uid, u);
 	u->flags = umode_default | USER_IS_LOCAL;
 	u->channels = u_map_new(0);
+	u->invites = u_map_new(0);
 
 	u_strlcpy(u->ip, conn->ip, MAXHOST+1);
 	u_strlcpy(u->realhost, conn->host, MAXHOST+1);
@@ -203,6 +204,7 @@ u_user_remote *u_user_new_remote(sv, uid) u_server *sv; char *uid;
 	u_trie_set(users_by_uid, u->uid, u);
 	u->flags = 0; /* modes are in EUID command */
 	u->channels = u_map_new(0);
+	u->invites = u_map_new(0);
 
 	u_user_state(u, USER_NO_STATE);
 
