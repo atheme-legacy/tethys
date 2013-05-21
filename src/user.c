@@ -427,39 +427,6 @@ static int is_in_list(host, list) char *host; u_list *list;
 	return 0;
 }
 
-void u_user_part_chan(ul, chan, reason) u_user_local *ul; char *chan, *reason;
-{
-	char buf[512];
-	u_user *u = USER(ul);
-	u_chan *c;
-	u_chanuser *cu;
-
-	c = u_chan_get(chan);
-	if (c == NULL) {
-		u_user_num(u, ERR_NOSUCHCHANNEL, chan);
-		return;
-	}
-
-	cu = u_chan_user_find(c, u);
-	if (cu == NULL) {
-		u_user_num(u, ERR_NOTONCHANNEL, c);
-		return;
-	}
-
-	buf[0] = '\0';
-	if (reason)
-		sprintf(buf, " :%s", reason);
-
-	u_sendto_chan(c, NULL, ST_ALL, ":%H PART %C%s", u, c, buf);
-
-	u_chan_user_del(cu);
-
-	if (c->members->size == 0) {
-		u_log(LG_DEBUG, "Dropping channel %C", c);
-		u_chan_drop(c);
-	}
-}
-
 int u_user_in_list(u, list) u_user *u; u_list *list;
 {
 	char buf[512];

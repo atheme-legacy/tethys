@@ -144,14 +144,46 @@ static int m_join(conn, msg) u_conn *conn; u_msg *msg;
 
 static int m_part(conn, msg) u_conn *conn; u_msg *msg;
 {
-	struct u_user *u = conn->priv;
+	char *q, chans[512], buf[512];
+	u_user *u = conn->priv;
+	u_chan *c;
+	u_chanuser *cu;
 	char *s, *p;
+
+	buf[0] = '\0';
+	if (msg->argv[1])
+		sprintf(buf, " :%s", msg->argv[1]);
+
+	q = chans;
 
 	p = msg->argv[0];
 	while ((s = cut(&p, ",")) != NULL) {
 		u_log(LG_FINE, "%s PART %s$%s", u->nick, s, p);
 
-		u_user_part_chan(u, s, msg->argv[1]);
+		if (!(c = u_chan_get(s))) {
+			u_user_num(u, ERR_NOSUCHCHANNEL, s);
+			continue;
+		}
+
+		if (!(cu = u_chan_user_find(c, u))) {
+			u_user_num(u, ERR_NOTONCHANNEL, c);
+			continue;
+		}
+
+		u_sendto_chan(c, NULL, ST_USERS, ":%H PART %C%s", u, c, buf);
+		u_chan_user_del(cu);
+
+		q += sprintf(q, "%s%s", q==chans?"":",", c->name);
+
+		if (c->members->size == 0) {
+			u_log(LG_DEBUG, "Dropping channel %C", c);
+			u_chan_drop(c);
+		}
+	}
+
+	if (q != chans) {
+		u_log(LG_DEBUG, "%U parted from %s%s", u, chans, buf);
+		u_roster_f(R_SERVERS, conn, ":%U PART %s%s", u, chans, buf);
 	}
 
 	return 0;

@@ -118,8 +118,6 @@ extern void u_user_send_isupport(); /* u_user_local* */
 extern void u_user_welcome(); /* u_user_local* */
 extern void u_user_send_motd(); /* u_user_local* */
 
-extern void u_user_part_chan(); /* u_user_local*, char *chan, char *reason */
-
 extern void u_user_make_euid(); /* u_user*, char *buf (space for 512) */
 
 extern int init_user();

@@ -332,18 +332,20 @@ static int m_sid(conn, msg) u_conn *conn; u_msg *msg;
 
 static int m_part(conn, msg) u_conn *conn; u_msg *msg;
 {
+	char buf[512];
 	u_chan *c;
 	u_user *u;
+	u_chanuser *cu;
 	char *s, *p;
 	
-	if (!(c = u_chan_get(msg->argv[0]))) {
-		return u_log(LG_ERROR, "%G tried to PART nonexistent chan %s",
-		             conn, msg->argv[0]);
-	}
 	if (!msg->src || !ENT_IS_USER(msg->src)) {
 		return u_log(LG_ERROR, "Can't use PART source %s from %G!",
 		             msg->srcstr, conn);
 	}
+
+	buf[0] = '\0';
+	if (msg->argv[1])
+		sprintf(buf, " :%s", msg->argv[1]);
 	
 	u = msg->src->v.u;
 
@@ -351,8 +353,28 @@ static int m_part(conn, msg) u_conn *conn; u_msg *msg;
 	while ((s = cut(&p, ",")) != NULL) {
 		u_log(LG_FINE, "%s PART %s$%s", u->nick, s, p);
 
-		u_user_part_chan(u, s, msg->argv[1]);
+		if (!(c = u_chan_get(s))) {
+			u_log(LG_WARN, "%G tried to part %U from %s (missing)",
+			      conn, u, s);
+			continue;
+		}
+		if (!(cu = u_chan_user_find(c, u))) {
+			u_log(LG_WARN, "%G tried to part %U from %C, but %s",
+			      conn, u, c, "user is not on that channel");
+			continue;
+		}
+
+		u_sendto_chan(c, conn, ST_USERS, ":%H PART %C%s", u, c, buf);
+		u_chan_user_del(cu);
+
+		if (c->members->size == 0) {
+			u_log(LG_DEBUG, "Dropping channel %C", c);
+			u_chan_drop(c);
+		}
 	}
+
+	u_roster_f(R_SERVERS, conn, ":%E PART %s%s", msg->src,
+	           msg->argv[0], buf);
 
 	return 0;
 }
@@ -366,7 +388,7 @@ u_cmd c_server[] = {
 
 	{ "SJOIN",       CTX_SERVER, m_sjoin,         4 },
 	{ "JOIN",        CTX_SERVER, m_join,          3 },
-	{ "PART",        CTX_SERVER, m_part,          2 },
+	{ "PART",        CTX_SERVER, m_part,          1 },
 
 	{ "TMODE",       CTX_SERVER, m_tmode,         3 },
 
