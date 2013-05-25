@@ -235,6 +235,8 @@ void u_user_unlink(u) u_user *u;
 
 	u_log(LG_VERBOSE, "Unlinking user uid=%s (%U)", u->uid, u);
 
+	u_clr_invites_user(u);
+
 	/* part from all channels */
 	u_map_each(u->channels, user_unlink_cb, NULL);
 	u_map_free(u->channels);

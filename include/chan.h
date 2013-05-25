@@ -88,6 +88,7 @@ extern int u_chan_send_names(); /* u_chan*, u_user* */
 extern int u_chan_send_list(); /* u_chan*, u_user*, u_list* */
 
 extern void u_add_invite(); /* u_chan*, u_user* */
+extern void u_del_invite(); /* u_chan*, u_user* */
 extern void u_clr_invites_chan(); /* u_chan* */
 extern void u_clr_invites_user(); /* u_user* */
 

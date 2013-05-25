@@ -360,6 +360,7 @@ void u_chan_drop(chan) u_chan *chan;
 	drop_list(&chan->quiet);
 	drop_list(&chan->banex);
 	drop_list(&chan->invex);
+	u_clr_invites_chan(chan);
 	drop_param(&chan->forward);
 	drop_param(&chan->key);
 
@@ -503,7 +504,7 @@ void u_add_invite(c, u) u_chan *c; u_user *u;
 	u_map_set(u->invites, c, c);
 }
 
-static void del_invite(c, u) u_chan *c; u_user *u;
+void u_del_invite(c, u) u_chan *c; u_user *u;
 {
 	u_map_del(c->invites, u);
 	u_map_del(u->invites, c);
@@ -511,7 +512,7 @@ static void del_invite(c, u) u_chan *c; u_user *u;
 
 static void inv_chan_cb(map, u, u_, c) u_map *map; u_user *u, *u_; u_chan *c;
 {
-	del_invite(c, u);
+	u_del_invite(c, u);
 }
 void u_clr_invites_chan(c) u_chan *c;
 {
@@ -520,7 +521,7 @@ void u_clr_invites_chan(c) u_chan *c;
 
 static void inv_user_cb(map, c, c_, u) u_map *map; u_chan *c, *c_; u_chan *u;
 {
-	del_invite(c, u);
+	u_del_invite(c, u);
 }
 void u_clr_invites_user(u) u_user *u;
 {
