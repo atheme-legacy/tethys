@@ -818,6 +818,39 @@ static int m_map(conn, msg) u_conn *conn; u_msg *msg;
 	return 0;
 }
 
+static int m_invite(conn, msg) u_conn *conn; u_msg *msg;
+{
+	u_entity te;
+	u_user *tu, *u = conn->priv;
+	u_chan *c;
+	u_chanuser *cu;
+
+	if (!(tu = u_user_by_nick(msg->argv[0])))
+		return u_user_num(u, ERR_NOSUCHNICK, msg->argv[0]);
+	if (!(c = u_chan_get(msg->argv[1])))
+		return u_user_num(u, ERR_NOSUCHCHANNEL, msg->argv[1]);
+	if (!(cu = u_chan_user_find(c, u)))
+		return u_user_num(u, ERR_NOTONCHANNEL, c);
+	if (u_chan_user_find(c, tu))
+		return u_user_num(u, ERR_USERONCHANNEL, tu, c);
+	if (!(cu->flags & CU_PFX_OP) && !(c->mode & CMODE_FREEINVITE))
+		return u_user_num(u, ERR_CHANOPRIVSNEEDED, c);
+
+	u_entity_from_user(&te, tu);
+	if (ENT_IS_LOCAL(&te)) {
+		u_add_invite(c, tu);
+		u_conn_f(te.link, ":%H INVITE %U :%C", u, tu, c);
+	} else {
+		u_conn_f(te.link, ":%H INVITE %U %C :%u", u, tu, c, c->ts);
+	}
+
+	/* TODO: who sees RPL_INVITING? */
+	u_user_num(u, RPL_INVITING, tu, c);
+	u_log(LG_VERBOSE, "Local %U invited %U to %C", u, tu, c);
+
+	return 0;
+}
+
 u_cmd c_user[] = {
 	{ "ECHO",      CTX_USER, m_echo,    0 },
 	{ "QUIT",      CTX_USER, m_quit,    0 },
@@ -843,9 +876,9 @@ u_cmd c_user[] = {
 	{ "KICK",      CTX_USER, m_kick,    2 },
 	{ "SUMMON",    CTX_USER, m_summon,  0 },
 	{ "MAP",       CTX_USER, m_map,     0 },
+	{ "INVITE",    CTX_USER, m_invite,  2 },
 
 	{ "SQUIT",     CTX_USER, not_implemented, 0 },
-	{ "INVITE",    CTX_USER, not_implemented, 0 },
 	{ "LINKS",     CTX_USER, not_implemented, 0 },
 	{ "TIME",      CTX_USER, not_implemented, 0 },
 	{ "CONNECT",   CTX_USER, not_implemented, 0 },

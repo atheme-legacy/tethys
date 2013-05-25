@@ -379,6 +379,41 @@ static int m_part(conn, msg) u_conn *conn; u_msg *msg;
 	return 0;
 }
 
+static int m_invite(conn, msg) u_conn *conn; u_msg *msg;
+{
+	u_entity te;
+	u_user *tu, *u;
+	u_chan *c;
+
+	if (!msg->src || !ENT_IS_USER(msg->src) || !(u = msg->src->v.u))
+		return u_log(LG_ERROR, "Can't use INVITE source %s from %G",
+		             msg->srcstr, conn);
+	if (!(tu = u_user_by_uid(msg->argv[0])))
+		return u_log(LG_ERROR, "%G sent INVITE for nonexistent %s",
+		             conn, msg->argv[0]);
+	if (!(c = u_chan_get(msg->argv[1])))
+		return u_log(LG_ERROR, "%G sent INVITE for nonexistent %s",
+		             conn, msg->argv[1]);
+
+	/* TODO: TS checking */
+
+	u_entity_from_user(&te, tu);
+	if (ENT_IS_LOCAL(&te)) {
+		u_add_invite(c, tu);
+		u_conn_f(te.link, ":%H INVITE %U :%C", u, tu, c);
+		u_log(LG_VERBOSE, "Remote %U invited my %U to %C", u, tu, c);
+	} else {
+		if (te.link == conn || msg->src->link != conn) {
+			u_log(LG_ERROR, "%G sent INVITE for user on %s",
+			      conn, "a different subtree");
+			return 0;
+		}
+		u_conn_f(te.link, ":%H INVITE %U %C :%s", u, tu, c, msg->argv[2]);
+	}
+
+	return 0;
+}
+
 u_cmd c_server[] = {
 	{ "ERROR",       CTX_SERVER, m_error,         0 },
 	{ "SVINFO",      CTX_SERVER, m_svinfo,        4 },
@@ -397,6 +432,8 @@ u_cmd c_server[] = {
 
 	{ "SID",         CTX_SERVER, m_sid,           4 },
 
+	{ "INVITE",      CTX_SERVER, m_invite,        2 },
+
 	{ "ADMIN",       CTX_SERVER, not_implemented, 0 }, /* hunted */
 	{ "AWAY",        CTX_SERVER, not_implemented, 0 },
 	{ "BAN",         CTX_SERVER, not_implemented, 0 },
@@ -407,7 +444,6 @@ u_cmd c_server[] = {
 	{ "GLINE",       CTX_SERVER, not_implemented, 0 },
 	{ "GUNGLINE",    CTX_SERVER, not_implemented, 0 },
 	{ "INFO",        CTX_SERVER, not_implemented, 0 }, /* hunted */
-	{ "INVITE",      CTX_SERVER, not_implemented, 0 },
 	{ "JUPE",        CTX_SERVER, not_implemented, 0 },
 	{ "KICK",        CTX_SERVER, not_implemented, 0 },
 	{ "KLINE",       CTX_SERVER, not_implemented, 0 },
