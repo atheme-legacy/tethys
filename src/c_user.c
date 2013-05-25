@@ -539,6 +539,9 @@ static int m_oper(conn, msg) u_conn *conn; u_msg *msg;
 
 static int list_entry(u, c) u_user *u; u_chan *c;
 {
+	if ((c->mode & (CMODE_PRIVATE | CMODE_SECRET))
+	    && !u_chan_user_find(c, u))
+		return 0;
 	u_user_num(u, RPL_LIST, c->name, c->members->size, c->topic);
 	return 0;
 }
@@ -546,9 +549,6 @@ static int list_entry(u, c) u_user *u; u_chan *c;
 static void m_list_chan_cb(c, u) u_chan *c; u_user *u;
 {
 	if (c->members->size < 3)
-		return;
-	if ((c->mode & (CMODE_PRIVATE | CMODE_SECRET))
-	    && !u_chan_user_find(c, u))
 		return;
 	list_entry(u, c);
 }
