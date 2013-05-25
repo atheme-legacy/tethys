@@ -92,6 +92,7 @@ static int try_join_chan(ul, chan, key) u_user_local *ul; char *chan, *key;
 	}
 
 	cu = u_chan_user_add(c, u);
+	u_del_invite(c, u);
 	u_sendto_chan(c, NULL, ST_USERS, ":%H JOIN %C", u, c);
 
 	if (c->members->size == 1) {

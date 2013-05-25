@@ -510,6 +510,11 @@ void u_del_invite(c, u) u_chan *c; u_user *u;
 	u_map_del(u->invites, c);
 }
 
+int u_has_invite(c, u) u_chan *c; u_user *u;
+{
+	return !!u_map_get(c->invites, u);
+}
+
 static void inv_chan_cb(map, u, u_, c) u_map *map; u_user *u, *u_; u_chan *c;
 {
 	u_del_invite(c, u);
@@ -656,13 +661,12 @@ u_chan *c; u_user *u; char *host; u_list *list;
 int u_entry_blocked(c, u, key) u_chan *c; u_user *u; char *key;
 {
 	char host[BUFSIZE];
+	int invited = u_has_invite(c, u);
 
 	snf(FMT_USER, host, BUFSIZE, "%H", u);
 
-	if (c->mode & CMODE_INVITEONLY) {
-		/* TODO: check pending invites */
-
-		if (!is_in_list(c, u, host, &c->invex))
+	if ((c->mode & CMODE_INVITEONLY)) {
+		if (!is_in_list(c, u, host, &c->invex) && !invited)
 			return ERR_INVITEONLYCHAN;
 	}
 
@@ -676,8 +680,10 @@ int u_entry_blocked(c, u, key) u_chan *c; u_user *u; char *key;
 			return ERR_BANNEDFROMCHAN;
 	}
 
-	if (c->limit > 0 && c->members->size >= c->limit)
+	if (c->limit > 0 && c->members->size >= c->limit && !invited)
 		return ERR_CHANNELISFULL;
+
+	/* TODO: an invite also allows +j and +r to be bypassed */
 
 	return 0;
 }
