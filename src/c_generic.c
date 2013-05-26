@@ -8,7 +8,7 @@
 
 static int m_ping(conn, msg) u_conn *conn; u_msg *msg;
 {
-	u_server *sv;
+	u_entity e;
 
 	if (msg->command[1] == 'O') /* user PONG */
 		return 0;
@@ -27,7 +27,7 @@ static int m_ping(conn, msg) u_conn *conn; u_msg *msg;
 		return 0;
 	}
 
-	if (!(sv = u_server_by_name(msg->argv[1]))) {
+	if (!u_entity_from_ref(&e, msg->argv[1]) || !ENT_IS_SERVER(&e)) {
 		if (conn->ctx == CTX_USER)
 			u_conn_num(conn, ERR_NOSUCHSERVER, msg->argv[1]);
 		else
@@ -37,8 +37,8 @@ static int m_ping(conn, msg) u_conn *conn; u_msg *msg;
 	}
 
 	if (msg->src != NULL)
-		u_conn_f(sv->conn, ":%s PING %s %s", msg->src->id,
-			 msg->src->name, sv->name);
+		u_conn_f(e.link, ":%s PING %s %s", msg->src->id,
+			 msg->src->name, e.name);
 
 	return 0;
 }
@@ -46,7 +46,7 @@ static int m_ping(conn, msg) u_conn *conn; u_msg *msg;
 static int m_pong(conn, msg) u_conn *conn; u_msg *msg;
 {
 	u_server *from, *sv = conn->priv;
-	u_conn *to;
+	u_entity e;
 
 	if (!msg->src || !ENT_IS_SERVER(msg->src))
 		return 0;
@@ -58,17 +58,16 @@ static int m_pong(conn, msg) u_conn *conn; u_msg *msg;
 		return 0;
 	}
 
-	to = u_conn_by_name(msg->argv[1]);
-	if (to == NULL) {
+	if (!u_entity_from_ref(&e, msg->argv[1])) {
 		u_log(LG_ERROR, "%G sent PONG for nonexistent %s",
 		      conn, msg->argv[1]);
 		return 0;
 	}
 
-	if (sv->conn == to)
+	if (conn == e.link)
 		return 0;
 
-	u_conn_f(to, ":%S PONG %s %s", from, from->name, msg->argv[1]);
+	u_conn_f(e.link, ":%S PONG %s %s", from, from->name, msg->argv[1]);
 
 	return 0;
 }
