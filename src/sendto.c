@@ -93,9 +93,9 @@ u_map *map; u_user *u; u_chanuser *cu; struct sendto_priv *priv;
 
 	if (!u_cookie_cmp(&conn->ck_sendto, &ck_sendto))
 		return;
-	u_cookie_cpy(&conn->ck_sendto, &ck_sendto);
 
 	if (want_send(priv, conn)) {
+		u_cookie_cpy(&conn->ck_sendto, &ck_sendto);
 		s = ln(priv, conn);
 		u_conn_f(conn, "%s", s);
 	}
@@ -186,9 +186,9 @@ u_map *map; u_conn *unused, *conn; struct sendto_priv *priv;
 
 	if (!u_cookie_cmp(&conn->ck_sendto, &ck_sendto))
 		return;
-	u_cookie_cpy(&conn->ck_sendto, &ck_sendto);
 
 	if (want_send(priv, conn)) {
+		u_cookie_cpy(&conn->ck_sendto, &ck_sendto);
 		s = ln(priv, conn);
 		u_conn_f(conn, "%s", s);
 	}
