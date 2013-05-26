@@ -52,15 +52,15 @@ static int m_pong(conn, msg) u_conn *conn; u_msg *msg;
 		return 0;
 	from = msg->src->v.sv;
 
-	if (streq(msg->argv[1], me.name)) {
-		if (sv->flags & SERVER_IS_BURSTING)
-			u_server_eob(conn->priv);
-		return 0;
-	}
-
 	if (!u_entity_from_ref(&e, msg->argv[1])) {
 		u_log(LG_ERROR, "%G sent PONG for nonexistent %s",
 		      conn, msg->argv[1]);
+		return 0;
+	}
+
+	if (ENT_IS_SERVER(&e) && e.v.sv == &me) {
+		if (sv->flags & SERVER_IS_BURSTING)
+			u_server_eob(conn->priv);
 		return 0;
 	}
 
