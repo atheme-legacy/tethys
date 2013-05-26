@@ -447,21 +447,6 @@ static int m_userhost(conn, msg) u_conn *conn; u_msg *msg;
 	return 0;
 }
 
-static int m_away(conn, msg) u_conn *conn; u_msg *msg;
-{
-	u_user *u = conn->priv;
-
-	if (msg->argc == 0 || !msg->argv[0][0]) {
-		u->away[0] = '\0';
-		u_user_num(u, RPL_UNAWAY);
-	} else {
-		u_strlcpy(u->away, msg->argv[0], MAXAWAY);
-		u_user_num(u, RPL_NOWAWAY);
-	}
-
-	return 0;
-}
-
 /* :serv.irc 352 aji #chan ident my.host serv.irc nick H*@ :hops realname */
 static void who_reply(u, tu, c, cu) u_user *u, *tu; u_chan *c; u_chanuser *cu;
 {
@@ -864,7 +849,6 @@ u_cmd c_user[] = {
 	{ "MODE",      CTX_USER, m_mode,    1 },
 	{ "WHOIS",     CTX_USER, m_whois,   1 },
 	{ "USERHOST",  CTX_USER, m_userhost,1 },
-	{ "AWAY",      CTX_USER, m_away,    0 },
 	{ "WHO",       CTX_USER, m_who,     1 },
 	{ "OPER",      CTX_USER, m_oper,    2 },
 	{ "LIST",      CTX_USER, m_list,    0 },

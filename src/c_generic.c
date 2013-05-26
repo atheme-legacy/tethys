@@ -73,11 +73,38 @@ static int m_pong(conn, msg) u_conn *conn; u_msg *msg;
 	return 0;
 }
 
+static int m_away(conn, msg) u_conn *conn; u_msg *msg;
+{
+	char *r = (msg->argc == 0 || !msg->argv[0][0]) ? NULL : msg->argv[0];
+	u_user *u;
+
+	if (!msg->src || !ENT_IS_USER(msg->src))
+		return 0;
+	u = msg->src->v.u;
+
+	if (!r) {
+		u->away[0] = '\0';
+		if (IS_LOCAL_USER(u))
+			u_user_num(u, RPL_UNAWAY);
+	} else {
+		u_strlcpy(u->away, msg->argv[0], MAXAWAY);
+		if (IS_LOCAL_USER(u))
+			u_user_num(u, RPL_NOWAWAY);
+	}
+
+	u_roster_f(R_SERVERS, conn, ":%E AWAY%s%s", msg->src, r?" :":"", r?r:"");
+
+	return 0;
+}
+
 u_cmd c_generic[] = {
 	{ "PING",        CTX_USER,    m_ping,        1 },
 	{ "PONG",        CTX_USER,    m_ping,        0 },
 	{ "PING",        CTX_SERVER,  m_ping,        1 },
 	{ "PONG",        CTX_SERVER,  m_pong,        2 },
+
+	{ "AWAY",        CTX_USER,    m_away,        0 },
+	{ "AWAY",        CTX_SERVER,  m_away,        0 },
 
 	{ "" }
 };

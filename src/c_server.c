@@ -435,7 +435,6 @@ u_cmd c_server[] = {
 	{ "INVITE",      CTX_SERVER, m_invite,        2 },
 
 	{ "ADMIN",       CTX_SERVER, not_implemented, 0 }, /* hunted */
-	{ "AWAY",        CTX_SERVER, not_implemented, 0 },
 	{ "BAN",         CTX_SERVER, not_implemented, 0 },
 	{ "BMASK",       CTX_SERVER, not_implemented, 0 },
 	{ "CHGHOST",     CTX_SERVER, not_implemented, 0 },
