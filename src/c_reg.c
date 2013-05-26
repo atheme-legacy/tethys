@@ -123,6 +123,8 @@ struct cap {
 	{ "" }
 };
 
+static char caps_str[512];
+
 static int cap_add(u, cap) u_user *u; char *cap;
 {
 	struct cap *cur;
@@ -157,12 +159,17 @@ static int m_cap(conn, msg) u_conn *conn; u_msg *msg;
 
 	if (streq(msg->argv[0], "LS")) {
 		/* maybe this will need to be wrapped? */
-		ackbuf[0] = '\0';
-		for (cur=caps; cur->name[0]; cur++) {
-			u_strlcat(ackbuf, " ", BUFSIZE);
-			u_strlcat(ackbuf, cur->name, BUFSIZE);
+		if (!caps_str[0]) {
+			caps_str[0] = '\0';
+			for (cur=caps; cur->name[0]; cur++) {
+				if (caps_str[0])
+					u_strlcat(caps_str, " ", BUFSIZE);
+				u_strlcat(caps_str, cur->name, BUFSIZE);
+			}
+			u_log(LG_FINE, "Built CAPs list: %s", caps_str);
 		}
-		u_conn_f(conn, ":%S CAP * LS :%s", &me, ackbuf+1);
+
+		u_conn_f(conn, ":%S CAP * LS :%s", &me, caps_str);
 
 	} else if (streq(msg->argv[0], "REQ")) {
 		if (msg->argc != 2) {
