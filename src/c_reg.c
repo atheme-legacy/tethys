@@ -114,19 +114,29 @@ static int m_user(conn, msg) u_conn *conn; u_msg *msg;
 	return 0;
 }
 
+struct cap {
+	char name[32];
+	ulong flag;
+} caps[] = {
+	{ "multi-prefix",   CAP_MULTI_PREFIX },
+	{ "away-notify",    CAP_AWAY_NOTIFY },
+	{ "" }
+};
+
 static int cap_add(u, cap) u_user *u; char *cap;
 {
+	struct cap *cur;
 	char *s;
 
 	for (s=cap; *s; s++)
 		*s = isupper(*s) ? tolower(*s) : *s;
 
-	if (streq(cap, "multi-prefix"))
+	for (cur=caps; cur->name[0]; cur++) {
+		if (!streq(cur->name, cap))
+			continue;
 		u->flags |= CAP_MULTI_PREFIX;
-	else if (streq(cap, "away-notify"))
-		u->flags |= CAP_AWAY_NOTIFY;
-	else
 		return 0;
+	}
 
 	return 1;
 }
@@ -137,6 +147,7 @@ static int m_cap(conn, msg) u_conn *conn; u_msg *msg;
 	char nakbuf[BUFSIZE];
 	u_user_local *ul;
 	char *s, *p, *q;
+	struct cap *cur;
 
 	u_user_make_ureg(conn);
 	ul = conn->priv;
@@ -145,7 +156,13 @@ static int m_cap(conn, msg) u_conn *conn; u_msg *msg;
 	ascii_canonize(msg->argv[0]);
 
 	if (streq(msg->argv[0], "LS")) {
-		u_conn_f(conn, ":%S CAP * LS :multi-prefix away-notify", &me);
+		/* maybe this will need to be wrapped? */
+		ackbuf[0] = '\0';
+		for (cur=caps; cur->name[0]; cur++) {
+			u_strlcat(ackbuf, " ", BUFSIZE);
+			u_strlcat(ackbuf, cur->name, BUFSIZE);
+		}
+		u_conn_f(conn, ":%S CAP * LS :%s", &me, ackbuf+1);
 
 	} else if (streq(msg->argv[0], "REQ")) {
 		if (msg->argc != 2) {
