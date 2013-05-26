@@ -1,4 +1,4 @@
-/* ircd-micro, c_hunted.c -- commands with hunted parameters
+/* ircd-micro, c_generic.c -- commands with hunted parameters
    Copyright (C) 2013 Alex Iadicicco
 
    This file is protected under the terms contained
@@ -73,7 +73,7 @@ static int m_pong(conn, msg) u_conn *conn; u_msg *msg;
 	return 0;
 }
 
-u_cmd c_hunted[] = {
+u_cmd c_generic[] = {
 	{ "PING",        CTX_USER,    m_ping,        1 },
 	{ "PONG",        CTX_USER,    m_ping,        0 },
 	{ "PING",        CTX_SERVER,  m_ping,        1 },

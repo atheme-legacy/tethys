@@ -24,7 +24,7 @@ int usage(argv0, code) char *argv0;
 #define INIT(fn) if ((err = (fn)()) < 0) return err
 #define COMMAND_DEF(cmds) extern u_cmd cmds[]
 #define COMMAND(cmds) if ((err = u_cmds_reg(cmds)) < 0) return err
-COMMAND_DEF(c_hunted);
+COMMAND_DEF(c_generic);
 COMMAND_DEF(c_message);
 COMMAND_DEF(c_reg);
 COMMAND_DEF(c_server);
@@ -51,7 +51,7 @@ int init()
 	INIT(init_server);
 	INIT(init_chan);
 	INIT(init_sendto);
-	COMMAND(c_hunted);
+	COMMAND(c_generic);
 	COMMAND(c_message);
 	COMMAND(c_reg);
 	COMMAND(c_server);

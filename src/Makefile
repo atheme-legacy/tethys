@@ -10,7 +10,7 @@ EXTRA = numeric.h \
 	version.c
 OBJS = numeric.o \
 	auth.o \
-	c_hunted.o \
+	c_generic.o \
 	c_message.o \
 	c_reg.o \
 	c_server.o \
