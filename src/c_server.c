@@ -57,15 +57,15 @@ static int m_svinfo(conn, msg) u_conn *conn; u_msg *msg;
 	return 0;
 }
 
-static u_user *uid_generic(conn, msg) u_conn *conn; u_msg *msg;
+static int m_euid(conn, msg) u_conn *conn; u_msg *msg;
 {
+	u_user *u;
 	u_server *sv;
 	u_user_remote *ur;
-	u_user *u;
 	char buf[512];
 
 	if (!(sv = u_server_by_sid(msg->srcstr)))
-		return NULL;
+		return idfk(conn, msg);
 
 	/* TODO: check for collision! */
 
@@ -81,30 +81,14 @@ static u_user *uid_generic(conn, msg) u_conn *conn; u_msg *msg;
 	u_strlcpy(u->ip, msg->argv[6], INET_ADDRSTRLEN);
 	u_strlcpy(u->gecos, msg->argv[msg->argc - 1], MAXGECOS+1);
 
+	u_strlcpy(u->realhost, msg->argv[8], MAXHOST+1);
+	if (msg->argv[9][0] != '*')
+		u_strlcpy(u->acct, msg->argv[9], MAXACCOUNT+1);
+
 	/* servers are required to have EUID */
 	u_user_make_euid(u, buf);
 	u_roster_f(R_SERVERS, conn, "%s", buf);
 
-	return u;
-}
-
-static int m_euid(conn, msg) u_conn *conn; u_msg *msg;
-{
-	u_user *u;
-
-	if (!(u = uid_generic(conn, msg)))
-		return idfk(conn, msg);
-
-	u_strlcpy(u->realhost, msg->argv[8], MAXHOST+1);
-	if (msg->argv[9][0] != '*')
-		u_strlcpy(u->acct, msg->argv[9], MAXACCOUNT+1);
-	return 0;
-}
-
-static int m_uid(conn, msg) u_conn *conn; u_msg *msg;
-{
-	if (!uid_generic(conn, msg))
-		return idfk(conn, msg);
 	return 0;
 }
 
@@ -419,7 +403,6 @@ u_cmd c_server[] = {
 	{ "SVINFO",      CTX_SERVER, m_svinfo,        4 },
 
 	{ "EUID",        CTX_SERVER, m_euid,         11 },
-	{ "UID",         CTX_SERVER, m_uid,           9 },
 
 	{ "SJOIN",       CTX_SERVER, m_sjoin,         4 },
 	{ "JOIN",        CTX_SERVER, m_join,          3 },
