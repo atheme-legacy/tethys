@@ -13,17 +13,11 @@ static int m_ping(conn, msg) u_conn *conn; u_msg *msg;
 	if (msg->command[1] == 'O') /* user PONG */
 		return 0;
 
+	if (msg->src == NULL)
+		return u_log(LG_ERROR, "Useless PING from %G", conn);
+
 	if (msg->argc == 1) {
 		u_conn_f(conn, ":%S PONG %s :%s", &me, me.name, msg->argv[0]);
-		return 0;
-	}
-
-	if (streq(msg->argv[1], me.name)) {
-		if (msg->src == NULL)
-			u_log(LG_ERROR, "Useless PING from %G", conn);
-		else
-			u_conn_f(conn, ":%S PONG %s %s", &me, me.name,
-			         msg->src->name);
 		return 0;
 	}
 
@@ -36,9 +30,17 @@ static int m_ping(conn, msg) u_conn *conn; u_msg *msg;
 		return 0;
 	}
 
-	if (msg->src != NULL)
-		u_conn_f(e.link, ":%s PING %s %s", msg->src->id,
-			 msg->src->name, e.name);
+	if (e.v.sv == &me) {
+		u_conn_f(conn, ":%S PONG %s %s", &me, me.name,
+		         msg->src->name);
+		return 0;
+	}
+
+	if (e.link == conn)
+		return u_log(LG_ERROR, "%G sent PING for wrong subtree", conn);
+
+	u_conn_f(e.link, ":%s PING %s %s", msg->src->id,
+		 msg->src->name, e.name);
 
 	return 0;
 }
