@@ -20,12 +20,12 @@ struct sendto_priv {
 	va_list va;
 };
 
-static void start()
+void u_st_start()
 {
 	u_cookie_inc(&ck_sendto);
 }
 
-static void exclude(conn) u_conn *conn;
+void u_st_exclude(conn) u_conn *conn;
 {
 	if (u_cookie_cmp(&conn->ck_sendto, &ck_sendto) < 0)
 		u_cookie_cpy(&conn->ck_sendto, &ck_sendto);
@@ -107,10 +107,10 @@ A(u_chan *c; u_conn *conn; uint type; char *fmt; va_dcl)
 {
 	struct sendto_priv priv;
 
-	start();
+	u_st_start();
 
 	if (conn != NULL)
-		exclude(conn);
+		u_st_exclude(conn);
 
 	priv.user = priv.serv = NULL;
 	priv.fmt = fmt;
@@ -131,9 +131,9 @@ A(u_user *u; uint type; char *fmt; va_dcl)
 {
 	struct sendto_priv priv;
 
-	start();
+	u_st_start();
 
-	exclude(u_user_conn(u));
+	u_st_exclude(u_user_conn(u));
 
 	priv.user = priv.serv = NULL;
 	priv.fmt = fmt;
@@ -199,10 +199,10 @@ A(unsigned char c; u_conn *conn; char *fmt; va_dcl)
 {
 	struct sendto_priv priv;
 
-	start();
+	u_st_start();
 
 	if (conn != NULL)
-		exclude(conn);
+		u_st_exclude(conn);
 
 	priv.user = priv.serv = NULL;
 	priv.fmt = fmt;

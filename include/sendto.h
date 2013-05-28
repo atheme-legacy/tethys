@@ -11,6 +11,21 @@
 #define ST_SERVERS             1
 #define ST_USERS               2
 
+typedef struct u_st_opts u_st_opts;
+
+struct u_st_opts {
+	uint type;
+	uint flags_all;
+	uint flags_none;
+
+	u_chan *c;
+	uint cu_flags;
+};
+
+extern void u_st_start();
+extern void u_st_exclude(); /* u_conn *conn */
+extern void u_st(A3(u_st_opts*, char*, ...));
+
 /* second argument is excluded from message */
 extern void u_sendto_chan(A5(u_chan*, u_conn*, uint, char*, ...));
 
