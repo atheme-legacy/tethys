@@ -31,6 +31,39 @@ void u_st_exclude(conn) u_conn *conn;
 		u_cookie_cpy(&conn->ck_sendto, &ck_sendto);
 }
 
+int u_st_match_server(opt, sv) u_st_opts *opt; u_server *sv;
+{
+	if (opt->type == ST_USERS)
+		return 0;
+	return 1;
+}
+
+int u_st_match_user(opt, u) u_st_opts *opt; u_user *u;
+{
+	if (opt->type == ST_SERVERS)
+		return 0;
+
+	if ((u->flags & opt->flags_all) != opt->flags_all)
+		return 0;
+	if (u->flags & opt->flags_none)
+		return 0;
+
+	if (opt->c) {
+		u_chanuser *cu = u_chan_user_find(opt->c, u);
+		if (!cu || (cu->flags & opt->cu_flags) != opt->cu_flags)
+			return 0;
+	}
+
+	return 1;
+}
+
+int u_st_match_conn(opt, conn) u_st_opts *opt; u_conn *conn;
+{
+	if (conn->ctx == CTX_SERVER || conn->ctx == CTX_SREG)
+		return u_st_match_server(opt, conn->priv);
+	return u_st_match_user(opt, conn->priv);
+}
+
 static int want_send(pv, conn) struct sendto_priv *pv; u_conn *conn;
 {
 	switch (pv->type) {

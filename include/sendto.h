@@ -15,16 +15,22 @@ typedef struct u_st_opts u_st_opts;
 
 struct u_st_opts {
 	uint type;
+
 	uint flags_all;
 	uint flags_none;
 
 	u_chan *c;
 	uint cu_flags;
+
+	char *serv, *user, *fmt;
+	va_list va;
 };
 
 extern void u_st_start();
 extern void u_st_exclude(); /* u_conn *conn */
-extern void u_st(A3(u_st_opts*, char*, ...));
+extern int u_st_match_server(); /* u_st_opts*, u_server* */
+extern int u_st_match_user(); /* u_st_opts*, u_user* */
+extern int u_st_match_conn(); /* u_st_opts*, u_conn* */
 
 /* second argument is excluded from message */
 extern void u_sendto_chan(A5(u_chan*, u_conn*, uint, char*, ...));
