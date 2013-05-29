@@ -136,11 +136,11 @@ static int cap_add(u, cap) u_user *u; char *cap;
 	for (cur=caps; cur->name[0]; cur++) {
 		if (!streq(cur->name, cap))
 			continue;
-		u->flags |= CAP_MULTI_PREFIX;
-		return 0;
+		u->flags |= cur->flag;
+		return 1;
 	}
 
-	return 1;
+	return 0;
 }
 
 static int m_cap(conn, msg) u_conn *conn; u_msg *msg;
