@@ -12,7 +12,8 @@
 #define U_CONN_OBUFSIZE 32768
 #define U_CONN_HOSTSIZE 256
 
-#define U_CONN_CLOSING 0x0001
+#define U_CONN_CLOSING    0x0001
+#define U_CONN_AWAIT_PONG 0x0002
 
 /* events */
 #define EV_ERROR          1
@@ -34,6 +35,7 @@ struct u_conn {
 	uint flags;
 	int ctx;
 	u_auth *auth;
+	u_ts_t last;
 
 	u_io_fd *sock;
 	char ip[INET_ADDRSTRLEN];

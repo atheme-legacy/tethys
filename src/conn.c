@@ -14,6 +14,8 @@ void u_conn_init(conn) u_conn *conn;
 {
 	conn->flags = 0;
 	conn->ctx = CTX_UNREG;
+	conn->auth = NULL;
+	conn->last = NOW.tv_sec;
 
 	conn->sock = NULL;
 	conn->ip[0] = '\0';
@@ -253,6 +255,8 @@ static void dispatch_lines(conn) u_conn *conn;
 		u_log(LG_DEBUG, "[%G] -> %s", conn, buf);
 		u_msg_parse(&msg, buf);
 		u_cmd_invoke(conn, &msg);
+		conn->last = NOW.tv_sec;
+		conn->flags &= ~U_CONN_AWAIT_PONG;
 	}
 }
 
@@ -368,6 +372,7 @@ static void toplev_send(iofd) u_io_fd *iofd;
 static int toplev_post(iofd) u_io_fd *iofd;
 {
 	u_conn *conn = iofd->priv;
+	int timeout, tdelta;
 
 	if (conn->error) {
 		if (conn->event)
@@ -389,6 +394,21 @@ static int toplev_post(iofd) u_io_fd *iofd;
 		iofd->priv = NULL;
 		return -1;
 	}
+
+	if (!conn->auth || !conn->auth->cls)
+		return 0;
+
+	timeout = conn->auth->cls->timeout;
+	tdelta = NOW.tv_sec - conn->last;
+
+	if (tdelta > timeout / 2 && !(conn->flags & U_CONN_AWAIT_PONG)) {
+		/* XXX: dispatch PING from toplev code? */
+		u_conn_f(conn, "PING :%s", me.name);
+		conn->flags |= U_CONN_AWAIT_PONG;
+	}
+
+	if (tdelta > timeout)
+		u_conn_error(conn, "Ping timeout");
 
 	return 0;
 }
