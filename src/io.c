@@ -148,7 +148,7 @@ void u_io_poll_once(io) u_io *io;
 	u_list *n, *tn;
 	u_io_timer *iot;
 	u_io_fd *iofd;
-	struct timeval tv, *tvp;
+	struct timeval tv;
 
 	FD_ZERO(&r);
 	FD_ZERO(&w);
@@ -177,13 +177,14 @@ void u_io_poll_once(io) u_io *io;
 			FD_SET(iofd->fd, &w);
 	}
 
-	tvp = NULL;
-	if (tv_isset(&tv)) {
+	if (!tv_isset(&tv) || tv.tv_sec > NOW.tv_sec + 1) {
+		tv.tv_sec = 1;
+		tv.tv_usec = 0;
+	} else {
 		tv_sub(&tv, &NOW, &tv);
-		tvp = &tv;
 	}
 
-	nfds = select(nfds+1, &r, &w, NULL, tvp);
+	nfds = select(nfds+1, &r, &w, NULL, &tv);
 
 	gettimeofday(&NOW, NULL);
 
