@@ -43,6 +43,24 @@ u_trie *u_trie_new(canonize) void (*canonize)();
 	return trie;
 }
 
+static void free_real(e, cb, priv) u_trie_e *e; void (*cb)(); void *priv;
+{
+	int i;
+
+	if (e == NULL)
+		return;
+	for (i=0; i<16; i++)
+		free_real(e->n[i], cb, priv);
+	cb(e->val, priv);
+	trie_e_del(e);
+}
+
+void u_trie_free(trie, cb, priv) u_trie *trie; void (*cb)(); void *priv;
+{
+	free_real(&trie->n, cb, priv);
+	free(trie);
+}
+
 static uchar nibble(s, i) uchar *s;
 {
 	return (i%2==0) ? s[i/2]>>4 : s[i/2]&0xf;
