@@ -47,13 +47,15 @@ static void free_real(e, cb, priv) u_trie_e *e; void (*cb)(); void *priv;
 {
 	int i;
 
-	if (e == NULL)
-		return;
-	for (i=0; i<16; i++)
+	for (i=0; i<16; i++) {
+		if (!e->n[i])
+			continue;
 		free_real(e->n[i], cb, priv);
+		trie_e_del(e->n[i]);
+	}
+
 	if (cb && e->val)
 		cb(e->val, priv);
-	trie_e_del(e);
 }
 
 void u_trie_free(trie, cb, priv) u_trie *trie; void (*cb)(); void *priv;
