@@ -51,7 +51,8 @@ static void free_real(e, cb, priv) u_trie_e *e; void (*cb)(); void *priv;
 		return;
 	for (i=0; i<16; i++)
 		free_real(e->n[i], cb, priv);
-	cb(e->val, priv);
+	if (cb && e->val)
+		cb(e->val, priv);
 	trie_e_del(e);
 }
 
