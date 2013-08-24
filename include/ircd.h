@@ -56,9 +56,9 @@ typedef unsigned char uchar;
 # include <sys/time.h>
 # include <time.h>
 
-# ifndef __APPLE__
+/*# ifndef __APPLE__
 #  include <crypt.h>
-# endif
+# endif*/
 
 # define A(x)
 # define A2(x,y) x,y

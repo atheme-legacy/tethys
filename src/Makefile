@@ -41,9 +41,9 @@ OBJS = numeric.o \
 HEADERS = ../include/*.h
 
 CFLAGS = -Wall -g -I. -I../include
-LIBS = $(shell ld -lcrypt -o /dev/null 2>/dev/null && echo -lcrypt)
+LIBS ?= $(shell $(CC) -lcrypt -o /dev/null probe_crypt.c 2>/dev/null && echo -lcrypt)
 CC = cc
-LD = cc
+LD = $(CC)
 
 default: $(OUTPUT)
 clean:
