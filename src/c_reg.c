@@ -145,10 +145,8 @@ static int cap_add(u, cap) u_user *u; char *cap;
 
 static int m_cap(conn, msg) u_conn *conn; u_msg *msg;
 {
-	char ackbuf[BUFSIZE];
-	char nakbuf[BUFSIZE];
 	u_user_local *ul;
-	char *s, *p, *q;
+	char *s, *p, buf[512];
 	struct cap *cur;
 
 	u_user_make_ureg(conn);
@@ -172,26 +170,28 @@ static int m_cap(conn, msg) u_conn *conn; u_msg *msg;
 		u_conn_f(conn, ":%S CAP * LS :%s", &me, caps_str);
 
 	} else if (streq(msg->argv[0], "REQ")) {
+		int ack = 1;
+		uint old = USER(ul)->flags;
+
 		if (msg->argc != 2) {
 			u_conn_num(conn, ERR_NEEDMOREPARAMS, "CAP");
 			return 0;
 		}
 
-		p = msg->argv[1];
-		ackbuf[0] = ackbuf[1] = '\0';
-		nakbuf[0] = nakbuf[1] = '\0';
+		u_strlcpy(buf, msg->argv[1], BUFSIZE);
+		p = buf;
 		while ((s = cut(&p, " \t")) != NULL) {
-			q = ackbuf;
-			if (!cap_add(USER(ul), s))
-				q = nakbuf;
-			u_strlcat(q, " ", BUFSIZE);
-			u_strlcat(q, s, BUFSIZE);
+			if (!cap_add(USER(ul), s)) {
+				USER(ul)->flags = old;
+				ack = 0;
+				break;
+			}
 		}
 
-		if (ackbuf[1])
-			u_conn_f(conn, ":%S CAP * ACK :%s", &me, ackbuf+1);
-		if (nakbuf[1])
-			u_conn_f(conn, ":%S CAP * NAK :%s", &me, nakbuf+1);
+		u_log(LG_FINE, "%U flags: %x", USER(ul), USER(ul)->flags);
+
+		u_conn_f(conn, ":%S CAP * %s :%s", &me, ack ? "ACK" : "NAK",
+		         msg->argv[1]);
 
 	} else if (streq(msg->argv[0], "END")) {
 		u_user_state(USER(ul), USER_REGISTERING);
