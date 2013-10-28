@@ -181,7 +181,7 @@ static int m_cap(conn, msg) u_conn *conn; u_msg *msg;
 		}
 
 		suspend_registration(ul);
-		u_conn_f(conn, ":%S CAP * LS :%s", &me, caps_str);
+		u_conn_f(conn, ":%S CAP %U LS :%s", &me, u, caps_str);
 
 	} else if (streq(msg->argv[0], "REQ")) {
 		int ack = 1;
@@ -205,8 +205,8 @@ static int m_cap(conn, msg) u_conn *conn; u_msg *msg;
 		u_log(LG_FINE, "%U flags: %x", u, u->flags);
 
 		suspend_registration(ul);
-		u_conn_f(conn, ":%S CAP * %s :%s", &me, ack ? "ACK" : "NAK",
-		         msg->argv[1]);
+		u_conn_f(conn, ":%S CAP %U %s :%s", &me, u,
+		         ack ? "ACK" : "NAK", msg->argv[1]);
 
 	} else if (streq(msg->argv[0], "END")) {
 		resume_registration(ul);
@@ -220,7 +220,7 @@ static int m_cap(conn, msg) u_conn *conn; u_msg *msg;
 				p += sprintf(p, " %s", cur->name);
 		}
 
-		u_conn_f(conn, ":%S CAP * LIST :%s", &me, buf + 1);
+		u_conn_f(conn, ":%S CAP %U LIST :%s", &me, u, buf + 1);
 	}
 
 	/* this is harmless if called on anything other than connections

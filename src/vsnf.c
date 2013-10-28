@@ -93,7 +93,7 @@ struct buffer *buf; uint n, sign, base; struct spec *spec;
 int vsnf(type, s, size, fmt, va) char *s, *fmt; uint size; va_list va;
 {
 	char *p, specbuf[16];
-	char c_arg, *s_arg;
+	char c_arg, *s_arg, *q;
 	u_user *user;
 	u_chan *chan;
 	u_server *server;
@@ -172,9 +172,11 @@ top:
 	case 'U': /* user */
 		user = va_arg(va, u_user*);
 		if (type == FMT_SERVER) {
-			string(&buf, user->uid, 9, NULL);
+			q = user ? user->uid : "*"; /* XXX: ?????? */
+			string(&buf, q, 9, NULL);
 		} else {
-			string(&buf, user->nick, -1, &spec);
+			q = (user && user->nick[0]) ? user->nick : "*";
+			string(&buf, q, -1, &spec);
 			if (debug) {
 				integer(&buf, user, 0, 16, NULL);
 				character(&buf, ']');
