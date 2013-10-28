@@ -143,15 +143,28 @@ static int cap_add(u, cap) u_user *u; char *cap;
 	return 0;
 }
 
+static void suspend_registration(u_user_local *ul)
+{
+	if (u_user_state(USER(ul), 0) == USER_REGISTERING)
+		u_user_state(USER(ul), USER_CAP_NEGOTIATION);
+}
+
+static void resume_registration(u_user_local *ul)
+{
+	if (u_user_state(USER(ul), 0) == USER_CAP_NEGOTIATION)
+		u_user_state(USER(ul), USER_REGISTERING);
+}
+
 static int m_cap(conn, msg) u_conn *conn; u_msg *msg;
 {
 	u_user_local *ul;
+	u_user *u;
 	char *s, *p, buf[512];
 	struct cap *cur;
 
 	u_user_make_ureg(conn);
 	ul = conn->priv;
-	u_user_state(USER(ul), USER_CAP_NEGOTIATION);
+	u = USER(ul);
 
 	ascii_canonize(msg->argv[0]);
 
@@ -167,11 +180,12 @@ static int m_cap(conn, msg) u_conn *conn; u_msg *msg;
 			u_log(LG_FINE, "Built CAPs list: %s", caps_str);
 		}
 
+		suspend_registration(ul);
 		u_conn_f(conn, ":%S CAP * LS :%s", &me, caps_str);
 
 	} else if (streq(msg->argv[0], "REQ")) {
 		int ack = 1;
-		uint old = USER(ul)->flags;
+		uint old = u->flags;
 
 		if (msg->argc != 2) {
 			u_conn_num(conn, ERR_NEEDMOREPARAMS, "CAP");
@@ -181,24 +195,38 @@ static int m_cap(conn, msg) u_conn *conn; u_msg *msg;
 		u_strlcpy(buf, msg->argv[1], BUFSIZE);
 		p = buf;
 		while ((s = cut(&p, " \t")) != NULL) {
-			if (!cap_add(USER(ul), s)) {
-				USER(ul)->flags = old;
+			if (!cap_add(u, s)) {
+				u->flags = old;
 				ack = 0;
 				break;
 			}
 		}
 
-		u_log(LG_FINE, "%U flags: %x", USER(ul), USER(ul)->flags);
+		u_log(LG_FINE, "%U flags: %x", u, u->flags);
 
+		suspend_registration(ul);
 		u_conn_f(conn, ":%S CAP * %s :%s", &me, ack ? "ACK" : "NAK",
 		         msg->argv[1]);
 
 	} else if (streq(msg->argv[0], "END")) {
-		u_user_state(USER(ul), USER_REGISTERING);
+		resume_registration(ul);
 
+	} else if (streq(msg->argv[0], "LIST")) {
+		p = buf;
+
+		u_strlcpy(buf, " ", 512);
+		for (cur=caps; cur->name[0]; cur++) {
+			if (u->flags & cur->flag)
+				p += sprintf(p, " %s", cur->name);
+		}
+
+		u_conn_f(conn, ":%S CAP * LIST :%s", &me, buf + 1);
 	}
 
+	/* this is harmless if called on anything other than connections
+	   in USER_REGISTERING */
 	try_reg(conn);
+
 	return 0;
 }
 
@@ -255,7 +283,7 @@ u_cmd c_reg[] = {
 	{ "USER",    CTX_USER,   err_already, 0 },
 	{ "CAP",     CTX_UNREG,  m_cap,  1 },
 	{ "CAP",     CTX_UREG,   m_cap,  1 },
-	{ "CAP",     CTX_USER,   err_already, 0 },
+	{ "CAP",     CTX_USER,   m_cap,  1 },
 
 	{ "CAPAB",   CTX_SREG,   m_capab, 1 },
 	{ "CAPAB",   CTX_UNREG,  gtfo, 0 },
