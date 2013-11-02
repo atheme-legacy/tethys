@@ -62,7 +62,7 @@ auth local {
 
 	# the password to require for users in
 	# this block
-	password "micro"
+	#password "micro"
 }
 
 auth lan {
@@ -73,7 +73,7 @@ auth lan {
 auth world {
 	class users
 	cidr 0.0.0.0/0
-	password "flowerpot"
+	#password "flowerpot"
 }
 
 

@@ -32,7 +32,7 @@ class.timeout       900
 auth                local
 auth.class          users
 auth.cidr           127.0.0.1/32
-auth.password       "micro"
+#auth.password       "micro"
 
 auth                lan
 auth.class          users
@@ -41,7 +41,7 @@ auth.cidr           192.168.0.0/16
 auth                world
 auth.class          users
 auth.cidr           0.0.0.0/0
-auth.password       "flowerpot"
+#auth.password       "flowerpot"
 
 oper                aji
 oper.password       "god"
