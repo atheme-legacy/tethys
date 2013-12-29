@@ -2,13 +2,13 @@
 
 ## About
 
-**ircd-micro** is an attempt to write an IRC daemon from scratch for the 4.3
-BSD architecture. This was done more as a personal challenge rather than
-as a real practical project.
+**ircd-micro** is an attempt to write a basic TS6 IRC daemon from
+scratch. This was done more as a personal challenge rather than as a
+real practical project.
 
-The goal is to be fully compatible with most modern TS6 IRC daemons,
-in particular charybdis ircd and atheme-services. This will allow a 4.3
-BSD system running ircd-micro to be linked into existing TS6 networks.
+The goal is to serve as a solid base for researching IRC software,
+providing a lightweight framework within which to build a more robust
+IRCD.
 
 
 ## Contact
@@ -56,21 +56,18 @@ probably already have something planned in that area and would like to
 be involved in the design of that component.
 
 
-## Future
+## Legacy
 
-When I feel ircd-micro meets my original goals, I will bump it to
-version 1.0. At this point, I will drop 4.3 BSD support. Attempting
-to support 4.3 BSD is beginning to get in the way of productivity. As
-an example, variable length argument lists are done very differently
-in 4.3 BSD than in a modern GNU system. The codebase is full of nasty
-tricks to consolidate these differences. Additionally, the lack of
-parameter lists in function prototypes has led to some hard to find
-bugs, and now-commonplace functions like `memmove()` and `inet_ntop()`
-are missing entirely. It was fun before to work in conditions like this,
-but now it's just getting annoying.
+This project used to be an attempt to build an IRCD for the 4.3 BSD
+operating system. However, the project matured and its direction changed,
+and this aspect of the design was beginning to become an obstruction. In
+a 4.3 BSD system, here is no SSL, no dynamic loading, no robust `crypt()`
+implementation, no `vsnprintf()`, no C89 compiler, no `make` with Makefile
+inclusion, and many other limitations and idiosyncracies. It started to get in the way of meaningful progress.
 
-I will still keep a "legacy" 4.3 BSD branch around, onto which new
-features and bugfixes will be backported as appropriate. However, trying
-to write code for two wildly different operating systems at the same
-time is beginning to become more work than it's worth, and I'd like to
-split them into separate projects if at all possible.
+This project still exists, in spirit, at
+[aji/bsdchat](http://github.com/aji/bsdchat).
+I will, from time to time, backport features patches from
+ircd-micro to bsdchat, so general IRCD features should be targeted to
+ircd-micro. Obviously, BSD-specific patches should be submitted to the
+bsdchat project.
