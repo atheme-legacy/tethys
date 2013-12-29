@@ -50,10 +50,6 @@ typedef unsigned char uchar;
 #define memberp(base, offs) ((void*)((ulong)(base) + (ulong)(offs)))
 #define member(mtype, base, offs) (*((mtype*)memberp(base, offs)))
 
-/*# ifndef __APPLE__
-#  include <crypt.h>
-# endif*/
-
 #define A(x)
 #define A2(x,y) x,y
 #define A3(x,y,z) x,y,z
@@ -98,5 +94,7 @@ typedef unsigned long u_ts_t;
 
 extern u_io base_io;
 extern u_ts_t started;
+
+extern char *crypt(const char*, const char*);
 
 #endif
