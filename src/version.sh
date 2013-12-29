@@ -11,25 +11,4 @@ echo "char *version = PACKAGE_FULLNAME;" >> $OUT
 # Doesn't account for variances in date and I don't care.
 echo "char *date = \"`date`\";" >> $OUT
 
-PLATFORM=`/bin/sh -c "uname -sm" 2>/dev/null || echo "None"`
-echo "char *platform = "  >> $OUT
-if [ "$PLATFORM" = "None" ]; then
-  # Logic for the older BSDs
-  # XXX I feel lazy. Not gonna bother checking for specifics
-  echo '#ifdef BSD4_2'                     >> $OUT
-  echo                   '"4.2BSD"'        >> $OUT
-  echo '#else'                             >> $OUT
-  echo '# ifdef BSD4_3'                    >> $OUT
-  echo                   '"4.3BSD"'        >> $OUT
-  echo '# else'                            >> $OUT
-  echo '#  ifdef BSD4_4'                   >> $OUT
-  echo                   '"4.4BSD"'        >> $OUT
-  echo '#  else'                           >> $OUT
-  echo                   '"Unknown"'       >> $OUT
-  echo '#  endif'                          >> $OUT
-  echo '# endif'                           >> $OUT
-  echo '#endif'                            >> $OUT
-else
-  echo "\"$PLATFORM\"" >> $OUT
-fi
-echo ";" >> $OUT
+echo "char *platform = \"$(uname -sm)\";"  >> $OUT

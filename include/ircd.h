@@ -22,6 +22,12 @@
 #include <netdb.h>
 #include <signal.h>
 #include <arpa/inet.h>
+#include <stdarg.h>
+#include <getopt.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/time.h>
+#include <time.h>
 
 #ifndef NULL
 #define NULL ((void*)0)
@@ -44,64 +50,25 @@ typedef unsigned char uchar;
 #define memberp(base, offs) ((void*)((ulong)(base) + (ulong)(offs)))
 #define member(mtype, base, offs) (*((mtype*)memberp(base, offs)))
 
-#ifdef __GNUC__
-
-# undef U_BSD
-# define STDARG
-
-# include <stdarg.h>
-# include <getopt.h>
-# include <stdlib.h>
-# include <unistd.h>
-# include <sys/time.h>
-# include <time.h>
-
 /*# ifndef __APPLE__
 #  include <crypt.h>
 # endif*/
 
-# define A(x)
-# define A2(x,y) x,y
-# define A3(x,y,z) x,y,z
-# define A4(w,x,y,z) w,x,y,z
-# define A5(v,w,x,y,z) v,w,x,y,z
-# define T(x) x
+#define A(x)
+#define A2(x,y) x,y
+#define A3(x,y,z) x,y,z
+#define A4(w,x,y,z) w,x,y,z
+#define A5(v,w,x,y,z) v,w,x,y,z
+#define T(x) x
 
-# define u_va_alist ...
-# define u_va_start(va, arg) va_start(va, arg)
-# define u_va_copy(a1, a2) va_copy(a1, a2)
+#define u_va_alist ...
+#define u_va_start(va, arg) va_start(va, arg)
+#define u_va_copy(a1, a2) va_copy(a1, a2)
 
-# define _stringify(x) #x
-# define stringify(x) _stringify(x)
+#define _stringify(x) #x
+#define stringify(x) _stringify(x)
 
 typedef unsigned short ushort;
-
-#else
-
-# define U_BSD
-# undef STDARG
-
-# include <varargs.h>
-# include <sys/time.h>
-
-# define A(x) x
-# define A2(x,y)
-# define A3(x,y,z)
-# define A4(w,x,y,z)
-# define A5(v,w,x,y,z)
-# define T(x)
-
-# define u_va_alist va_alist
-# define u_va_start(va, arg) va_start(va)
-# define u_va_copy(a1, a2) (a1) = (a2)
-
-# define _stringify(x) "x"
-# define stringify(x) _stringify(x)
-
-extern void *malloc();
-
-#endif
-
 typedef unsigned long u_ts_t;
 
 #include "util.h"
