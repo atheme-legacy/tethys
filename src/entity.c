@@ -6,7 +6,7 @@
 
 #include "ircd.h"
 
-void make_server(e) u_entity *e;
+void make_server(u_entity *e)
 {
 	u_server *sv = e->v.sv;
 
@@ -21,7 +21,7 @@ void make_server(e) u_entity *e;
 		e->loc = e->link;
 }
 
-void make_user(e) u_entity *e;
+void make_user(u_entity *e)
 {
 	u_user *u = e->v.u;
 
@@ -39,7 +39,7 @@ void make_user(e) u_entity *e;
 	}
 }
 
-u_entity *u_entity_from_name(e, s) u_entity *e; char *s;
+u_entity *u_entity_from_name(u_entity *e, char *s)
 {
 	if (!s) return NULL;
 
@@ -56,7 +56,7 @@ u_entity *u_entity_from_name(e, s) u_entity *e; char *s;
 	return e;
 }
 
-u_entity *u_entity_from_id(e, s) u_entity *e; char *s;
+u_entity *u_entity_from_id(u_entity *e, char *s)
 {
 	if (!s) return NULL;
 
@@ -73,21 +73,21 @@ u_entity *u_entity_from_id(e, s) u_entity *e; char *s;
 	return e;
 }
 
-u_entity *u_entity_from_ref(e, s) u_entity *e; char *s;
+u_entity *u_entity_from_ref(u_entity *e, char *s)
 {
 	if (!s) return NULL;
 
 	return u_entity_from_id(e, ref_to_id(s));
 }
 
-u_entity *u_entity_from_user(e, u) u_entity *e; u_user *u;
+u_entity *u_entity_from_user(u_entity *e, u_user *u)
 {
 	e->v.u = u;
 	make_user(e);
 	return e;
 }
 
-u_entity *u_entity_from_server(e, sv) u_entity *e; u_server *sv;
+u_entity *u_entity_from_server(u_entity *e, u_server *sv)
 {
 	e->v.sv = sv;
 	make_server(e);

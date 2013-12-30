@@ -44,6 +44,9 @@
 typedef unsigned long ulong;
 typedef unsigned int uint;
 typedef unsigned char uchar;
+typedef unsigned short ushort;
+
+typedef unsigned long u_ts_t;
 
 #define offsetof(st, m) ((ulong)(&((st *)0)->m))
 #define containerof(ptr, st, m) ((void*)((ptr) - offsetof(st, m)))
@@ -51,47 +54,31 @@ typedef unsigned char uchar;
 #define memberp(base, offs) ((void*)((ulong)(base) + (ulong)(offs)))
 #define member(mtype, base, offs) (*((mtype*)memberp(base, offs)))
 
-#define A(x)
-#define A2(x,y) x,y
-#define A3(x,y,z) x,y,z
-#define A4(w,x,y,z) w,x,y,z
-#define A5(v,w,x,y,z) v,w,x,y,z
-#define T(x) x
-
-#define u_va_alist ...
-#define u_va_start(va, arg) va_start(va, arg)
-#define u_va_copy(a1, a2) va_copy(a1, a2)
-
 #define _stringify(x) #x
 #define stringify(x) _stringify(x)
 
-typedef unsigned short ushort;
-typedef unsigned long u_ts_t;
-
-#include "util.h"
+#include "numeric.h"
+#include "version.h"
+#include "vsnf.h"
 #include "crypto.h"
 #include "log.h"
 #include "list.h"
-#include "trie.h"
 #include "map.h"
-#include "upgrade.h"
+#include "trie.h"
 #include "conf.h"
-#include "auth.h"
 #include "io.h"
 #include "dns.h"
-#include "cookie.h"
-#include "linebuf.h"
-#include "mode.h"
-#include "numeric.h"
+#include "util.h"
+#include "auth.h"
 #include "conn.h"
+#include "mode.h"
 #include "server.h"
 #include "user.h"
-#include "chan.h"
 #include "entity.h"
+#include "chan.h"
 #include "msg.h"
 #include "sendto.h"
-#include "vsnf.h"
-#include "version.h"
+#include "upgrade.h"
 
 extern u_io base_io;
 extern u_ts_t started;

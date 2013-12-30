@@ -10,17 +10,17 @@ static char *crypt_alpha =
   "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789./";
 static size_t crypt_alpha_len = 64;
 
-static int gen_salt_3des(buf) char *buf;
+static int gen_salt_3des(char *buf)
 {
 	return -1;
 }
 
-static int hash_3des(buf, key, salt) char *buf, *key, *salt;
+static int hash_3des(char *buf, char *key, char *salt)
 {
 	return -1;
 }
 
-static int gen_salt_posix(buf) char *buf;
+static int gen_salt_posix(char *buf)
 {
 	strcpy(buf, "$p$");
 	buf[3] = crypt_alpha[rand() % crypt_alpha_len];
@@ -29,7 +29,7 @@ static int gen_salt_posix(buf) char *buf;
 	return 0;
 }
 
-static int hash_posix(buf, key, salt) char *buf, *key, *salt;
+static int hash_posix(char *buf, char *key, char *salt)
 {
 	char *h;
 
@@ -43,13 +43,13 @@ static int hash_posix(buf, key, salt) char *buf, *key, *salt;
 	return 0;
 }
 
-static int gen_salt_plain(buf) char *buf;
+static int gen_salt_plain(char *buf)
 {
 	buf[0] = 0;
 	return 0;
 }
 
-static int hash_plain(buf, key, salt) char *buf, *key, *salt;
+static int hash_plain(char *buf, char *key, char *salt)
 {
 	u_strlcpy(buf, key, CRYPTLEN);
 	return 0;
@@ -63,7 +63,7 @@ static u_crypto hashes[] = {
 	{ "", NULL, NULL }
 };
 
-void u_crypto_gen_salt(buf) char *buf;
+void u_crypto_gen_salt(char *buf)
 {
 	u_crypto *cur;
 
@@ -81,7 +81,7 @@ void u_crypto_gen_salt(buf) char *buf;
 	return;
 }
 
-void u_crypto_hash(buf, key, salt) char *buf, *key, *salt;
+void u_crypto_hash(char *buf, char *key, char *salt)
 {
 	u_crypto *cur;
 

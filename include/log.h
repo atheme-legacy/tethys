@@ -15,11 +15,11 @@
 #define LG_DEBUG    5
 #define LG_FINE     6
 
-extern int (*u_log_handler)(); /* int level, char *time, char *line (no EOL) */
+extern int (*u_log_handler)(int level, char *time, char *line /* no EOL */);
 extern int u_log_level;
 
-extern int u_log(A3(int level, char *fmt, ...));
+extern int u_log(int level, char *fmt, ...);
 
-extern int init_log();
+extern int init_log(void);
 
 #endif

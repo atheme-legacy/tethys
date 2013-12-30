@@ -19,8 +19,7 @@ struct spec {
 };
 static struct spec __spec_default = { 0, ' ' };
 
-static void string(buf, s, copylen, spec)
-struct buffer *buf; char *s; struct spec *spec;
+static void string(struct buffer *buf, char *s, int copylen, struct spec *spec)
 {
 	int width;
 
@@ -52,7 +51,7 @@ struct buffer *buf; char *s; struct spec *spec;
 	buf->len += copylen;
 }
 
-static void character(buf, c) struct buffer *buf; char c;
+static void character(struct buffer *buf, char c)
 {
 	if (buf->len >= buf->size)
 		return;
@@ -60,8 +59,8 @@ static void character(buf, c) struct buffer *buf; char c;
 	buf->len++;
 }
 
-static void integer(buf, n, sign, base, spec)
-struct buffer *buf; uint n, sign, base; struct spec *spec;
+static void integer(struct buffer *buf, uint n, uint sign, uint base,
+                    struct spec *spec)
 {
 	static char *digits = "0123456789abcdef";
 	int negative = 0;
@@ -90,7 +89,7 @@ struct buffer *buf; uint n, sign, base; struct spec *spec;
 	string(buf, s, buf2 + 63 - s, spec);
 }
 
-int vsnf(type, s, size, fmt, va) char *s, *fmt; uint size; va_list va;
+int vsnf(int type, char *s, uint size, const char *fmt, va_list va)
 {
 	char *p, specbuf[16];
 	char c_arg, *s_arg, *q;
@@ -178,7 +177,7 @@ top:
 			q = (user && user->nick[0]) ? user->nick : "*";
 			string(&buf, q, -1, &spec);
 			if (debug) {
-				integer(&buf, user, 0, 16, NULL);
+				integer(&buf, (int)user, 0, 16, NULL);
 				character(&buf, ']');
 			}
 		}
@@ -196,7 +195,7 @@ top:
 			string(&buf, user->host, -1, NULL);
 			if (debug) {
 				character(&buf, '[');
-				integer(&buf, user, 0, 16, NULL);
+				integer(&buf, (int)user, 0, 16, NULL);
 				character(&buf, ']');
 			}
 		}
@@ -207,7 +206,7 @@ top:
 		string(&buf, chan?chan->name:"*", -1, &spec);
 		if (debug) {
 			character(&buf, '[');
-			integer(&buf, user, 0, 16, NULL);
+			integer(&buf, (int)user, 0, 16, NULL);
 			character(&buf, ']');
 		}
 		break;
@@ -220,7 +219,7 @@ top:
 			string(&buf, server->name, -1, &spec);
 			if (debug) {
 				character(&buf, '[');
-				integer(&buf, server, 0, 16, NULL);
+				integer(&buf, (int)server, 0, 16, NULL);
 				character(&buf, ']');
 			}
 		}
@@ -305,12 +304,11 @@ bottom:
 	return buf.len;
 }
 
-int snf(T(int) type, T(char*) s, T(uint) size, T(char*) fmt, u_va_alist)
-A(char *s; char *fmt; uint size; va_dcl)
+int snf(int type, char *s, uint size, char *fmt, ...)
 {
 	va_list va;
 	int ret;
-	u_va_start(va, fmt);
+	va_start(va, fmt);
 	ret = vsnf(type, s, size, fmt, va);
 	va_end(va);
 	return ret;

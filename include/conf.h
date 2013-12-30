@@ -10,9 +10,8 @@
 #define U_CONF_MAX_KEY 128
 #define U_CONF_MAX_VALUE 512
 
-extern void u_conf_read();
-/* FILE *f
-
+extern void u_conf_read(FILE *f);
+/*
    cb is called with key=>value pairs. The key is a dot-separated string
    indicating the path to the value. The cb is loaded from u_conf_handlers
    using the key as the key.
@@ -58,6 +57,6 @@ extern void u_conf_read();
    */
 
 extern u_trie *u_conf_handlers;
-extern int init_conf();
+extern int init_conf(void);
 
 #endif

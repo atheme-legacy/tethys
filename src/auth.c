@@ -25,7 +25,7 @@ u_map *all_links;
 static u_list auth_list;
 static u_list link_list;
 
-u_auth *u_find_auth(conn) u_conn *conn;
+u_auth *u_find_auth(u_conn *conn)
 {
 	u_list *n;
 	u_auth *auth;
@@ -59,7 +59,7 @@ u_auth *u_find_auth(conn) u_conn *conn;
 	return NULL;
 }
 
-u_oper *u_find_oper(auth, name, pass) u_auth *auth; char *name, *pass;
+u_oper *u_find_oper(u_auth *auth, char *name, char *pass)
 {
 	u_oper *oper;
 
@@ -84,7 +84,7 @@ u_oper *u_find_oper(auth, name, pass) u_auth *auth; char *name, *pass;
 	return oper;
 }
 
-u_link *u_find_link(conn) u_conn *conn;
+u_link *u_find_link(u_conn *conn)
 {
 	u_list *n;
 	u_link *link;
@@ -127,7 +127,7 @@ u_link *u_find_link(conn) u_conn *conn;
 
 static u_class *cur_class = NULL;
 
-void conf_class(key, val) char *key, *val;
+void conf_class(char *key, char *val)
 {
 	cur_class = malloc(sizeof(*cur_class));
 
@@ -137,7 +137,7 @@ void conf_class(key, val) char *key, *val;
 	u_map_set(all_classes, val, cur_class);
 }
 
-void conf_class_timeout(key, val) char *key, *val;
+void conf_class_timeout(char *key, char *val)
 {
 	CONF_CHECK(cur_class, key, "class");
 	cur_class->timeout = atoi(val);
@@ -150,7 +150,7 @@ void conf_class_timeout(key, val) char *key, *val;
 
 static u_auth *cur_auth = NULL;
 
-void conf_auth(key, val) char *key, *val;
+void conf_auth(char *key, char *val)
 {
 	cur_auth = malloc(sizeof(*cur_auth));
 
@@ -161,19 +161,19 @@ void conf_auth(key, val) char *key, *val;
 	cur_auth->n = u_list_add(&auth_list, cur_auth);
 }
 
-void conf_auth_class(key, val) char *key, *val;
+void conf_auth_class(char *key, char *val)
 {
 	CONF_CHECK(cur_auth, key, "auth");
 	u_strlcpy(cur_auth->classname, val, MAXCLASSNAME+1);
 }
 
-void conf_auth_cidr(key, val) char *key, *val;
+void conf_auth_cidr(char *key, char *val)
 {
 	CONF_CHECK(cur_auth, key, "auth");
 	u_str_to_cidr(val, &cur_auth->cidr);
 }
 
-void conf_auth_password(key, val) char *key, *val;
+void conf_auth_password(char *key, char *val)
 {
 	CONF_CHECK(cur_auth, key, "auth");
 	u_strlcpy(cur_auth->pass, val, MAXPASSWORD+1);
@@ -181,7 +181,7 @@ void conf_auth_password(key, val) char *key, *val;
 
 static u_oper *cur_oper = NULL;
 
-void conf_oper(key, val) char *key, *val;
+void conf_oper(char *key, char *val)
 {
 	cur_oper = malloc(sizeof(*cur_oper));
 
@@ -193,13 +193,13 @@ void conf_oper(key, val) char *key, *val;
 	u_map_set(all_opers, val, cur_oper);
 }
 
-void conf_oper_password(key, val) char *key, *val;
+void conf_oper_password(char *key, char *val)
 {
 	CONF_CHECK(cur_oper, key, "oper");
 	u_strlcpy(cur_oper->pass, val, MAXPASSWORD+1);
 }
 
-void conf_oper_auth(key, val) char *key, *val;
+void conf_oper_auth(char *key, char *val)
 {
 	CONF_CHECK(cur_oper, key, "oper");
 	u_strlcpy(cur_oper->authname, val, MAXAUTHNAME+1);
@@ -207,7 +207,7 @@ void conf_oper_auth(key, val) char *key, *val;
 
 static u_link *cur_link = NULL;
 
-void conf_link(key, val) char *key, *val;
+void conf_link(char *key, char *val)
 {
 	cur_link = malloc(sizeof(*cur_link));
 
@@ -218,31 +218,31 @@ void conf_link(key, val) char *key, *val;
 	cur_link->n = u_list_add(&link_list, cur_link);
 }
 
-void conf_link_host(key, val) char *key, *val;
+void conf_link_host(char *key, char *val)
 {
 	CONF_CHECK(cur_link, key, "link");
 	u_strlcpy(cur_link->host, val, INET_ADDRSTRLEN);
 }
 
-void conf_link_sendpass(key, val) char *key, *val;
+void conf_link_sendpass(char *key, char *val)
 {
 	CONF_CHECK(cur_link, key, "link");
 	u_strlcpy(cur_link->sendpass, val, MAXPASSWORD+1);
 }
 
-void conf_link_recvpass(key, val) char *key, *val;
+void conf_link_recvpass(char *key, char *val)
 {
 	CONF_CHECK(cur_link, key, "link");
 	u_strlcpy(cur_link->recvpass, val, MAXPASSWORD+1);
 }
 
-void conf_link_class(key, val) char *key, *val;
+void conf_link_class(char *key, char *val)
 {
 	CONF_CHECK(cur_link, key, "link");
 	u_strlcpy(cur_link->classname, val, MAXCLASSNAME+1);
 }
 
-int init_auth()
+int init_auth(void)
 {
 	all_classes = u_map_new(1);
 	all_auths = u_map_new(1);

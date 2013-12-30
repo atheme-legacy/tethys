@@ -22,7 +22,7 @@ struct u_udb {
 u_list *u_udb_save_hooks;
 u_trie *u_udb_load_hooks;
 
-void u_udb_row_start(db, name) u_udb *db; char *name;
+void u_udb_row_start(u_udb *db, char *name)
 {
 	if (db->reading) {
 		u_log(LG_ERROR, "Tried to start row while reading database!");
@@ -32,12 +32,12 @@ void u_udb_row_start(db, name) u_udb *db; char *name;
 	db->sz = snf(FMT_LOG, db->line, UDB_LINE_SIZE, "%s", name);
 }
 
-void u_udb_row_end(db) u_udb *db;
+void u_udb_row_end(u_udb *db)
 {
 	fprintf(db->f, "%s\n", db->line);
 }
 
-void u_udb_put_s(db, s) u_udb *db; char *s;
+void u_udb_put_s(u_udb *db, char *s)
 {
 	char *p = db->buf;
 
@@ -55,7 +55,7 @@ void u_udb_put_s(db, s) u_udb *db; char *s;
 	              UDB_LINE_SIZE - db->sz, " %s", s);
 }
 
-void u_udb_put_i(db, n) u_udb *db; long n;
+void u_udb_put_i(u_udb *db, long n)
 {
 	char buf[512];
 
@@ -63,7 +63,7 @@ void u_udb_put_i(db, n) u_udb *db; long n;
 	u_udb_put_s(db, buf);
 }
 
-char *u_udb_get_s(db) u_udb *db;
+char *u_udb_get_s(u_udb *db)
 {
 	char *s = db->buf;
 
@@ -82,7 +82,7 @@ char *u_udb_get_s(db) u_udb *db;
 	return db->buf;
 }
 
-long u_udb_get_i(db) u_udb *db;
+long u_udb_get_i(u_udb *db)
 {
 	char *s = u_udb_get_s(db);
 	if (s != NULL)
@@ -90,7 +90,7 @@ long u_udb_get_i(db) u_udb *db;
 	return -1;
 }
 
-int init_upgrade()
+int init_upgrade(void)
 {
 	u_udb_save_hooks = malloc(sizeof(u_list));
 	u_udb_load_hooks = u_trie_new(NULL);

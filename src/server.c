@@ -16,7 +16,7 @@ char my_admin_loc1[MAXADMIN+1] = "-";
 char my_admin_loc2[MAXADMIN+1] = "-";
 char my_admin_email[MAXADMIN+1] = "-";
 
-void server_conf(key, val) char *key, *val;
+void server_conf(char *key, char *val)
 {
 	if (strlen(key) < 3 || memcmp(key, "me.", 3)!=0) {
 		u_log(LG_WARN, "server_conf: Can't use %s", key);
@@ -25,7 +25,7 @@ void server_conf(key, val) char *key, *val;
 	key += 3;
 
 	if (streq(key, "name")) {
-		u_trie_del(servers_by_name, me.name, &me);
+		u_trie_del(servers_by_name, me.name);
 		u_strlcpy(me.name, val, MAXSERVNAME+1);
 		u_trie_set(servers_by_name, me.name, &me);
 		u_log(LG_DEBUG, "server_conf: me.name=%s", me.name);
@@ -33,7 +33,7 @@ void server_conf(key, val) char *key, *val;
 		u_strlcpy(my_net_name, val, MAXNETNAME+1);
 		u_log(LG_DEBUG, "server_conf: me.net=%s", my_net_name);
 	} else if (streq(key, "sid")) {
-		u_trie_del(servers_by_sid, me.sid, &me);
+		u_trie_del(servers_by_sid, me.sid);
 		u_strlcpy(me.sid, val, 4);
 		u_trie_set(servers_by_sid, me.sid, &me);
 		u_log(LG_DEBUG, "server_conf: me.sid=%s", me.sid);
@@ -45,7 +45,7 @@ void server_conf(key, val) char *key, *val;
 	}
 }
 
-void load_motd(key, val) char *key, *val;
+void load_motd(char *key, char *val)
 {
 	char *s, *p, buf[BUFSIZE];
 	FILE *f;
@@ -65,13 +65,13 @@ void load_motd(key, val) char *key, *val;
 		p = strchr(s, '\n');
 		if (p) *p = '\0';
 		u_log(LG_DEBUG, ":- %s", s);
-		u_list_add(&my_motd, u_strdup(s));
+		u_list_add(&my_motd, strdup(s));
 	}
 
 	fclose(f);
 }
 
-void admin_conf(key, val) char *key, *val;
+void admin_conf(char *key, char *val)
 {
 	char *dest;
 
@@ -95,17 +95,17 @@ void admin_conf(key, val) char *key, *val;
 	u_strlcpy(dest, val, MAXADMIN);
 }
 
-u_server *u_server_by_sid(sid) char *sid;
+u_server *u_server_by_sid(char *sid)
 {
 	return u_trie_get(servers_by_sid, sid);
 }
 
-u_server *u_server_by_name(name) char *name;
+u_server *u_server_by_name(char *name)
 {
 	return u_trie_get(servers_by_name, name);
 }
 
-u_server *u_server_find(str) char *str;
+u_server *u_server_find(char *str)
 {
 	if (strchr(str, '.'))
 		return u_server_by_name(str);
@@ -134,7 +134,7 @@ struct capab_info {
 	{ "", 0 }
 };
 
-static void capab_to_str(capab, buf) uint capab; char *buf;
+static void capab_to_str(uint capab, char *buf)
 {
 	struct capab_info *info = capabs;
 	char *s = buf;
@@ -146,7 +146,7 @@ static void capab_to_str(capab, buf) uint capab; char *buf;
 	}
 }
 
-static uint str_to_capab(buf) char *buf;
+static uint str_to_capab(char *buf)
 {
 	struct capab_info *info;
 	char *s;
@@ -165,17 +165,17 @@ static uint str_to_capab(buf) char *buf;
 	return capab;
 }
 
-void u_server_add_capabs(sv, s) u_server *sv; char *s;
+void u_server_add_capabs(u_server *sv, char *s)
 {
 	sv->capab |= str_to_capab(s);
 }
 
-void u_my_capabs(buf) char *buf;
+void u_my_capabs(char *buf)
 {
 	capab_to_str(me.capab, buf);
 }
 
-void server_local_die(conn, msg) u_conn *conn; char *msg;
+void server_local_die(u_conn *conn, char *msg)
 {
 	u_server *sv = conn->priv;
 	if (sv == NULL)
@@ -187,7 +187,7 @@ void server_local_die(conn, msg) u_conn *conn; char *msg;
 	u_server_unlink(sv);
 }
 
-void server_local_event(conn, event) u_conn *conn;
+void server_local_event(u_conn *conn, int event)
 {
 	switch (event) {
 	case EV_ERROR:
@@ -202,7 +202,7 @@ void server_local_event(conn, event) u_conn *conn;
 	}
 }
 
-void u_server_make_sreg(conn, sid) u_conn *conn; char *sid;
+void u_server_make_sreg(u_conn *conn, char *sid)
 {
 	u_server *sv;
 
@@ -239,8 +239,8 @@ void u_server_make_sreg(conn, sid) u_conn *conn; char *sid;
 	sv->parent->nlinks++;
 }
 
-u_server *u_server_new_remote(parent, sid, name, desc)
-u_server *parent; char *sid, *name, *desc;
+u_server *u_server_new_remote(u_server *parent, char *sid,
+                              char *name, char *desc)
 {
 	u_server *sv;
 
@@ -267,19 +267,19 @@ u_server *parent; char *sid, *name, *desc;
 	return sv;
 }
 
-static void delete_links(tsv, sv) u_server *tsv, *sv;
+static void delete_links(u_server *tsv, u_server *sv)
 {
 	if (tsv->parent == sv)
 		u_server_unlink(tsv);
 }
 
-static void user_delete(u, priv) u_user *u; void *priv;
+static void user_delete(u_user *u, void *priv)
 {
 	u_sendto_visible(u, ST_USERS, ":%H QUIT :*.net *.split", u);
 	u_user_unlink(u);
 }
 
-void u_server_unlink(sv) u_server *sv;
+void u_server_unlink(u_server *sv)
 {
 	if (sv == &me) {
 		u_log(LG_ERROR, "Can't unlink self!");
@@ -298,19 +298,19 @@ void u_server_unlink(sv) u_server *sv;
 	sv->parent->nlinks--;
 
 	/* delete all users */
-	u_trie_each(users_by_uid, sv->sid, user_delete, NULL);
+	u_trie_each(users_by_uid, sv->sid, (u_trie_cb_t*)user_delete, NULL);
 
 	if (sv->name[0])
 		u_trie_del(servers_by_name, sv->name);
 	u_trie_del(servers_by_sid, sv->sid);
 
 	/* delete any servers linked to this one */
-	u_trie_each(servers_by_sid, NULL, delete_links, sv);
+	u_trie_each(servers_by_sid, NULL, (u_trie_cb_t*)delete_links, sv);
 
 	free(sv);
 }
 
-static void burst_euid(u, conn) u_user *u; u_conn *conn;
+static void burst_euid(u_user *u, u_conn *conn)
 {
 	char buf[512];
 
@@ -321,7 +321,7 @@ static void burst_euid(u, conn) u_user *u; u_conn *conn;
 		u_conn_f(conn, ":%U AWAY :%s", u, u->away);
 }
 
-static void burst_uid(u, conn) u_user *u; u_conn *conn;
+static void burst_uid(u_user *u, u_conn *conn)
 {
 	u_server *sv = u_user_server(u);
 
@@ -351,8 +351,8 @@ struct burst_chan_priv {
 	uint w;
 };
 
-static void burst_chan_cb(map, u, cu, priv)
-u_map *map; u_user *u; u_chanuser *cu; struct burst_chan_priv *priv;
+static void burst_chan_cb(u_map *map, u_user *u, u_chanuser *cu,
+                          struct burst_chan_priv *priv)
 {
 	char *p, nbuf[12];
 
@@ -370,7 +370,7 @@ try_again:
 	}
 }
 
-static void burst_chan(c, conn) u_chan *c; u_conn *conn;
+static void burst_chan(u_chan *c, u_conn *conn)
 {
 	struct burst_chan_priv priv;
 	char buf[512];
@@ -385,12 +385,12 @@ static void burst_chan(c, conn) u_chan *c; u_conn *conn;
 	priv.s = priv.buf;
 	priv.w = 512 - sz;
 
-	u_map_each(c->members, burst_chan_cb, &priv);
+	u_map_each(c->members, (u_map_cb_t*)burst_chan_cb, &priv);
 	if (priv.s != priv.buf)
 		u_conn_f(conn, "%s%s", buf, priv.buf);
 }
 
-void u_server_burst(sv, link) u_server *sv; u_link *link;
+void u_server_burst(u_server *sv, u_link *link)
 {
 	u_conn *conn = sv->conn;
 	char buf[512];
@@ -421,13 +421,13 @@ void u_server_burst(sv, link) u_server *sv; u_link *link;
 	/* TODO: "EUID for all known users (possibly followed by ENCAP
 	   REALHOST, ENCAP LOGIN, and/or AWAY)" */
 	if (sv->capab & CAPAB_EUID)
-		u_trie_each(users_by_uid, NULL, burst_euid, conn);
+		u_trie_each(users_by_uid, NULL, (u_trie_cb_t*)burst_euid, conn);
 	else
-		u_trie_each(users_by_uid, NULL, burst_uid, conn);
+		u_trie_each(users_by_uid, NULL, (u_trie_cb_t*)burst_uid, conn);
 
 	/* TODO: "and SJOIN messages for all known channels (possibly followed
 	   by BMASK and/or TB)" */
-	u_trie_each(all_chans, NULL, burst_chan, conn);
+	u_trie_each(all_chans, NULL, (u_trie_cb_t*)burst_chan, conn);
 
 	u_conn_f(conn, ":%S PING %s %s", &me, me.name, sv->name);
 
@@ -435,7 +435,7 @@ void u_server_burst(sv, link) u_server *sv; u_link *link;
 	u_trie_set(servers_by_name, sv->name, sv);
 }
 
-void u_server_eob(sv) u_server *sv;
+void u_server_eob(u_server *sv)
 {
 	if (sv->hops != 1) {
 		u_log(LG_ERROR, "u_server_eob called for remote server %S!", sv);
@@ -447,7 +447,7 @@ void u_server_eob(sv) u_server *sv;
 	u_roster_add(R_SERVERS, sv->conn);
 }
 
-int init_server()
+int init_server(void)
 {
 	servers_by_sid = u_trie_new(ascii_canonize);
 	servers_by_name = u_trie_new(ascii_canonize);

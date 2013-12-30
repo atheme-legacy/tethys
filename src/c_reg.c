@@ -6,18 +6,18 @@
 
 #include "ircd.h"
 
-static int err_already(conn, msg) u_conn *conn; u_msg *msg;
+static int err_already(u_conn *conn, u_msg *msg)
 {
 	return u_conn_num(conn, ERR_ALREADYREGISTERED);
 }
 
-static int gtfo(conn, msg) u_conn *conn; u_msg *msg;
+static int gtfo(u_conn *conn, u_msg *msg)
 {
 	u_conn_error(conn, "Server doesn't know what it's doing");
 	return 0;
 }
 
-static int m_pass(conn, msg) u_conn *conn; u_msg *msg;
+static int m_pass(u_conn *conn, u_msg *msg)
 {
 	if (msg->argc != 1 && msg->argc != 4) {
 		u_conn_num(conn, ERR_NEEDMOREPARAMS, msg->command);
@@ -26,7 +26,7 @@ static int m_pass(conn, msg) u_conn *conn; u_msg *msg;
 
 	if (conn->pass != NULL)
 		free(conn->pass);
-	conn->pass = u_strdup(msg->argv[0]);
+	conn->pass = strdup(msg->argv[0]);
 
 	if (msg->argc == 1)
 		return 0;
@@ -45,7 +45,7 @@ static int m_pass(conn, msg) u_conn *conn; u_msg *msg;
 	return 0;
 }
 
-static int try_reg(conn) u_conn *conn;
+static int try_reg(u_conn *conn)
 {
 	u_user *u = conn->priv;
 
@@ -64,11 +64,11 @@ static int try_reg(conn) u_conn *conn;
 		return 0;
 	}
 
-	u_user_welcome(u);
+	u_user_welcome(USER_LOCAL(u));
 	return 0;
 }
 
-static int m_nick(conn, msg) u_conn *conn; u_msg *msg;
+static int m_nick(u_conn *conn, u_msg *msg)
 {
 	u_user_local *ul;
 	char buf[MAXNICKLEN+1];
@@ -94,7 +94,7 @@ static int m_nick(conn, msg) u_conn *conn; u_msg *msg;
 	return 0;
 }
 
-static int m_user(conn, msg) u_conn *conn; u_msg *msg;
+static int m_user(u_conn *conn, u_msg *msg)
 {
 	u_user_local *ul;
 	char buf[MAXIDENT+1];
@@ -125,7 +125,7 @@ struct cap {
 
 static char caps_str[512];
 
-static int cap_add(u, cap) u_user *u; char *cap;
+static int cap_add(u_user *u, char *cap)
 {
 	struct cap *cur;
 	char *s;
@@ -155,7 +155,7 @@ static void resume_registration(u_user_local *ul)
 		u_user_state(USER(ul), USER_REGISTERING);
 }
 
-static int m_cap(conn, msg) u_conn *conn; u_msg *msg;
+static int m_cap(u_conn *conn, u_msg *msg)
 {
 	u_user_local *ul;
 	u_user *u;
@@ -230,7 +230,7 @@ static int m_cap(conn, msg) u_conn *conn; u_msg *msg;
 	return 0;
 }
 
-static int try_serv(conn) u_conn *conn;
+static int try_serv(u_conn *conn)
 {
 	u_server *sv = conn->priv;
 	u_link *link;
@@ -252,14 +252,14 @@ static int try_serv(conn) u_conn *conn;
 	return 0;
 }
 
-static int m_capab(conn, msg) u_conn *conn; u_msg *msg;
+static int m_capab(u_conn *conn, u_msg *msg)
 {
 	u_server *sv = conn->priv;
 	u_server_add_capabs(sv, msg->argv[0]);
 	return 0;
 }
 
-static int m_server(conn, msg) u_conn *conn; u_msg *msg;
+static int m_server(u_conn *conn, u_msg *msg)
 {
 	u_server *sv = conn->priv;
 

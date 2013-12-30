@@ -18,7 +18,7 @@ struct u_crypto {
 	int (*hash)(); /* char *buf, char *key, char *salt */
 };
 
-extern void u_crypto_gen_salt(); /* char *buf */
-extern void u_crypto_hash(); /* char *buf, char *key, char *salt */
+extern void u_crypto_gen_salt(char *buf);
+extern void u_crypto_hash(char *buf, char *key, char *salt);
 
 #endif

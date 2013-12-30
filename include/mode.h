@@ -15,7 +15,8 @@ typedef struct u_modes u_modes;
 
 struct u_mode_info {
 	char ch;
-	int (*cb)(); /* modes, on, char *arg; return if used arg */
+	/* return bool, if used arg or not */
+	int (*cb)(u_modes*, int on, char *arg);
 	ulong data;
 };
 
@@ -41,12 +42,11 @@ struct u_modes {
 	char *l, list[32];
 };
 
-extern void u_mode_put(); /* u_modes*, int on, char ch, char *fmt, void *p */
-extern void u_mode_put_u(); /* u_modes*, int on, char ch, char *fmt, void *p */
-extern void u_mode_put_s(); /* u_modes*, int on, char ch, char *fmt, void *p */
-extern void u_mode_put_l(); /* u_modes*, char ch */
+extern void u_mode_put(u_modes*, int on, char ch, char *fmt, void *p);
+extern void u_mode_put_u(u_modes*, int on, char ch, char *fmt, void *p);
+extern void u_mode_put_s(u_modes*, int on, char ch, char *fmt, void *p);
+extern void u_mode_put_l(u_modes*, char ch);
 
-/* u_modes *m, u_mode_info *info, int parc, char **parv */
-extern void u_mode_process();
+extern void u_mode_process(u_modes *m, u_mode_info *info, int parc, char **parv);
 
 #endif

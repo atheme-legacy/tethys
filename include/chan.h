@@ -77,30 +77,30 @@ extern u_trie *all_chans;
 extern u_mode_info *cmodes;
 extern uint cmode_default;
 
-extern u_chan *u_chan_get(); /* char* */
-extern u_chan *u_chan_get_or_create(); /* char* */
-extern void u_chan_drop(); /* u_chan* */
+extern u_chan *u_chan_get(char*);
+extern u_chan *u_chan_get_or_create(char*);
+extern void u_chan_drop(u_chan*);
 
-extern char *u_chan_modes(); /* u_chan*, int on_chan */
+extern char *u_chan_modes(u_chan*, int un_chan);
 
-extern int u_chan_send_topic(); /* u_chan*, u_user* */
-extern int u_chan_send_names(); /* u_chan*, u_user* */
-extern int u_chan_send_list(); /* u_chan*, u_user*, u_list* */
+extern int u_chan_send_topic(u_chan*, u_user*);
+extern int u_chan_send_names(u_chan*, u_user*);
+extern int u_chan_send_list(u_chan*, u_user*, u_list*);
 
-extern void u_add_invite(); /* u_chan*, u_user* */
-extern void u_del_invite(); /* u_chan*, u_user* */
-extern int u_has_invite(); /* u_chan*, u_user* */
-extern void u_clr_invites_chan(); /* u_chan* */
-extern void u_clr_invites_user(); /* u_user* */
+extern void u_add_invite(u_chan*, u_user*);
+extern void u_del_invite(u_chan*, u_user*);
+extern int u_has_invite(u_chan*, u_user*);
+extern void u_clr_invites_chan(u_chan*);
+extern void u_clr_invites_user(u_user*);
 
-extern u_chanuser *u_chan_user_add(); /* u_chan*, u_user* */
-extern void u_chan_user_del(); /* u_chanuser* */
-extern u_chanuser *u_chan_user_find(); /* u_chan*, u_user* */
+extern u_chanuser *u_chan_user_add(u_chan*, u_user*);
+extern void u_chan_user_del(u_chanuser*);
+extern u_chanuser *u_chan_user_find(u_chan*, u_user*);
 
-extern int u_entry_blocked(); /* u_chan*, u_user*, char *key */
-extern u_chan *u_find_forward(); /* u_chan*, u_user*, char *key */
-extern int u_is_muted(); /* u_chanuser* */
+extern int u_entry_blocked(u_chan*, u_user*, char *key);
+extern u_chan *u_find_forward(u_chan*, u_user*, char *key);
+extern int u_is_muted(u_chanuser*);
 
-extern int init_chan();
+extern int init_chan(void);
 
 #endif

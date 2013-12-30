@@ -6,9 +6,9 @@
 
 #include "ircd.h"
 
-static void __null_canonize(s) { }
+static void __null_canonize(char *s) { }
 
-static u_trie_e *trie_e_new(up) u_trie_e *up;
+static u_trie_e *trie_e_new(u_trie_e *up)
 {
 	u_trie_e *e;
 	int i;
@@ -22,12 +22,12 @@ static u_trie_e *trie_e_new(up) u_trie_e *up;
 	return e;
 }
 
-static void trie_e_del(e) u_trie_e *e;
+static void trie_e_del(u_trie_e *e)
 {
 	free(e);
 }
 
-u_trie *u_trie_new(canonize) void (*canonize)();
+u_trie *u_trie_new(void (*canonize)(char*))
 {
 	u_trie *trie;
 	int i;
@@ -43,7 +43,7 @@ u_trie *u_trie_new(canonize) void (*canonize)();
 	return trie;
 }
 
-static void free_real(e, cb, priv) u_trie_e *e; void (*cb)(); void *priv;
+static void free_real(u_trie_e *e, void (*cb)(), void *priv)
 {
 	int i;
 
@@ -58,18 +58,18 @@ static void free_real(e, cb, priv) u_trie_e *e; void (*cb)(); void *priv;
 		cb(e->val, priv);
 }
 
-void u_trie_free(trie, cb, priv) u_trie *trie; void (*cb)(); void *priv;
+void u_trie_free(u_trie *trie, void (*cb)(), void *priv)
 {
 	free_real(&trie->n, cb, priv);
 	free(trie);
 }
 
-static uchar nibble(s, i) uchar *s;
+static uchar nibble(uchar *s, int i)
 {
 	return (i%2==0) ? s[i/2]>>4 : s[i/2]&0xf;
 }
 
-static u_trie_e *retrieval(trie, tkey, create) u_trie *trie; char *tkey;
+static u_trie_e *retrieval(u_trie *trie, char *tkey, int create)
 {
 	u_trie_e *n;
 	char key[U_TRIE_KEY_MAX];
@@ -85,7 +85,7 @@ static u_trie_e *retrieval(trie, tkey, create) u_trie *trie; char *tkey;
 	n = &trie->n;
 
 	for (; n && key[nib/2]; nib++) {
-		c = nibble(key, nib);
+		c = nibble((uchar*)key, nib);
 		if (n->n[c] == NULL) {
 			if (create)
 				n->n[c] = trie_e_new(n);
@@ -98,20 +98,20 @@ static u_trie_e *retrieval(trie, tkey, create) u_trie *trie; char *tkey;
 	return n;
 }
 
-void u_trie_set(trie, key, val) u_trie *trie; char *key; void *val;
+void u_trie_set(u_trie *trie, char *key, void *val)
 {
 	u_trie_e *n = retrieval(trie, key, 1);
 	u_log(LG_FINE, "TRIE:SET: [%p] %s", trie, key);
 	n->val = val;
 }
 
-void *u_trie_get(trie, key) u_trie *trie; char *key;
+void *u_trie_get(u_trie *trie, char *key)
 {
 	u_trie_e *n = retrieval(trie, key, 0);
 	return n ? n->val : NULL;
 }
 
-static void each(e, cb, priv) u_trie_e *e; void (*cb)(); void *priv;
+static void each(u_trie_e *e, void (*cb)(), void *priv)
 {
 	int i;
 
@@ -124,8 +124,7 @@ static void each(e, cb, priv) u_trie_e *e; void (*cb)(); void *priv;
 	}
 }
 
-void u_trie_each(trie, pfx, cb, priv)
-u_trie *trie; char *pfx; void (*cb)(); void *priv;
+void u_trie_each(u_trie *trie, char *pfx, void (*cb)(), void *priv)
 {
 	u_trie_e *e = &trie->n;
 	if (pfx && pfx[0]) {
@@ -135,7 +134,7 @@ u_trie *trie; char *pfx; void (*cb)(); void *priv;
 	each(e, cb, priv);
 }
 
-void *u_trie_del(trie, key) u_trie *trie; char *key;
+void *u_trie_del(u_trie *trie, char *key)
 {
 	u_trie_e *prev, *cur;
 	void *val;

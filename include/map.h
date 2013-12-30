@@ -21,13 +21,14 @@ struct u_map {
 	u_list pending;
 };
 
-extern u_map *u_map_new(); /* int string_keys */
-extern void u_map_free(); /* u_map* */
-/* u_map*, void (*cb)(u_map*, void *k, void *v, void*), void* */
-extern void u_map_each();
-extern void *u_map_get(); /* u_map*, void *key */
-extern void u_map_set(); /* u_map*, void *key, void *data */
-extern void *u_map_del(); /* u_map*, void *key */
-extern void u_map_dump(); /* u_map* */
+typedef void (u_map_cb_t)(u_map*, void *k, void *v, void *priv);
+
+extern u_map *u_map_new(int string_keys);
+extern void u_map_free(u_map*);
+extern void u_map_each(u_map*, u_map_cb_t*, void *priv);
+extern void *u_map_get(u_map*, void *key);
+extern void u_map_set(u_map*, void *key, void *data);
+extern void *u_map_del(u_map*, void *key);
+extern void u_map_dump(u_map*);
 
 #endif

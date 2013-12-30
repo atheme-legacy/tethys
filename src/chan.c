@@ -8,12 +8,12 @@
 
 u_trie *all_chans;
 
-static int cb_flag();
-static int cb_list();
-static int cb_prefix();
-static int cb_fwd();
-static int cb_key();
-static int cb_limit();
+static int cb_flag(u_modes*, int, char*);
+static int cb_list(u_modes*, int, char*);
+static int cb_prefix(u_modes*, int, char*);
+static int cb_fwd(u_modes*, int, char*);
+static int cb_key(u_modes*, int, char*);
+static int cb_limit(u_modes*, int, char*);
 
 static u_mode_info __cmodes[] = {
 	{ 'c', cb_flag,   CMODE_NOCOLOR              },
@@ -40,7 +40,7 @@ static u_mode_info __cmodes[] = {
 u_mode_info *cmodes = __cmodes;
 uint cmode_default = CMODE_TOPIC | CMODE_NOEXTERNAL;
 
-static int cm_deny(m) u_modes *m;
+static int cm_deny(u_modes *m)
 {
 	u_chanuser *cu;
 
@@ -53,7 +53,7 @@ static int cm_deny(m) u_modes *m;
 	return m->flags & CM_DENY;
 }
 
-static int cb_flag(m, on, arg) u_modes *m; char *arg;
+static int cb_flag(u_modes *m, int on, char *arg)
 {
 	u_chan *c = m->target;
 	uint oldm = c->mode;
@@ -73,7 +73,7 @@ static int cb_flag(m, on, arg) u_modes *m; char *arg;
 }
 
 /* foo -> foo!*@*, aji@ -> *!aji@*, etc */
-static char *full_hostmask(mask) char *mask;
+static char *full_hostmask(char *mask)
 {
 	static char buf[512];
 	char *nick, *ident, *host, *ex, *at;
@@ -114,7 +114,7 @@ static char *full_hostmask(mask) char *mask;
 	return buf;
 }
 
-static int cb_list(m, on, arg) u_modes *m; char *arg;
+static int cb_list(u_modes *m, int on, char *arg)
 {
 	u_chan *c = m->target;
 	u_user *u = m->setter;
@@ -166,7 +166,7 @@ static int cb_list(m, on, arg) u_modes *m; char *arg;
 	return 1;
 }
 
-static int cb_prefix(m, on, arg) u_modes *m; char *arg;
+static int cb_prefix(u_modes *m, int on, char *arg)
 {
 	u_chan *c = m->target;
 	u_user *u = m->setter;
@@ -204,7 +204,7 @@ static int cb_prefix(m, on, arg) u_modes *m; char *arg;
 	return 1;
 }
 
-static int cb_fwd(m, on, arg) u_modes *m; char *arg;
+static int cb_fwd(u_modes *m, int on, char *arg)
 {
 	u_user *u = m->setter;
 	u_chan *tc, *c = m->target;
@@ -239,13 +239,13 @@ static int cb_fwd(m, on, arg) u_modes *m; char *arg;
 
 	if (c->forward)
 		free(c->forward);
-	c->forward = u_strdup(arg);
+	c->forward = strdup(arg);
 
 	u_mode_put(m, on, m->info->ch, " %C", tc);
 	return 1;
 }
 
-static int cb_key(m, on, arg) u_modes *m; char *arg;
+static int cb_key(u_modes *m, int on, char *arg)
 {
 	u_chan *c = m->target;
 
@@ -266,14 +266,14 @@ static int cb_key(m, on, arg) u_modes *m; char *arg;
 
 	if (c->key)
 		free(c->key);
-	c->key = u_strdup(arg);
+	c->key = strdup(arg);
 
 	u_mode_put(m, on, m->info->ch, " %s", arg);
 
 	return 1;
 }
 
-static int cb_limit(m, on, arg) u_modes *m; char *arg;
+static int cb_limit(u_modes *m, int on, char *arg)
 {
 	u_chan *c = m->target;
 	int lim;
@@ -295,16 +295,16 @@ static int cb_limit(m, on, arg) u_modes *m; char *arg;
 		return 1;
 	c->limit = lim;
 
-	u_mode_put(m, 1, 'l', " %d", c->limit);
+	u_mode_put(m, 1, 'l', " %d", (void*)c->limit);
 	return 1;
 }
 
-u_chan *u_chan_get(name) char *name;
+u_chan *u_chan_get(char *name)
 {
 	return u_trie_get(all_chans, name);
 }
 
-u_chan *u_chan_get_or_create(name) char *name;
+u_chan *u_chan_get_or_create(char *name)
 {
 	u_chan *chan;
 
@@ -335,7 +335,7 @@ u_chan *u_chan_get_or_create(name) char *name;
 	return chan;
 }
 
-static void drop_list(list) u_list *list;
+static void drop_list(u_list *list)
 {
 	u_list *n, *tn;
 
@@ -345,14 +345,14 @@ static void drop_list(list) u_list *list;
 	}
 }
 
-static void drop_param(p) char **p;
+static void drop_param(char **p)
 {
 	if (*p != NULL)
 		free(*p);
 	*p = NULL;
 }
 
-void u_chan_drop(chan) u_chan *chan;
+void u_chan_drop(u_chan *chan)
 {
 	/* TODO: u_map_free callback! */
 	u_map_free(chan->members);
@@ -368,7 +368,7 @@ void u_chan_drop(chan) u_chan *chan;
 	free(chan);
 }
 
-char *u_chan_modes(c, on_chan) u_chan *c;
+char *u_chan_modes(u_chan *c, int on_chan)
 {
 	static char buf[512];
 	char chs[64], args[512];
@@ -401,7 +401,7 @@ char *u_chan_modes(c, on_chan) u_chan *c;
 	return buf;
 }
 
-int u_chan_send_topic(c, u) u_chan *c; u_user *u;
+int u_chan_send_topic(u_chan *c, u_user *u)
 {
 	if (c->topic[0]) {
 		u_user_num(u, RPL_TOPIC, c, c->topic);
@@ -421,8 +421,8 @@ struct send_names_priv {
 	uint w;
 };
 
-void send_names_cb(map, u, cu, priv)
-u_map *map; u_user *u; u_chanuser *cu; struct send_names_priv *priv;
+void send_names_cb(u_map *map, u_user *u, u_chanuser *cu,
+                   struct send_names_priv *priv)
 {
 	char *p, nbuf[MAXNICKLEN+3];
 	int retrying = 0;
@@ -449,7 +449,7 @@ try_again:
 
 /* :my.name 353 nick = #chan :...
    *       *****    ***     **  = 11 */
-int u_chan_send_names(c, u) u_chan *c; u_user *u;
+int u_chan_send_names(u_chan *c, u_user *u)
 {
 	struct send_names_priv priv;
 
@@ -459,7 +459,7 @@ int u_chan_send_names(c, u) u_chan *c; u_user *u;
 	priv.s = priv.buf;
 	priv.w = 512 - (strlen(me.name) + strlen(u->nick) + strlen(c->name) + 11);
 
-	u_map_each(c->members, send_names_cb, &priv);
+	u_map_each(c->members, (u_map_cb_t*)send_names_cb, &priv);
 	if (priv.s != priv.buf)
 		u_user_num(u, RPL_NAMREPLY, priv.pfx, c, priv.buf);
 	u_user_num(u, RPL_ENDOFNAMES, c);
@@ -467,7 +467,7 @@ int u_chan_send_names(c, u) u_chan *c; u_user *u;
 	return 0;
 }
 
-int u_chan_send_list(c, u, list) u_chan *c; u_user *u; u_list *list;
+int u_chan_send_list(u_chan *c, u_user *u, u_list *list)
 {
 	u_list *n;
 	u_chanban *ban;
@@ -497,44 +497,44 @@ int u_chan_send_list(c, u, list) u_chan *c; u_user *u; u_list *list;
 	return 0;
 }
 
-void u_add_invite(c, u) u_chan *c; u_user *u;
+void u_add_invite(u_chan *c, u_user *u)
 {
 	/* TODO: check invite limits */
 	u_map_set(c->invites, u, u);
 	u_map_set(u->invites, c, c);
 }
 
-void u_del_invite(c, u) u_chan *c; u_user *u;
+void u_del_invite(u_chan *c, u_user *u)
 {
 	u_map_del(c->invites, u);
 	u_map_del(u->invites, c);
 }
 
-int u_has_invite(c, u) u_chan *c; u_user *u;
+int u_has_invite(u_chan *c, u_user *u)
 {
 	return !!u_map_get(c->invites, u);
 }
 
-static void inv_chan_cb(map, u, u_, c) u_map *map; u_user *u, *u_; u_chan *c;
+static void inv_chan_cb(u_map *map, u_user *u, u_user *u_, u_chan *c)
 {
 	u_del_invite(c, u);
 }
-void u_clr_invites_chan(c) u_chan *c;
+void u_clr_invites_chan(u_chan *c)
 {
-	u_map_each(c->invites, inv_chan_cb, c);
+	u_map_each(c->invites, (u_map_cb_t*)inv_chan_cb, c);
 }
 
-static void inv_user_cb(map, c, c_, u) u_map *map; u_chan *c, *c_; u_chan *u;
+static void inv_user_cb(u_map *map, u_chan *c, u_chan *c_, u_user *u)
 {
 	u_del_invite(c, u);
 }
-void u_clr_invites_user(u) u_user *u;
+void u_clr_invites_user(u_user *u)
 {
-	u_map_each(u->invites, inv_user_cb, u);
+	u_map_each(u->invites, (u_map_cb_t*)inv_user_cb, u);
 }
 
 /* XXX: assumes the chanuser doesn't already exist */
-u_chanuser *u_chan_user_add(c, u) u_chan *c; u_user *u;
+u_chanuser *u_chan_user_add(u_chan *c, u_user *u)
 {
 	u_chanuser *cu;
 
@@ -550,14 +550,14 @@ u_chanuser *u_chan_user_add(c, u) u_chan *c; u_user *u;
 	return cu;
 }
 
-void u_chan_user_del(cu) u_chanuser *cu;
+void u_chan_user_del(u_chanuser *cu)
 {
 	u_map_del(cu->c->members, cu->u);
 	u_map_del(cu->u->channels, cu->c);
 	free(cu);
 }
 
-u_chanuser *u_chan_user_find(c, u) u_chan *c; u_user *u;
+u_chanuser *u_chan_user_find(u_chan *c, u_user *u)
 {
 	return u_map_get(c->members, u);
 }
@@ -571,18 +571,18 @@ struct extban {
 	void *priv;
 };
 
-static int ex_oper(ex, c, u, data) extb_t *ex; u_chan *c; u_user *u; char *data;
+static int ex_oper(extb_t *ex, u_chan *c, u_user *u, char *data)
 {
 	return u->flags & UMODE_OPER;
 }
 
-static int ex_account(ex, c, u, data) extb_t *ex; u_chan *c; u_user *u; char *data;
+static int ex_account(extb_t *ex, u_chan *c, u_user *u, char *data)
 {
 	/* TODO: do this, once we have accounts */
 	return 0;
 }
 
-static int ex_channel(ex, c, u, data) extb_t *ex; u_chan *c; u_user *u; char *data;
+static int ex_channel(extb_t *ex, u_chan *c, u_user *u, char *data)
 {
 	u_chan *tc;
 	if (data == NULL)
@@ -593,7 +593,7 @@ static int ex_channel(ex, c, u, data) extb_t *ex; u_chan *c; u_user *u; char *da
 	return 1;
 }
 
-static int ex_gecos(ex, c, u, data) extb_t *ex; u_chan *c; u_user *u; char *data;
+static int ex_gecos(extb_t *ex, u_chan *c, u_user *u, char *data)
 {
 	if (data == NULL)
 		return 0;
@@ -608,7 +608,7 @@ static extb_t extbans[] = {
 	{ 0 }
 };
 
-static int matches_ban(c, u, mask, host) u_chan *c; u_user *u; char *mask, *host;
+static int matches_ban(u_chan *c, u_user *u, char *mask, char *host)
 {
 	char *data;
 	extb_t *extb = extbans;
@@ -643,8 +643,7 @@ static int matches_ban(c, u, mask, host) u_chan *c; u_user *u; char *mask, *host
 	return match(mask, host);
 }
 
-static int is_in_list(c, u, host, list)
-u_chan *c; u_user *u; char *host; u_list *list;
+static int is_in_list(u_chan *c, u_user *u, char *host, u_list *list)
 {
 	u_list *n;
 	u_chanban *ban;
@@ -658,7 +657,7 @@ u_chan *c; u_user *u; char *host; u_list *list;
 	return 0;
 }
 
-int u_entry_blocked(c, u, key) u_chan *c; u_user *u; char *key;
+int u_entry_blocked(u_chan *c, u_user *u, char *key)
 {
 	char host[BUFSIZE];
 	int invited = u_has_invite(c, u);
@@ -688,7 +687,7 @@ int u_entry_blocked(c, u, key) u_chan *c; u_user *u; char *key;
 	return 0;
 }
 
-u_chan *u_find_forward(c, u, key) u_chan *c; u_user *u; char *key;
+u_chan *u_find_forward(u_chan *c, u_user *u, char *key)
 {
 	int forwards_left = 30;
 
@@ -707,7 +706,7 @@ u_chan *u_find_forward(c, u, key) u_chan *c; u_user *u; char *key;
 	return NULL;
 }
 
-int u_is_muted(cu) u_chanuser *cu;
+int u_is_muted(u_chanuser *cu)
 {
 	char buf[512];
 
@@ -730,7 +729,7 @@ int u_is_muted(cu) u_chanuser *cu;
 	return CU_MUTED; /* not 1, to mimic cu->flags & CU_MUTED */
 }
 
-int init_chan()
+int init_chan(void)
 {
 	all_chans = u_trie_new(ascii_canonize);
 	return all_chans != NULL ? 0 : -1;

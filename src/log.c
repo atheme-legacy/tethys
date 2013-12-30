@@ -6,7 +6,7 @@
 
 #include "ircd.h"
 
-int default_handler(level, tm, line) char *tm, *line;
+int default_handler(int level, char *tm, char *line)
 {
 	static char *prefix[] =
 		{ "!!! SEVERE: ",
@@ -21,10 +21,10 @@ int default_handler(level, tm, line) char *tm, *line;
 	return 0;
 }
 
-int (*u_log_handler)() = default_handler;
+int (*u_log_handler)(int, char*, char*) = default_handler;
 int u_log_level = LG_INFO;
 
-int u_log(T(int) level, T(char*) fmt, u_va_alist) A(char *fmt; va_dcl)
+int u_log(int level, char* fmt, ...)
 {
 	struct tm *tm;
 	char tmbuf[512];
@@ -34,7 +34,7 @@ int u_log(T(int) level, T(char*) fmt, u_va_alist) A(char *fmt; va_dcl)
 	if (level > u_log_level)
 		return 0;
 
-	u_va_start(va, fmt);
+	va_start(va, fmt);
 	vsnf(FMT_LOG, buf, BUFSIZE, fmt, va);
 	va_end(va);
 

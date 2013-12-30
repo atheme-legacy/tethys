@@ -9,22 +9,22 @@
 
 typedef struct u_udb u_udb;
 
-/* void save_hook(u_udb*)
-   void load_hook(u_udb*) */
+typedef void (u_udb_save_hook_t)(u_udb*);
+typedef void (u_udb_load_hook_t)(u_udb*);
 
 extern u_list *u_udb_save_hooks;
 extern u_trie *u_udb_load_hooks;
 
 /* save functions: */
-extern void u_udb_row_start(); /* u_udb*, char *name */
-extern void u_udb_row_end(); /* u_udb* */
-extern void u_udb_put_s(); /* u_udb*, char *s */
-extern void u_udb_put_i(); /* u_udb*, long n */
+extern void u_udb_row_start(u_udb*, char *name);
+extern void u_udb_row_end(u_udb*);
+extern void u_udb_put_s(u_udb*, char *s);
+extern void u_udb_put_i(u_udb*, long n);
 
 /* load functions: */
-extern char *u_udb_get_s(); /* u_udb* */
-extern long u_udb_get_i(); /* u_udb* */
+extern char *u_udb_get_s(u_udb*);
+extern long u_udb_get_i(u_udb*);
 
-extern int init_upgrade();
+extern int init_upgrade(void);
 
 #endif

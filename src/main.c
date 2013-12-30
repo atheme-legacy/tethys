@@ -11,7 +11,7 @@ u_ts_t started;
 
 short opt_port = 6667;
 
-int usage(argv0, code) char *argv0;
+int usage(char *argv0, int code)
 {
 	printf("Usage: %s [OPTIONS]\n", argv0);
 	printf("Options:\n");
@@ -29,7 +29,7 @@ COMMAND_DEF(c_message);
 COMMAND_DEF(c_reg);
 COMMAND_DEF(c_server);
 COMMAND_DEF(c_user);
-int init()
+int init(void)
 {
 	int err;
 	FILE *f;
@@ -73,7 +73,7 @@ int init()
 
 extern char *optarg;
 
-int main(argc, argv) char *argv[];
+int main(int argc, char **argv)
 {
 	int c;
 

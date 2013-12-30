@@ -6,7 +6,7 @@
 
 #include "ircd.h"
 
-void u_cidr_to_str(cidr, s) u_cidr *cidr; char *s;
+void u_cidr_to_str(u_cidr *cidr, char *s)
 {
 	struct in_addr in;
 
@@ -16,7 +16,7 @@ void u_cidr_to_str(cidr, s) u_cidr *cidr; char *s;
 	sprintf(s, "/%d", cidr->netsize);
 }
 
-void u_str_to_cidr(s, cidr) char *s; u_cidr *cidr;
+void u_str_to_cidr(char *s, u_cidr *cidr)
 {
 	struct in_addr in;
 	char *p;
@@ -37,7 +37,7 @@ void u_str_to_cidr(s, cidr) char *s; u_cidr *cidr;
 	cidr->addr = ntohl(in.s_addr);
 }
 
-int u_cidr_match(cidr, s) u_cidr *cidr; char *s;
+int u_cidr_match(u_cidr *cidr, char *s)
 {
 	struct in_addr in;
 	ulong mask, addr;
@@ -62,7 +62,7 @@ static char null_casemap[256];
 static char rfc1459_casemap[256];
 static char ascii_casemap[256];
 
-int matchmap(mask, string, casemap) char *mask, *string, *casemap;
+int matchmap(char *mask, char *string, char *casemap)
 {
 	char *m = mask, *s = string;
 	char *m_bt = m, *s_bt = s;
@@ -98,29 +98,29 @@ int matchmap(mask, string, casemap) char *mask, *string, *casemap;
 	}
 }
 
-int match(mask, string) char *mask, *string;
+int match(char *mask, char *string)
 {
 	return matchmap(mask, string, null_casemap);
 }
 
-int matchirc(mask, string) char *mask, *string;
+int matchirc(char *mask, char *string)
 {
 	return matchmap(mask, string, rfc1459_casemap);
 }
 
-int matchcase(mask, string) char *mask, *string;
+int matchcase(char *mask, char *string)
 {
 	return matchmap(mask, string, ascii_casemap);
 }
 
-int matchhash(hash, string) char *hash, *string;
+int matchhash(char *hash, char *string)
 {
 	char buf[CRYPTLEN];
 	u_crypto_hash(buf, string, hash);
 	return streq(buf, hash);
 }
 
-int mapcmp(s1, s2, map) char *s1, *s2, *map;
+int mapcmp(char *s1, char *s2, char *map)
 {
 	int diff;
 
@@ -135,41 +135,17 @@ int mapcmp(s1, s2, map) char *s1, *s2, *map;
 	return map[(unsigned)*s1] - map[(unsigned)*s2];
 }
 
-int casecmp(s1, s2) char *s1, *s2;
+int casecmp(char *s1, char *s2)
 {
 	return mapcmp(s1, s2, ascii_casemap);
 }
 
-int irccmp(s1, s2) char *s1, *s2;
+int irccmp(char *s1, char *s2)
 {
 	return mapcmp(s1, s2, rfc1459_casemap);
 }
 
-void u_memmove_lower(dest, src, n) char *dest, *src;
-{
-	while (n --> 0) {
-		*dest++ = *src++;
-	}
-}
-
-void u_memmove_upper(dest, src, n) char *dest, *src;
-{
-	src += n;
-	dest += n;
-	while (n --> 0) {
-		*--dest = *--src;
-	}
-}
-
-void u_memmove(dest, src, n) char *dest, *src;
-{
-	if (dest < src)
-		u_memmove_lower(dest, src, n);
-	if (dest > src)
-		u_memmove_upper(dest, src, n);
-}
-
-ulong u_strlcpy(dest, src, n) char *dest, *src;
+ulong u_strlcpy(char *dest, char *src, ulong n)
 {
 	int len;
 	n--;
@@ -184,31 +160,23 @@ ulong u_strlcpy(dest, src, n) char *dest, *src;
 	return n;
 }
 
-void u_strlcat(dest, src, n) char *dest, *src;
+void u_strlcat(char *dest, char *src, ulong n)
 {
 	int len = strlen(dest);
 	u_strlcpy(dest+len, src, n-len);
 }
 
-char *u_strdup(s) char *s;
-{
-	int len = strlen(s) + 1;
-	char *p = malloc(len);
-	memcpy(p, s, len);
-	return p;
-}
-
-void u_ntop(in, s) struct in_addr *in; char *s;
+void u_ntop(struct in_addr *in, char *s)
 {
 	u_strlcpy(s, inet_ntoa(*in), INET_ADDRSTRLEN);
 }
 
-void u_aton(s, in) char *s; struct in_addr *in;
+void u_aton(char *s, struct in_addr *in)
 {
 	in->s_addr = inet_addr(s);
 }
 
-char *cut(p, delim) char **p, *delim;
+char *cut(char **p, char *delim)
 {
 	char *s = *p;
 
@@ -243,7 +211,7 @@ char *cut(p, delim) char **p, *delim;
    if (s != buf)
            puts(buf);
  */
-int wrap(base, p, w, str) char *base, **p, *str; uint w;
+int wrap(char *base, char **p, uint w, char *str)
 {
 	uint len = strlen(str) + (base != *p);
 
@@ -264,23 +232,23 @@ int wrap(base, p, w, str) char *base, **p, *str; uint w;
 	return 1;
 }
 
-void null_canonize(s) char *s;
+void null_canonize(char *s)
 {
 }
 
-void rfc1459_canonize(s) char *s;
+void rfc1459_canonize(char *s)
 {
 	for (; *s; s++)
 		*s = rfc1459_casemap[(uchar)*s];
 }
 
-void ascii_canonize(s) char *s;
+void ascii_canonize(char *s)
 {
 	for (; *s; s++)
 		*s = ascii_casemap[(uchar)*s];
 }
 
-char *id_to_name(s) char *s;
+char *id_to_name(char *s)
 {
 	if (s[3]) { /* uid */
 		u_user *u = u_user_by_uid(s);
@@ -291,7 +259,7 @@ char *id_to_name(s) char *s;
 	}
 }
 
-char *name_to_id(s) char *s;
+char *name_to_id(char *s)
 {
 	if (strchr(s, '.')) { /* server */
 		u_server *sv = u_server_by_name(s);
@@ -302,21 +270,21 @@ char *name_to_id(s) char *s;
 	}
 }
 
-char *ref_to_name(s) char *s;
+char *ref_to_name(char *s)
 {
 	if (isdigit(s[0]))
 		return id_to_name(s);
 	return s;
 }
 
-char *ref_to_id(s) char *s;
+char *ref_to_id(char *s)
 {
 	if (isdigit(s[0]))
 		return s;
 	return name_to_id(s);
 }
 
-char *conn_name(conn) u_conn *conn;
+char *conn_name(u_conn *conn)
 {
 	char *name = NULL;
 
@@ -334,7 +302,7 @@ char *conn_name(conn) u_conn *conn;
 	return (name && name[0]) ? name : "*";
 }
 
-char *conn_id(conn) u_conn *conn;
+char *conn_id(u_conn *conn)
 {
 	char *id = NULL;
 
@@ -352,7 +320,7 @@ char *conn_id(conn) u_conn *conn;
 	return (id && id[0]) ? id : NULL;
 }
 
-int is_valid_nick(s) char *s;
+int is_valid_nick(char *s)
 {
 	if (isdigit(*s) || *s == '-')
 		return 0;
@@ -363,7 +331,7 @@ int is_valid_nick(s) char *s;
 	return 1;
 }
 
-int is_valid_ident(s) char *s;
+int is_valid_ident(char *s)
 {
 	for (; *s; s++) {
 		if (!(ctype_map[(uchar)*s] & CT_IDENT))
@@ -372,7 +340,7 @@ int is_valid_ident(s) char *s;
 	return 1;
 }
 
-int is_valid_sid(s) char *s;
+int is_valid_sid(char *s)
 {
 	if (strlen(s) != 3)
 		return 0;
@@ -385,7 +353,7 @@ int is_valid_sid(s) char *s;
 	return 1;
 }
 
-int init_util()
+int init_util(void)
 {
 	int i;
 

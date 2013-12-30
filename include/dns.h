@@ -15,14 +15,15 @@
 #define DNS_TOOLONG   4   /* request too long */
 #define DNS_OTHER     5   /* some other error */
 
-extern void u_dns_use_io(); /* u_io* */
+extern void u_dns_use_io(u_io*);
 
-/* cb(status, res, priv) */
-extern ushort u_dns(); /* char*, void (*cb)(), void *priv */
-extern ushort u_rdns(); /* char*, void (*cb)(), void *priv */
+typedef void (u_dns_cb_t)(int status, char *res, void *priv);
 
-extern void u_dns_cancel(); /* ushort, void (*cb)(), void *priv */
+extern ushort u_dns(char*, u_dns_cb_t*, void *priv);
+extern ushort u_rdns(char*, u_dns_cb_t*, void *priv);
 
-extern int init_dns();
+extern void u_dns_cancel(ushort, u_dns_cb_t*, void *priv);
+
+extern int init_dns(void);
 
 #endif

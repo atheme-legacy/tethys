@@ -10,7 +10,7 @@ static void origin_rdns();
 static void origin_recv();
 static int toplev_post();
 
-void u_conn_init(conn) u_conn *conn;
+void u_conn_init(u_conn *conn)
 {
 	conn->flags = 0;
 	conn->ctx = CTX_UNREG;
@@ -39,7 +39,7 @@ void u_conn_init(conn) u_conn *conn;
 	conn->pass = NULL;
 }
 
-void u_conn_cleanup(conn) u_conn *conn;
+void u_conn_cleanup(u_conn *conn)
 {
 	if (conn->dns_id)
 		u_dns_cancel(conn->dns_id, origin_rdns, conn);
@@ -48,13 +48,13 @@ void u_conn_cleanup(conn) u_conn *conn;
 	free(conn->obuf);
 }
 
-void u_conn_close(conn) u_conn *conn;
+void u_conn_close(u_conn *conn)
 {
 	conn->flags |= U_CONN_CLOSING;
 }
 
 /* sadfaec */
-void u_conn_obufsize(conn, obufsize) u_conn *conn;
+void u_conn_obufsize(u_conn *conn, int obufsize)
 {
 	char *buf;
 
@@ -71,7 +71,7 @@ void u_conn_obufsize(conn, obufsize) u_conn *conn;
 	conn->obufsize = obufsize;
 }
 
-u_conn *u_conn_by_name(s) char *s;
+u_conn *u_conn_by_name(char *s)
 {
 	if (strchr(s, '.')) {
 		u_server *sv = u_server_by_name(s);
@@ -82,7 +82,7 @@ u_conn *u_conn_by_name(s) char *s;
 	}
 }
 
-void conn_out_clear(conn) u_conn *conn;
+void conn_out_clear(u_conn *conn)
 {
 	char *s;
 
@@ -95,7 +95,7 @@ void conn_out_clear(conn) u_conn *conn;
 	conn->obuflen = s - conn->obuf;
 }
 
-void u_conn_vf(conn, fmt, va) u_conn *conn; char *fmt; va_list va;
+void u_conn_vf(u_conn *conn, char *fmt, va_list va)
 {
 	int type;
 	char buf[4096];
@@ -136,16 +136,15 @@ void u_conn_vf(conn, fmt, va) u_conn *conn; char *fmt; va_list va;
 	conn->obuflen = p - conn->obuf;
 }
 
-void u_conn_f(T(u_conn*) conn, T(char*) fmt, u_va_alist)
-A(u_conn *conn; char *fmt; va_dcl)
+void u_conn_f(u_conn *conn, char *fmt, ...)
 {
 	va_list va;
-	u_va_start(va, fmt);
+	va_start(va, fmt);
 	u_conn_vf(conn, fmt, va);
 	va_end(va);
 }
 
-void u_conn_vnum(conn, tgt, num, va) u_conn *conn; char *tgt; va_list va;
+void u_conn_vnum(u_conn *conn, char *tgt, int num, va_list va)
 {
 	char buf[4096];
 	char *fmt;
@@ -163,12 +162,11 @@ void u_conn_vnum(conn, tgt, num, va) u_conn *conn; char *tgt; va_list va;
 	u_conn_f(conn, ":%S %03d %s %s", &me, num, tgt, buf);
 }
 
-int u_conn_num(T(u_conn*) conn, T(int) num, u_va_alist)
-A(u_conn *conn; va_dcl)
+int u_conn_num(u_conn *conn, int num, ...)
 {
 	va_list va;
 
-	u_va_start(va, num);
+	va_start(va, num);
 	switch (conn->ctx) {
 	case CTX_UNREG:
 		u_conn_vnum(conn, "*", num, va);
@@ -185,18 +183,17 @@ A(u_conn *conn; va_dcl)
 	return 0;
 }
 
-void u_conn_error(conn, error) u_conn *conn; char *error;
+void u_conn_error(u_conn *conn, char *error)
 {
 	if (conn->flags & U_CONN_CLOSING)
 		return;
 	u_log(LG_FINE, "CONN:ERR: [%p] ERR=\"%s\"", conn, error);
 	if (conn->error != NULL)
 		free(conn->error);
-	conn->error = u_strdup(error);
+	conn->error = strdup(error);
 }
 
-u_conn_origin *u_conn_origin_create(io, addr, port)
-u_io *io; u_long addr; u_short port;
+u_conn_origin *u_conn_origin_create(u_io *io, u_long addr, u_short port)
 {
 	struct sockaddr_in sa;
 	u_conn_origin *orig;
@@ -239,7 +236,7 @@ out:
 	return NULL;
 }
 
-static void dispatch_lines(conn) u_conn *conn;
+static void dispatch_lines(u_conn *conn)
 {
 	char buf[BUFSIZE];
 	u_msg msg;
@@ -260,7 +257,7 @@ static void dispatch_lines(conn) u_conn *conn;
 	}
 }
 
-static void origin_rdns(status, name, priv) char *name; void *priv;
+static void origin_rdns(int status, char *name, void *priv)
 {
 	u_conn *conn = priv;
 	int len;
@@ -284,7 +281,7 @@ static void origin_rdns(status, name, priv) char *name; void *priv;
 	dispatch_lines(conn);
 }
 
-static void origin_recv(sock) u_io_fd *sock;
+static void origin_recv(u_io_fd *sock)
 {
 	u_io_fd *iofd;
 	u_conn *conn;
@@ -317,7 +314,7 @@ static void origin_recv(sock) u_io_fd *sock;
 	u_log(LG_VERBOSE, "Connection from %s", conn->ip);
 }
 
-static void toplev_cleanup(iofd) u_io_fd *iofd;
+static void toplev_cleanup(u_io_fd *iofd)
 {
 	u_conn *conn = iofd->priv;
 	u_log(LG_VERBOSE, "%s disconnecting", conn->host);
@@ -328,7 +325,7 @@ static void toplev_cleanup(iofd) u_io_fd *iofd;
 	free(conn);
 }
 
-static void toplev_recv(iofd) u_io_fd *iofd;
+static void toplev_recv(u_io_fd *iofd)
 {
 	u_conn *conn = iofd->priv;
 	char buf[1024];
@@ -350,7 +347,7 @@ static void toplev_recv(iofd) u_io_fd *iofd;
 		dispatch_lines(conn);
 }
 
-static void toplev_send(iofd) u_io_fd *iofd;
+static void toplev_send(u_io_fd *iofd)
 {
 	u_conn *conn = iofd->priv;
 	int sz;
@@ -364,12 +361,12 @@ static void toplev_send(iofd) u_io_fd *iofd;
 	}
 
 	if (sz > 0) {
-		u_memmove(conn->obuf, conn->obuf + sz, conn->obufsize - sz);
+		memmove(conn->obuf, conn->obuf + sz, conn->obufsize - sz);
 		conn->obuflen -= sz;
 	}
 }
 
-static int toplev_post(iofd) u_io_fd *iofd;
+static int toplev_post(u_io_fd *iofd)
 {
 	u_conn *conn = iofd->priv;
 	int timeout, tdelta;

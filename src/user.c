@@ -46,13 +46,13 @@ uint umode_default = 0;
 static int um_on;
 static char *um_buf_p, um_buf[128];
 
-void u_user_m_start(u) u_user *u;
+void u_user_m_start(u_user *u)
 {
 	um_on = -1;
 	um_buf_p = um_buf;
 }
 
-void u_user_m_end(u) u_user *u;
+void u_user_m_end(u_user *u)
 {
 	*um_buf_p = '\0';
 	if (um_buf_p != um_buf)
@@ -61,7 +61,7 @@ void u_user_m_end(u) u_user *u;
 		u_user_num(u, ERR_UMODEUNKNOWNFLAG);
 }
 
-static void um_put(on, ch) char ch;
+static void um_put(int on, char ch)
 {
 	if (on != um_on) {
 		um_on = on;
@@ -70,7 +70,7 @@ static void um_put(on, ch) char ch;
 	*um_buf_p++ = ch;
 }
 
-static void cb_oper(info, u, on) u_umode_info *info; u_user *u;
+static void cb_oper(u_umode_info *info, u_user *u, int on)
 {
 	if (on)
 		return;
@@ -79,7 +79,7 @@ static void cb_oper(info, u, on) u_umode_info *info; u_user *u;
 	um_put(on, info->ch);
 }
 
-static void cb_flag(info, u, on) u_umode_info *info; u_user *u;
+static void cb_flag(u_umode_info *info, u_user *u, int on)
 {
 	uint oldm = u->flags;
 	if (on)
@@ -90,7 +90,7 @@ static void cb_flag(info, u, on) u_umode_info *info; u_user *u;
 		um_put(on, info->ch);
 }
 
-static void cb_wallops(info, u, on) u_umode_info *info; u_user *u;
+static void cb_wallops(u_umode_info *info, u_user *u, int on)
 {
 	cb_flag(info, u, on);
 
@@ -104,7 +104,7 @@ static void cb_wallops(info, u, on) u_umode_info *info; u_user *u;
 		u_roster_del(R_WALLOPS, USER_LOCAL(u)->conn);
 }
 
-void u_user_mode(u, ch, on) u_user *u; char ch;
+void u_user_mode(u_user *u, char ch, int on)
 {
 	u_umode_info *info = umodes;
 
@@ -118,7 +118,7 @@ void u_user_mode(u, ch, on) u_user *u; char ch;
 }
 
 /* used to simplify user_local_event */
-void user_local_die(conn, msg) u_conn *conn; char *msg;
+void user_local_die(u_conn *conn, char *msg)
 {
 	u_user *u = conn->priv;
 	if (u == NULL)
@@ -129,7 +129,7 @@ void user_local_die(conn, msg) u_conn *conn; char *msg;
 	u_user_unlink(u);
 }
 
-void user_local_event(conn, event) u_conn *conn;
+void user_local_event(u_conn *conn, int event)
 {
 	switch (event) {
 	case EV_ERROR:
@@ -144,7 +144,7 @@ void user_local_event(conn, event) u_conn *conn;
 	}
 }
 
-void u_user_make_ureg(conn) u_conn *conn;
+void u_user_make_ureg(u_conn *conn)
 {
 	u_user_local *ul;
 	u_user *u;
@@ -185,7 +185,7 @@ void u_user_make_ureg(conn) u_conn *conn;
 	u_log(LG_VERBOSE, "New local user uid=%s host=%s", u->uid, u->host);
 }
 
-u_user_remote *u_user_new_remote(sv, uid) u_server *sv; char *uid;
+u_user_remote *u_user_new_remote(u_server *sv, char *uid)
 {
 	u_user_remote *ur;
 	u_user *u;
@@ -216,13 +216,12 @@ u_user_remote *u_user_new_remote(sv, uid) u_server *sv; char *uid;
 	return ur;
 }
 
-void user_unlink_cb(map, c, cu, priv)
-u_map *map; u_chan *c; u_chanuser *cu; void *priv;
+void user_unlink_cb(u_map *map, u_chan *c, u_chanuser *cu, void *priv)
 {
 	u_chan_user_del(cu);
 }
 
-void u_user_unlink(u) u_user *u;
+void u_user_unlink(u_user *u)
 {
 	u_server *sv = u_user_server(u);
 
@@ -238,7 +237,7 @@ void u_user_unlink(u) u_user *u;
 	u_clr_invites_user(u);
 
 	/* part from all channels */
-	u_map_each(u->channels, user_unlink_cb, NULL);
+	u_map_each(u->channels, (u_map_cb_t*)user_unlink_cb, NULL);
 	u_map_free(u->channels);
 
 	if (u->nick[0])
@@ -251,7 +250,7 @@ void u_user_unlink(u) u_user *u;
 	free(u);
 }
 
-u_conn *u_user_conn(u) u_user *u;
+u_conn *u_user_conn(u_user *u)
 {
 	if (IS_LOCAL_USER(u))
 		return USER_LOCAL(u)->conn;
@@ -259,7 +258,7 @@ u_conn *u_user_conn(u) u_user *u;
 		return USER_REMOTE(u)->server->conn;
 }
 
-u_server *u_user_server(u) u_user *u;
+u_server *u_user_server(u_user *u)
 {
 	if (IS_LOCAL_USER(u))
 		return &me;
@@ -267,17 +266,17 @@ u_server *u_user_server(u) u_user *u;
 		return USER_REMOTE(u)->server;
 }
 
-u_user *u_user_by_nick(nick) char *nick;
+u_user *u_user_by_nick(char *nick)
 {
 	return u_trie_get(users_by_nick, nick);
 }
 
-u_user *u_user_by_uid(uid) char *uid;
+u_user *u_user_by_uid(char *uid)
 {
 	return u_trie_get(users_by_uid, uid);
 }
 
-void u_user_set_nick(u, nick, ts) u_user *u; char *nick; uint ts;
+void u_user_set_nick(u_user *u, char *nick, uint ts)
 {
 	/* TODO: check collision? */
 	if (u->nick[0])
@@ -287,7 +286,7 @@ void u_user_set_nick(u, nick, ts) u_user *u; char *nick; uint ts;
 	u->nickts = ts;
 }
 
-uint u_user_state(u, state) u_user *u; uint state;
+uint u_user_state(u_user *u, uint state)
 {
 	if (state & USER_MASK_STATE) {
 		u->flags &= ~USER_MASK_STATE;
@@ -297,7 +296,7 @@ uint u_user_state(u, state) u_user *u; uint state;
 	return u->flags & USER_MASK_STATE;
 }
 
-void u_user_vnum(u, num, va) u_user *u; va_list va;
+void u_user_vnum(u_user *u, int num, va_list va)
 {
 	u_conn *conn;
 	char *tgt;
@@ -314,10 +313,10 @@ void u_user_vnum(u, num, va) u_user *u; va_list va;
 	u_conn_vnum(conn, tgt, num, va);
 }
 
-int u_user_num(T(u_user*) u, T(int) num, u_va_alist) A(u_user *u; va_dcl)
+int u_user_num(u_user *u, int num, ...)
 {
 	va_list va; 
-	u_va_start(va, num);
+	va_start(va, num);
 	u_user_vnum(u, num, va);
 	va_end(va);
 	return 0;
@@ -346,7 +345,7 @@ struct isupport {
 	{ NULL },
 };
 
-void u_user_send_isupport(ul) u_user_local *ul;
+void u_user_send_isupport(u_user_local *ul)
 {
 	/* :host.irc 005 nick ... :are supported by this server
 	   *        *****    *   *....*....*....*....*....*.... = 37 */
@@ -378,7 +377,7 @@ again:
 		u_user_num(u, RPL_ISUPPORT, buf);
 }
 
-void u_user_welcome(ul) u_user_local *ul;
+void u_user_welcome(u_user_local *ul)
 {
 	u_user *u = USER(ul);
 	char buf[512];
@@ -399,7 +398,7 @@ void u_user_welcome(ul) u_user_local *ul;
 	u_roster_f(R_SERVERS, NULL, "%s", buf);
 }
 
-void u_user_send_motd(ul) u_user_local *ul;
+void u_user_send_motd(u_user_local *ul)
 {
 	u_list *n;
 	u_user *u = USER(ul);
@@ -415,7 +414,7 @@ void u_user_send_motd(ul) u_user_local *ul;
 	u_user_num(u, RPL_ENDOFMOTD);
 }
 
-static int is_in_list(host, list) char *host; u_list *list;
+static int is_in_list(char *host, u_list *list)
 {
 	u_list *n;
 	u_chanban *ban;
@@ -429,14 +428,14 @@ static int is_in_list(host, list) char *host; u_list *list;
 	return 0;
 }
 
-int u_user_in_list(u, list) u_user *u; u_list *list;
+int u_user_in_list(u_user *u, u_list *list)
 {
 	char buf[512];
 	snf(FMT_USER, buf, 512, "%H", u);
 	return is_in_list(buf, list);
 }
 
-void u_user_make_euid(u, buf) u_user *u; char *buf;
+void u_user_make_euid(u_user *u, char *buf)
 {
 	u_server *sv = u_user_server(u);
 
@@ -450,7 +449,7 @@ void u_user_make_euid(u, buf) u_user *u; char *buf;
 	    u->acct[0] ? u->acct : "*", u->gecos);
 }
 
-int init_user()
+int init_user(void)
 {
 	users_by_nick = u_trie_new(rfc1459_canonize);
 	users_by_uid = u_trie_new(ascii_canonize);

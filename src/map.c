@@ -9,14 +9,14 @@ struct u_map_n {
 	u_map_n *parent, *child[2];
 };
 
-static void n_key(map, n, k) u_map *map; u_map_n *n; void *k;
+static void n_key(u_map *map, u_map_n *n, void *k)
 {
 	if (map->flags & MAP_STRING_KEYS) {
 		if (n->key != NULL)
 			free(n->key);
 
 		if (k != NULL) {
-			n->key = u_strdup(k); /* ;_; */
+			n->key = strdup(k); /* ;_; */
 			return;
 		}
 	}
@@ -24,7 +24,7 @@ static void n_key(map, n, k) u_map *map; u_map_n *n; void *k;
 	n->key = k;
 }
 
-static int n_cmp(map, k1, k2) u_map *map; void *k1, *k2;
+static int n_cmp(u_map *map, void *k1, void *k2)
 {
 	if (map->flags & MAP_STRING_KEYS)
 		return strcmp((char*)k1, (char*)k2);
@@ -32,8 +32,7 @@ static int n_cmp(map, k1, k2) u_map *map; void *k1, *k2;
 	return (long)k1 - (long)k2;
 }
 
-static u_map_n *u_map_n_new(map, key, data, color)
-u_map *map; void *key, *data;
+static u_map_n *u_map_n_new(u_map *map, void *key, void *data, int color)
 {
 	u_map_n *n;
 
@@ -49,14 +48,14 @@ u_map *map; void *key, *data;
 	return n;
 }
 
-static void u_map_n_del(map, n) u_map *map; u_map_n *n;
+static void u_map_n_del(u_map *map, u_map_n *n)
 {
 	if ((map->flags & MAP_STRING_KEYS) && n->key)
 		free(n->key);
 	free(n);
 }
 
-u_map *u_map_new(string_keys)
+u_map *u_map_new(int string_keys)
 {
 	u_map *map;
 
@@ -71,7 +70,7 @@ u_map *u_map_new(string_keys)
 	return map;
 }
 
-void u_map_free(map) u_map *map;
+void u_map_free(u_map *map)
 {
 	u_map_n *n, *tn;
 
@@ -96,15 +95,15 @@ void u_map_free(map) u_map *map;
 	free(map);
 }
 
-static u_map_n *dumb_fetch();
-static void rb_delete();
+static u_map_n *dumb_fetch(u_map *map, void *key);
+static void rb_delete(u_map *map, u_map_n *n);
 
-static void clear_pending(map) u_map *map;
+static void clear_pending(u_map *map)
 {
 	u_list_init(&map->pending);
 }
 
-static void delete_pending(map) u_map *map;
+static void delete_pending(u_map *map)
 {
 	u_list *cur, *tn;
 	u_map_n *n;
@@ -118,13 +117,13 @@ static void delete_pending(map) u_map *map;
 	}
 }
 
-static void add_pending(map, n) u_map *map; u_map_n *n;
+static void add_pending(u_map *map, u_map_n *n)
 {
 	u_log(LG_FINE, "ADD PENDING %p (n=%p)", n->key, n);
 	u_list_add(&map->pending, n->key);
 }
 
-void u_map_each(map, cb, priv) u_map *map; void (*cb)(); void *priv;
+void u_map_each(u_map *map, void (*cb)(), void *priv)
 {
 	u_map_n *cur;
 	int idx;
@@ -165,7 +164,7 @@ loop_top:
 /* dumb functions are just standard binary search tree operations that
    don't pay attention to the colors of the nodes */
 
-static u_map_n *dumb_fetch(map, key) u_map *map; void *key;
+static u_map_n *dumb_fetch(u_map *map, void *key)
 {
 	u_map_n *n = map->root;
 
@@ -178,7 +177,7 @@ static u_map_n *dumb_fetch(map, key) u_map *map; void *key;
 	return n;
 }
 
-static void dumb_insert(map, n) u_map *map; u_map_n *n;
+static void dumb_insert(u_map *map, u_map_n *n)
 {
 	u_map_n *cur;
 	int idx;
@@ -202,14 +201,14 @@ static void dumb_insert(map, n) u_map *map; u_map_n *n;
 	}
 }
 
-static u_map_n *leftmost_subchild(n) u_map_n *n;
+static u_map_n *leftmost_subchild(u_map_n *n)
 {
 	while (n && n->child[LEFT])
 		n = n->child[LEFT];
 	return n;
 }
 
-static u_map_n *dumb_delete(map, n) u_map *map; u_map_n *n;
+static u_map_n *dumb_delete(u_map *map, u_map_n *n)
 {
 	int idx;
 	u_map_n *tgt;
@@ -256,7 +255,7 @@ static u_map_n *dumb_delete(map, n) u_map *map; u_map_n *n;
 	return dumb_delete(map, tgt);
 }
 
-static void rb_delete(map, n) u_map *map; u_map_n *n;
+static void rb_delete(u_map *map, u_map_n *n)
 {
 	if (map->flags & MAP_STRING_KEYS)
 		u_log(LG_FINE, "MAP: %p RB-DEL %s", map, n->key);
@@ -270,13 +269,13 @@ static void rb_delete(map, n) u_map *map; u_map_n *n;
 	u_map_n_del(map, n);
 }
 
-void *u_map_get(map, key) u_map *map; void *key;
+void *u_map_get(u_map *map, void *key)
 {
 	u_map_n *n = dumb_fetch(map, key);
 	return n == NULL ? NULL : n->data;
 }
 
-void u_map_set(map, key, data) u_map *map; void *key, *data;
+void u_map_set(u_map *map, void *key, void *data)
 {
 	u_map_n *n = dumb_fetch(map, key);
 
@@ -296,7 +295,7 @@ void u_map_set(map, key, data) u_map *map; void *key, *data;
 	/* TODO: rb cases */
 }
 
-void *u_map_del(map, key) u_map *map; void *key;
+void *u_map_del(u_map *map, void *key)
 {
 	u_map_n *n = dumb_fetch(map, key);
 	void *data;
@@ -325,13 +324,13 @@ void *u_map_del(map, key) u_map *map; void *key;
 	return data;
 }
 
-static void indent(depth)
+static void indent(int depth)
 {
 	while (depth-->0)
 		printf("  ");
 }
 
-static void map_dump_real(map, n, depth) u_map *map; u_map_n *n;
+static void map_dump_real(u_map *map, u_map_n *n, int depth)
 {
 	if (n == NULL) {
 		printf("*");
@@ -362,7 +361,7 @@ static void map_dump_real(map, n, depth) u_map *map; u_map_n *n;
 	printf("]");
 }
 
-void u_map_dump(map) u_map *map;
+void u_map_dump(u_map *map)
 {
 	map_dump_real(map, map->root, 1);
 	printf("\n\n");

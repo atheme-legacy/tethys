@@ -6,7 +6,7 @@
 
 #include "ircd.h"
 
-static int message_blocked(c, u) u_chan *c; u_user *u;
+static int message_blocked(u_chan *c, u_user *u)
 {
 	u_chanuser *cu = u_chan_user_find(c, u);
 
@@ -24,7 +24,7 @@ static int message_blocked(c, u) u_chan *c; u_user *u;
 	return 0;
 }
 
-static int m_message_chan(conn, msg) u_conn *conn; u_msg *msg;
+static int m_message_chan(u_conn *conn, u_msg *msg)
 {
 	u_chan *tgt;
 
@@ -47,7 +47,7 @@ static int m_message_chan(conn, msg) u_conn *conn; u_msg *msg;
 	return 0;
 }
 
-static int m_message_user(conn, msg) u_conn *conn; u_msg *msg;
+static int m_message_user(u_conn *conn, u_msg *msg)
 {
 	u_entity tgt;
 
@@ -68,7 +68,7 @@ static int m_message_user(conn, msg) u_conn *conn; u_msg *msg;
 	return 0;
 }
 
-static int m_message(conn, msg) u_conn *conn; u_msg *msg;
+static int m_message(u_conn *conn, u_msg *msg)
 {
 	if (ENT_IS_SERVER(msg->src) && msg->command[0] == 'P') {
 		u_log(LG_ERROR, "%E tried to send a PRIVMSG!", msg->src);

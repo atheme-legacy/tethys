@@ -56,10 +56,12 @@ extern u_map *all_auths;
 extern u_map *all_opers;
 extern u_map *all_links;
 
-extern u_auth *u_find_auth(); /* u_conn *conn */
-extern u_oper *u_find_oper(); /* u_auth*; char *name, *pass */
-extern u_link *u_find_link(); /* u_conn *conn */
+#include "conn.h"
 
-extern int init_auth();
+extern u_auth *u_find_auth(u_conn*);
+extern u_oper *u_find_oper(u_auth*, char*, char*);
+extern u_link *u_find_link(u_conn*);
+
+extern int init_auth(void);
 
 #endif

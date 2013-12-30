@@ -6,20 +6,20 @@
 
 #include "ircd.h"
 
-static int not_implemented(conn, msg) u_conn *conn; u_msg *msg;
+static int not_implemented(u_conn *conn, u_msg *msg)
 {
 	u_log(LG_SEVERE, "%S used unimplemented S2S command %s",
 	      conn->priv, msg->command);
 	return 0;
 }
 
-static int idfk(conn, msg) u_conn *conn; u_msg *msg;
+static int idfk(u_conn *conn, u_msg *msg)
 {
 	u_log(LG_WARN, "%S sent bad %s, it seems", conn->priv, msg->command);
 	return 0;
 }
 
-static int m_error(conn, msg) u_conn *conn; u_msg *msg;
+static int m_error(u_conn *conn, u_msg *msg)
 {
 	u_log(LG_ERROR, "%S is closing connection via ERROR (%s)", conn->priv,
 	      msg->argc > 0 ? msg->argv[0] : "no message");
@@ -27,7 +27,7 @@ static int m_error(conn, msg) u_conn *conn; u_msg *msg;
 	return 0;
 }
 
-static int m_svinfo(conn, msg) u_conn *conn; u_msg *msg;
+static int m_svinfo(u_conn *conn, u_msg *msg)
 {
 	int tsdelta;
 	u_server *sv = conn->priv;
@@ -57,7 +57,7 @@ static int m_svinfo(conn, msg) u_conn *conn; u_msg *msg;
 	return 0;
 }
 
-static int m_euid(conn, msg) u_conn *conn; u_msg *msg;
+static int m_euid(u_conn *conn, u_msg *msg)
 {
 	u_user *u;
 	u_server *sv;
@@ -72,7 +72,7 @@ static int m_euid(conn, msg) u_conn *conn; u_msg *msg;
 	ur = u_user_new_remote(sv, msg->argv[7]);
 	u = USER(ur);
 
-	u_user_set_nick(ur, msg->argv[0], atoi(msg->argv[2]));
+	u_user_set_nick(u, msg->argv[0], atoi(msg->argv[2]));
 
 	/* TODO: set umodes */
 
@@ -92,7 +92,7 @@ static int m_euid(conn, msg) u_conn *conn; u_msg *msg;
 	return 0;
 }
 
-static int m_sjoin(conn, msg) u_conn *conn; u_msg *msg;
+static int m_sjoin(u_conn *conn, u_msg *msg)
 {
 	u_chan *c;
 	u_user *u;
@@ -151,7 +151,7 @@ static int m_sjoin(conn, msg) u_conn *conn; u_msg *msg;
 	return 0;
 }
 
-static int m_join(conn, msg) u_conn *conn; u_msg *msg;
+static int m_join(u_conn *conn, u_msg *msg)
 {
 	u_chan *c;
 	u_chanuser *cu;
@@ -177,7 +177,7 @@ static int m_join(conn, msg) u_conn *conn; u_msg *msg;
 	return 0;
 }
 
-static int m_tmode(conn, msg) u_conn *conn; u_msg *msg;
+static int m_tmode(u_conn *conn, u_msg *msg)
 {
 	int parc;
 	char **parv;
@@ -228,7 +228,7 @@ static int m_tmode(conn, msg) u_conn *conn; u_msg *msg;
 	return 0;
 }
 
-static int m_kill(conn, msg) u_conn *conn; u_msg *msg;
+static int m_kill(u_conn *conn, u_msg *msg)
 {
 	char *r, buf[512];
 	u_user *u;
@@ -265,7 +265,7 @@ static int m_kill(conn, msg) u_conn *conn; u_msg *msg;
 	return 0;
 }
 
-static int m_quit(conn, msg) u_conn *conn; u_msg *msg;
+static int m_quit(u_conn *conn, u_msg *msg)
 {
 	char buf[512];
 	u_user *u;
@@ -296,7 +296,7 @@ static int m_quit(conn, msg) u_conn *conn; u_msg *msg;
 	return 0;
 }
 
-static int m_sid(conn, msg) u_conn *conn; u_msg *msg;
+static int m_sid(u_conn *conn, u_msg *msg)
 {
 	if (!ENT_IS_SERVER(msg->src)) {
 		return u_log(LG_WARN, "Can't use SID source %s from %G!",
@@ -314,7 +314,7 @@ static int m_sid(conn, msg) u_conn *conn; u_msg *msg;
 	return 0;
 }
 
-static int m_part(conn, msg) u_conn *conn; u_msg *msg;
+static int m_part(u_conn *conn, u_msg *msg)
 {
 	char buf[512];
 	u_chan *c;
@@ -363,7 +363,7 @@ static int m_part(conn, msg) u_conn *conn; u_msg *msg;
 	return 0;
 }
 
-static int m_invite(conn, msg) u_conn *conn; u_msg *msg;
+static int m_invite(u_conn *conn, u_msg *msg)
 {
 	u_entity te;
 	u_user *tu, *u;

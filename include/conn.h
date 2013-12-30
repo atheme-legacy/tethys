@@ -8,6 +8,8 @@
 #define __INC_CONN_H__
 
 #include "ircd.h"
+#include "linebuf.h"
+#include "cookie.h"
 
 #define U_CONN_OBUFSIZE 32768
 #define U_CONN_HOSTSIZE 256
@@ -30,6 +32,8 @@
 
 typedef struct u_conn u_conn;
 typedef struct u_conn_origin u_conn_origin;
+
+#include "auth.h"
 
 struct u_conn {
 	uint flags;
@@ -59,21 +63,20 @@ struct u_conn_origin {
 	u_io_fd *sock;
 };
 
-extern void u_conn_init(); /* u_conn* */
-extern void u_conn_close(); /* u_conn* */
-extern void u_conn_obufsize(); /* u_conn*, int obufsize */
+extern void u_conn_init(u_conn*);
+extern void u_conn_close(u_conn*);
+extern void u_conn_obufsize(u_conn*, int obufsize);
 
-extern u_conn *u_conn_by_name(); /* char *nick_or_server */
+extern u_conn *u_conn_by_name(char *nick_or_server);
 
-extern void u_conn_vf(); /* u_conn*, char *fmt, va_list */
-extern void u_conn_f(A3(u_conn *conn, char *fmt, ...));
+extern void u_conn_vf(u_conn*, char *fmt, va_list);
+extern void u_conn_f(u_conn *conn, char *fmt, ...);
 
-extern void u_conn_vnum(); /* u_conn*, char *tgt, int num, va_list */
-extern int u_conn_num(A3(u_conn *conn, int num, ...));
+extern void u_conn_vnum(u_conn*, char *tgt, int num, va_list);
+extern int u_conn_num(u_conn *conn, int num, ...);
 
-extern void u_conn_error(); /* u_conn*, char* */
+extern void u_conn_error(u_conn*, char*);
 
-/* u_io*, u_long addr, u_short port */
-extern u_conn_origin *u_conn_origin_create();
+extern u_conn_origin *u_conn_origin_create(u_io*, ulong addr, ushort port);
 
 #endif

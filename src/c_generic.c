@@ -6,7 +6,7 @@
 
 #include "ircd.h"
 
-static int m_ping(conn, msg) u_conn *conn; u_msg *msg;
+static int m_ping(u_conn *conn, u_msg *msg)
 {
 	u_entity e;
 
@@ -45,7 +45,7 @@ static int m_ping(conn, msg) u_conn *conn; u_msg *msg;
 	return 0;
 }
 
-static int m_pong(conn, msg) u_conn *conn; u_msg *msg;
+static int m_pong(u_conn *conn, u_msg *msg)
 {
 	u_server *from, *sv = conn->priv;
 	u_entity e;
@@ -74,7 +74,7 @@ static int m_pong(conn, msg) u_conn *conn; u_msg *msg;
 	return 0;
 }
 
-static int m_away(conn, msg) u_conn *conn; u_msg *msg;
+static int m_away(u_conn *conn, u_msg *msg)
 {
 	char *r = (msg->argc == 0 || !msg->argv[0][0]) ? NULL : msg->argv[0];
 	u_user *u;

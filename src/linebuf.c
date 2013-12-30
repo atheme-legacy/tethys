@@ -6,12 +6,12 @@
 
 #include "ircd.h"
 
-void u_linebuf_init(lb) u_linebuf *lb;
+void u_linebuf_init(u_linebuf *lb)
 {
 	lb->pos = 0;
 }
 
-int u_linebuf_data(lb, data, size) u_linebuf *lb; char *data;
+int u_linebuf_data(u_linebuf *lb, char *data, int size)
 {
 	if (lb->pos + size > U_LINEBUF_SIZE)
 		return -1; /* linebuf full! */
@@ -20,7 +20,7 @@ int u_linebuf_data(lb, data, size) u_linebuf *lb; char *data;
 	return 0;
 }
 
-int u_linebuf_line(lb, dest, size) u_linebuf *lb; char *dest;
+int u_linebuf_line(u_linebuf *lb, char *dest, int size)
 {
 	/* s and p are just generic pointers whose meaning changes throughout
 	   the function. */
@@ -46,7 +46,7 @@ int u_linebuf_line(lb, dest, size) u_linebuf *lb; char *dest;
 	sz = s - lb->buf;
 	memcpy(dest, lb->buf, sz);
 
-	u_memmove(lb->buf, p, lb->buf - p + U_LINEBUF_SIZE);
+	memmove(lb->buf, p, lb->buf - p + U_LINEBUF_SIZE);
 	lb->pos -= p - lb->buf;
 
 	return sz;

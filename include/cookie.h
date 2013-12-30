@@ -13,9 +13,9 @@ struct u_cookie {
 	ulong high, low;
 };
 
-extern void u_cookie_reset(); /* u_cookie* */
-extern void u_cookie_inc(); /* u_cookie* */
-extern void u_cookie_cpy(); /* u_cookie *A, u_cookie *B, A=B */
-extern int u_cookie_cmp(); /* u_cookie*, u_cookie* */
+extern void u_cookie_reset(u_cookie*);
+extern void u_cookie_inc(u_cookie*);
+extern void u_cookie_cpy(u_cookie *A, u_cookie *B);
+extern int u_cookie_cmp(u_cookie*, u_cookie*);
 
 #endif

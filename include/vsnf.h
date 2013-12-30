@@ -12,9 +12,8 @@
 #define FMT_LOG     3
 #define FMT_DEBUG   4  /* LOG + some extras */
 
-/* int type, char *buf, uint size, const char *fmt, va_list va */
-extern int vsnf();
-extern int snf(A5(int, char*, uint, char*, ...));
+extern int vsnf(int type, char *buf, uint size, const char *fmt, va_list va);
+extern int snf(int, char*, uint, char*, ...);
 
 /*
    It's like vsnprintf with IRC-suitable additions. This will a)

@@ -6,14 +6,14 @@
 
 #include "ircd.h"
 
-void u_list_init(list) u_list *list;
+void u_list_init(u_list *list)
 {
 	list->data = (void *)0;
 	list->prev = list;
 	list->next = list;
 }
 
-u_list *u_list_add(list, data) u_list *list; void *data;
+u_list *u_list_add(u_list *list, void *data)
 {
 	u_list *n;
 
@@ -32,7 +32,7 @@ u_list *u_list_add(list, data) u_list *list; void *data;
 	return n;
 }
 
-u_list *u_list_contains(list, data) u_list *list; void *data;
+u_list *u_list_contains(u_list *list, void *data)
 {
 	u_list *n;
 
@@ -44,17 +44,17 @@ u_list *u_list_contains(list, data) u_list *list; void *data;
 	return NULL;
 }
 
-int u_list_is_empty(list) u_list *list;
+int u_list_is_empty(u_list *list)
 {
 	return list->next == list;
 } 
 
-ulong u_list_size(list) u_list *list;
+ulong u_list_size(u_list *list)
 {
 	return (ulong)(list->data);
 }
 
-void *u_list_del_n(list, n) u_list *list, *n;
+void *u_list_del_n(u_list *list, u_list *n)
 {
 	void *data;
 

@@ -16,8 +16,8 @@ struct u_linebuf {
 	uint pos;
 };
 
-extern void u_linebuf_init(); /* u_linebuf* */
-extern int u_linebuf_data(); /* u_linebuf*, char*, int */
-extern int u_linebuf_line(); /* u_linebuf*, char*, int */
+extern void u_linebuf_init(u_linebuf*);
+extern int u_linebuf_data(u_linebuf*, char*, int);
+extern int u_linebuf_line(u_linebuf*, char*, int);
 
 #endif

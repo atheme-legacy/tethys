@@ -65,20 +65,21 @@ extern char my_admin_loc1[MAXADMIN+1];
 extern char my_admin_loc2[MAXADMIN+1];
 extern char my_admin_email[MAXADMIN+1];
 
-extern u_server *u_server_by_sid(); /* char *sid */
-extern u_server *u_server_by_name(); /* char *name */
-extern u_server *u_server_find(); /* char *str */
+extern u_server *u_server_by_sid(char *sid);
+extern u_server *u_server_by_name(char *name);
+extern u_server *u_server_find(char *str);
 
-extern void u_server_add_capabs(); /* u_server*, char *caps */
-extern void u_my_capabs(); /* char *buf */
+extern void u_server_add_capabs(u_server*, char *caps);
+extern void u_my_capabs(char *buf);
 
-extern void u_server_make_sreg(); /* u_conn* */
-extern u_server *u_server_new_remote(); /* see m_sid in c_server.c */
-extern void u_server_unlink(); /* u_server* */
+extern void u_server_make_sreg(u_conn*, char *sid);
+extern u_server *u_server_new_remote(u_server *parent, char *sid,
+                                     char *name, char *desc);
+extern void u_server_unlink(u_server*);
 
-extern void u_server_burst(); /* u_server*, u_link* */
-extern void u_server_eob(); /* u_server* */
+extern void u_server_burst(u_server*, u_link*);
+extern void u_server_eob(u_server*);
 
-extern int init_server();
+extern int init_server(void);
 
 #endif

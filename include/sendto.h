@@ -26,17 +26,17 @@ struct u_st_opts {
 	va_list va;
 };
 
-extern void u_st_start();
-extern void u_st_exclude(); /* u_conn *conn */
-extern int u_st_match_server(); /* u_st_opts*, u_server* */
-extern int u_st_match_user(); /* u_st_opts*, u_user* */
-extern int u_st_match_conn(); /* u_st_opts*, u_conn* */
+extern void u_st_start(void);
+extern void u_st_exclude(u_conn *conn);
+extern int u_st_match_server(u_st_opts*, u_server*);
+extern int u_st_match_user(u_st_opts*, u_user*);
+extern int u_st_match_conn(u_st_opts*, u_conn*);
 
 /* second argument is excluded from message */
-extern void u_sendto_chan(A5(u_chan*, u_conn*, uint, char*, ...));
+extern void u_sendto_chan(u_chan*, u_conn*, uint, char*, ...);
 
 /* sends to all connections a user is visible to */
-extern void u_sendto_visible(A4(u_user*, uint, char*, ...));
+extern void u_sendto_visible(u_user*, uint, char*, ...);
 
 /*
       +-----------------------------------------------+
@@ -57,13 +57,13 @@ extern void u_sendto_visible(A4(u_user*, uint, char*, ...));
 
 #define R_SNOTICE(c)   (0xc0 | ((c) & 0x3f))
 
-extern void u_roster_add(); /* unsigned char r, u_conn* */
-extern void u_roster_del(); /* unsigned char r, u_conn* */
-extern void u_roster_del_all(); /* u_conn* */
-extern void u_roster_f(A4(unsigned char, u_conn*, char*, ...));
+extern void u_roster_add(unsigned char r, u_conn*);
+extern void u_roster_del(unsigned char r, u_conn*);
+extern void u_roster_del_all(u_conn*);
+extern void u_roster_f(unsigned char, u_conn*, char*, ...);
 
-extern void u_wallops(A2(char*, ...));
+extern void u_wallops(char*, ...);
 
-extern int init_sendto();
+extern int init_sendto(void);
 
 #endif

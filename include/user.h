@@ -94,32 +94,32 @@ extern u_trie *users_by_uid;
 extern u_umode_info *umodes;
 extern uint umode_default;
 
-extern void u_user_m_start(); /* u_user* */
-extern void u_user_m_end(); /* u_user* */
-extern void u_user_mode(); /* u_user*, char ch, int on */
+extern void u_user_m_start(u_user*);
+extern void u_user_m_end(u_user*);
+extern void u_user_mode(u_user*, char ch, int on);
 
-extern void u_user_make_ureg(); /* u_conn* */
-extern u_user_remote *u_user_new_remote(); /* u_server*, char *uid */
-extern void u_user_unlink(); /* u_user* */
+extern void u_user_make_ureg(u_conn*);
+extern u_user_remote *u_user_new_remote(u_server*, char *uid);
+extern void u_user_unlink(u_user*);
 
-extern u_conn *u_user_conn(); /* u_user* */
-extern u_server *u_user_server(); /* u_user* */
+extern u_conn *u_user_conn(u_user*);
+extern u_server *u_user_server(u_user*);
 
-extern u_user *u_user_by_nick(); /* char* */
-extern u_user *u_user_by_uid(); /* char* */
+extern u_user *u_user_by_nick(char*);
+extern u_user *u_user_by_uid(char*);
 
-extern void u_user_set_nick(); /* u_user*, char*, uint */
-extern uint u_user_state(); /* u_user*, uint */
+extern void u_user_set_nick(u_user*, char*, uint);
+extern uint u_user_state(u_user*, uint);
 
-extern void u_user_vnum(); /* u_user*, int, va_list */
-extern int u_user_num(A3(u_user*, int num, ...));
+extern void u_user_vnum(u_user*, int, va_list);
+extern int u_user_num(u_user*, int num, ...);
 
-extern void u_user_send_isupport(); /* u_user_local* */
-extern void u_user_welcome(); /* u_user_local* */
-extern void u_user_send_motd(); /* u_user_local* */
+extern void u_user_send_isupport(u_user_local*);
+extern void u_user_welcome(u_user_local*);
+extern void u_user_send_motd(u_user_local*);
 
-extern void u_user_make_euid(); /* u_user*, char *buf (space for 512) */
+extern void u_user_make_euid(u_user*, char *buf); /* sizeof(buf) > 512 */
 
-extern int init_user();
+extern int init_user(void);
 
 #endif

@@ -8,7 +8,7 @@
 
 u_trie *u_conf_handlers = NULL;
 
-void do_cb(key, val) char *key, *val;
+void do_cb(char *key, char *val)
 {
 	void (*cb)();
 
@@ -22,12 +22,12 @@ void do_cb(key, val) char *key, *val;
 	cb(key, val);
 }
 
-void skip_to_eol(f) FILE *f;
+void skip_to_eol(FILE *f)
 {
 	while (!feof(f) && getc(f) != '\n');
 }
 
-void skip_ews(f) FILE *f; /* ews == effective whitespace */
+void skip_ews(FILE *f) /* ews == effective whitespace */
 {
 	int c;
 	for (;;) {
@@ -41,7 +41,7 @@ void skip_ews(f) FILE *f; /* ews == effective whitespace */
 		ungetc(c, f);
 }
 
-void read_quoted_value(f, p, n) FILE *f; char *p;
+void read_quoted_value(FILE *f, char *p, int n)
 {
 	int c;
 
@@ -60,7 +60,7 @@ void read_quoted_value(f, p, n) FILE *f; char *p;
 	*p = '\0';
 }
 
-void read_unquoted_value(f, p, n) FILE *f; char *p;
+void read_unquoted_value(FILE *f, char *p, int n)
 {
 	int c;
 
@@ -78,7 +78,7 @@ void read_unquoted_value(f, p, n) FILE *f; char *p;
 	*p = '\0';
 }
 
-void read_value(f, p, n) FILE *f; char *p;
+void read_value(FILE *f, char *p, int n)
 {
 	int c;
 
@@ -96,7 +96,7 @@ void read_value(f, p, n) FILE *f; char *p;
 	}
 }
 
-void conf_descend(key, value, f) char *key, *value; FILE *f;
+void conf_descend(char *key, char *value, FILE *f)
 {
 	int c, n = strlen(key);
 	char *p = key + n;
@@ -135,7 +135,7 @@ void conf_descend(key, value, f) char *key, *value; FILE *f;
 	}
 }
 
-void u_conf_read(f) FILE *f;
+void u_conf_read(FILE *f)
 {
 	char key[U_CONF_MAX_KEY];
 	char value[U_CONF_MAX_VALUE];
@@ -146,7 +146,7 @@ void u_conf_read(f) FILE *f;
 	conf_descend(key, value, f);
 }
 
-int init_conf()
+int init_conf(void)
 {
 	u_conf_handlers = u_trie_new(ascii_canonize);
 	return u_conf_handlers ? 0 : -1;

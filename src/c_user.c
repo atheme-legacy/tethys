@@ -6,14 +6,14 @@
 
 #include "ircd.h"
 
-static int not_implemented(conn, msg) u_conn *conn; u_msg *msg;
+static int not_implemented(u_conn *conn, u_msg *msg)
 {
 	u_conn_f(conn, ":%S NOTICE %U :*** %s is not yet implemented!",
 	         &me, conn->priv, msg->command);
 	return 0;
 }
 
-static int m_echo(conn, msg) u_conn *conn; u_msg *msg;
+static int m_echo(u_conn *conn, u_msg *msg)
 {
 	u_user *u = conn->priv;
 	char buf[512];
@@ -30,7 +30,7 @@ static int m_echo(conn, msg) u_conn *conn; u_msg *msg;
 	return 0;
 }
 
-static int m_quit(conn, msg) u_conn *conn; u_msg *msg;
+static int m_quit(u_conn *conn, u_msg *msg)
 {
 	char *r = msg->argc > 0 ? msg->argv[0] : "Client quit";
 	u_user *u = conn->priv;
@@ -45,23 +45,23 @@ static int m_quit(conn, msg) u_conn *conn; u_msg *msg;
 	return 0;
 }
 
-static int m_version(conn, msg) u_conn *conn; u_msg *msg;
+static int m_version(u_conn *conn, u_msg *msg)
 {
 	u_user *u = conn->priv;
 	u_user_num(u, RPL_VERSION, PACKAGE_FULLNAME, me.name,
 	           PACKAGE_COPYRIGHT);
-	u_user_send_isupport(u);
+	u_user_send_isupport(USER_LOCAL(u));
 	return 0;
 }
 
-static int m_motd(conn, msg) u_conn *conn; u_msg *msg;
+static int m_motd(u_conn *conn, u_msg *msg)
 {
 	u_user *u = conn->priv;
-	u_user_send_motd(u);
+	u_user_send_motd(USER_LOCAL(u));
 	return 0;
 }
 
-static int try_join_chan(ul, chan, key) u_user_local *ul; char *chan, *key;
+static int try_join_chan(u_user_local *ul, char *chan, char *key)
 {
 	u_conn *conn = ul->conn;
 	u_user *u = USER(ul);
@@ -115,7 +115,7 @@ static int try_join_chan(ul, chan, key) u_user_local *ul; char *chan, *key;
 	return 0;
 }
 
-static int m_join(conn, msg) u_conn *conn; u_msg *msg;
+static int m_join(u_conn *conn, u_msg *msg)
 {
 	char *keys[128], **keys_p;
 	char *s, *p;
@@ -137,13 +137,13 @@ static int m_join(conn, msg) u_conn *conn; u_msg *msg;
 			continue;
 		}
 
-		try_join_chan(u, s, *keys_p++);
+		try_join_chan(USER_LOCAL(u), s, *keys_p++);
 	}
 
 	return 0;
 }
 
-static int m_part(conn, msg) u_conn *conn; u_msg *msg;
+static int m_part(u_conn *conn, u_msg *msg)
 {
 	char *q, chans[512], buf[512];
 	u_user *u = conn->priv;
@@ -190,7 +190,7 @@ static int m_part(conn, msg) u_conn *conn; u_msg *msg;
 	return 0;
 }
 
-static int m_topic(conn, msg) u_conn *conn; u_msg *msg;
+static int m_topic(u_conn *conn, u_msg *msg)
 {
 	u_user *u = conn->priv;
 	u_chan *c;
@@ -214,7 +214,7 @@ static int m_topic(conn, msg) u_conn *conn; u_msg *msg;
 	return 0;
 }
 
-static int m_names(conn, msg) u_conn *conn; u_msg *msg;
+static int m_names(u_conn *conn, u_msg *msg)
 {
 	u_user *u = conn->priv;
 	u_chan *c;
@@ -230,7 +230,7 @@ static int m_names(conn, msg) u_conn *conn; u_msg *msg;
 	return 0;
 }
 
-static int mode_user(u, s) u_user *u; char *s;
+static int mode_user(u_user *u, char *s)
 {
 	int on = 1;
 
@@ -253,7 +253,7 @@ static int mode_user(u, s) u_user *u; char *s;
 	return 0;
 }
 
-static int m_mode(conn, msg) u_conn *conn; u_msg *msg;
+static int m_mode(u_conn *conn, u_msg *msg)
 {
 	int parc;
 	char **parv;
@@ -323,8 +323,7 @@ struct m_whois_cb_priv {
 	uint w;
 };
 
-static void m_whois_cb(map, c, cu, priv)
-u_map *map; u_chan *c; u_chanuser *cu; struct m_whois_cb_priv *priv;
+static void m_whois_cb(u_map *map, u_chan *c, u_chanuser *cu, struct m_whois_cb_priv *priv)
 {
 	char *p, buf[MAXCHANNAME+3];
 	int retrying = 0;
@@ -354,7 +353,7 @@ try_again:
 	}
 }
 
-static int m_whois(conn, msg) u_conn *conn; u_msg *msg;
+static int m_whois(u_conn *conn, u_msg *msg)
 {
 	u_user *tu, *u = conn->priv;
 	u_server *serv;
@@ -390,7 +389,7 @@ static int m_whois(conn, msg) u_conn *conn; u_msg *msg;
 	cb_priv.tu = tu;
 	cb_priv.s = cb_priv.buf;
 	cb_priv.w = 512 - (strlen(me.name) + strlen(u->nick) + strlen(tu->nick) + 9);
-	u_map_each(tu->channels, m_whois_cb, &cb_priv);
+	u_map_each(tu->channels, (u_map_cb_t*)m_whois_cb, &cb_priv);
 	if (cb_priv.s != cb_priv.buf) /* left over */
 		u_user_num(u, RPL_WHOISCHANNELS, tu->nick, cb_priv.buf);
 
@@ -406,7 +405,7 @@ static int m_whois(conn, msg) u_conn *conn; u_msg *msg;
 	return 0;
 }
 
-static int m_userhost(conn, msg) u_conn *conn; u_msg *msg;
+static int m_userhost(u_conn *conn, u_msg *msg)
 {
 	/* USERHOST user1 user2... usern 
 	 * :host.irc 302 nick :user1=+~user@host user2=+~user@host ...
@@ -448,7 +447,7 @@ static int m_userhost(conn, msg) u_conn *conn; u_msg *msg;
 }
 
 /* :serv.irc 352 aji #chan ident my.host serv.irc nick H*@ :hops realname */
-static void who_reply(u, tu, c, cu) u_user *u, *tu; u_chan *c; u_chanuser *cu;
+static void who_reply(u_user *u, u_user *tu, u_chan *c, u_chanuser *cu)
 {
 	u_server *serv;
 	char *s, buf[6];
@@ -474,12 +473,12 @@ static void who_reply(u, tu, c, cu) u_user *u, *tu; u_chan *c; u_chanuser *cu;
 	           serv->name, tu->nick, buf, 0, tu->gecos);
 }
 
-static void m_who_chan_cb(map, tu, cu, u) u_map *map; u_user *tu, *u; u_chanuser *cu;
+static void m_who_chan_cb(u_map *map, u_user *tu, u_user *u, u_chanuser *cu)
 {
 	who_reply(u, tu, cu->c, cu);
 }
 
-static int m_who(conn, msg) u_conn *conn; u_msg *msg;
+static int m_who(u_conn *conn, u_msg *msg)
 {
 	u_user *tu, *u = conn->priv;
 	u_chan *c = NULL;
@@ -491,7 +490,7 @@ static int m_who(conn, msg) u_conn *conn; u_msg *msg;
 		if ((c = u_chan_get(name)) == NULL)
 			goto end;
 
-		u_map_each(c->members, m_who_chan_cb, u);
+		u_map_each(c->members, (u_map_cb_t*)m_who_chan_cb, u);
 	} else {
 		if ((tu = u_user_by_nick(name)) == NULL)
 			goto end;
@@ -505,7 +504,7 @@ end:
 	return 0;
 }
 
-static int m_oper(conn, msg) u_conn *conn; u_msg *msg;
+static int m_oper(u_conn *conn, u_msg *msg)
 {
 	u_user_local *ul = conn->priv;
 	u_user *u = USER(ul);
@@ -522,7 +521,7 @@ static int m_oper(conn, msg) u_conn *conn; u_msg *msg;
 	return 0;
 }
 
-static int list_entry(u, c) u_user *u; u_chan *c;
+static int list_entry(u_user *u, u_chan *c)
 {
 	if ((c->mode & (CMODE_PRIVATE | CMODE_SECRET))
 	    && !u_chan_user_find(c, u))
@@ -531,14 +530,14 @@ static int list_entry(u, c) u_user *u; u_chan *c;
 	return 0;
 }
 
-static void m_list_chan_cb(c, u) u_chan *c; u_user *u;
+static void m_list_chan_cb(u_chan *c, u_user *u)
 {
 	if (c->members->size < 3)
 		return;
 	list_entry(u, c);
 }
 
-static int m_list(conn, msg) u_conn *conn; u_msg *msg;
+static int m_list(u_conn *conn, u_msg *msg)
 {
 	u_user *u = conn->priv;
 	u_chan *c;
@@ -553,13 +552,13 @@ static int m_list(conn, msg) u_conn *conn; u_msg *msg;
 	}
 
 	u_user_num(u, RPL_LISTSTART);
-	u_trie_each(all_chans, NULL, m_list_chan_cb, u);
+	u_trie_each(all_chans, NULL, (u_trie_cb_t*)m_list_chan_cb, u);
 	u_user_num(u, RPL_LISTEND);
 
 	return 0;
 }
 
-static int m_nick(conn, msg) u_conn *conn; u_msg *msg;
+static int m_nick(u_conn *conn, u_msg *msg)
 {
 	u_user *u = conn->priv;
 	char *s, *newnick = msg->argv[0];
@@ -596,7 +595,7 @@ static int m_nick(conn, msg) u_conn *conn; u_msg *msg;
 	return 0;
 }
 
-static int m_42(conn, msg) u_conn *conn; u_msg *msg;
+static int m_42(u_conn *conn, u_msg *msg)
 {
 	u_user *u = conn->priv;
 	u_conn_f(conn, ":%S NOTICE %U :The Answer to Life, the Universe, and %s",
@@ -604,20 +603,20 @@ static int m_42(conn, msg) u_conn *conn; u_msg *msg;
 	return 0;
 }
 
-static void stats_o_cb(map, k, o, u) u_map *map; char *k; u_oper *o; u_user *u;
+static void stats_o_cb(u_map *map, char *k, u_oper *o, u_user *u)
 {
 	char *auth = o->authname[0] ? o->authname : "<any>";
 	u_user_num(u, RPL_STATSOLINE, o->name, o->pass, auth);
 }
 
-static void stats_i_cb(map, k, v, u) u_map *map; char *k; u_auth *v; u_user *u;
+static void stats_i_cb(u_map *map, char *k, u_auth *v, u_user *u)
 {
 	char buf[CIDR_ADDRSTRLEN];
 	u_cidr_to_str(&v->cidr, buf);
 	u_user_num(u, RPL_STATSILINE, v->name, v->classname, buf);
 }
 
-static int m_stats(conn, msg) u_conn *conn; u_msg *msg;
+static int m_stats(u_conn *conn, u_msg *msg)
 {
 	u_user *u = conn->priv;
 	int c, days, hr, min, sec;
@@ -633,10 +632,10 @@ static int m_stats(conn, msg) u_conn *conn; u_msg *msg;
 
 	switch (c) {
 	case 'o':
-		u_map_each(all_opers, stats_o_cb, u);
+		u_map_each(all_opers, (u_map_cb_t*)stats_o_cb, u);
 		break;
 	case 'i':
-		u_map_each(all_auths, stats_i_cb, u);
+		u_map_each(all_auths, (u_map_cb_t*)stats_i_cb, u);
 		break;
 
 	case 'u':
@@ -653,7 +652,7 @@ static int m_stats(conn, msg) u_conn *conn; u_msg *msg;
 	return 0;
 }
 
-static int m_mkpass(conn, msg) u_conn *conn; u_msg *msg;
+static int m_mkpass(u_conn *conn, u_msg *msg)
 {
 	char buf[CRYPTLEN], salt[CRYPTLEN];
 
@@ -664,7 +663,7 @@ static int m_mkpass(conn, msg) u_conn *conn; u_msg *msg;
 	return 0;
 }
 
-static int m_admin(conn, msg) u_conn *conn; u_msg *msg;
+static int m_admin(u_conn *conn, u_msg *msg)
 {
 	u_conn_num(conn, RPL_ADMINME, &me);
 	u_conn_num(conn, RPL_ADMINLOC1, my_admin_loc1);
@@ -673,7 +672,7 @@ static int m_admin(conn, msg) u_conn *conn; u_msg *msg;
 	return 0;
 }
 
-static int m_kill(conn, msg) u_conn *conn; u_msg *msg;
+static int m_kill(u_conn *conn, u_msg *msg)
 {
 	u_user *tu, *u = conn->priv;
 	char *reason = msg->argv[1] ? msg->argv[1] : "<No reason given>";
@@ -698,7 +697,7 @@ static int m_kill(conn, msg) u_conn *conn; u_msg *msg;
 	return 0;
 }
 
-static int m_kick(conn, msg) u_conn *conn; u_msg *msg;
+static int m_kick(u_conn *conn, u_msg *msg)
 {
 	u_user *tu, *u = conn->priv;
 	u_chan *c;
@@ -726,7 +725,7 @@ static int m_kick(conn, msg) u_conn *conn; u_msg *msg;
 	return 0;
 }
 
-static int m_summon(conn, msg) u_conn *conn; u_msg *msg;
+static int m_summon(u_conn *conn, u_msg *msg)
 {
 	u_conn_num(conn, ERR_SUMMONDISABLED);
 	return 0;
@@ -739,8 +738,8 @@ struct map_priv {
 	u_server *sv;
 	int depth, left;
 };
-static void do_map();
-static void map_find_children(sv, p) u_server *sv; struct map_priv *p;
+static void do_map(struct map_priv*);
+static void map_find_children(u_server *sv, struct map_priv *p)
 {
 	u_server *psv = p->sv;
 	if (sv->parent == psv) {
@@ -749,7 +748,7 @@ static void map_find_children(sv, p) u_server *sv; struct map_priv *p;
 		p->sv = psv;
 	}
 }
-static void do_map(p) struct map_priv *p;
+static void do_map(struct map_priv *p)
 {
 	int len, left, depth = p->depth << 2;
 	u_server *sv = p->sv;
@@ -775,7 +774,7 @@ static void do_map(p) struct map_priv *p;
 		left = p->left;
 		p->left = sv->nlinks;
 		p->depth = (depth >> 2) + 1;
-		u_trie_each(servers_by_sid, NULL, map_find_children, p);
+		u_trie_each(servers_by_sid, NULL, (u_trie_cb_t*)map_find_children, p);
 		p->depth = (depth >> 2);
 		p->left = left;
 	}
@@ -786,7 +785,7 @@ static void do_map(p) struct map_priv *p;
 	}
 }
 
-static int m_map(conn, msg) u_conn *conn; u_msg *msg;
+static int m_map(u_conn *conn, u_msg *msg)
 {
 	struct map_priv p;
 	u_user *u = conn->priv;
@@ -804,7 +803,7 @@ static int m_map(conn, msg) u_conn *conn; u_msg *msg;
 	return 0;
 }
 
-static int m_invite(conn, msg) u_conn *conn; u_msg *msg;
+static int m_invite(u_conn *conn, u_msg *msg)
 {
 	u_entity te;
 	u_user *tu, *u = conn->priv;

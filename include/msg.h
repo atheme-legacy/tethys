@@ -12,6 +12,8 @@
 
 typedef struct u_msg u_msg;
 
+#include "entity.h"
+
 struct u_msg {
 	u_entity *src;
 	char *srcstr;
@@ -21,7 +23,7 @@ struct u_msg {
 };
 
 /* the parser will modify the string */
-extern int u_msg_parse(); /* u_msg*, char* */
+extern int u_msg_parse(u_msg*, char*);
 
 #define MAXCOMMANDLEN 16
 
@@ -31,13 +33,13 @@ typedef struct u_cmd u_cmd;
 struct u_cmd {
 	char name[MAXCOMMANDLEN+1];
 	int ctx;
-	int (*cb)(); /* u_conn* src, u_msg* */
+	int (*cb)(u_conn* src, u_msg*);
 	int nargs;
 };
 
-extern int u_cmds_reg(); /* u_cmd*, terminated with empty name */
-extern void u_cmd_invoke(); /* u_conn*, u_msg* */
+extern int u_cmds_reg(u_cmd*); /* terminated with empty name */
+extern void u_cmd_invoke(u_conn*, u_msg*);
 
-extern int init_cmd();
+extern int init_cmd(void);
 
 #endif

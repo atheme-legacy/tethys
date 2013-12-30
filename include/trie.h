@@ -15,6 +15,9 @@
 typedef struct u_trie u_trie;
 typedef struct u_trie_e u_trie_e;
 
+typedef void (u_trie_canonize_t)(char *key);
+typedef void (u_trie_cb_t)(void *value, void *priv);
+
 struct u_trie_e {
 	void *val;
 	u_trie_e *up;
@@ -22,17 +25,15 @@ struct u_trie_e {
 };
 
 struct u_trie {
-	void (*canonize)(); /* char *key */
+	u_trie_canonize_t *canonize;
 	u_trie_e n;
 };
 
-/* void cb(void *value, void *priv); */
-
-extern u_trie *u_trie_new(); /* canonize cb, or NULL */
-extern void u_trie_free(); /* u_trie*, cb, void *priv */
-extern void u_trie_set(); /* u_trie*, char*, void* */
-extern void *u_trie_get(); /* u_trie*, char* */
-extern void u_trie_each(); /* u_trie*, char*, cb, void* */
-extern void *u_trie_del(); /* u_trie*, char* */
+extern u_trie *u_trie_new(u_trie_canonize_t*);
+extern void u_trie_free(u_trie*, u_trie_cb_t*, void *priv);
+extern void u_trie_set(u_trie*, char*, void*);
+extern void *u_trie_get(u_trie*, char*);
+extern void u_trie_each(u_trie*, char*, u_trie_cb_t*, void*);
+extern void *u_trie_del(u_trie*, char*);
 
 #endif

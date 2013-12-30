@@ -20,25 +20,25 @@ struct sendto_priv {
 	va_list va;
 };
 
-void u_st_start()
+void u_st_start(void)
 {
 	u_cookie_inc(&ck_sendto);
 }
 
-void u_st_exclude(conn) u_conn *conn;
+void u_st_exclude(u_conn *conn)
 {
 	if (u_cookie_cmp(&conn->ck_sendto, &ck_sendto) < 0)
 		u_cookie_cpy(&conn->ck_sendto, &ck_sendto);
 }
 
-int u_st_match_server(opt, sv) u_st_opts *opt; u_server *sv;
+int u_st_match_server(u_st_opts *opt, u_server *sv)
 {
 	if (opt->type == ST_USERS)
 		return 0;
 	return 1;
 }
 
-int u_st_match_user(opt, u) u_st_opts *opt; u_user *u;
+int u_st_match_user(u_st_opts *opt, u_user *u)
 {
 	if (opt->type == ST_SERVERS)
 		return 0;
@@ -57,14 +57,14 @@ int u_st_match_user(opt, u) u_st_opts *opt; u_user *u;
 	return 1;
 }
 
-int u_st_match_conn(opt, conn) u_st_opts *opt; u_conn *conn;
+int u_st_match_conn(u_st_opts *opt, u_conn *conn)
 {
 	if (conn->ctx == CTX_SERVER || conn->ctx == CTX_SREG)
 		return u_st_match_server(opt, conn->priv);
 	return u_st_match_user(opt, conn->priv);
 }
 
-static int want_send(pv, conn) struct sendto_priv *pv; u_conn *conn;
+static int want_send(struct sendto_priv *pv, u_conn *conn)
 {
 	switch (pv->type) {
 	case ST_ALL:
@@ -88,7 +88,7 @@ static int want_send(pv, conn) struct sendto_priv *pv; u_conn *conn;
 	return 0;
 }
 
-static char *ln(pv, conn) struct sendto_priv *pv; u_conn *conn;
+static char *ln(struct sendto_priv *pv, u_conn *conn)
 {
 	va_list va;
 
@@ -98,7 +98,7 @@ static char *ln(pv, conn) struct sendto_priv *pv; u_conn *conn;
 	case CTX_UREG:
 		if (!pv->user) {
 			pv->user = buf_user;
-			u_va_copy(va, pv->va);
+			va_copy(va, pv->va);
 			vsnf(FMT_USER, buf_user, 1024, pv->fmt, va);
 			va_end(va);
 		}
@@ -108,7 +108,7 @@ static char *ln(pv, conn) struct sendto_priv *pv; u_conn *conn;
 	case CTX_SREG:
 		if (!pv->serv) {
 			pv->serv = buf_serv;
-			u_va_copy(va, pv->va);
+			va_copy(va, pv->va);
 			vsnf(FMT_SERVER, buf_serv, 1024, pv->fmt, va);
 			va_end(va);
 		}
@@ -118,8 +118,8 @@ static char *ln(pv, conn) struct sendto_priv *pv; u_conn *conn;
 	return NULL;
 }
 
-static void sendto_chan_cb(map, u, cu, priv)
-u_map *map; u_user *u; u_chanuser *cu; struct sendto_priv *priv;
+static void sendto_chan_cb(u_map *map, u_user *u, u_chanuser *cu,
+                           struct sendto_priv *priv)
 {
 	u_conn *conn = u_user_conn(u);
 	char *s;
@@ -134,9 +134,7 @@ u_map *map; u_user *u; u_chanuser *cu; struct sendto_priv *priv;
 	}
 }
 
-void u_sendto_chan(T(u_chan*) c, T(u_conn*) conn, T(uint) type,
-                   T(char*) fmt, u_va_alist)
-A(u_chan *c; u_conn *conn; uint type; char *fmt; va_dcl)
+void u_sendto_chan(u_chan *c, u_conn *conn, uint type, char *fmt, ...)
 {
 	struct sendto_priv priv;
 
@@ -148,19 +146,18 @@ A(u_chan *c; u_conn *conn; uint type; char *fmt; va_dcl)
 	priv.user = priv.serv = NULL;
 	priv.fmt = fmt;
 	priv.type = type;
-	u_va_start(priv.va, fmt);
-	u_map_each(c->members, sendto_chan_cb, &priv);
+	va_start(priv.va, fmt);
+	u_map_each(c->members, (u_map_cb_t*)sendto_chan_cb, &priv);
 	va_end(priv.va);
 }
 
-static void sendto_visible_cb(map, c, cu, priv)
-u_map *map; u_chan *c; u_chanuser *cu; struct sendto_priv *priv;
+static void sendto_visible_cb(u_map *map, u_chan *c, u_chanuser *cu,
+                              struct sendto_priv *priv)
 {
-	u_map_each(c->members, sendto_chan_cb, priv);
+	u_map_each(c->members, (u_map_cb_t*)sendto_chan_cb, priv);
 }
 
-void u_sendto_visible(T(u_user*) u, T(uint) type, T(char*) fmt, u_va_alist)
-A(u_user *u; uint type; char *fmt; va_dcl)
+void u_sendto_visible(u_user* u, uint type, char* fmt, ...)
 {
 	struct sendto_priv priv;
 
@@ -171,12 +168,12 @@ A(u_user *u; uint type; char *fmt; va_dcl)
 	priv.user = priv.serv = NULL;
 	priv.fmt = fmt;
 	priv.type = type;
-	u_va_start(priv.va, fmt);
-	u_map_each(u->channels, sendto_visible_cb, &priv);
+	va_start(priv.va, fmt);
+	u_map_each(u->channels, (u_map_cb_t*)sendto_visible_cb, &priv);
 	va_end(priv.va);
 }
 
-static char *roster_to_str(c) unsigned char c;
+static char *roster_to_str(unsigned char c)
 {
 	static char buf[16];
 	char *high = (c / 0x80) ? "+0x80" : "";
@@ -190,21 +187,21 @@ static char *roster_to_str(c) unsigned char c;
 	return buf;
 }
 
-void u_roster_add(r, conn) unsigned char r; u_conn *conn;
+void u_roster_add(unsigned char r, u_conn *conn)
 {
 	if (!r) return;
 	u_log(LG_DEBUG, "Adding %G to roster %s", conn, roster_to_str(r));
 	u_map_set(rosters[r], conn, conn);
 }
 
-void u_roster_del(r, conn) unsigned char r; u_conn *conn;
+void u_roster_del(unsigned char r, u_conn *conn)
 {
 	if (!r) return;
 	u_log(LG_DEBUG, "Removing %G from roster %s", conn, roster_to_str(r));
 	u_map_del(rosters[r], conn);
 }
 
-void u_roster_del_all(conn) u_conn *conn;
+void u_roster_del_all(u_conn *conn)
 {
 	unsigned int c;
 	u_log(LG_DEBUG, "Removing %G from all rosters", conn);
@@ -212,8 +209,7 @@ void u_roster_del_all(conn) u_conn *conn;
 		u_map_del(rosters[c], conn);
 }
 
-void roster_f_cb(map, unused, conn, priv)
-u_map *map; u_conn *unused, *conn; struct sendto_priv *priv;
+void roster_f_cb(u_map *map, u_conn *unused, u_conn *conn, struct sendto_priv *priv)
 {
 	char *s;
 
@@ -227,8 +223,7 @@ u_map *map; u_conn *unused, *conn; struct sendto_priv *priv;
 	}
 }
 
-void u_roster_f(T(unsigned char) c, T(u_conn*) conn, T(char*) fmt, u_va_alist)
-A(unsigned char c; u_conn *conn; char *fmt; va_dcl)
+void u_roster_f(unsigned char c, u_conn *conn, char *fmt, ...)
 {
 	struct sendto_priv priv;
 
@@ -243,24 +238,24 @@ A(unsigned char c; u_conn *conn; char *fmt; va_dcl)
 
 	u_log(LG_DEBUG, "roster[%s]: %s", roster_to_str(c), fmt);
 
-	u_va_start(priv.va, fmt);
-	u_map_each(rosters[(unsigned)c], roster_f_cb, &priv);
+	va_start(priv.va, fmt);
+	u_map_each(rosters[(unsigned)c], (u_map_cb_t*)roster_f_cb, &priv);
 	va_end(priv.va);
 }
 
-void u_wallops(T(char*) fmt, u_va_alist) A(char *fmt; va_dcl)
+void u_wallops(char *fmt, ...)
 {
 	char buf[512];
 	va_list va;
 
-	u_va_start(va, fmt);
+	va_start(va, fmt);
 	vsnf(FMT_USER, buf, 512, fmt, va);
 	va_end(va);
 
 	u_roster_f(R_WALLOPS, NULL, ":%S WALLOPS :%s", &me, buf);
 }
 
-int init_sendto()
+int init_sendto(void)
 {
 	int i;
 
