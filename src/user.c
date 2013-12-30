@@ -14,7 +14,7 @@ int id_modulus = 36; /* just strlen(uid_map) */
 int id_digits[6] = {0, 0, 0, 0, 0, 0};
 char id_buf[7] = {0, 0, 0, 0, 0, 0, 0};
 
-char *id_next()
+char *id_next(void)
 {
 	int i;
 	for (i=0; i<6; i++)

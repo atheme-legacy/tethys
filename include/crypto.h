@@ -14,8 +14,8 @@ typedef struct u_crypto u_crypto;
 
 struct u_crypto {
 	char name[16];
-	int (*gen_salt)(); /* char *buf */
-	int (*hash)(); /* char *buf, char *key, char *salt */
+	int (*gen_salt)(char *buf);
+	int (*hash)(char *buf, char *key, char *salt);
 };
 
 extern void u_crypto_gen_salt(char *buf);

@@ -47,7 +47,7 @@ typedef struct u_user_remote u_user_remote;
 struct u_umode_info {
 	char ch;
 	uint mask;
-	void (*cb)(); /* info, u, on */
+	void (*cb)(u_umode_info*, u_user*, int on);
 };
 
 struct u_user {

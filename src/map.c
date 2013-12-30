@@ -123,7 +123,7 @@ static void add_pending(u_map *map, u_map_n *n)
 	u_list_add(&map->pending, n->key);
 }
 
-void u_map_each(u_map *map, void (*cb)(), void *priv)
+void u_map_each(u_map *map, u_map_cb_t *cb, void *priv)
 {
 	u_map_n *cur;
 	int idx;

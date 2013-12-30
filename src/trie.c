@@ -43,7 +43,7 @@ u_trie *u_trie_new(void (*canonize)(char*))
 	return trie;
 }
 
-static void free_real(u_trie_e *e, void (*cb)(), void *priv)
+static void free_real(u_trie_e *e, u_trie_cb_t *cb, void *priv)
 {
 	int i;
 
@@ -58,7 +58,7 @@ static void free_real(u_trie_e *e, void (*cb)(), void *priv)
 		cb(e->val, priv);
 }
 
-void u_trie_free(u_trie *trie, void (*cb)(), void *priv)
+void u_trie_free(u_trie *trie, u_trie_cb_t *cb, void *priv)
 {
 	free_real(&trie->n, cb, priv);
 	free(trie);
@@ -111,7 +111,7 @@ void *u_trie_get(u_trie *trie, char *key)
 	return n ? n->val : NULL;
 }
 
-static void each(u_trie_e *e, void (*cb)(), void *priv)
+static void each(u_trie_e *e, u_trie_cb_t *cb, void *priv)
 {
 	int i;
 
@@ -124,7 +124,7 @@ static void each(u_trie_e *e, void (*cb)(), void *priv)
 	}
 }
 
-void u_trie_each(u_trie *trie, char *pfx, void (*cb)(), void *priv)
+void u_trie_each(u_trie *trie, char *pfx, u_trie_cb_t *cb, void *priv)
 {
 	u_trie_e *e = &trie->n;
 	if (pfx && pfx[0]) {

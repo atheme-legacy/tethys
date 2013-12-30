@@ -50,7 +50,7 @@ struct dns_hdr {
 };
 
 struct dns_cb {
-	void (*cb)();
+	u_dns_cb_t *cb;
 	void *priv;
 	struct dns_cb *next;
 };
@@ -265,7 +265,7 @@ int cache_find(char *req, char *res)
 	return cached->status;
 }
 
-dns_cb_t *req_cb_add(dns_req_t *req, void (*cb)(), void *priv)
+dns_cb_t *req_cb_add(dns_req_t *req, u_dns_cb_t *cb, void *priv)
 {
 	dns_cb_t *cbn;
 
@@ -293,7 +293,7 @@ dns_cb_t *req_cb_add(dns_req_t *req, void (*cb)(), void *priv)
 	return cbn;
 }
 
-void req_cb_del(dns_req_t *req, void (*cb)(), void *priv)
+void req_cb_del(dns_req_t *req, u_dns_cb_t *cb, void *priv)
 {
 	dns_cb_t *cbn, *cbp;
 
@@ -337,7 +337,7 @@ void req_cb_call(dns_req_t *req, int err, char *rdata)
 		cbn->cb(err, rdata, cbn->priv);
 }
 
-dns_req_t *req_make(int type, int dur, int udur, void (*timeout)())
+dns_req_t *req_make(int type, int dur, int udur, u_io_timer_cb_t *timeout)
 {
 	dns_req_t *req;
 	req = malloc(sizeof(*req));
@@ -742,7 +742,7 @@ void short_circuit_timeout(u_io_timer *timer)
 	req_del(req);
 }
 
-ushort short_circuit(void (*cb)(), int status, char *res, void *priv)
+ushort short_circuit(u_dns_cb_t *cb, int status, char *res, void *priv)
 {
 	dns_req_t *req;
 
@@ -753,7 +753,7 @@ ushort short_circuit(void (*cb)(), int status, char *res, void *priv)
 	return req->id;
 }
 
-ushort request(int type, char *name, void (*cb)(), void *priv)
+ushort request(int type, char *name, u_dns_cb_t *cb, void *priv)
 {
 	char res[DNSNAMESIZE];
 	int status;
@@ -779,7 +779,7 @@ ushort request(int type, char *name, void (*cb)(), void *priv)
 	return req->id;
 }
 
-ushort u_dns(char *name, void (*cb)(), void *priv)
+ushort u_dns(char *name, u_dns_cb_t *cb, void *priv)
 {
 	char buf[DNSNAMESIZE];
 
@@ -794,7 +794,7 @@ ushort u_dns(char *name, void (*cb)(), void *priv)
 	return request(DNS_TYPE_A, buf, cb, priv);
 }
 
-ushort u_rdns(char *name, void (*cb)(), void *priv)
+ushort u_rdns(char *name, u_dns_cb_t *cb, void *priv)
 {
 	char buf[DNSNAMESIZE];
 	struct in_addr in;
@@ -814,7 +814,7 @@ ushort u_rdns(char *name, void (*cb)(), void *priv)
 	return request(DNS_TYPE_PTR, buf, cb, priv);
 }
 
-void u_dns_cancel(ushort id, void (*cb)(), void *priv)
+void u_dns_cancel(ushort id, u_dns_cb_t *cb, void *priv)
 {
 	dns_req_t *req = req_find(id);
 	req_cb_del(req, cb, priv);

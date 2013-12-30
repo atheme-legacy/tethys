@@ -52,7 +52,7 @@ struct u_conn {
 	int obuflen, obufsize;
 	u_cookie ck_sendto;
 
-	void (*event)(); /* u_conn*, int event */
+	void (*event)(u_conn*, int event);
 	char *error;
 
 	void *priv;

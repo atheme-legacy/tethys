@@ -566,8 +566,7 @@ typedef struct extban extb_t;
 
 struct extban {
 	char ch;
-	/* struct extban*, u_chan*, u_user*, char *data */
-	int (*cb)();
+	int (*cb)(struct extban*, u_chan*, u_user*, char *data);
 	void *priv;
 };
 

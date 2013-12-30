@@ -113,7 +113,8 @@ void u_io_del_fd(u_io *io, u_io_fd *iofd)
 	free(iofd);
 }
 
-u_io_timer *u_io_add_timer(u_io *io, ulong sec, ulong usec, void (*cb)(), void *priv)
+u_io_timer *u_io_add_timer(u_io *io, ulong sec, ulong usec,
+                           u_io_timer_cb_t *cb, void *priv)
 {
 	u_io_timer *iot;
 

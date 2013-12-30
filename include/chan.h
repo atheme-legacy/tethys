@@ -30,19 +30,9 @@
 
 #define CU_MUTED           0x00010000
 
-typedef struct u_cmode_info u_cmode_info;
 typedef struct u_chan u_chan;
 typedef struct u_chanuser u_chanuser;
 typedef struct u_chanban u_chanban;
-
-struct u_cmode_info {
-	char ch;
-	/* int cb(u_cmode_info*, u_chan*, u_user*, on, char *(*getarg)())
-	   on is 1 if +, 0 if -
-	   getarg takes no arguments; returns NULL if no more args */
-	void (*cb)();
-	uint data;
-};
 
 struct u_chan {
 	u_ts_t ts;
