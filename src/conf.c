@@ -10,11 +10,12 @@ u_trie *u_conf_handlers = NULL;
 
 void do_cb(char *key, char *val)
 {
-	void (*cb)();
+	u_conf_handler_t *cb;
 
 	u_log(LG_FINE, "conf: %s=%s", key, val);
 
-	cb = u_trie_get(u_conf_handlers, key);
+	cb = (u_conf_handler_t*)u_trie_get(u_conf_handlers, key);
+
 	if (!cb) {
 		u_log(LG_WARN, "No config handler for %s=%s", key, val);
 		return;
@@ -144,6 +145,11 @@ void u_conf_read(FILE *f)
 
 	skip_ews(f);
 	conf_descend(key, value, f);
+}
+
+void u_conf_add_handler(char *key, u_conf_handler_t *cb)
+{
+	u_trie_set(u_conf_handlers, key, (void*)cb);
 }
 
 int init_conf(void)

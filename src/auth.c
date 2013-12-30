@@ -255,23 +255,23 @@ int init_auth(void)
 	u_list_init(&auth_list);
 	u_list_init(&link_list);
 
-	u_trie_set(u_conf_handlers, "class", conf_class);
-	u_trie_set(u_conf_handlers, "class.timeout", conf_class_timeout);
+	u_conf_add_handler("class", conf_class);
+	u_conf_add_handler("class.timeout", conf_class_timeout);
 
-	u_trie_set(u_conf_handlers, "auth", conf_auth);
-	u_trie_set(u_conf_handlers, "auth.class", conf_auth_class);
-	u_trie_set(u_conf_handlers, "auth.cidr", conf_auth_cidr);
-	u_trie_set(u_conf_handlers, "auth.password", conf_auth_password);
+	u_conf_add_handler("auth", conf_auth);
+	u_conf_add_handler("auth.class", conf_auth_class);
+	u_conf_add_handler("auth.cidr", conf_auth_cidr);
+	u_conf_add_handler("auth.password", conf_auth_password);
 
-	u_trie_set(u_conf_handlers, "oper", conf_oper);
-	u_trie_set(u_conf_handlers, "oper.password", conf_oper_password);
-	u_trie_set(u_conf_handlers, "oper.auth", conf_oper_auth);
+	u_conf_add_handler("oper", conf_oper);
+	u_conf_add_handler("oper.password", conf_oper_password);
+	u_conf_add_handler("oper.auth", conf_oper_auth);
 
-	u_trie_set(u_conf_handlers, "link", conf_link);
-	u_trie_set(u_conf_handlers, "link.host", conf_link_host);
-	u_trie_set(u_conf_handlers, "link.sendpass", conf_link_sendpass);
-	u_trie_set(u_conf_handlers, "link.recvpass", conf_link_recvpass);
-	u_trie_set(u_conf_handlers, "link.class", conf_link_class);
+	u_conf_add_handler("link", conf_link);
+	u_conf_add_handler("link.host", conf_link_host);
+	u_conf_add_handler("link.sendpass", conf_link_sendpass);
+	u_conf_add_handler("link.recvpass", conf_link_recvpass);
+	u_conf_add_handler("link.class", conf_link_class);
 
 	return 0;
 }

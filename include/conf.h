@@ -56,7 +56,10 @@ extern void u_conf_read(FILE *f);
 
    */
 
+typedef void (u_conf_handler_t)(char*, char*);
+
 extern u_trie *u_conf_handlers;
+extern void u_conf_add_handler(char *key, u_conf_handler_t *cb);
 extern int init_conf(void);
 
 #endif

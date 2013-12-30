@@ -474,15 +474,15 @@ int init_server(void)
 
 	u_strlcpy(my_net_name, "MicroIRC", MAXNETNAME+1);
 
-	u_trie_set(u_conf_handlers, "me.name", server_conf);
-	u_trie_set(u_conf_handlers, "me.net", server_conf);
-	u_trie_set(u_conf_handlers, "me.sid", server_conf);
-	u_trie_set(u_conf_handlers, "me.desc", server_conf);
-	u_trie_set(u_conf_handlers, "me.motd", load_motd);
+	u_conf_add_handler("me.name", server_conf);
+	u_conf_add_handler("me.net", server_conf);
+	u_conf_add_handler("me.sid", server_conf);
+	u_conf_add_handler("me.desc", server_conf);
+	u_conf_add_handler("me.motd", load_motd);
 
-	u_trie_set(u_conf_handlers, "admin.loc1", admin_conf);
-	u_trie_set(u_conf_handlers, "admin.loc2", admin_conf);
-	u_trie_set(u_conf_handlers, "admin.email", admin_conf);
+	u_conf_add_handler("admin.loc1", admin_conf);
+	u_conf_add_handler("admin.loc2", admin_conf);
+	u_conf_add_handler("admin.email", admin_conf);
 
 	return 1;
 }
