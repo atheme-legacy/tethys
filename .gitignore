@@ -12,3 +12,11 @@ etc/
 local/
 release/
 IrcLog
+*.dep
+.deps
+buildsys.mk
+extra.mk
+include/autoconf.h
+config.log
+config.status
+autom4te.cache/

@@ -1,0 +1,18 @@
+/* ircd-micro, autoconf.h.in -- autoconf input
+   Copyright (C) 2013 Alex Iadicicco
+
+   This file is protected under the terms contained
+   in the COPYING file in the project root. */
+
+#ifndef __INC_AUTOCONF_H__
+#define __INC_AUTOCONF_H__
+
+#define PACKAGE_NAME "@PACKAGE_NAME@"
+#define PACKAGE_VERSION "@PACKAGE_VERSION@"
+
+#define PREFIX "@prefix@"
+
+/* If crypt() */
+#undef HAVE_CRYPT
+
+#endif
