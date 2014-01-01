@@ -61,9 +61,10 @@ be involved in the design of that component.
 This project used to be an attempt to build an IRCD for the 4.3 BSD
 operating system. However, the project matured and its direction changed,
 and this aspect of the design was beginning to become an obstruction. In
-a 4.3 BSD system, here is no SSL, no dynamic loading, no robust `crypt()`
+a 4.3 BSD system, there is no SSL, no dynamic loading, no robust `crypt()`
 implementation, no `vsnprintf()`, no C89 compiler, no `make` with Makefile
-inclusion, and many other limitations and idiosyncracies. It started to get in the way of meaningful progress.
+inclusion, and many other limitations and idiosyncracies. It started to
+get in the way of meaningful progress.
 
 This project still exists, in spirit, at
 [aji/bsdchat](http://github.com/aji/bsdchat).
