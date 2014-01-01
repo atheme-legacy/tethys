@@ -20,6 +20,7 @@ static int hash_3des(char *buf, char *key, char *salt)
 	return -1;
 }
 
+#ifdef HAVE_CRYPT
 static int gen_salt_posix(char *buf)
 {
 	strcpy(buf, "$p$");
@@ -42,6 +43,7 @@ static int hash_posix(char *buf, char *key, char *salt)
 	u_strlcpy(buf + 3, h, CRYPTLEN - 3);
 	return 0;
 }
+#endif /* ifdef HAVE_CRYPT */
 
 static int gen_salt_plain(char *buf)
 {
@@ -58,7 +60,9 @@ static int hash_plain(char *buf, char *key, char *salt)
 /* better hashes come first */
 static u_crypto hashes[] = {
 	{ "3des",    gen_salt_3des,    hash_3des    },
+#ifdef HAVE_CRYPT
 	{ "posix",   gen_salt_posix,   hash_posix   },
+#endif
 	{ "plain",   gen_salt_plain,   hash_plain   },
 	{ "", NULL, NULL }
 };
