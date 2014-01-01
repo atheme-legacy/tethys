@@ -1,4 +1,4 @@
-SUBDIRS = src
+SUBDIRS = $(LIBMOWGLI) src
 CLEANDIRS = $(SUBDIRS) include
 DISTCLEAN = extra.mk \
 	buildsys.mk \

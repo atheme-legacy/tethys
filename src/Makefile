@@ -34,8 +34,11 @@ SRCS = numeric.c \
 include ../extra.mk
 include ../buildsys.mk
 
-CFLAGS += -g -O2 -Wall -I. -I../include
-LDFLAGS += -lcrypt
+CFLAGS += -Wall -I. -I../include
+LIBS += $(LDFLAGS_RPATH)
+
+CFLAGS += $(MOWGLI_CFLAGS)
+LIBS += $(MOWGLI_LIBS)
 
 build: all
 
