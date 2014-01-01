@@ -1,3 +1,6 @@
 [submodule "libmowgli-2"]
 	path = libmowgli-2
 	url = git://github.com/atheme/libmowgli-2.git
+[submodule "buildsys"]
+	path = buildsys
+	url = git://github.com/atheme/buildsys.git
