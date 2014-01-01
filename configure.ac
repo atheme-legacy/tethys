@@ -6,6 +6,9 @@ dnl in the COPYING file in the project root
 
 AC_INIT([ircd-micro], [0.1], [https://github.com/aji/ircd-micro])
 
+AC_CONFIG_HEADER([include/autoconf.h])
+AC_PREFIX_DEFAULT(~/ircd)
+
 AC_PROG_CC
 AC_PROG_CPP
 AC_PROG_INSTALL
@@ -21,6 +24,6 @@ BUILDSYS_PROG_IMPLIB
 BUILDSYS_INIT
 BUILDSYS_TOUCH_DEPS
 
-AC_CONFIG_FILES([buildsys.mk extra.mk include/autoconf.h])
+AC_CONFIG_FILES([buildsys.mk extra.mk])
 
 AC_OUTPUT

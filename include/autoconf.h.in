@@ -10,8 +10,6 @@
 #define PACKAGE_NAME "@PACKAGE_NAME@"
 #define PACKAGE_VERSION "@PACKAGE_VERSION@"
 
-#define PREFIX "@prefix@"
-
 /* If crypt() */
 #undef HAVE_CRYPT
 
