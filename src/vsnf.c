@@ -206,7 +206,7 @@ top:
 		string(&buf, chan?chan->name:"*", -1, &spec);
 		if (debug) {
 			character(&buf, '[');
-			integer(&buf, (int)user, 0, 16, NULL);
+			integer(&buf, (int)chan, 0, 16, NULL);
 			character(&buf, ']');
 		}
 		break;
