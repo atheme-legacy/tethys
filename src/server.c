@@ -273,14 +273,11 @@ static void delete_links(u_server *tsv, u_server *sv)
 		u_server_unlink(tsv);
 }
 
-static void user_delete(u_user *u, void *priv)
-{
-	u_sendto_visible(u, ST_USERS, ":%H QUIT :*.net *.split", u);
-	u_user_unlink(u);
-}
-
 void u_server_unlink(u_server *sv)
 {
+	mowgli_patricia_iteration_state_t state;
+	u_user *u;
+
 	if (sv == &me) {
 		u_log(LG_ERROR, "Can't unlink self!");
 		return;
@@ -298,7 +295,15 @@ void u_server_unlink(u_server *sv)
 	sv->parent->nlinks--;
 
 	/* delete all users */
-	u_trie_each(users_by_uid, sv->sid, (u_trie_cb_t*)user_delete, NULL);
+	MOWGLI_PATRICIA_FOREACH(u, &state, users_by_uid) {
+		u_log(LG_DEBUG, "  Considering %s/%s", sv->sid, u->uid);
+
+		if (strncmp(sv->sid, u->uid, 3))
+			continue;
+
+		u_sendto_visible(u, ST_USERS, ":%H QUIT :*.net *.split", u);
+		u_user_unlink(u);
+	}
 
 	if (sv->name[0])
 		u_trie_del(servers_by_name, sv->name);
@@ -310,8 +315,10 @@ void u_server_unlink(u_server *sv)
 	free(sv);
 }
 
-static void burst_euid(u_user *u, u_conn *conn)
+static int burst_euid(const char *key, void *value, void *priv)
 {
+	u_user *u = value;
+	u_conn *conn = priv;
 	char buf[512];
 
 	u_user_make_euid(u, buf);
@@ -319,10 +326,14 @@ static void burst_euid(u_user *u, u_conn *conn)
 
 	if (u->away[0])
 		u_conn_f(conn, ":%U AWAY :%s", u, u->away);
+
+	return 0;
 }
 
-static void burst_uid(u_user *u, u_conn *conn)
+static int burst_uid(const char *key, void *value, void *priv)
 {
+	u_user *u = value;
+	u_conn *conn = priv;
 	u_server *sv = u_user_server(u);
 
 	/* NOTE: this is legacy, but I'm keeping it around anyway */
@@ -342,6 +353,8 @@ static void burst_uid(u_user *u, u_conn *conn)
 		u_conn_f(conn, ":%U ENCAP * LOGIN :%s", u, u->acct);
 
 	u_conn_f(conn, ":%U AWAY :%s", u, u->away);
+
+	return 0;
 }
 
 struct burst_chan_priv {
@@ -421,9 +434,9 @@ void u_server_burst(u_server *sv, u_link *link)
 	/* TODO: "EUID for all known users (possibly followed by ENCAP
 	   REALHOST, ENCAP LOGIN, and/or AWAY)" */
 	if (sv->capab & CAPAB_EUID)
-		u_trie_each(users_by_uid, NULL, (u_trie_cb_t*)burst_euid, conn);
+		mowgli_patricia_foreach(users_by_uid, burst_euid, conn);
 	else
-		u_trie_each(users_by_uid, NULL, (u_trie_cb_t*)burst_uid, conn);
+		mowgli_patricia_foreach(users_by_uid, burst_uid, conn);
 
 	/* TODO: "and SJOIN messages for all known channels (possibly followed
 	   by BMASK and/or TB)" */

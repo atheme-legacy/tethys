@@ -88,8 +88,8 @@ struct u_user_remote {
 
 #define IS_LOCAL_USER(u) ((USER(u)->flags & USER_IS_LOCAL) != 0)
 
-extern u_trie *users_by_nick;
-extern u_trie *users_by_uid;
+extern mowgli_patricia_t *users_by_nick;
+extern mowgli_patricia_t *users_by_uid;
 
 extern u_umode_info *umodes;
 extern uint umode_default;

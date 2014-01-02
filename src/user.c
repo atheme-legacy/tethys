@@ -6,8 +6,8 @@
 
 #include "ircd.h"
 
-u_trie *users_by_nick;
-u_trie *users_by_uid;
+mowgli_patricia_t *users_by_nick;
+mowgli_patricia_t *users_by_uid;
 
 char *id_map = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 int id_modulus = 36; /* just strlen(uid_map) */
@@ -164,7 +164,7 @@ void u_user_make_ureg(u_conn *conn)
 
 	u_strlcpy(u->uid, me.sid, 4);
 	u_strlcpy(u->uid + 3, id_next(), 7);
-	u_trie_set(users_by_uid, u->uid, u);
+	mowgli_patricia_add(users_by_uid, u->uid, u);
 	u->flags = umode_default | USER_IS_LOCAL;
 	u->channels = u_map_new(0);
 	u->invites = u_map_new(0);
@@ -201,7 +201,7 @@ u_user_remote *u_user_new_remote(u_server *sv, char *uid)
 		u_log(LG_INFO, "     uid=%s, sv->sid=%s", uid, sv->sid);
 	}
 	u_strlcpy(u->uid + 3, uid + 3, 7);
-	u_trie_set(users_by_uid, u->uid, u);
+	mowgli_patricia_add(users_by_uid, u->uid, u);
 	u->flags = 0; /* modes are in EUID command */
 	u->channels = u_map_new(0);
 	u->invites = u_map_new(0);
@@ -241,8 +241,8 @@ void u_user_unlink(u_user *u)
 	u_map_free(u->channels);
 
 	if (u->nick[0])
-		u_trie_del(users_by_nick, u->nick);
-	u_trie_del(users_by_uid, u->uid);
+		mowgli_patricia_delete(users_by_nick, u->nick);
+	mowgli_patricia_delete(users_by_uid, u->uid);
 
 	if (sv != NULL)
 		sv->nusers--;
@@ -268,21 +268,21 @@ u_server *u_user_server(u_user *u)
 
 u_user *u_user_by_nick(char *nick)
 {
-	return u_trie_get(users_by_nick, nick);
+	return mowgli_patricia_retrieve(users_by_nick, nick);
 }
 
 u_user *u_user_by_uid(char *uid)
 {
-	return u_trie_get(users_by_uid, uid);
+	return mowgli_patricia_retrieve(users_by_uid, uid);
 }
 
 void u_user_set_nick(u_user *u, char *nick, uint ts)
 {
 	/* TODO: check collision? */
 	if (u->nick[0])
-		u_trie_del(users_by_nick, u->nick);
+		mowgli_patricia_delete(users_by_nick, u->nick);
 	u_strlcpy(u->nick, nick, MAXNICKLEN+1);
-	u_trie_set(users_by_nick, u->nick, u);
+	mowgli_patricia_add(users_by_nick, u->nick, u);
 	u->nickts = ts;
 }
 
@@ -451,8 +451,8 @@ void u_user_make_euid(u_user *u, char *buf)
 
 int init_user(void)
 {
-	users_by_nick = u_trie_new(rfc1459_canonize);
-	users_by_uid = u_trie_new(ascii_canonize);
+	users_by_nick = mowgli_patricia_create(rfc1459_canonize);
+	users_by_uid = mowgli_patricia_create(ascii_canonize);
 
 	return (users_by_nick && users_by_uid) ? 0 : -1;
 }

@@ -30,6 +30,8 @@
 #include <sys/time.h>
 #include <time.h>
 
+#include <mowgli.h>
+
 #ifndef NULL
 #define NULL ((void*)0)
 #endif
@@ -48,7 +50,10 @@ typedef unsigned short ushort;
 
 typedef unsigned long u_ts_t;
 
+#ifndef offsetof
 #define offsetof(st, m) ((ulong)(&((st *)0)->m))
+#endif
+
 #define containerof(ptr, st, m) ((void*)((ptr) - offsetof(st, m)))
 
 #define memberp(base, offs) ((void*)((ulong)(base) + (ulong)(offs)))
