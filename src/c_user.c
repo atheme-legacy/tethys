@@ -738,20 +738,11 @@ struct map_priv {
 	u_server *sv;
 	int depth, left;
 };
-static void do_map(struct map_priv*);
-static void map_find_children(u_server *sv, struct map_priv *p)
-{
-	u_server *psv = p->sv;
-	if (sv->parent == psv) {
-		p->sv = sv;
-		do_map(p);
-		p->sv = psv;
-	}
-}
 static void do_map(struct map_priv *p)
 {
 	int len, left, depth = p->depth << 2;
-	u_server *sv = p->sv;
+	mowgli_patricia_iteration_state_t state;
+	u_server *tsv, *sv = p->sv;
 
 	p->indent[depth] = '\0';
 	if (depth != 0) {
@@ -774,7 +765,13 @@ static void do_map(struct map_priv *p)
 		left = p->left;
 		p->left = sv->nlinks;
 		p->depth = (depth >> 2) + 1;
-		u_trie_each(servers_by_sid, NULL, (u_trie_cb_t*)map_find_children, p);
+		MOWGLI_PATRICIA_FOREACH(tsv, &state, servers_by_sid) {
+			if (tsv->parent != sv)
+				continue;
+			p->sv = tsv;
+			do_map(p);
+			p->sv = sv;
+		}
 		p->depth = (depth >> 2);
 		p->left = left;
 	}

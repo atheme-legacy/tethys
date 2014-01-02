@@ -6,8 +6,8 @@
 
 #include "ircd.h"
 
-u_trie *servers_by_sid;
-u_trie *servers_by_name;
+mowgli_patricia_t *servers_by_sid;
+mowgli_patricia_t *servers_by_name;
 
 u_server me;
 u_list my_motd;
@@ -25,17 +25,17 @@ void server_conf(char *key, char *val)
 	key += 3;
 
 	if (streq(key, "name")) {
-		u_trie_del(servers_by_name, me.name);
+		mowgli_patricia_delete(servers_by_name, me.name);
 		u_strlcpy(me.name, val, MAXSERVNAME+1);
-		u_trie_set(servers_by_name, me.name, &me);
+		mowgli_patricia_add(servers_by_name, me.name, &me);
 		u_log(LG_DEBUG, "server_conf: me.name=%s", me.name);
 	} else if (streq(key, "net")) {
 		u_strlcpy(my_net_name, val, MAXNETNAME+1);
 		u_log(LG_DEBUG, "server_conf: me.net=%s", my_net_name);
 	} else if (streq(key, "sid")) {
-		u_trie_del(servers_by_sid, me.sid);
+		mowgli_patricia_delete(servers_by_sid, me.sid);
 		u_strlcpy(me.sid, val, 4);
-		u_trie_set(servers_by_sid, me.sid, &me);
+		mowgli_patricia_add(servers_by_sid, me.sid, &me);
 		u_log(LG_DEBUG, "server_conf: me.sid=%s", me.sid);
 	} else if (streq(key, "desc")) {
 		u_strlcpy(me.desc, val, MAXSERVDESC+1);
@@ -97,12 +97,12 @@ void admin_conf(char *key, char *val)
 
 u_server *u_server_by_sid(char *sid)
 {
-	return u_trie_get(servers_by_sid, sid);
+	return mowgli_patricia_retrieve(servers_by_sid, sid);
 }
 
 u_server *u_server_by_name(char *name)
 {
-	return u_trie_get(servers_by_name, name);
+	return mowgli_patricia_retrieve(servers_by_name, name);
 }
 
 u_server *u_server_find(char *str)
@@ -219,7 +219,7 @@ void u_server_make_sreg(u_conn *conn, char *sid)
 	sv->flags = SERVER_IS_BURSTING;
 
 	strcpy(sv->sid, sid);
-	u_trie_set(servers_by_sid, sv->sid, sv);
+	mowgli_patricia_add(servers_by_sid, sv->sid, sv);
 
 	sv->name[0] = '\0';
 	sv->desc[0] = '\0';
@@ -257,8 +257,8 @@ u_server *u_server_new_remote(u_server *parent, char *sid,
 	sv->nusers = 0;
 	sv->nlinks = 0;
 
-	u_trie_set(servers_by_sid, sv->sid, sv);
-	u_trie_set(servers_by_name, sv->name, sv);
+	mowgli_patricia_add(servers_by_sid, sv->sid, sv);
+	mowgli_patricia_add(servers_by_name, sv->name, sv);
 
 	u_log(LG_INFO, "New remote server sid=%s", sv->sid);
 
@@ -267,16 +267,11 @@ u_server *u_server_new_remote(u_server *parent, char *sid,
 	return sv;
 }
 
-static void delete_links(u_server *tsv, u_server *sv)
-{
-	if (tsv->parent == sv)
-		u_server_unlink(tsv);
-}
-
 void u_server_unlink(u_server *sv)
 {
 	mowgli_patricia_iteration_state_t state;
 	u_user *u;
+	u_server *tsv;
 
 	if (sv == &me) {
 		u_log(LG_ERROR, "Can't unlink self!");
@@ -306,11 +301,14 @@ void u_server_unlink(u_server *sv)
 	}
 
 	if (sv->name[0])
-		u_trie_del(servers_by_name, sv->name);
-	u_trie_del(servers_by_sid, sv->sid);
+		mowgli_patricia_delete(servers_by_name, sv->name);
+	mowgli_patricia_delete(servers_by_sid, sv->sid);
 
 	/* delete any servers linked to this one */
-	u_trie_each(servers_by_sid, NULL, (u_trie_cb_t*)delete_links, sv);
+	MOWGLI_PATRICIA_FOREACH(tsv, &state, servers_by_sid) {
+		if (tsv->parent == sv)
+			u_server_unlink(tsv);
+	}
 
 	free(sv);
 }
@@ -445,7 +443,7 @@ void u_server_burst(u_server *sv, u_link *link)
 	u_conn_f(conn, ":%S PING %s %s", &me, me.name, sv->name);
 
 	u_log(LG_DEBUG, "Adding %s to servers_by_name", sv->name);
-	u_trie_set(servers_by_name, sv->name, sv);
+	mowgli_patricia_add(servers_by_name, sv->name, sv);
 }
 
 void u_server_eob(u_server *sv)
@@ -462,8 +460,8 @@ void u_server_eob(u_server *sv)
 
 int init_server(void)
 {
-	servers_by_sid = u_trie_new(ascii_canonize);
-	servers_by_name = u_trie_new(ascii_canonize);
+	servers_by_sid = mowgli_patricia_create(ascii_canonize);
+	servers_by_name = mowgli_patricia_create(ascii_canonize);
 
 	/* default settings! */
 	me.conn = NULL;
@@ -480,8 +478,8 @@ int init_server(void)
 	me.nusers = 0;
 	me.nlinks = 0;
 
-	u_trie_set(servers_by_name, me.name, &me);
-	u_trie_set(servers_by_sid, me.sid, &me);
+	mowgli_patricia_add(servers_by_name, me.name, &me);
+	mowgli_patricia_add(servers_by_sid, me.sid, &me);
 
 	u_list_init(&my_motd);
 

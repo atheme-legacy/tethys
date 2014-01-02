@@ -55,8 +55,8 @@ struct u_server {
 
 #define SERVER(sv) ((u_server*)(sv))
 
-extern u_trie *servers_by_sid;
-extern u_trie *servers_by_name;
+extern mowgli_patricia_t *servers_by_sid;
+extern mowgli_patricia_t *servers_by_name;
 
 extern u_server me;
 extern u_list my_motd;
