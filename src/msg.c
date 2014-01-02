@@ -58,14 +58,14 @@ int u_msg_parse(u_msg *msg, char *s)
 }
 
 
-static u_trie *commands[CTX_MAX];
+static mowgli_patricia_t *commands[CTX_MAX];
 
 int reg_one_real(u_cmd *cmd, int ctx)
 {
-	if (u_trie_get(commands[ctx], cmd->name))
+	if (mowgli_patricia_retrieve(commands[ctx], cmd->name))
 		return -1;
 
-	u_trie_set(commands[ctx], cmd->name, cmd);
+	mowgli_patricia_add(commands[ctx], cmd->name, cmd);
 	return 0;
 }
 
@@ -98,7 +98,7 @@ void u_cmd_invoke(u_conn *conn, u_msg *msg)
 	u_cmd *cmd;
 	u_entity e;
 
-	cmd = u_trie_get(commands[conn->ctx], msg->command);
+	cmd = mowgli_patricia_retrieve(commands[conn->ctx], msg->command);
 
 	if (!cmd) {
 		if (conn->ctx == CTX_USER || conn->ctx == CTX_UREG)
@@ -144,7 +144,7 @@ int init_cmd(void)
 	int i;
 
 	for (i=0; i<CTX_MAX; i++) {
-		if ((commands[i] = u_trie_new(NULL)) == NULL)
+		if ((commands[i] = mowgli_patricia_create(NULL)) == NULL)
 			return -1;
 	}
 
