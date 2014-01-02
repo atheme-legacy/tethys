@@ -6,7 +6,7 @@
 
 #include "ircd.h"
 
-u_trie *u_conf_handlers = NULL;
+mowgli_patricia_t *u_conf_handlers = NULL;
 
 void do_cb(char *key, char *val)
 {
@@ -14,7 +14,7 @@ void do_cb(char *key, char *val)
 
 	u_log(LG_FINE, "conf: %s=%s", key, val);
 
-	cb = (u_conf_handler_t*)u_trie_get(u_conf_handlers, key);
+	cb = (u_conf_handler_t*)mowgli_patricia_retrieve(u_conf_handlers, key);
 
 	if (!cb) {
 		u_log(LG_WARN, "No config handler for %s=%s", key, val);
@@ -149,11 +149,11 @@ void u_conf_read(FILE *f)
 
 void u_conf_add_handler(char *key, u_conf_handler_t *cb)
 {
-	u_trie_set(u_conf_handlers, key, (void*)cb);
+	mowgli_patricia_add(u_conf_handlers, key, (void*)cb);
 }
 
 int init_conf(void)
 {
-	u_conf_handlers = u_trie_new(ascii_canonize);
+	u_conf_handlers = mowgli_patricia_create(ascii_canonize);
 	return u_conf_handlers ? 0 : -1;
 }
