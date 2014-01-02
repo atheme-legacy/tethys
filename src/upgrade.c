@@ -20,7 +20,7 @@ struct u_udb {
 };
 
 u_list *u_udb_save_hooks;
-u_trie *u_udb_load_hooks;
+mowgli_patricia_t *u_udb_load_hooks;
 
 void u_udb_row_start(u_udb *db, char *name)
 {
@@ -93,7 +93,7 @@ long u_udb_get_i(u_udb *db)
 int init_upgrade(void)
 {
 	u_udb_save_hooks = malloc(sizeof(u_list));
-	u_udb_load_hooks = u_trie_new(NULL);
+	u_udb_load_hooks = mowgli_patricia_create(NULL);
 
 	u_list_init(u_udb_save_hooks);
 
