@@ -23,7 +23,6 @@ SRCS = numeric.c \
 	msg.c \
 	sendto.c \
 	server.c \
-	trie.c \
 	upgrade.c \
 	user.c \
 	util.c \
