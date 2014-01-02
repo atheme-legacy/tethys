@@ -62,7 +62,7 @@ struct u_chanban {
 	u_ts_t time;
 };
 
-extern u_trie *all_chans;
+extern mowgli_patricia_t *all_chans;
 
 extern u_mode_info *cmodes;
 extern uint cmode_default;

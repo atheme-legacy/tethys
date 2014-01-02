@@ -530,15 +530,9 @@ static int list_entry(u_user *u, u_chan *c)
 	return 0;
 }
 
-static void m_list_chan_cb(u_chan *c, u_user *u)
-{
-	if (c->members->size < 3)
-		return;
-	list_entry(u, c);
-}
-
 static int m_list(u_conn *conn, u_msg *msg)
 {
+	mowgli_patricia_iteration_state_t state;
 	u_user *u = conn->priv;
 	u_chan *c;
 
@@ -552,7 +546,11 @@ static int m_list(u_conn *conn, u_msg *msg)
 	}
 
 	u_user_num(u, RPL_LISTSTART);
-	u_trie_each(all_chans, NULL, (u_trie_cb_t*)m_list_chan_cb, u);
+	MOWGLI_PATRICIA_FOREACH(c, &state, all_chans) {
+		if (c->members->size < 3)
+			continue;
+		list_entry(u, c);
+	}
 	u_user_num(u, RPL_LISTEND);
 
 	return 0;

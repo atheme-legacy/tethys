@@ -381,8 +381,10 @@ try_again:
 	}
 }
 
-static void burst_chan(u_chan *c, u_conn *conn)
+static int burst_chan(const char *key, void *_c, void *_conn)
 {
+	u_chan *c = _c;
+	u_conn *conn = _conn;
 	struct burst_chan_priv priv;
 	char buf[512];
 	int sz;
@@ -399,6 +401,8 @@ static void burst_chan(u_chan *c, u_conn *conn)
 	u_map_each(c->members, (u_map_cb_t*)burst_chan_cb, &priv);
 	if (priv.s != priv.buf)
 		u_conn_f(conn, "%s%s", buf, priv.buf);
+
+	return 0;
 }
 
 void u_server_burst(u_server *sv, u_link *link)
@@ -438,7 +442,7 @@ void u_server_burst(u_server *sv, u_link *link)
 
 	/* TODO: "and SJOIN messages for all known channels (possibly followed
 	   by BMASK and/or TB)" */
-	u_trie_each(all_chans, NULL, (u_trie_cb_t*)burst_chan, conn);
+	mowgli_patricia_foreach(all_chans, burst_chan, conn);
 
 	u_conn_f(conn, ":%S PING %s %s", &me, me.name, sv->name);
 

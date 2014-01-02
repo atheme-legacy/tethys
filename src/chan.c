@@ -6,7 +6,7 @@
 
 #include "ircd.h"
 
-u_trie *all_chans;
+mowgli_patricia_t *all_chans;
 
 static int cb_flag(u_modes*, int, char*);
 static int cb_list(u_modes*, int, char*);
@@ -301,7 +301,7 @@ static int cb_limit(u_modes *m, int on, char *arg)
 
 u_chan *u_chan_get(char *name)
 {
-	return u_trie_get(all_chans, name);
+	return mowgli_patricia_retrieve(all_chans, name);
 }
 
 u_chan *u_chan_get_or_create(char *name)
@@ -330,7 +330,7 @@ u_chan *u_chan_get_or_create(char *name)
 	chan->key = NULL;
 	chan->limit = -1;
 
-	u_trie_set(all_chans, chan->name, chan);
+	mowgli_patricia_add(all_chans, chan->name, chan);
 
 	return chan;
 }
@@ -364,7 +364,7 @@ void u_chan_drop(u_chan *chan)
 	drop_param(&chan->forward);
 	drop_param(&chan->key);
 
-	u_trie_del(all_chans, chan->name);
+	mowgli_patricia_delete(all_chans, chan->name);
 	free(chan);
 }
 
@@ -730,6 +730,6 @@ int u_is_muted(u_chanuser *cu)
 
 int init_chan(void)
 {
-	all_chans = u_trie_new(ascii_canonize);
+	all_chans = mowgli_patricia_create(ascii_canonize);
 	return all_chans != NULL ? 0 : -1;
 }
