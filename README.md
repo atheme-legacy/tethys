@@ -20,6 +20,12 @@ be using one of many nicknames, but will definitely have +o. Users with
 
 ## Building
 
+If this source has been obtained via git, the following commands should
+be run first:
+
+    $ git submodule init
+    $ git submodule update
+
 ircd-micro can be compiled and installed using the typical sequence:
 
     $ ./configure
