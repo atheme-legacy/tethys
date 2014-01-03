@@ -473,7 +473,7 @@ static void who_reply(u_user *u, u_user *tu, u_chan *c, u_chanuser *cu)
 	           serv->name, tu->nick, buf, 0, tu->gecos);
 }
 
-static void m_who_chan_cb(u_map *map, u_user *tu, u_user *u, u_chanuser *cu)
+static void m_who_chan_cb(u_map *map, u_user *tu, u_chanuser *cu, u_user *u)
 {
 	who_reply(u, tu, cu->c, cu);
 }
