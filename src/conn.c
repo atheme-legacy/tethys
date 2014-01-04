@@ -460,6 +460,11 @@ static void u_conn_sync(u_conn *conn)
 	bool need_recv, need_send;
 	mowgli_eventloop_t *ev = conn->poll->eventloop;
 
+	if (conn->flags & U_CONN_SYNCING)
+		return;
+
+	conn->flags |= U_CONN_SYNCING;
+
 	/* sync is determined by
 	     - existing error conditions
 	     - U_CONN_CLOSING flag
@@ -490,10 +495,10 @@ static void u_conn_sync(u_conn *conn)
 	mowgli_pollable_setselect(ev, conn->poll, MOWGLI_EVENTLOOP_IO_WRITE,
 	                          need_send ? toplev_send : NULL);
 
-	if (!need_recv && !need_send) {
+	if (!need_recv && !need_send)
 		toplev_cleanup(conn);
-		return;
-	}
+
+	conn->flags &= ~U_CONN_SYNCING;
 }
 
 static void u_conn_sync_all(void)

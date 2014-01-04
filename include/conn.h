@@ -16,6 +16,7 @@
 
 #define U_CONN_CLOSING    0x0001
 #define U_CONN_AWAIT_PONG 0x0002
+#define U_CONN_SYNCING    0x0004
 
 /* events */
 #define EV_ERROR          1
