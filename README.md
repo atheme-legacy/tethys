@@ -26,7 +26,8 @@ be run first:
     $ git submodule init
     $ git submodule update
 
-ircd-micro can be compiled and installed using the typical sequence:
+You will need to run `git submodule update` for each successive pull.
+ircd-micro can be then compiled and installed using the typical sequence:
 
     $ ./configure
     $ make
