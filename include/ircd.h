@@ -71,8 +71,6 @@ typedef unsigned long u_ts_t;
 #include "map.h"
 #include "trie.h"
 #include "conf.h"
-#include "io.h"
-#include "dns.h"
 #include "util.h"
 #include "auth.h"
 #include "conn.h"
@@ -85,7 +83,12 @@ typedef unsigned long u_ts_t;
 #include "sendto.h"
 #include "upgrade.h"
 
-extern u_io base_io;
+extern struct timeval NOW;
+
+extern void sync_time(void);
+
+extern mowgli_eventloop_t *base_ev;
+extern mowgli_dns_t *base_dns;
 extern u_ts_t started;
 
 extern char *crypt(const char*, const char*);

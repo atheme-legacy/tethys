@@ -6,9 +6,20 @@
 
 #include "ircd.h"
 
+static u_list all_conns;
+
 static void origin_rdns();
-static void origin_recv();
-static int toplev_post();
+static void origin_recv(mowgli_eventloop_t *ev, mowgli_eventloop_io_t *io,
+                        mowgli_eventloop_io_dir_t dir, void *priv);
+static void toplev_recv(mowgli_eventloop_t *ev, mowgli_eventloop_io_t *io,
+                        mowgli_eventloop_io_dir_t dir, void *priv);
+
+static void u_conn_sync(u_conn *conn);
+
+struct rdns_query {
+	u_conn *conn;
+	mowgli_dns_query_t q;
+};
 
 void u_conn_init(u_conn *conn)
 {
@@ -17,10 +28,10 @@ void u_conn_init(u_conn *conn)
 	conn->auth = NULL;
 	conn->last = NOW.tv_sec;
 
-	conn->sock = NULL;
+	conn->poll = NULL;
 	conn->ip[0] = '\0';
 	conn->host[0] = '\0';
-	conn->dns_id = 0;
+	conn->dnsq = NULL;
 
 	u_linebuf_init(&conn->ibuf);
 
@@ -37,12 +48,15 @@ void u_conn_init(u_conn *conn)
 
 	conn->priv = NULL;
 	conn->pass = NULL;
+
+	conn->n = u_list_add(&all_conns, conn);
 }
 
 void u_conn_cleanup(u_conn *conn)
 {
-	if (conn->dns_id)
-		u_dns_cancel(conn->dns_id, origin_rdns, conn);
+	u_list_del_n(&all_conns, conn->n);
+	if (conn->dnsq)
+		mowgli_dns_delete_query(base_dns, conn->dnsq);
 	if (conn->error)
 		free(conn->error);
 	free(conn->obuf);
@@ -51,6 +65,7 @@ void u_conn_cleanup(u_conn *conn)
 void u_conn_close(u_conn *conn)
 {
 	conn->flags |= U_CONN_CLOSING;
+	u_conn_sync(conn);
 }
 
 /* sadfaec */
@@ -134,6 +149,8 @@ void u_conn_vf(u_conn *conn, char *fmt, va_list va)
 	*p++ = '\n';
 
 	conn->obuflen = p - conn->obuf;
+
+	u_conn_sync(conn);
 }
 
 void u_conn_f(u_conn *conn, char *fmt, ...)
@@ -191,9 +208,11 @@ void u_conn_error(u_conn *conn, char *error)
 	if (conn->error != NULL)
 		free(conn->error);
 	conn->error = strdup(error);
+	u_conn_sync(conn);
 }
 
-u_conn_origin *u_conn_origin_create(u_io *io, u_long addr, u_short port)
+u_conn_origin *u_conn_origin_create(mowgli_eventloop_t *ev, u_long addr,
+                                    u_short port)
 {
 	struct sockaddr_in sa;
 	u_conn_origin *orig;
@@ -218,13 +237,12 @@ u_conn_origin *u_conn_origin_create(u_io *io, u_long addr, u_short port)
 	if (!(orig = malloc(sizeof(*orig))))
 		goto out_close;
 
-	if (!(orig->sock = u_io_add_fd(io, fd)))
+	if (!(orig->poll = mowgli_pollable_create(ev, fd, orig)))
 		goto out_free;
 
-	orig->sock->recv = origin_recv;
-	orig->sock->send = NULL;
-	orig->sock->post = NULL;
-	orig->sock->priv = orig;
+	mowgli_pollable_set_nonblocking(orig->poll, true);
+	mowgli_pollable_setselect(ev, orig->poll, MOWGLI_EVENTLOOP_IO_READ,
+	                          origin_recv);
 
 	return orig;
 
@@ -255,83 +273,121 @@ static void dispatch_lines(u_conn *conn)
 		conn->last = NOW.tv_sec;
 		conn->flags &= ~U_CONN_AWAIT_PONG;
 	}
+
+	u_conn_sync(conn);
 }
 
-static void origin_rdns(int status, char *name, void *priv)
+static void origin_rdns(mowgli_dns_reply_t *reply, int reason, void *vptr)
 {
-	u_conn *conn = priv;
-	int len;
+	struct rdns_query *query = vptr;
+	u_conn *conn = query->conn;
+	const char *reasonstr = "Unknown error";
 
-	conn->dns_id = 0;
+	if (reply && reply->addr.addr.ss_family != AF_INET) {
+		reply = NULL;
+		reasonstr = "No IPv6 RDNS yet";
+		reason = 0;
+	}
 
-	switch (status) {
-	case DNS_OKAY:
-		len = strlen(name);
-		u_strlcpy(conn->host, name, U_CONN_HOSTSIZE);
-		conn->host[len-1] = '\0'; /* TODO: move to dns? */
+	if (reply == NULL) {
+		u_strlcpy(conn->host, conn->ip, U_CONN_HOSTSIZE);
+		switch (reason) {
+		case MOWGLI_DNS_RES_NXDOMAIN:
+			reasonstr = "No such domain";
+			break;
+		case MOWGLI_DNS_RES_INVALID:
+			reasonstr = "Invalid domain";
+			break;
+		case MOWGLI_DNS_RES_TIMEOUT:
+			reasonstr = "Request timeout";
+			break;
+		}
+		u_conn_f(conn, ":%s NOTICE * :*** Couldn't find your hostname: %s. "
+		         "Using your ip %s", me.name, reasonstr, conn->host);
+	} else {
+		const struct sockaddr_in *saddr = (void*)&reply->addr.addr;
+		inet_ntop(AF_INET, (void*)&saddr->sin_addr, conn->host,
+		          U_CONN_HOSTSIZE);
 		u_conn_f(conn, ":%s NOTICE * :*** Found your hostname. Hi there %s",
 		         me.name, conn->host);
-		break;
-
-	default:
-		u_strlcpy(conn->host, conn->ip, U_CONN_HOSTSIZE);
-		u_conn_f(conn, ":%s NOTICE * :*** Couldn't find your hostname. Using your ip %s", me.name, conn->host);
 	}
+
+	conn->dnsq = NULL;
+	free(query);
 
 	dispatch_lines(conn);
 }
 
-static void origin_recv(u_io_fd *sock)
+static void origin_recv(mowgli_eventloop_t *ev, mowgli_eventloop_io_t *io,
+                        mowgli_eventloop_io_dir_t dir, void *priv)
 {
-	u_io_fd *iofd;
+	mowgli_eventloop_pollable_t *poll = mowgli_eventloop_io_pollable(io);
+	mowgli_eventloop_pollable_t *cli;
+	struct rdns_query *query;
 	u_conn *conn;
-	struct sockaddr_in addr;
-	uint addrlen = sizeof(addr);
+	struct sockaddr_storage addr;
+	void *addrptr;
+	socklen_t addrlen = sizeof(addr);
 	int fd;
 
-	if ((fd = accept(sock->fd, (struct sockaddr*)&addr, &addrlen)) < 0) {
-		perror("origin_recv");
+	sync_time();
+
+	if ((fd = accept(poll->fd, (struct sockaddr*)&addr, &addrlen)) < 0) {
+		perror("origin_recv: accept");
 		return;
 	}
 
-	if (!(iofd = u_io_add_fd(sock->io, fd)))
-		return; /* XXX */
-
-	iofd->recv = NULL;
-	iofd->send = NULL;
-	iofd->post = toplev_post;
-
 	conn = malloc(sizeof(*conn));
 	u_conn_init(conn);
-	conn->sock = iofd;
-	iofd->priv = conn;
+	cli = mowgli_pollable_create(poll->eventloop, fd, conn);
+	mowgli_pollable_set_nonblocking(cli, true);
+	conn->poll = cli;
 
-	u_ntop(&addr.sin_addr, conn->ip);
+	addrptr = NULL;
+	switch (addr.ss_family) {
+	case AF_INET:
+		addrptr = &((struct sockaddr_in*)&addr)->sin_addr;
+		break;
+	case AF_INET6:
+		addrptr = &((struct sockaddr_in6*)&addr)->sin6_addr;
+		break;
+	}
+	inet_ntop(addr.ss_family, addrptr, conn->ip, sizeof(conn->ip));
 
 	u_conn_f(conn, ":%s NOTICE * :*** Looking up your hostname", me.name);
-	conn->dns_id = u_rdns(conn->ip, origin_rdns, conn);
+	query = malloc(sizeof(*query));
+	query->conn = conn;
+	query->q.ptr = query;
+	query->q.callback = origin_rdns;
+	conn->dnsq = &query->q;
+	/* mowgli_dns_gethost_byaddr(base_dns, (void*)&addr, conn->dnsq); */
+	origin_rdns(NULL, MOWGLI_DNS_RES_NXDOMAIN, query->q.ptr);
 
 	u_log(LG_VERBOSE, "Connection from %s", conn->ip);
 }
 
-static void toplev_cleanup(u_io_fd *iofd)
+static void toplev_cleanup(u_conn *conn)
 {
-	u_conn *conn = iofd->priv;
+	mowgli_eventloop_t *ev = conn->poll->eventloop;
 	u_log(LG_VERBOSE, "%s disconnecting", conn->host);
 	if (conn->event != NULL)
 		conn->event(conn, EV_DESTROYING);
+	mowgli_pollable_destroy(ev, conn->poll);
 	u_conn_cleanup(conn);
-	close(iofd->fd);
+	close(conn->poll->fd);
 	free(conn);
 }
 
-static void toplev_recv(u_io_fd *iofd)
+static void toplev_recv(mowgli_eventloop_t *ev, mowgli_eventloop_io_t *io,
+                        mowgli_eventloop_io_dir_t dir, void *priv)
 {
-	u_conn *conn = iofd->priv;
+	u_conn *conn = priv;
 	char buf[1024];
 	int sz;
 
-	sz = recv(iofd->fd, buf, 1024-conn->ibuf.pos, 0);
+	sync_time();
+
+	sz = recv(conn->poll->fd, buf, 1024-conn->ibuf.pos, 0);
 
 	if (sz <= 0) {
 		u_conn_error(conn, sz == 0 ? "End of stream" : "Read error");
@@ -347,12 +403,15 @@ static void toplev_recv(u_io_fd *iofd)
 		dispatch_lines(conn);
 }
 
-static void toplev_send(u_io_fd *iofd)
+static void toplev_send(mowgli_eventloop_t *ev, mowgli_eventloop_io_t *io,
+                        mowgli_eventloop_io_dir_t dir, void *priv)
 {
-	u_conn *conn = iofd->priv;
+	u_conn *conn = priv;
 	int sz;
 
-	sz = send(iofd->fd, conn->obuf, conn->obuflen, 0);
+	sync_time();
+
+	sz = send(conn->poll->fd, conn->obuf, conn->obuflen, 0);
 
 	if (sz < 0) {
 		u_conn_error(conn, "Write error");
@@ -363,13 +422,49 @@ static void toplev_send(u_io_fd *iofd)
 	if (sz > 0) {
 		memmove(conn->obuf, conn->obuf + sz, conn->obufsize - sz);
 		conn->obuflen -= sz;
+		u_conn_sync(conn);
 	}
 }
 
-static int toplev_post(u_io_fd *iofd)
+static void u_conn_check_ping(u_conn *conn)
 {
-	u_conn *conn = iofd->priv;
 	int timeout, tdelta;
+
+	if (!conn->auth || !conn->auth->cls)
+		return;
+
+	timeout = conn->auth->cls->timeout;
+	tdelta = NOW.tv_sec - conn->last;
+
+	if (tdelta > timeout / 2 && !(conn->flags & U_CONN_AWAIT_PONG)) {
+		u_conn_f(conn, "PING :%s", me.name);
+		conn->flags |= U_CONN_AWAIT_PONG;
+	}
+
+	if (tdelta > timeout)
+		u_conn_error(conn, "Ping timeout");
+}
+
+void u_conn_check_ping_all(void *priv)
+{
+	u_list *n, *tn;
+
+	sync_time();
+
+	U_LIST_EACH_SAFE(n, tn, &all_conns)
+		u_conn_check_ping(n->data);
+}
+
+static void u_conn_sync(u_conn *conn)
+{
+	bool need_recv, need_send;
+	mowgli_eventloop_t *ev = conn->poll->eventloop;
+
+	/* sync is determined by
+	     - existing error conditions
+	     - U_CONN_CLOSING flag
+	     - output buffer size
+	   if any of these things change, then the connection needs synced */
 
 	if (conn->error) {
 		if (conn->event)
@@ -379,33 +474,40 @@ static int toplev_post(u_io_fd *iofd)
 		conn->flags |= U_CONN_CLOSING;
 	}
 
-	iofd->recv = iofd->send = NULL;
+	need_recv = need_send = false;
 
 	if (!(conn->flags & U_CONN_CLOSING))
-		iofd->recv = toplev_recv;
+		need_recv = true;
 	if (conn->obuflen > 0)
-		iofd->send = toplev_send;
+		need_send = true;
 
-	if (!iofd->recv && !iofd->send) {
-		toplev_cleanup(iofd);
-		iofd->priv = NULL;
-		return -1;
+	u_log(LG_DEBUG, "  [%G] need_recv=%s need_send=%s", conn,
+	      need_recv ? "true" : "false",
+	      need_send ? "true" : "false");
+
+	mowgli_pollable_setselect(ev, conn->poll, MOWGLI_EVENTLOOP_IO_READ,
+	                          need_recv ? toplev_recv : NULL);
+	mowgli_pollable_setselect(ev, conn->poll, MOWGLI_EVENTLOOP_IO_WRITE,
+	                          need_send ? toplev_send : NULL);
+
+	if (!need_recv && !need_send) {
+		toplev_cleanup(conn);
+		return;
 	}
+}
 
-	if (!conn->auth || !conn->auth->cls)
-		return 0;
+static void u_conn_sync_all(void)
+{
+	u_list *n, *tn;
 
-	timeout = conn->auth->cls->timeout;
-	tdelta = NOW.tv_sec - conn->last;
+	u_log(LG_DEBUG, "sync all");
 
-	if (tdelta > timeout / 2 && !(conn->flags & U_CONN_AWAIT_PONG)) {
-		/* XXX: dispatch PING from toplev code? */
-		u_conn_f(conn, "PING :%s", me.name);
-		conn->flags |= U_CONN_AWAIT_PONG;
-	}
+	U_LIST_EACH_SAFE(n, tn, &all_conns)
+		u_conn_sync(n->data);
+}
 
-	if (tdelta > timeout)
-		u_conn_error(conn, "Ping timeout");
-
+int init_conn(void)
+{
+	u_list_init(&all_conns);
 	return 0;
 }

@@ -36,15 +36,17 @@ typedef struct u_conn_origin u_conn_origin;
 #include "auth.h"
 
 struct u_conn {
+	u_list *n;
+
 	uint flags;
 	int ctx;
 	u_auth *auth;
 	u_ts_t last;
 
-	u_io_fd *sock;
-	char ip[INET_ADDRSTRLEN];
+	mowgli_eventloop_pollable_t *poll;
+	char ip[INET6_ADDRSTRLEN];
 	char host[U_CONN_HOSTSIZE];
-	ushort dns_id;
+	mowgli_dns_query_t *dnsq;
 
 	u_linebuf ibuf;
 
@@ -60,7 +62,7 @@ struct u_conn {
 };
 
 struct u_conn_origin {
-	u_io_fd *sock;
+	mowgli_eventloop_pollable_t *poll;
 };
 
 extern void u_conn_init(u_conn*);
@@ -77,6 +79,11 @@ extern int u_conn_num(u_conn *conn, int num, ...);
 
 extern void u_conn_error(u_conn*, char*);
 
-extern u_conn_origin *u_conn_origin_create(u_io*, ulong addr, ushort port);
+extern u_conn_origin *u_conn_origin_create(mowgli_eventloop_t*, ulong addr,
+                                           ushort port);
+
+extern void u_conn_check_ping_all(void*);
+
+extern int init_conn(void);
 
 #endif

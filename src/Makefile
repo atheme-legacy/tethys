@@ -12,9 +12,7 @@ SRCS = numeric.c \
 	conn.c \
 	cookie.c \
 	crypto.c \
-	dns.c \
 	entity.c \
-	io.c \
 	linebuf.c \
 	list.c \
 	log.c \
