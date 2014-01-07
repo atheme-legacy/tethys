@@ -73,6 +73,10 @@ int reg_one(u_cmd *cmd)
 {
 	int i, err;
 
+	if (cmd->owner != NULL)
+		return -1;
+	cmd->owner = u_module_loading();
+
 	if (cmd->ctx >= 0)
 		return reg_one_real(cmd, cmd->ctx);
 
@@ -80,6 +84,7 @@ int reg_one(u_cmd *cmd)
 		if ((err = reg_one_real(cmd, i)) < 0)
 			return err;
 	}
+
 	return 0;
 }
 

@@ -6,21 +6,27 @@
 
 #include "ircd.h"
 
+struct conf_handler {
+	u_conf_handler_t *cb;
+	u_module *owner;
+};
+
 mowgli_patricia_t *u_conf_handlers = NULL;
 
 void do_cb(char *key, char *val)
 {
-	u_conf_handler_t *cb;
+	struct conf_handler *h;
 
 	u_log(LG_FINE, "conf: %s=%s", key, val);
 
-	cb = (u_conf_handler_t*)mowgli_patricia_retrieve(u_conf_handlers, key);
+	h = mowgli_patricia_retrieve(u_conf_handlers, key);
 
-	if (!cb) {
+	if (h == NULL) {
 		u_log(LG_WARN, "No config handler for %s=%s", key, val);
 		return;
 	}
-	cb(key, val);
+
+	h->cb(key, val);
 }
 
 void skip_to_eol(FILE *f)
@@ -149,7 +155,12 @@ void u_conf_read(FILE *f)
 
 void u_conf_add_handler(char *key, u_conf_handler_t *cb)
 {
-	mowgli_patricia_add(u_conf_handlers, key, (void*)cb);
+	struct conf_handler *h = malloc(sizeof(*h));
+
+	h->cb = cb;
+	h->owner = u_module_loading();
+
+	mowgli_patricia_add(u_conf_handlers, key, h);
 }
 
 int init_conf(void)

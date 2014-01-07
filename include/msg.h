@@ -35,6 +35,10 @@ struct u_cmd {
 	int ctx;
 	int (*cb)(u_conn* src, u_msg*);
 	int nargs;
+
+	/* users should not initialize the rest of this struct to
+	   anything */
+	u_module *owner;
 };
 
 extern int u_cmds_reg(u_cmd*); /* terminated with empty name */
