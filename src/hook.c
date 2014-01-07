@@ -19,6 +19,8 @@ static u_hook *add_hook(const char *name)
 	h->name = name; /* is this ok? */
 	mowgli_list_init(&h->callbacks);
 
+	mowgli_patricia_add(all_hooks, h->name, h);
+
 	return h;
 }
 
@@ -84,11 +86,14 @@ void u_hook_call(const char *name, void *arg)
 	u_hook *hook;
 	mowgli_node_t *n, *tn;
 
+	u_log(LG_DEBUG, "HOOK:CALL: %s", name);
+
 	if ((hook = mowgli_patricia_retrieve(all_hooks, name)) == NULL)
 		return;
 
 	MOWGLI_LIST_FOREACH_SAFE(n, tn, hook->callbacks.head) {
 		u_hook_cb *cb = n->data;
+		u_log(LG_DEBUG, "           %p(%p, %p)", cb->fn, cb->priv, arg);
 		cb->fn(cb->priv, arg);
 	}
 }
@@ -101,11 +106,14 @@ void *u_hook_first(const char *name, void *arg)
 	mowgli_node_t *n, *tn;
 	void *p;
 
+	u_log(LG_DEBUG, "HOOK:FIRST: %s", name);
+
 	if ((hook = mowgli_patricia_retrieve(all_hooks, name)) == NULL)
 		return NULL;
 
 	MOWGLI_LIST_FOREACH_SAFE(n, tn, hook->callbacks.head) {
 		u_hook_cb *cb = n->data;
+		u_log(LG_DEBUG, "            %p(%p, %p)", cb->fn, cb->priv, arg);
 		if ((p = cb->fn(cb->priv, arg)) != NULL)
 			return p;
 	}
@@ -123,6 +131,8 @@ mowgli_list_t *u_hook_all(const char *name, void *arg)
 	mowgli_list_t *list;
 	void *p;
 
+	u_log(LG_DEBUG, "HOOK:ALL: %s", name);
+
 	list = mowgli_list_create();
 
 	if ((hook = mowgli_patricia_retrieve(all_hooks, name)) == NULL)
@@ -130,6 +140,7 @@ mowgli_list_t *u_hook_all(const char *name, void *arg)
 
 	MOWGLI_LIST_FOREACH_SAFE(n, tn, hook->callbacks.head) {
 		u_hook_cb *cb = n->data;
+		u_log(LG_DEBUG, "          %p(%p, %p)", cb->fn, cb->priv, arg);
 		if ((p = cb->fn(cb->priv, arg)) != NULL)
 			mowgli_node_add(p, mowgli_node_create(), list);
 	}
