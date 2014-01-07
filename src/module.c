@@ -166,6 +166,11 @@ bool u_module_unload(const char *name)
 	if (!(m = u_module_find(name)))
 		return false;
 
+	if (m->flags & MODULE_PERMANENT) {
+		u_log(LG_ERROR, "Cannot unload permanent module %s", name);
+		return false;
+	}
+
 	u_log(LG_INFO, "Unloading module %s", name);
 
 	mowgli_patricia_delete(u_modules, m->info->name);
