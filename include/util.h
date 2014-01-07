@@ -50,6 +50,8 @@ extern char *name_to_id(char *nick_or_server);
 extern char *ref_to_name(char *ref);
 extern char *ref_to_id(char *ref);
 
+extern bool exists(const char *path);
+
 #include "conn.h"
 
 extern char *conn_name(u_conn*);

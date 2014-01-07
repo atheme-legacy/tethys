@@ -284,6 +284,12 @@ char *ref_to_id(char *s)
 	return name_to_id(s);
 }
 
+bool exists(const char *path)
+{
+	struct stat st;
+	return stat(path, &st) == 0;
+}
+
 char *conn_name(u_conn *conn)
 {
 	char *name = NULL;

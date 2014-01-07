@@ -17,6 +17,7 @@ SRCS = numeric.c \
 	log.c \
 	map.c \
 	mode.c \
+	module.c \
 	msg.c \
 	sendto.c \
 	server.c \
@@ -30,8 +31,9 @@ SRCS = numeric.c \
 include ../extra.mk
 include ../buildsys.mk
 
-CFLAGS += -Wall -I. -I../include
-LIBS += $(LDFLAGS_RPATH)
+CFLAGS += -Wall
+CPPFLAGS += -I. -I../include
+LDFLAGS += -rdynamic $(LDFLAGS_RPATH)
 
 CFLAGS += $(MOWGLI_CFLAGS)
 LIBS += $(MOWGLI_LIBS)

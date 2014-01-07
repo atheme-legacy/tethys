@@ -65,6 +65,7 @@ typedef unsigned long u_ts_t;
 #include "numeric.h"
 #include "version.h"
 #include "vsnf.h"
+#include "module.h"
 #include "crypto.h"
 #include "log.h"
 #include "map.h"

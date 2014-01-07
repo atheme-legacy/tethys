@@ -53,6 +53,7 @@ int init(void)
 	base_dns = mowgli_dns_create(base_ev, MOWGLI_DNS_TYPE_ASYNC);
 
 	INIT(init_util);
+	INIT(init_module);
 	INIT(init_conn);
 	INIT(init_upgrade);
 	INIT(init_conf);
@@ -67,6 +68,8 @@ int init(void)
 	COMMAND(c_reg);
 	COMMAND(c_server);
 	COMMAND(c_user);
+
+	u_module_load("core/hello");
 
 	mowgli_timer_add(base_ev, "ping", u_conn_check_ping_all, base_ev, 10);
 

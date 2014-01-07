@@ -9,8 +9,10 @@ AC_INIT([ircd-micro], [0.1], [https://github.com/aji/ircd-micro])
 AC_CONFIG_HEADER([include/autoconf.h])
 AC_PREFIX_DEFAULT(~/ircd)
 
-MOWGLI_CFLAGS="-I../libmowgli-2/src/libmowgli"
-MOWGLI_LIBS="-L../libmowgli-2/src/libmowgli -lmowgli-2"
+MOWGLI="libmowgli-2/src/libmowgli"
+
+MOWGLI_CFLAGS="-I../$MOWGLI -I../../$MOWGLI"
+MOWGLI_LIBS="-L../$MOWGLI -L../../$MOWGLI -lmowgli-2"
 LIBMOWGLI="libmowgli-2"
 AC_CONFIG_SUBDIRS([libmowgli-2])
 

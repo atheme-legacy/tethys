@@ -1,7 +1,7 @@
 *.swp
 *.un?
 *.o
-core*
+*.so
 src/ircd-micro
 src/numeric.c
 src/numeric.h

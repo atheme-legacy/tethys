@@ -2027,8 +2027,10 @@ ac_config_headers="$ac_config_headers include/autoconf.h"
 
 
 
-MOWGLI_CFLAGS="-I../libmowgli-2/src/libmowgli"
-MOWGLI_LIBS="-L../libmowgli-2/src/libmowgli -lmowgli-2"
+MOWGLI="libmowgli-2/src/libmowgli"
+
+MOWGLI_CFLAGS="-I../$MOWGLI -I../../$MOWGLI"
+MOWGLI_LIBS="-L../$MOWGLI -L../../$MOWGLI -lmowgli-2"
 LIBMOWGLI="libmowgli-2"
 ac_aux_dir=
 for ac_dir in "$srcdir" "$srcdir/.." "$srcdir/../.."; do
