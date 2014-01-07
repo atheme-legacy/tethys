@@ -35,6 +35,9 @@ BUILDSYS_PROG_IMPLIB
 BUILDSYS_INIT
 BUILDSYS_TOUCH_DEPS
 
+echo "touching numeric.h"
+touch src/numeric.h
+
 AC_CONFIG_FILES([buildsys.mk extra.mk])
 
 AC_OUTPUT

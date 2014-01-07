@@ -1,5 +1,4 @@
 PROG = ircd-micro
-EXT_DEPS = numeric.h
 SRCS = numeric.c \
 	auth.c \
 	c_generic.c \
@@ -28,6 +27,9 @@ SRCS = numeric.c \
 	version.c \
 	vsnf.c \
 	main.c
+DISTCLEAN = numeric.c numeric.h
+
+build: all
 
 include ../extra.mk
 include ../buildsys.mk
@@ -39,9 +41,10 @@ LDFLAGS += -rdynamic $(LDFLAGS_RPATH)
 CFLAGS += $(MOWGLI_CFLAGS)
 LIBS += $(MOWGLI_LIBS)
 
-build: all
-
 numeric.h numeric.c: numeric.tab
+	@echo "Creating numeric.[ch]"
 	awk -f numeric.awk < numeric.tab
+
 version.c: version.sh
+	@echo "Creating version.c"
 	sh version.sh

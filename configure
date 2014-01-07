@@ -3819,6 +3819,9 @@ fi
 	done
 
 
+echo "touching numeric.h"
+touch src/numeric.h
+
 ac_config_files="$ac_config_files buildsys.mk extra.mk"
 
 
