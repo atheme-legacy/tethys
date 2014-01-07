@@ -98,6 +98,8 @@ static const char *module_load(u_module **mp, const char *name)
 
 	m->flags |= MODULE_LOADED;
 
+	u_hook_call(HOOK_MODULE_LOAD, m);
+
 	*mp = m;
 	return NULL;
 
@@ -111,6 +113,8 @@ fail:
 
 static void module_unload(u_module *m)
 {
+	u_hook_call(HOOK_MODULE_UNLOAD, m);
+
 	if (m->info->deinit)
 		m->info->deinit(m);
 

@@ -13,6 +13,9 @@
 #define MODULE_LOADED       0x00000001
 #define MODULE_PERMANENT    0x00000002
 
+#define HOOK_MODULE_LOAD    "module:load"
+#define HOOK_MODULE_UNLOAD  "module:unload"
+
 typedef struct u_module u_module;
 typedef struct u_module_info u_module_info;
 
