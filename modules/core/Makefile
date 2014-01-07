@@ -1,6 +1,7 @@
 MODULE = core
 
-SRCS = hello.c
+SRCS = hello.c \
+       c_42.c
 
 include ../../extra.mk
 include ../../buildsys.mk

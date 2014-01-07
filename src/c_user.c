@@ -593,14 +593,6 @@ static int m_nick(u_conn *conn, u_msg *msg)
 	return 0;
 }
 
-static int m_42(u_conn *conn, u_msg *msg)
-{
-	u_user *u = conn->priv;
-	u_conn_f(conn, ":%S NOTICE %U :The Answer to Life, the Universe, and %s",
-	         &me, u, (u->flags & UMODE_OPER) ? "matthew" : "Everything");
-	return 0;
-}
-
 static void stats_o_cb(u_map *map, char *k, u_oper *o, u_user *u)
 {
 	char *auth = o->authname[0] ? o->authname : "<any>";
@@ -847,7 +839,6 @@ u_cmd c_user[] = {
 	{ "OPER",      CTX_USER, m_oper,    2 },
 	{ "LIST",      CTX_USER, m_list,    0 },
 	{ "NICK",      CTX_USER, m_nick,    1 },
-	{ "42",        CTX_USER, m_42,      0 },
 	{ "STATS",     CTX_USER, m_stats,   1 },
 	{ "MKPASS",    CTX_USER, m_mkpass,  1 },
 	{ "ADMIN",     CTX_USER, m_admin,   0 },
