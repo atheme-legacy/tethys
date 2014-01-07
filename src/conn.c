@@ -6,7 +6,7 @@
 
 #include "ircd.h"
 
-static u_list all_conns;
+static mowgli_list_t all_conns;
 
 static void origin_rdns();
 static void origin_recv(mowgli_eventloop_t *ev, mowgli_eventloop_io_t *io,
@@ -49,12 +49,12 @@ void u_conn_init(u_conn *conn)
 	conn->priv = NULL;
 	conn->pass = NULL;
 
-	conn->n = u_list_add(&all_conns, conn);
+	mowgli_node_add(conn, &conn->n, &all_conns);
 }
 
 void u_conn_cleanup(u_conn *conn)
 {
-	u_list_del_n(&all_conns, conn->n);
+	mowgli_node_delete(&conn->n, &all_conns);
 	if (conn->dnsq)
 		mowgli_dns_delete_query(base_dns, conn->dnsq);
 	if (conn->error)
@@ -447,11 +447,11 @@ static void u_conn_check_ping(u_conn *conn)
 
 void u_conn_check_ping_all(void *priv)
 {
-	u_list *n, *tn;
+	mowgli_node_t *n, *tn;
 
 	sync_time();
 
-	U_LIST_EACH_SAFE(n, tn, &all_conns)
+	MOWGLI_LIST_FOREACH_SAFE(n, tn, all_conns.head)
 		u_conn_check_ping(n->data);
 }
 
@@ -503,16 +503,16 @@ static void u_conn_sync(u_conn *conn)
 
 static void u_conn_sync_all(void)
 {
-	u_list *n, *tn;
+	mowgli_node_t *n, *tn;
 
 	u_log(LG_DEBUG, "sync all");
 
-	U_LIST_EACH_SAFE(n, tn, &all_conns)
+	MOWGLI_LIST_FOREACH_SAFE(n, tn, all_conns.head)
 		u_conn_sync(n->data);
 }
 
 int init_conn(void)
 {
-	u_list_init(&all_conns);
+	mowgli_list_init(&all_conns);
 	return 0;
 }

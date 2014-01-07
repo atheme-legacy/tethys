@@ -18,7 +18,7 @@ struct u_map {
 	uint flags;
 	u_map_n *root;
 	uint size;
-	u_list pending;
+	mowgli_list_t pending;
 };
 
 typedef void (u_map_cb_t)(u_map*, void *k, void *v, void *priv);

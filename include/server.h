@@ -59,7 +59,7 @@ extern mowgli_patricia_t *servers_by_sid;
 extern mowgli_patricia_t *servers_by_name;
 
 extern u_server me;
-extern u_list my_motd;
+extern mowgli_list_t my_motd;
 extern char my_net_name[MAXNETNAME+1];
 extern char my_admin_loc1[MAXADMIN+1];
 extern char my_admin_loc2[MAXADMIN+1];

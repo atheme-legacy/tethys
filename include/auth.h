@@ -31,7 +31,7 @@ struct u_auth {
 	u_class *cls;
 	u_cidr cidr;
 	char pass[MAXPASSWORD+1];
-	u_list *n;
+	mowgli_node_t n;
 };
 
 struct u_oper {
@@ -48,7 +48,7 @@ struct u_link {
 	char sendpass[MAXPASSWORD+1];
 	char classname[MAXCLASSNAME+1];
 	u_class *cls;
-	u_list *n;
+	mowgli_node_t n;
 };
 
 extern u_map *all_classes;

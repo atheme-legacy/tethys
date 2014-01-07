@@ -118,7 +118,8 @@ static int cb_list(u_modes *m, int on, char *arg)
 {
 	u_chan *c = m->target;
 	u_user *u = m->setter;
-	u_list *list, *n;
+	mowgli_list_t *list;
+	mowgli_node_t *n;
 	u_chanban *ban;
 	char *mask;
 
@@ -131,22 +132,23 @@ static int cb_list(u_modes *m, int on, char *arg)
 	if (cm_deny(m))
 		return 1;
 
-	list = (u_list*)memberp(c, m->info->data);
+	list = (mowgli_list_t*)memberp(c, m->info->data);
 	mask = full_hostmask(arg);
 
-	U_LIST_EACH(n, list) {
+	MOWGLI_LIST_FOREACH(n, list->head) {
 		ban = n->data;
 		if (streq(ban->mask, mask)) {
 			if (!on) {
 				u_mode_put(m, on, m->info->ch, " %s", ban->mask);
-				free(u_list_del_n(list, n));
+				mowgli_node_delete(&ban->n, list);
+				free(ban);
 			}
 			return 1;
 		}
 	}
 
 	if (on) {
-		if (u_list_size(list) >= MAXBANLIST) {
+		if (mowgli_list_size(list) >= MAXBANLIST) {
 			u_log(LG_VERBOSE, "%C +%c full, not adding %s",
 		              c, m->info->ch, mask);
 			u_user_num(u, ERR_BANLISTFULL, c, mask);
@@ -160,7 +162,7 @@ static int cb_list(u_modes *m, int on, char *arg)
 		ban->time = NOW.tv_sec;
 
 		u_mode_put(m, on, m->info->ch, " %s", mask);
-		u_list_add(list, ban);
+		mowgli_node_add(ban, &ban->n, list);
 	}
 
 	return 1;
@@ -321,10 +323,10 @@ u_chan *u_chan_get_or_create(char *name)
 	chan->mode = cmode_default;
 	u_cookie_reset(&chan->ck_flags);
 	chan->members = u_map_new(0);
-	u_list_init(&chan->ban);
-	u_list_init(&chan->quiet);
-	u_list_init(&chan->banex);
-	u_list_init(&chan->invex);
+	mowgli_list_init(&chan->ban);
+	mowgli_list_init(&chan->quiet);
+	mowgli_list_init(&chan->banex);
+	mowgli_list_init(&chan->invex);
 	chan->invites = u_map_new(0);
 	chan->forward = NULL;
 	chan->key = NULL;
@@ -335,13 +337,13 @@ u_chan *u_chan_get_or_create(char *name)
 	return chan;
 }
 
-static void drop_list(u_list *list)
+static void drop_list(mowgli_list_t *list)
 {
-	u_list *n, *tn;
+	mowgli_node_t *n, *tn;
 
-	U_LIST_EACH_SAFE(n, tn, list) {
+	MOWGLI_LIST_FOREACH_SAFE(n, tn, list->head) {
+		mowgli_node_delete(n, list);
 		free(n->data);
-		u_list_del_n(list, n);
 	}
 }
 
@@ -467,9 +469,9 @@ int u_chan_send_names(u_chan *c, u_user *u)
 	return 0;
 }
 
-int u_chan_send_list(u_chan *c, u_user *u, u_list *list)
+int u_chan_send_list(u_chan *c, u_user *u, mowgli_list_t *list)
 {
-	u_list *n;
+	mowgli_node_t *n;
 	u_chanban *ban;
 	int entry, end;
 
@@ -488,7 +490,7 @@ int u_chan_send_list(u_chan *c, u_user *u, u_list *list)
 		end = RPL_ENDOFBANLIST;
 	}
 
-	U_LIST_EACH(n, list) {
+	MOWGLI_LIST_FOREACH(n, list->head) {
 		ban = n->data;
 		u_user_num(u, entry, c, ban->mask, ban->setter, ban->time);
 	}
@@ -642,12 +644,12 @@ static int matches_ban(u_chan *c, u_user *u, char *mask, char *host)
 	return match(mask, host);
 }
 
-static int is_in_list(u_chan *c, u_user *u, char *host, u_list *list)
+static int is_in_list(u_chan *c, u_user *u, char *host, mowgli_list_t *list)
 {
-	u_list *n;
+	mowgli_node_t *n;
 	u_chanban *ban;
 
-	U_LIST_EACH(n, list) {
+	MOWGLI_LIST_FOREACH(n, list->head) {
 		ban = n->data;
 		if (matches_ban(c, u, ban->mask, host))
 			return 1;

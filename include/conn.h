@@ -37,7 +37,7 @@ typedef struct u_conn_origin u_conn_origin;
 #include "auth.h"
 
 struct u_conn {
-	u_list *n;
+	mowgli_node_t n;
 
 	uint flags;
 	int ctx;

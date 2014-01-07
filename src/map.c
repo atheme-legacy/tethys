@@ -100,27 +100,27 @@ static void rb_delete(u_map *map, u_map_n *n);
 
 static void clear_pending(u_map *map)
 {
-	u_list_init(&map->pending);
+	mowgli_list_init(&map->pending);
 }
 
 static void delete_pending(u_map *map)
 {
-	u_list *cur, *tn;
+	mowgli_node_t *cur, *tn;
 	u_map_n *n;
 
-	U_LIST_EACH_SAFE(cur, tn, &map->pending) {
+	MOWGLI_LIST_FOREACH_SAFE(cur, tn, map->pending.head) {
 		n = dumb_fetch(map, cur->data);
 		u_log(LG_FINE, "DEL PENDING %p (n=%p)", cur->data, n);
 		if (n != NULL)
 			rb_delete(map, n);
-		u_list_del_n(&map->pending, cur);
+		mowgli_list_delete(cur, &map->pending);
 	}
 }
 
 static void add_pending(u_map *map, u_map_n *n)
 {
 	u_log(LG_FINE, "ADD PENDING %p (n=%p)", n->key, n);
-	u_list_add(&map->pending, n->key);
+	mowgli_list_add(&map->pending, n->key);
 }
 
 void u_map_each(u_map *map, u_map_cb_t *cb, void *priv)

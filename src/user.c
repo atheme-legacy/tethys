@@ -400,26 +400,29 @@ void u_user_welcome(u_user_local *ul)
 
 void u_user_send_motd(u_user_local *ul)
 {
-	u_list *n;
+	mowgli_node_t *n;
 	u_user *u = USER(ul);
 
-	if (u_list_is_empty(&my_motd)) {
+	if (mowgli_list_size(&my_motd) == 0) {
 		u_user_num(u, ERR_NOMOTD);
 		return;
 	}
 
 	u_user_num(u, RPL_MOTDSTART, me.name);
-	U_LIST_EACH(n, &my_motd)
+	MOWGLI_LIST_FOREACH(n, my_motd.head)
 		u_user_num(u, RPL_MOTD, n->data);
 	u_user_num(u, RPL_ENDOFMOTD);
 }
 
-static int is_in_list(char *host, u_list *list)
+static int is_in_list(char *host, mowgli_list_t *list)
 {
-	u_list *n;
+	mowgli_node_t *n;
 	u_chanban *ban;
 
-	U_LIST_EACH(n, list) {
+	if (!host || !list)
+		return 0;
+
+	MOWGLI_LIST_FOREACH(n, list->head) {
 		ban = n->data;
 		if (match(ban->mask, host))
 			return 1;
@@ -428,7 +431,7 @@ static int is_in_list(char *host, u_list *list)
 	return 0;
 }
 
-int u_user_in_list(u_user *u, u_list *list)
+int u_user_in_list(u_user *u, mowgli_list_t *list)
 {
 	char buf[512];
 	snf(FMT_USER, buf, 512, "%H", u);

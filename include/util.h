@@ -61,4 +61,29 @@ extern int is_valid_sid();
 
 extern int init_util();
 
+static inline void mowgli_list_init(mowgli_list_t *list)
+{
+	memset(list, 0, sizeof(*list));
+}
+
+static inline mowgli_node_t *mowgli_list_add(mowgli_list_t *list, void *data)
+{
+	mowgli_node_t *n = mowgli_node_create();
+	mowgli_node_add(data, n, list);
+	return n;
+}
+
+static inline void *mowgli_list_delete(mowgli_node_t *n, mowgli_list_t *list)
+{
+	void *d = n->data;
+	mowgli_node_delete(n, list);
+	free(n);
+	return d;
+}
+
+static inline int mowgli_list_size(mowgli_list_t *list)
+{
+	return list->count;
+}
+
 #endif

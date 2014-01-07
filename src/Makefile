@@ -14,7 +14,6 @@ SRCS = numeric.c \
 	crypto.c \
 	entity.c \
 	linebuf.c \
-	list.c \
 	log.c \
 	map.c \
 	mode.c \

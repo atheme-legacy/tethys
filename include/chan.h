@@ -43,7 +43,7 @@ struct u_chan {
 	uint mode;
 	u_cookie ck_flags;
 	u_map *members;
-	u_list ban, quiet, banex, invex;
+	mowgli_list_t ban, quiet, banex, invex;
 	u_map *invites;
 	char *forward, *key;
 	int limit;
@@ -60,6 +60,7 @@ struct u_chanban {
 	char mask[256];
 	char setter[256];
 	u_ts_t time;
+	mowgli_node_t n;
 };
 
 extern mowgli_patricia_t *all_chans;
@@ -75,7 +76,7 @@ extern char *u_chan_modes(u_chan*, int un_chan);
 
 extern int u_chan_send_topic(u_chan*, u_user*);
 extern int u_chan_send_names(u_chan*, u_user*);
-extern int u_chan_send_list(u_chan*, u_user*, u_list*);
+extern int u_chan_send_list(u_chan*, u_user*, mowgli_list_t*);
 
 extern void u_add_invite(u_chan*, u_user*);
 extern void u_del_invite(u_chan*, u_user*);

@@ -12,7 +12,7 @@ typedef struct u_udb u_udb;
 typedef void (u_udb_save_hook_t)(u_udb*);
 typedef void (u_udb_load_hook_t)(u_udb*);
 
-extern u_list *u_udb_save_hooks;
+extern mowgli_list_t *u_udb_save_hooks;
 extern mowgli_patricia_t *u_udb_load_hooks;
 
 /* save functions: */

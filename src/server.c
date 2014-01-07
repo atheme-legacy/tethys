@@ -10,7 +10,7 @@ mowgli_patricia_t *servers_by_sid;
 mowgli_patricia_t *servers_by_name;
 
 u_server me;
-u_list my_motd;
+mowgli_list_t my_motd;
 char my_net_name[MAXNETNAME+1];
 char my_admin_loc1[MAXADMIN+1] = "-";
 char my_admin_loc2[MAXADMIN+1] = "-";
@@ -65,7 +65,7 @@ void load_motd(char *key, char *val)
 		p = strchr(s, '\n');
 		if (p) *p = '\0';
 		u_log(LG_DEBUG, ":- %s", s);
-		u_list_add(&my_motd, strdup(s));
+		mowgli_list_add(&my_motd, strdup(s));
 	}
 
 	fclose(f);
@@ -485,7 +485,7 @@ int init_server(void)
 	mowgli_patricia_add(servers_by_name, me.name, &me);
 	mowgli_patricia_add(servers_by_sid, me.sid, &me);
 
-	u_list_init(&my_motd);
+	mowgli_list_init(&my_motd);
 
 	u_strlcpy(my_net_name, "MicroIRC", MAXNETNAME+1);
 

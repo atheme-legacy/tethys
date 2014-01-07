@@ -22,20 +22,20 @@ u_map *all_auths;
 u_map *all_opers;
 u_map *all_links;
 
-static u_list auth_list;
-static u_list link_list;
+static mowgli_list_t auth_list;
+static mowgli_list_t link_list;
 
 u_auth *u_find_auth(u_conn *conn)
 {
-	u_list *n;
+	mowgli_node_t *n;
 	u_auth *auth;
 
-	if (u_list_size(&auth_list) == 0) {
+	if (mowgli_list_size(&auth_list) == 0) {
 		u_log(LG_WARN, msg_noauthblocks);
 		return &auth_default;
 	}
 
-	U_LIST_EACH(n, &auth_list) {
+	MOWGLI_LIST_FOREACH(n, auth_list.head) {
 		auth = n->data;
 		if (!u_cidr_match(&auth->cidr, conn->ip))
 			continue;
@@ -86,15 +86,15 @@ u_oper *u_find_oper(u_auth *auth, char *name, char *pass)
 
 u_link *u_find_link(u_conn *conn)
 {
-	u_list *n;
+	mowgli_node_t *n;
 	u_link *link;
 
-	if (u_list_size(&link_list) == 0) {
+	if (mowgli_list_size(&link_list) == 0) {
 		u_log(LG_WARN, msg_nolinkblocks);
 		return NULL;
 	}
 
-	U_LIST_EACH(n, &link_list) {
+	MOWGLI_LIST_FOREACH(n, link_list.head) {
 		link = n->data;
 
 		if (!streq(link->host, conn->ip))
@@ -158,7 +158,7 @@ void conf_auth(char *key, char *val)
 	u_strlcpy(cur_auth->name, val, MAXAUTHNAME+1);
 
 	u_map_set(all_auths, val, cur_auth);
-	cur_auth->n = u_list_add(&auth_list, cur_auth);
+	mowgli_node_add(cur_auth, &cur_auth->n, &auth_list);
 }
 
 void conf_auth_class(char *key, char *val)
@@ -215,7 +215,7 @@ void conf_link(char *key, char *val)
 	u_strlcpy(cur_link->name, val, MAXSERVERNAME+1);
 
 	u_map_set(all_links, val, cur_link);
-	cur_link->n = u_list_add(&link_list, cur_link);
+	mowgli_node_add(cur_link, &cur_link->n, &link_list);
 }
 
 void conf_link_host(char *key, char *val)
@@ -252,8 +252,8 @@ int init_auth(void)
 	if (!all_classes || !all_auths || !all_opers || !all_links)
 		return -1;
 
-	u_list_init(&auth_list);
-	u_list_init(&link_list);
+	mowgli_list_init(&auth_list);
+	mowgli_list_init(&link_list);
 
 	u_conf_add_handler("class", conf_class);
 	u_conf_add_handler("class.timeout", conf_class_timeout);
