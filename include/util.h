@@ -79,7 +79,7 @@ static inline void *mowgli_list_delete(mowgli_node_t *n, mowgli_list_t *list)
 {
 	void *d = n->data;
 	mowgli_node_delete(n, list);
-	free(n);
+	mowgli_node_free(n);
 	return d;
 }
 
