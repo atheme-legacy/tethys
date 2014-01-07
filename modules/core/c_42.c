@@ -21,13 +21,7 @@ u_cmd c_42[] = {
 
 int c_42_init(u_module *m)
 {
-	u_log(LG_DEBUG, "%s initalizing", m->info->name);
 	u_cmds_reg(c_42);
-}
-
-void c_42_deinit(u_module *m)
-{
-	u_log(LG_DEBUG, "%s deinitializing", m->info->name);
 }
 
 MICRO_MODULE_V1(
@@ -35,5 +29,5 @@ MICRO_MODULE_V1(
 	"Example command module",
 
 	c_42_init,
-	c_42_deinit
+	NULL
 );
