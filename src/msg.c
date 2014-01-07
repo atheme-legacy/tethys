@@ -60,7 +60,7 @@ int u_msg_parse(u_msg *msg, char *s)
 
 static mowgli_patricia_t *commands[CTX_MAX];
 
-int reg_one_real(u_cmd *cmd, int ctx)
+static int reg_one_real(u_cmd *cmd, int ctx)
 {
 	if (mowgli_patricia_retrieve(commands[ctx], cmd->name))
 		return -1;
@@ -69,7 +69,7 @@ int reg_one_real(u_cmd *cmd, int ctx)
 	return 0;
 }
 
-int reg_one(u_cmd *cmd)
+static int reg_one(u_cmd *cmd)
 {
 	int i, err;
 
@@ -96,6 +96,24 @@ int u_cmds_reg(u_cmd *cmds)
 			return err;
 	}
 	return 0;
+}
+
+static void *on_module_unload(void *unused, void *m)
+{
+	mowgli_patricia_iteration_state_t state;
+	u_cmd *cmd;
+	int i;
+
+	for (i=0; i<CTX_MAX; i++) {
+		MOWGLI_PATRICIA_FOREACH(cmd, &state, commands[i]) {
+			if (cmd->owner != m)
+				continue;
+
+			mowgli_patricia_delete(commands[i], cmd->name);
+		}
+	}
+
+	return NULL;
 }
 
 void u_cmd_invoke(u_conn *conn, u_msg *msg)
@@ -147,6 +165,8 @@ void u_cmd_invoke(u_conn *conn, u_msg *msg)
 int init_cmd(void)
 {
 	int i;
+
+	u_hook_add(HOOK_MODULE_UNLOAD, on_module_unload, NULL);
 
 	for (i=0; i<CTX_MAX; i++) {
 		if ((commands[i] = mowgli_patricia_create(NULL)) == NULL)

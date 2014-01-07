@@ -7,6 +7,7 @@
 #include "ircd.h"
 
 struct conf_handler {
+	const char *key;
 	u_conf_handler_t *cb;
 	u_module *owner;
 };
@@ -157,14 +158,34 @@ void u_conf_add_handler(char *key, u_conf_handler_t *cb)
 {
 	struct conf_handler *h = malloc(sizeof(*h));
 
+	h->key = key;
 	h->cb = cb;
 	h->owner = u_module_loading();
 
 	mowgli_patricia_add(u_conf_handlers, key, h);
 }
 
+static void *on_module_unload(void *unused, void *m)
+{
+	mowgli_patricia_iteration_state_t state;
+	struct conf_handler *h;
+
+	MOWGLI_PATRICIA_FOREACH(h, &state, u_conf_handlers) {
+		if (h->owner != m)
+			continue;
+
+		mowgli_patricia_delete(u_conf_handlers, h->key);
+		free(h);
+	}
+
+	return NULL;
+}
+
 int init_conf(void)
 {
+	u_hook_add(HOOK_MODULE_UNLOAD, on_module_unload, NULL);
+
 	u_conf_handlers = mowgli_patricia_create(ascii_canonize);
+
 	return u_conf_handlers ? 0 : -1;
 }

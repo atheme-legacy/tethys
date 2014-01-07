@@ -71,6 +71,7 @@ int init(void)
 	COMMAND(c_user);
 
 	u_module_load("core/hello");
+	u_module_unload("core/hello");
 
 	mowgli_timer_add(base_ev, "ping", u_conn_check_ping_all, base_ev, 10);
 
