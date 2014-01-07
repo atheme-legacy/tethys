@@ -54,6 +54,7 @@ int init(void)
 
 	INIT(init_util);
 	INIT(init_module);
+	INIT(init_hook);
 	INIT(init_conn);
 	INIT(init_upgrade);
 	INIT(init_conf);
