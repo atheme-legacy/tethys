@@ -208,10 +208,68 @@ static u_map_n *leftmost_subchild(u_map_n *n)
 	return n;
 }
 
-static u_map_n *dumb_delete(u_map *map, u_map_n *n)
+static u_map_n *grandparent(u_map_n *n)
+{
+	return n && n->parent ? n->parent->parent : NULL;
+}
+
+static u_map_n *uncle(u_map_n *n)
+{
+	u_map_n *g = grandparent(n);
+	if (g == NULL)
+		return NULL;
+	return n->parent == g->child[LEFT] ? g->child[RIGHT] : g->child[LEFT];
+}
+
+static u_map_n *sibling(u_map_n *n)
+{
+	if (n->parent == NULL)
+		return NULL;
+
+	if (n == n->parent->child[LEFT])
+		return n->parent->child[RIGHT];
+	else
+		return n->parent->child[LEFT];
+}
+
+static void rotate(u_map *map, u_map_n *n, int dir)
+{
+	u_map_n *m, *b;
+
+	if ((m = n->child[!dir]) == NULL) {
+		u_log(LG_ERROR, "map: Can't rotate %s!",
+		      dir == LEFT ? "left" : "right");
+		return;
+	}
+
+	b = m ? m->child[dir] : NULL;
+
+	if (n->parent) {
+		if (n->parent->child[LEFT] == n)
+			n->parent->child[LEFT] = m;
+		else
+			n->parent->child[RIGHT] = m;
+	}
+
+	m->parent = n->parent;
+	n->parent = m;
+
+	m->child[dir] = n;
+	n->child[!dir] = b;
+
+	if (b)
+		b->parent = n;
+
+	if (map->root == n)
+		map->root = m;
+}
+
+static u_map_n *dumb_delete(u_map *map, u_map_n *n, u_map_n **child)
 {
 	int idx;
 	u_map_n *tgt;
+
+	*child = NULL;
 
 	if (n->child[LEFT] == NULL && n->child[RIGHT] == NULL) {
 		if (n->parent == NULL) {
@@ -227,6 +285,7 @@ static u_map_n *dumb_delete(u_map *map, u_map_n *n)
 	} else if (n->child[LEFT] == NULL || n->child[RIGHT] == NULL) {
 		/* tgt = the non-null child */
 		tgt = n->child[n->child[LEFT] == NULL ? RIGHT : LEFT];
+		*child = tgt;
 
 		if (n->parent == NULL) {
 			map->root = tgt;
@@ -252,21 +311,91 @@ static u_map_n *dumb_delete(u_map *map, u_map_n *n)
 		free(n->key);
 	n->key = tgt->key;
 	tgt->key = NULL;
-	return dumb_delete(map, tgt);
+	return dumb_delete(map, tgt, child);
 }
 
 static void rb_delete(u_map *map, u_map_n *n)
 {
+	u_map_n *s, *m;
+
 	if (map->flags & MAP_STRING_KEYS)
 		u_log(LG_FINE, "MAP: %p RB-DEL %s", map, n->key);
 	else
 		u_log(LG_FINE, "MAP: %p RB-DEL %p", map, n->key);
 
-	n = dumb_delete(map, n);
+	m = dumb_delete(map, n, &n);
 
-	/* TODO: rb cases */
+case1:
+	if (m->color != BLACK || !n)
+		goto finish;
 
-	u_map_n_del(map, n);
+	if (n->color == RED) {
+		n->color = BLACK;
+		goto finish;
+	}
+
+	if (!n->parent)
+		goto finish;
+
+	s = sibling(n);
+	if (s->color == RED) {
+		n->parent->color = RED;
+		s->color = BLACK;
+		if (n == n->parent->child[RIGHT])
+			rotate(map, n->parent, LEFT);
+		else
+			rotate(map, n->parent, RIGHT);
+	}
+
+	s = sibling(n);
+	if (n->parent->color == BLACK &&
+	    s->color == BLACK &&
+	    s->child[LEFT]->color == BLACK &&
+	    s->child[RIGHT]->color == BLACK) {
+		s->color = RED;
+		n = n->parent;
+		goto case1;
+	}
+
+	if (n->parent->color == RED &&
+	    s->color == BLACK &&
+	    s->child[LEFT]->color == BLACK &&
+	    s->child[RIGHT]->color == BLACK) {
+		s->color = RED;
+		n->parent->color = BLACK;
+		goto finish;
+	}
+
+	if (s->color == BLACK) {
+		if (n == n->parent->child[LEFT] &&
+		    s->child[LEFT]->color == RED &&
+		    s->child[RIGHT]->color == BLACK) {
+			s->color = RED;
+			s->child[LEFT]->color = BLACK;
+			rotate(map, s, RIGHT);
+		} else if (n == n->parent->child[RIGHT] &&
+		    s->child[LEFT]->color == BLACK &&
+		    s->child[RIGHT]->color == RED) {
+			s->color = RED;
+			s->child[RIGHT]->color = BLACK;
+			rotate(map, s, LEFT);
+		}
+	}
+	s = sibling(n);
+
+	s->color = n->parent->color;
+	n->parent->color = BLACK;
+	if (n == n->parent->child[LEFT]) {
+		s->child[RIGHT]->color = BLACK;
+		rotate(map, n->parent, LEFT);
+	} else {
+		s->child[LEFT]->color = BLACK;
+		rotate(map, n->parent, RIGHT);
+	}
+
+finish:
+
+	u_map_n_del(map, m);
 }
 
 void *u_map_get(u_map *map, void *key)
@@ -278,6 +407,7 @@ void *u_map_get(u_map *map, void *key)
 void u_map_set(u_map *map, void *key, void *data)
 {
 	u_map_n *n = dumb_fetch(map, key);
+	u_map_n *u, *g;
 
 	if (map->flags & MAP_TRAVERSING)
 		abort();
@@ -292,7 +422,43 @@ void u_map_set(u_map *map, void *key, void *data)
 	n = u_map_n_new(map, key, data, RED);
 	dumb_insert(map, n);
 
-	/* TODO: rb cases */
+case1:
+	if (n->parent == NULL) {
+		n->color = BLACK;
+		goto finish;
+	}
+
+	if (n->parent->color == BLACK)
+		goto finish;
+
+	u = uncle(n);
+	if (u && u->color == RED) {
+		n->parent->color = BLACK;
+		u->color = BLACK;
+		n = grandparent(n);
+		n->color = RED;
+		goto case1;
+	}
+
+	g = grandparent(n);
+	if (n == n->parent->child[RIGHT] && n->parent == g->child[LEFT]) {
+		rotate(map, n->parent, LEFT);
+		n = n->child[LEFT];
+	} else if (n == n->parent->child[LEFT] && n->parent == g->child[RIGHT]) {
+		rotate(map, n->parent, RIGHT);
+		n = n->child[RIGHT];
+	}
+
+	g = grandparent(n);
+	n->parent->color = BLACK;
+	g->color = RED;
+	if (n == n->parent->child[LEFT])
+		rotate(map, g, RIGHT);
+	else
+		rotate(map, g, LEFT);
+finish:
+
+	return;
 }
 
 void *u_map_del(u_map *map, void *key)
@@ -338,7 +504,9 @@ static void map_dump_real(u_map *map, u_map_n *n, int depth)
 	}
 
 /*
-	too many compiler warnings to bother with this...
+	this section of code produces too many compiler warnings.
+	uncomment if you need to dump maps.
+
 	if (map->flags & MAP_STRING_KEYS) {
 		printf("\e[%sm%s=%d\e[0m[", n->color == RED ? "31;1" : "36;1",
 		       (char*)n->key, (long)n->data);
