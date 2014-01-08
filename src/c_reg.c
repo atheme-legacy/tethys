@@ -248,7 +248,8 @@ static int try_serv(u_conn *conn)
 
 	u_roster_f(R_SERVERS, conn, ":%S SID %s %d %s :%s", &me,
 	           sv->name, sv->hops, sv->sid, sv->desc);
-	u_server_burst(sv, link);
+	u_server_burst_1(sv, link);
+	u_server_burst_2(sv, link);
 	return 0;
 }
 

@@ -77,7 +77,8 @@ extern u_server *u_server_new_remote(u_server *parent, char *sid,
                                      char *name, char *desc);
 extern void u_server_unlink(u_server*);
 
-extern void u_server_burst(u_server*, u_link*);
+extern void u_server_burst_1(u_server*, u_link*);
+extern void u_server_burst_2(u_server*, u_link*);
 extern void u_server_eob(u_server*);
 
 extern int init_server(void);

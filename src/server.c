@@ -405,7 +405,7 @@ static int burst_chan(const char *key, void *_c, void *_conn)
 	return 0;
 }
 
-void u_server_burst(u_server *sv, u_link *link)
+void u_server_burst_1(u_server *sv, u_link *link)
 {
 	u_conn *conn = sv->conn;
 	char buf[512];
@@ -426,6 +426,21 @@ void u_server_burst(u_server *sv, u_link *link)
 	u_my_capabs(buf);
 	u_conn_f(conn, "CAPAB :%s", buf);
 	u_conn_f(conn, "SERVER %s 1 :%s", me.name, me.desc);
+}
+
+void u_server_burst_2(u_server *sv, u_link *link)
+{
+	u_conn *conn = sv->conn;
+
+	if (conn == NULL) {
+		u_log(LG_ERROR, "Attempted to burst to %S, which has no conn!", sv);
+		return;
+	}
+
+	if (sv->hops != 1) {
+		u_log(LG_ERROR, "Attempted to burst to %S, which is not local!", sv);
+		return;
+	}
 
 	u_conn_f(conn, "SVINFO 6 6 0 :%u", NOW.tv_sec);
 
