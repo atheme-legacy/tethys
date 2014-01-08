@@ -17,7 +17,7 @@ mowgli_eventloop_t *base_ev;
 mowgli_dns_t *base_dns;
 u_ts_t started;
 
-short opt_port = 6667;
+short opt_port = -1;
 
 int usage(char *argv0, int code)
 {
@@ -25,7 +25,6 @@ int usage(char *argv0, int code)
 	printf("Options:\n");
 	printf("  -v         Be verbose. Supply multiple times for more verbosity.\n");
 	printf("  -h         Print this help and exit\n");
-	printf("  -p PORT    The port to listen on for connections\n");
 	exit(code);
 }
 
@@ -55,9 +54,9 @@ int init(void)
 	INIT(init_util);
 	INIT(init_module);
 	INIT(init_hook);
+	INIT(init_conf);
 	INIT(init_conn);
 	INIT(init_upgrade);
-	INIT(init_conf);
 	INIT(init_auth);
 	INIT(init_user);
 	INIT(init_cmd);
@@ -75,6 +74,9 @@ int init(void)
 	u_module_load("core/c_42");
 
 	mowgli_timer_add(base_ev, "ping", u_conn_check_ping_all, base_ev, 10);
+
+	if (opt_port != -1 && !u_conn_origin_create(base_ev, INADDR_ANY, opt_port))
+		return -1;
 
 	f = fopen("etc/micro.conf", "r");
 	if (f == NULL) {
@@ -108,6 +110,8 @@ int main(int argc, char **argv)
 			usage(argv[0], 0);
 			break;
 		case 'p':
+			u_log(LG_WARN, "Use of -p is deprecated. Please use the"
+			      " config file to specify listeners");
 			opt_port = atoi(optarg);
 			break;
 		case '?':
@@ -118,12 +122,6 @@ int main(int argc, char **argv)
 
 	if (init() < 0) {
 		u_log(LG_ERROR, "Initialization failed");
-		return 1;
-	}
-
-	if (!u_conn_origin_create(base_ev, INADDR_ANY, opt_port)) {
-		u_log(LG_SEVERE, "Could not create listener on port %d. Bailing",
-		      opt_port);
 		return 1;
 	}
 

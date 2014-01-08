@@ -517,10 +517,66 @@ static void u_conn_sync(u_conn *conn)
 	conn->flags &= ~U_CONN_SYNCING;
 }
 
+static void *conf_end(void *unused, void *unused2)
+{
+	if (all_origs.count != 0)
+		return NULL;
+
+	u_log(LG_WARN, "No listeners! Opening one on 6667");
+	u_conn_origin_create(base_ev, INADDR_ANY, 6667);
+
+	return NULL;
+}
+
+static void conf_listen(char *key, char *val)
+{
+	ushort low, hi;
+	char buf[512];
+	char *s, *lows, *his;
+
+	snprintf(buf, 512, "%s", val);
+
+	lows = buf;
+	his = NULL;
+
+	if ((s = strstr(buf, "..")) || (s = strstr(buf, "-"))) {
+		*s++ = '\0';
+		while (*s && !isdigit(*s))
+			s++;
+		his = s;
+	}
+
+	low = atoi(lows);
+	hi = (his && *his) ? atoi(his) : low;
+
+	if (low == 0 || hi == 0) {
+		u_log(LG_ERROR, "%s: invalid listen range string", val);
+		return;
+	}
+
+	if (hi < low) {
+		u_log(LG_ERROR, "%u-%u: invalid listen range", low, hi);
+		return;
+	}
+
+	if (hi - low > 20) {
+		u_log(LG_ERROR, "%u-%u: listener range too large", low, hi);
+		return;
+	}
+
+	for (; low <= hi; low++) {
+		u_log(LG_DEBUG, "Listening on %u", low);
+		u_conn_origin_create(base_ev, INADDR_ANY, low);
+	}
+}
+
 int init_conn(void)
 {
 	mowgli_list_init(&all_conns);
 	mowgli_list_init(&all_origs);
+
+	u_hook_add(HOOK_CONF_END, conf_end, NULL);
+	u_conf_add_handler("listen", conf_listen);
 
 	return 0;
 }

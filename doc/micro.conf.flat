@@ -23,6 +23,8 @@ admin.loc1          "Alex Iadicicco"
 admin.loc2          "http://github.com/aji"
 admin.email         "yes@hello"
 
+listen              6665-6669
+
 class               users
 class.timeout       300
 

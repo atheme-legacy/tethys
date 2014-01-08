@@ -34,6 +34,13 @@ admin {
 }
 
 
+# listen - this is pretty straightforward. which
+# ports are we listening on? a range may also be
+# specified with low..hi, or low-hi
+
+listen 6665-6669
+
+
 # class{} - these blocks define connection
 # classes, which specify certain parameters and
 # limitations for connections
