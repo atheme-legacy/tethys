@@ -7,6 +7,7 @@
 #include "ircd.h"
 
 static mowgli_list_t all_conns;
+static mowgli_list_t all_origs;
 
 static void origin_rdns();
 static void origin_recv(mowgli_eventloop_t *ev, mowgli_eventloop_io_t *io,
@@ -244,6 +245,8 @@ u_conn_origin *u_conn_origin_create(mowgli_eventloop_t *ev, u_long addr,
 	mowgli_pollable_setselect(ev, orig->poll, MOWGLI_EVENTLOOP_IO_READ,
 	                          origin_recv);
 
+	mowgli_node_add(orig, &orig->n, &all_origs);
+
 	return orig;
 
 out_free:
@@ -252,6 +255,19 @@ out_close:
 	close(fd);
 out:
 	return NULL;
+}
+
+void u_conn_origin_destroy(u_conn_origin *orig)
+{
+	if (!orig || !orig->poll || !orig->poll->eventloop) {
+		u_log(LG_ERROR, "can't destroy origin %p", orig);
+		return;
+	}
+
+	close(orig->poll->fd);
+	mowgli_node_delete(&orig->n, &all_origs);
+	mowgli_pollable_destroy(orig->poll->eventloop, orig->poll);
+	free(orig);
 }
 
 static void dispatch_lines(u_conn *conn)
@@ -501,18 +517,10 @@ static void u_conn_sync(u_conn *conn)
 	conn->flags &= ~U_CONN_SYNCING;
 }
 
-static void u_conn_sync_all(void)
-{
-	mowgli_node_t *n, *tn;
-
-	u_log(LG_DEBUG, "sync all");
-
-	MOWGLI_LIST_FOREACH_SAFE(n, tn, all_conns.head)
-		u_conn_sync(n->data);
-}
-
 int init_conn(void)
 {
 	mowgli_list_init(&all_conns);
+	mowgli_list_init(&all_origs);
+
 	return 0;
 }

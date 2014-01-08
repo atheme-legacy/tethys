@@ -64,6 +64,7 @@ struct u_conn {
 
 struct u_conn_origin {
 	mowgli_eventloop_pollable_t *poll;
+	mowgli_node_t n;
 };
 
 extern void u_conn_init(u_conn*);
@@ -82,6 +83,7 @@ extern void u_conn_error(u_conn*, char*);
 
 extern u_conn_origin *u_conn_origin_create(mowgli_eventloop_t*, ulong addr,
                                            ushort port);
+extern void u_conn_origin_destroy(u_conn_origin *orig);
 
 extern void u_conn_check_ping_all(void*);
 
