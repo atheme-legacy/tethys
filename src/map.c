@@ -1,3 +1,11 @@
+/* ircd-micro, map.c -- AA tree
+   Copyright (C) 2013 Alex Iadicicco
+
+   This file is protected under the terms contained
+   in the COPYING file in the project root */
+
+/* Most of this implementation was taken from Wikipedia's page on AA trees */
+
 #include "ircd.h"
 
 #define LEFT 0
@@ -5,8 +13,8 @@
 
 struct u_map_n {
 	void *key, *data;
-	enum u_map_color { RED, BLACK } color;
-	u_map_n *parent, *child[2];
+	int level;
+	u_map_n *child[2];
 };
 
 static void n_key(u_map *map, u_map_n *n, void *k)
@@ -32,7 +40,21 @@ static int n_cmp(u_map *map, void *k1, void *k2)
 	return (long)k1 - (long)k2;
 }
 
-static u_map_n *u_map_n_new(u_map *map, void *key, void *data, int color)
+static void *n_clone(u_map *map, void *k)
+{
+	if (map->flags & MAP_STRING_KEYS)
+		return strdup(k);
+
+	return k;
+}
+
+static void n_free(u_map *map, void *k)
+{
+	if (map->flags & MAP_STRING_KEYS)
+		free(k);
+}
+
+static u_map_n *u_map_n_new(u_map *map, void *key, void *data, int level)
 {
 	u_map_n *n;
 
@@ -40,9 +62,8 @@ static u_map_n *u_map_n_new(u_map *map, void *key, void *data, int color)
 	n->key = NULL;
 	n_key(map, n, key);
 	n->data = data;
-	n->color = color;
+	n->level = level;
 
-	n->parent = NULL;
 	n->child[0] = n->child[1] = NULL;
 
 	return n;
@@ -70,33 +91,28 @@ u_map *u_map_new(int string_keys)
 	return map;
 }
 
+void u_map_free_n(u_map *map, u_map_n *n)
+{
+	if (!n)
+		return;
+
+	u_map_free_n(map, n->child[LEFT]);
+	u_map_free_n(map, n->child[RIGHT]);
+
+	u_map_n_del(map, n);
+}
+
 void u_map_free(u_map *map)
 {
 	u_map_n *n, *tn;
 
-	for (n=map->root; n; ) {
-		if (n->child[LEFT]) {
-			n = n->child[LEFT];
-			continue;
-		}
-
-		if (n->child[RIGHT]) {
-			n = n->child[RIGHT];
-			continue;
-		}
-
-		tn = n->parent;
-		if (tn != NULL)
-			tn->child[n == tn->child[LEFT] ? LEFT : RIGHT] = NULL;
-		u_map_n_del(map, n);
-		n = tn;
-	}
+	u_map_free_n(map, map->root);
 
 	free(map);
 }
 
 static u_map_n *dumb_fetch(u_map *map, void *key);
-static void rb_delete(u_map *map, u_map_n *n);
+static u_map_n *aa_delete(u_map *map, u_map_n *tree, void *key);
 
 static void clear_pending(u_map *map)
 {
@@ -109,53 +125,34 @@ static void delete_pending(u_map *map)
 	u_map_n *n;
 
 	MOWGLI_LIST_FOREACH_SAFE(cur, tn, map->pending.head) {
-		n = dumb_fetch(map, cur->data);
-		u_log(LG_FINE, "DEL PENDING %p (n=%p)", cur->data, n);
-		if (n != NULL)
-			rb_delete(map, n);
+		u_log(LG_FINE, "DEL PENDING %p", cur->data);
+		map->root = aa_delete(map, map->root, cur->data);
+		n_free(map, cur->data);
 		mowgli_list_delete(cur, &map->pending);
 	}
 }
 
-static void add_pending(u_map *map, u_map_n *n)
+static void add_pending(u_map *map, void *key)
 {
-	u_log(LG_FINE, "ADD PENDING %p (n=%p)", n->key, n);
-	mowgli_list_add(&map->pending, n->key);
+	u_log(LG_FINE, "ADD PENDING %p", key);
+	mowgli_list_add(&map->pending, n_clone(map, key));
+}
+
+static void u_map_each_n(u_map *map, u_map_n *n, u_map_cb_t *cb, void *priv)
+{
+	if (!n) return;
+
+	u_map_each_n(map, n->child[LEFT], cb, priv);
+	cb(map, n->key, n->data, priv);
+	u_map_each_n(map, n->child[RIGHT], cb, priv);
 }
 
 void u_map_each(u_map *map, u_map_cb_t *cb, void *priv)
 {
-	u_map_n *cur;
-	int idx;
-
-	if ((cur = map->root) == NULL)
-		return;
-
 	map->flags |= MAP_TRAVERSING;
 	clear_pending(map);
 
-try_left:
-	if (cur->child[LEFT] != NULL) {
-		cur = cur->child[LEFT];
-		goto try_left;
-	}
-
-loop_top:
-	cb(map, cur->key, cur->data, priv);
-
-	if (cur->child[RIGHT] != NULL) {
-		cur = cur->child[RIGHT];
-		goto try_left;
-	}
-
-	for (;;) {
-		if (cur->parent == NULL)
-			break;
-		idx = cur->parent->child[LEFT] == cur ? LEFT : RIGHT;
-		cur = cur->parent;
-		if (idx == LEFT)
-			goto loop_top;
-	}
+	u_map_each_n(map, map->root, cb, priv);
 
 	map->flags &= ~MAP_TRAVERSING;
 	delete_pending(map);
@@ -177,225 +174,130 @@ static u_map_n *dumb_fetch(u_map *map, void *key)
 	return n;
 }
 
-static void dumb_insert(u_map *map, u_map_n *n)
+static u_map_n *skew(u_map_n *n)
 {
-	u_map_n *cur;
-	int idx;
+	if (n == NULL)
+		return NULL;
 
-	if (map->root == NULL) {
-		map->root = n;
-		map->root->parent = NULL;
-		return;
+	if (n->child[LEFT] == NULL)
+		return n;
+
+	if (n->child[LEFT]->level == n->level) {
+		u_map_n *m = n->child[LEFT];
+		n->child[LEFT] = m->child[RIGHT];
+		m->child[RIGHT] = n;
+		return m;
 	}
 
-	cur = map->root;
-
-	for (;;) {
-		idx = n_cmp(map, cur->key, n->key) < 0 ? RIGHT : LEFT;
-		if (cur->child[idx] == NULL) {
-			cur->child[idx] = n;
-			n->parent = cur;
-			break;
-		}
-		cur = cur->child[idx];
-	}
-}
-
-static u_map_n *leftmost_subchild(u_map_n *n)
-{
-	while (n && n->child[LEFT])
-		n = n->child[LEFT];
 	return n;
 }
 
-static u_map_n *grandparent(u_map_n *n)
+static u_map_n *split(u_map_n *n)
 {
-	return n && n->parent ? n->parent->parent : NULL;
-}
-
-static u_map_n *uncle(u_map_n *n)
-{
-	u_map_n *g = grandparent(n);
-	if (g == NULL)
-		return NULL;
-	return n->parent == g->child[LEFT] ? g->child[RIGHT] : g->child[LEFT];
-}
-
-static u_map_n *sibling(u_map_n *n)
-{
-	if (n->parent == NULL)
+	if (n == NULL)
 		return NULL;
 
-	if (n == n->parent->child[LEFT])
-		return n->parent->child[RIGHT];
-	else
-		return n->parent->child[LEFT];
-}
-
-static void rotate(u_map *map, u_map_n *n, int dir)
-{
-	u_map_n *m, *b;
-
-	if ((m = n->child[!dir]) == NULL) {
-		u_log(LG_ERROR, "map: Can't rotate %s!",
-		      dir == LEFT ? "left" : "right");
-		return;
-	}
-
-	b = m ? m->child[dir] : NULL;
-
-	if (n->parent) {
-		if (n->parent->child[LEFT] == n)
-			n->parent->child[LEFT] = m;
-		else
-			n->parent->child[RIGHT] = m;
-	}
-
-	m->parent = n->parent;
-	n->parent = m;
-
-	m->child[dir] = n;
-	n->child[!dir] = b;
-
-	if (b)
-		b->parent = n;
-
-	if (map->root == n)
-		map->root = m;
-}
-
-static u_map_n *dumb_delete(u_map *map, u_map_n *n, u_map_n **child)
-{
-	int idx;
-	u_map_n *tgt;
-
-	*child = NULL;
-
-	if (n->child[LEFT] == NULL && n->child[RIGHT] == NULL) {
-		if (n->parent == NULL) {
-			/* we are the sole node, the root */
-			map->root = NULL;
-			return n;
-		}
-
-		idx = n->parent->child[LEFT] == n ? LEFT : RIGHT;
-		n->parent->child[idx] = NULL;
+	if (n->child[RIGHT] == NULL || n->child[RIGHT]->child[RIGHT] == NULL)
 		return n;
 
-	} else if (n->child[LEFT] == NULL || n->child[RIGHT] == NULL) {
-		/* tgt = the non-null child */
-		tgt = n->child[n->child[LEFT] == NULL ? RIGHT : LEFT];
-		*child = tgt;
-
-		if (n->parent == NULL) {
-			map->root = tgt;
-			tgt->parent = NULL;
-			return n;
-		}
-
-		idx = n->parent->child[LEFT] == n ? LEFT : RIGHT;
-
-		n->parent->child[idx] = tgt;
-		tgt->parent = n->parent;
-		return n;
+	if (n->level == n->child[RIGHT]->child[RIGHT]->level) {
+		u_map_n *m = n->child[RIGHT];
+		n->child[RIGHT] = m->child[LEFT];
+		m->child[LEFT] = n;
+		m->level++;
+		return m;
 	}
 
-	/* else, both non-null */
-
-	/* the successor will have at most one non-null child, so this
-	   will only recurse once */
-	tgt = leftmost_subchild(n->child[RIGHT]);
-	n->data = tgt->data;
-	/* we don't use n_key here, since this is faster */
-	if ((map->flags & MAP_STRING_KEYS) && n->key)
-		free(n->key);
-	n->key = tgt->key;
-	tgt->key = NULL;
-	return dumb_delete(map, tgt, child);
+	return n;
 }
 
-static void rb_delete(u_map *map, u_map_n *n)
+static u_map_n *next(u_map_n *n, int dir)
 {
-	u_map_n *s, *m;
+	n = n->child[dir];
+	while (n && n->child[!dir])
+		n = n->child[!dir];
+	return n;
+}
 
-	if (map->flags & MAP_STRING_KEYS)
-		u_log(LG_FINE, "MAP: %p RB-DEL %s", map, n->key);
-	else
-		u_log(LG_FINE, "MAP: %p RB-DEL %p", map, n->key);
+static void decrease_level(u_map_n *tree)
+{
+	int should_be;
+	u_map_n *L, *R;
 
-	m = dumb_delete(map, n, &n);
+	L = tree->child[LEFT];
+	R = tree->child[RIGHT];
 
-case1:
-	if (m->color != BLACK || !n)
-		goto finish;
-
-	if (n->color == RED) {
-		n->color = BLACK;
-		goto finish;
-	}
-
-	if (!n->parent)
-		goto finish;
-
-	s = sibling(n);
-	if (s->color == RED) {
-		n->parent->color = RED;
-		s->color = BLACK;
-		if (n == n->parent->child[RIGHT])
-			rotate(map, n->parent, LEFT);
-		else
-			rotate(map, n->parent, RIGHT);
-	}
-
-	s = sibling(n);
-	if (n->parent->color == BLACK &&
-	    s->color == BLACK &&
-	    s->child[LEFT]->color == BLACK &&
-	    s->child[RIGHT]->color == BLACK) {
-		s->color = RED;
-		n = n->parent;
-		goto case1;
-	}
-
-	if (n->parent->color == RED &&
-	    s->color == BLACK &&
-	    s->child[LEFT]->color == BLACK &&
-	    s->child[RIGHT]->color == BLACK) {
-		s->color = RED;
-		n->parent->color = BLACK;
-		goto finish;
-	}
-
-	if (s->color == BLACK) {
-		if (n == n->parent->child[LEFT] &&
-		    s->child[LEFT]->color == RED &&
-		    s->child[RIGHT]->color == BLACK) {
-			s->color = RED;
-			s->child[LEFT]->color = BLACK;
-			rotate(map, s, RIGHT);
-		} else if (n == n->parent->child[RIGHT] &&
-		    s->child[LEFT]->color == BLACK &&
-		    s->child[RIGHT]->color == RED) {
-			s->color = RED;
-			s->child[RIGHT]->color = BLACK;
-			rotate(map, s, LEFT);
-		}
-	}
-	s = sibling(n);
-
-	s->color = n->parent->color;
-	n->parent->color = BLACK;
-	if (n == n->parent->child[LEFT]) {
-		s->child[RIGHT]->color = BLACK;
-		rotate(map, n->parent, LEFT);
+	if (L == NULL) {
+		should_be = R ? R->level : 0;
+	} else if (R == NULL) {
+		should_be = L->level;
 	} else {
-		s->child[LEFT]->color = BLACK;
-		rotate(map, n->parent, RIGHT);
+		should_be = L->level < R->level ? L->level : R->level;
+	}
+	should_be++;
+
+	if (should_be < tree->level) {
+		tree->level = should_be;
+		if (R && should_be < R->level)
+			R->level = should_be;
+	}
+}
+
+static u_map_n *aa_insert(u_map *map, u_map_n *tree, u_map_n *n)
+{
+	int c;
+
+	if (tree == NULL)
+		return n;
+
+	c = n_cmp(map, tree->key, n->key) < 0 ? RIGHT : LEFT;
+	tree->child[c] = aa_insert(map, tree->child[c], n);
+
+	tree = skew(tree);
+	tree = split(tree);
+
+	return tree;
+}
+
+static u_map_n *aa_delete(u_map *map, u_map_n *tree, void *k)
+{
+	u_map_n *n;
+	int c;
+
+	if (tree == NULL)
+		return NULL;
+
+	c = n_cmp(map, tree->key, k);
+
+	if (c != 0) {
+		c = c < 0 ? RIGHT : LEFT;
+		tree->child[c] = aa_delete(map, tree->child[c], k);
+	} else {
+		if (!tree->child[LEFT] && !tree->child[RIGHT]) {
+			u_map_n_del(map, tree);
+			return NULL;
+		}
+
+		c = !tree->child[LEFT] ? RIGHT : LEFT;
+		n = next(tree, c);
+		n_key(map, tree, n->key);
+		n_key(map, n, k); /* HEHEHE! */
+		tree->data = n->data;
+		tree->child[c] = aa_delete(map, tree->child[c], k);
 	}
 
-finish:
+	decrease_level(tree);
 
-	u_map_n_del(map, m);
+	tree = skew(tree);
+	tree->child[RIGHT] = skew(tree->child[RIGHT]);
+	if (tree->child[RIGHT] != NULL) {
+		tree->child[RIGHT]->child[RIGHT] =
+		    skew(tree->child[RIGHT]->child[RIGHT]);
+	}
+	tree = split(tree);
+	tree->child[RIGHT] = split(tree->child[RIGHT]);
+
+	return tree;
 }
 
 void *u_map_get(u_map *map, void *key)
@@ -419,46 +321,8 @@ void u_map_set(u_map *map, void *key, void *data)
 
 	map->size++;
 
-	n = u_map_n_new(map, key, data, RED);
-	dumb_insert(map, n);
-
-case1:
-	if (n->parent == NULL) {
-		n->color = BLACK;
-		goto finish;
-	}
-
-	if (n->parent->color == BLACK)
-		goto finish;
-
-	u = uncle(n);
-	if (u && u->color == RED) {
-		n->parent->color = BLACK;
-		u->color = BLACK;
-		n = grandparent(n);
-		n->color = RED;
-		goto case1;
-	}
-
-	g = grandparent(n);
-	if (n == n->parent->child[RIGHT] && n->parent == g->child[LEFT]) {
-		rotate(map, n->parent, LEFT);
-		n = n->child[LEFT];
-	} else if (n == n->parent->child[LEFT] && n->parent == g->child[RIGHT]) {
-		rotate(map, n->parent, RIGHT);
-		n = n->child[RIGHT];
-	}
-
-	g = grandparent(n);
-	n->parent->color = BLACK;
-	g->color = RED;
-	if (n == n->parent->child[LEFT])
-		rotate(map, g, RIGHT);
-	else
-		rotate(map, g, LEFT);
-finish:
-
-	return;
+	n = u_map_n_new(map, key, data, 1);
+	map->root = aa_insert(map, map->root, n);
 }
 
 void *u_map_del(u_map *map, void *key)
@@ -482,10 +346,11 @@ void *u_map_del(u_map *map, void *key)
 	data = n->data;
 	n->data = NULL;
 
-	if (map->flags & MAP_TRAVERSING)
-		add_pending(map, n);
-	else
-		rb_delete(map, n);
+	if (map->flags & MAP_TRAVERSING) {
+		add_pending(map, key);
+	} else {
+		map->root = aa_delete(map, map->root, key);
+	}
 
 	return data;
 }
@@ -493,44 +358,37 @@ void *u_map_del(u_map *map, void *key)
 static void indent(int depth)
 {
 	while (depth-->0)
-		printf("  ");
+		fprintf(stderr, "  ");
 }
 
 static void map_dump_real(u_map *map, u_map_n *n, int depth)
 {
 	if (n == NULL) {
-		printf("*");
+		fprintf(stderr, "*");
 		return;
 	}
-
-/*
-	this section of code produces too many compiler warnings.
-	uncomment if you need to dump maps.
 
 	if (map->flags & MAP_STRING_KEYS) {
-		printf("\e[%sm%s=%d\e[0m[", n->color == RED ? "31;1" : "36;1",
-		       (char*)n->key, (long)n->data);
+		fprintf(stderr, "%s=%p (%d)\e[0m[", n->key, n->data, n->level);
 	} else {
-		printf("\e[%sm%d=%d\e[0m[", n->color == RED ? "31;1" : "36;1",
-		       (long)n->key, (long)n->data);
+		fprintf(stderr, "%p=%p (%d)\e[0m[", n->key, n->data, n->level);
 	}
-*/
 
 	if (n->child[LEFT] == NULL && n->child[RIGHT] == NULL) {
-		printf("]");
+		fprintf(stderr, "]");
 		return;
 	}
-	printf("\n");
+	fprintf(stderr, "\n");
 	indent(depth);
 	map_dump_real(map, n->child[LEFT], depth + 1);
-	printf(",\n");
+	fprintf(stderr, ",\n");
 	indent(depth);
 	map_dump_real(map, n->child[RIGHT], depth + 1);
-	printf("]");
+	fprintf(stderr, "]");
 }
 
 void u_map_dump(u_map *map)
 {
 	map_dump_real(map, map->root, 1);
-	printf("\n\n");
+	fprintf(stderr, "\n");
 }

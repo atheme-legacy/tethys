@@ -7,7 +7,6 @@ src/numeric.c
 src/numeric.h
 src/version.c
 src/version.c.last
-test/
 etc/
 local/
 release/
