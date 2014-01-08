@@ -219,21 +219,29 @@ u_conn_origin *u_conn_origin_create(mowgli_eventloop_t *ev, u_long addr,
 	u_conn_origin *orig;
 	int fd, one=1;
 
-	if ((fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+	if ((fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+		u_perror("socket");
 		goto out;
+	}
 
 	sa.sin_family = AF_INET;
 	sa.sin_port = htons(port);
 	sa.sin_addr.s_addr = addr;
 
-	if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one)) < 0)
+	if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one)) < 0) {
+		u_perror("setsockopt");
 		goto out;
+	}
 
-	if (bind(fd, (struct sockaddr*)&sa, sizeof(sa)) < 0)
+	if (bind(fd, (struct sockaddr*)&sa, sizeof(sa)) < 0) {
+		u_perror("bind");
 		goto out;
+	}
 
-	if (listen(fd, 5) < 0)
+	if (listen(fd, 5) < 0) {
+		u_perror("listen");
 		goto out;
+	}
 
 	if (!(orig = malloc(sizeof(*orig))))
 		goto out_close;
@@ -349,7 +357,7 @@ static void origin_recv(mowgli_eventloop_t *ev, mowgli_eventloop_io_t *io,
 	sync_time();
 
 	if ((fd = accept(poll->fd, (struct sockaddr*)&addr, &addrlen)) < 0) {
-		perror("origin_recv: accept");
+		u_perror("accept");
 		return;
 	}
 
@@ -406,6 +414,8 @@ static void toplev_recv(mowgli_eventloop_t *ev, mowgli_eventloop_io_t *io,
 	sz = recv(conn->poll->fd, buf, 1024-conn->ibuf.pos, 0);
 
 	if (sz <= 0) {
+		if (sz < 0)
+			u_perror("recv");
 		u_conn_error(conn, sz == 0 ? "End of stream" : "Read error");
 		return;
 	}
@@ -430,6 +440,7 @@ static void toplev_send(mowgli_eventloop_t *ev, mowgli_eventloop_io_t *io,
 	sz = send(conn->poll->fd, conn->obuf, conn->obuflen, 0);
 
 	if (sz < 0) {
+		u_perror("send");
 		u_conn_error(conn, "Write error");
 		conn->obuflen = 0;
 		return;

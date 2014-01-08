@@ -45,3 +45,11 @@ int u_log(int level, char* fmt, ...)
 
 	return u_log_handler(level, tmbuf, buf);
 }
+
+void u_perror_real(const char *func, const char *s)
+{
+	int x = errno;
+	char *error = strerror(x);
+
+	u_log(LG_ERROR, "%s: %s: %s", func, s, error);
+}

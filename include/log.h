@@ -20,6 +20,9 @@ extern int u_log_level;
 
 extern int u_log(int level, char *fmt, ...);
 
+extern void u_perror_real(const char *func, const char *s);
+#define u_perror(s) u_perror_real(__func__, s)
+
 extern int init_log(void);
 
 #endif
