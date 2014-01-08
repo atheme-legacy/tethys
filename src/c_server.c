@@ -314,6 +314,24 @@ static int m_sid(u_conn *conn, u_msg *msg)
 	return 0;
 }
 
+static int m_server(u_conn *conn, u_msg *msg)
+{
+	if (!ENT_IS_SERVER(msg->src)) {
+		return u_log(LG_WARN, "Can't use SID source %s from %G!",
+		             msg->srcstr, conn);
+	}
+
+	u_server_new_remote(msg->src->v.sv,
+	                    NULL, /* sid */
+	                    msg->argv[0], /* name */
+	                    msg->argv[2]); /* description */
+	u_roster_f(R_SERVERS, conn, ":%E SERVER %s %s :%s",
+	           msg->src, msg->argv[0], msg->argv[1],
+	           msg->argv[2]);
+
+	return 0;
+}
+
 static int m_part(u_conn *conn, u_msg *msg)
 {
 	char buf[512];
@@ -414,6 +432,7 @@ u_cmd c_server[] = {
 	{ "QUIT",        CTX_SERVER, m_quit,          0 },
 
 	{ "SID",         CTX_SERVER, m_sid,           4 },
+	{ "SERVER",      CTX_SERVER, m_server,        3 },
 
 	{ "INVITE",      CTX_SERVER, m_invite,        2 },
 
@@ -442,7 +461,6 @@ u_cmd c_server[] = {
 	{ "PRIVS",       CTX_SERVER, not_implemented, 0 }, /* hunted */
 	{ "RESV",        CTX_SERVER, not_implemented, 0 },
 	{ "SAVE",        CTX_SERVER, not_implemented, 0 },
-	{ "SERVER",      CTX_SERVER, not_implemented, 0 },
 	{ "SIGNON",      CTX_SERVER, not_implemented, 0 },
 	{ "SQUIT",       CTX_SERVER, not_implemented, 0 },
 	{ "STATS",       CTX_SERVER, not_implemented, 0 }, /* hunted */

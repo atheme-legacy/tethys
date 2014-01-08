@@ -38,7 +38,7 @@ struct u_server {
 	u_conn *conn;
 	ulong flags;
 
-	char sid[4];
+	char sid[4]; /* if empty, this server is a TS5 */
 	char name[MAXSERVNAME+1];
 	char desc[MAXSERVDESC+1];
 	uint capab;

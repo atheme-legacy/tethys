@@ -742,7 +742,7 @@ static void do_map(struct map_priv *p)
 	}
 
 	len = snf(FMT_USER, p->buf, 512, "%s%s[%s] ",
-	          p->indent, sv->name, sv->sid);
+	          p->indent, sv->name, sv->sid[0] ? sv->sid : "JUPE");
 	memset(p->buf + len, '-', 512 - len);
 	snf(FMT_USER, p->buf + 50, 462, " | Users: %5d", sv->nusers);
 
@@ -755,7 +755,7 @@ static void do_map(struct map_priv *p)
 		left = p->left;
 		p->left = sv->nlinks;
 		p->depth = (depth >> 2) + 1;
-		MOWGLI_PATRICIA_FOREACH(tsv, &state, servers_by_sid) {
+		MOWGLI_PATRICIA_FOREACH(tsv, &state, servers_by_name) {
 			if (tsv->parent != sv)
 				continue;
 			p->sv = tsv;

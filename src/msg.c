@@ -151,7 +151,7 @@ void u_cmd_invoke(u_conn *conn, u_msg *msg)
 	case CTX_SERVER:
 	case CTX_SREG:
 		if (msg->srcstr)
-			msg->src = u_entity_from_id(&e, msg->srcstr);
+			msg->src = u_entity_from_ref(&e, msg->srcstr);
 		else
 			msg->src = u_entity_from_server(&e, conn->priv);
 		break;

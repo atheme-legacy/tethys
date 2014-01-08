@@ -218,7 +218,7 @@ void u_server_make_sreg(u_conn *conn, char *sid)
 	sv->conn = conn;
 	sv->flags = SERVER_IS_BURSTING;
 
-	strcpy(sv->sid, sid);
+	u_strlcpy(sv->sid, sid, 4);
 	mowgli_patricia_add(servers_by_sid, sv->sid, sv);
 
 	sv->name[0] = '\0';
@@ -247,7 +247,10 @@ u_server *u_server_new_remote(u_server *parent, char *sid,
 	sv = malloc(sizeof(*sv));
 
 	sv->conn = parent->conn;
-	strcpy(sv->sid, sid);
+	if (sid)
+		u_strlcpy(sv->sid, sid, 4);
+	else
+		sv->sid[0] = '\0'; /* TS5 */
 	u_strlcpy(sv->name, name, MAXSERVNAME+1);
 	u_strlcpy(sv->desc, desc, MAXSERVDESC+1);
 	sv->capab = 0;
@@ -257,10 +260,11 @@ u_server *u_server_new_remote(u_server *parent, char *sid,
 	sv->nusers = 0;
 	sv->nlinks = 0;
 
-	mowgli_patricia_add(servers_by_sid, sv->sid, sv);
+	if (sv->sid[0])
+		mowgli_patricia_add(servers_by_sid, sv->sid, sv);
 	mowgli_patricia_add(servers_by_name, sv->name, sv);
 
-	u_log(LG_INFO, "New remote server sid=%s", sv->sid);
+	u_log(LG_INFO, "New remote server name=%s, sid=%s", sv->name, sv->sid);
 
 	sv->parent->nlinks++;
 
@@ -290,19 +294,20 @@ void u_server_unlink(u_server *sv)
 	sv->parent->nlinks--;
 
 	/* delete all users */
-	MOWGLI_PATRICIA_FOREACH(u, &state, users_by_uid) {
-		u_log(LG_DEBUG, "  Considering %s/%s", sv->sid, u->uid);
+	if (sv->sid[0]) {
+		MOWGLI_PATRICIA_FOREACH(u, &state, users_by_uid) {
+			if (strncmp(sv->sid, u->uid, 3))
+				continue;
 
-		if (strncmp(sv->sid, u->uid, 3))
-			continue;
-
-		u_sendto_visible(u, ST_USERS, ":%H QUIT :*.net *.split", u);
-		u_user_unlink(u);
+			u_sendto_visible(u, ST_USERS, ":%H QUIT :*.net *.split", u);
+			u_user_unlink(u);
+		}
 	}
 
 	if (sv->name[0])
 		mowgli_patricia_delete(servers_by_name, sv->name);
-	mowgli_patricia_delete(servers_by_sid, sv->sid);
+	if (sv->sid[0])
+		mowgli_patricia_delete(servers_by_sid, sv->sid);
 
 	/* delete any servers linked to this one */
 	MOWGLI_PATRICIA_FOREACH(tsv, &state, servers_by_sid) {

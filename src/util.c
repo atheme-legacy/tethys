@@ -263,7 +263,7 @@ char *name_to_id(char *s)
 {
 	if (strchr(s, '.')) { /* server */
 		u_server *sv = u_server_by_name(s);
-		return sv ? sv->sid : NULL;
+		return sv ? (sv->sid[0] ? sv->sid : NULL) : NULL;
 	} else {
 		u_user *u = u_user_by_nick(s);
 		return u ? u->uid : NULL;
