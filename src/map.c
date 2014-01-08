@@ -104,8 +104,6 @@ void u_map_free_n(u_map *map, u_map_n *n)
 
 void u_map_free(u_map *map)
 {
-	u_map_n *n, *tn;
-
 	u_map_free_n(map, map->root);
 
 	free(map);
@@ -122,7 +120,6 @@ static void clear_pending(u_map *map)
 static void delete_pending(u_map *map)
 {
 	mowgli_node_t *cur, *tn;
-	u_map_n *n;
 
 	MOWGLI_LIST_FOREACH_SAFE(cur, tn, map->pending.head) {
 		u_log(LG_FINE, "DEL PENDING %p", cur->data);
@@ -309,7 +306,6 @@ void *u_map_get(u_map *map, void *key)
 void u_map_set(u_map *map, void *key, void *data)
 {
 	u_map_n *n = dumb_fetch(map, key);
-	u_map_n *u, *g;
 
 	if (map->flags & MAP_TRAVERSING)
 		abort();
@@ -369,7 +365,8 @@ static void map_dump_real(u_map *map, u_map_n *n, int depth)
 	}
 
 	if (map->flags & MAP_STRING_KEYS) {
-		fprintf(stderr, "%s=%p (%d)\e[0m[", n->key, n->data, n->level);
+		fprintf(stderr, "%s=%p (%d)\e[0m[", (char*)n->key,
+		        n->data, n->level);
 	} else {
 		fprintf(stderr, "%p=%p (%d)\e[0m[", n->key, n->data, n->level);
 	}
