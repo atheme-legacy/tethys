@@ -148,10 +148,14 @@ void u_conf_read(FILE *f)
 	char key[U_CONF_MAX_KEY];
 	char value[U_CONF_MAX_VALUE];
 
+	u_hook_call(HOOK_CONF_START, f);
+
 	key[0] = value[0] = '\0';
 
 	skip_ews(f);
 	conf_descend(key, value, f);
+
+	u_hook_call(HOOK_CONF_END, f);
 }
 
 void u_conf_add_handler(char *key, u_conf_handler_t *cb)

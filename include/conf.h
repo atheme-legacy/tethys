@@ -7,6 +7,9 @@
 #ifndef __INC_CONF_H__
 #define __INC_CONF_H__
 
+#define HOOK_CONF_START "conf:start"
+#define HOOK_CONF_END   "conf:end"
+
 #define U_CONF_MAX_KEY 128
 #define U_CONF_MAX_VALUE 512
 
