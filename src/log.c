@@ -26,10 +26,15 @@ int u_log_level = LG_INFO;
 
 int u_log(int level, char* fmt, ...)
 {
+	static bool logging = false;
 	struct tm *tm;
 	char tmbuf[512];
 	char buf[BUFSIZE];
 	va_list va;
+
+	if (logging)
+		return 0;
+	logging = true;
 
 	if (level > u_log_level)
 		return 0;
@@ -48,6 +53,8 @@ int u_log(int level, char* fmt, ...)
 	hook.time = tmbuf;
 	hook.line = buf;
 	u_hook_call(HOOK_LOG, &hook);
+
+	logging = false;
 
 	return u_log_handler(level, tmbuf, buf);
 }
