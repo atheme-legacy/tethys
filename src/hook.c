@@ -12,6 +12,12 @@ static u_hook *add_hook(const char *name)
 {
 	u_hook *h;
 
+	if (all_hooks == NULL) {
+		all_hooks = mowgli_patricia_create(NULL);
+		if (!all_hooks)
+			abort();
+	}
+
 	if ((h = mowgli_patricia_retrieve(all_hooks, name)) != NULL)
 		return h;
 
@@ -26,6 +32,9 @@ static u_hook *add_hook(const char *name)
 
 static void delete_hook(u_hook *h)
 {
+	if (!all_hooks)
+		return;
+
 	if (h->callbacks.count != 0) {
 		u_log(LG_ERROR, "Refusing to delete hook with remaining "
 		                "callbacks (because lazy)");
@@ -64,6 +73,9 @@ void u_hook_delete(const char *name, u_hook_fn_t *fn, void *priv)
 	u_hook *hook;
 	mowgli_node_t *n, *tn;
 
+	if (!all_hooks)
+		return;
+
 	if ((hook = mowgli_patricia_retrieve(all_hooks, name)) == NULL)
 		return;
 
@@ -88,6 +100,9 @@ void u_hook_call(const char *name, void *arg)
 
 	u_log(LG_DEBUG, "HOOK:CALL: %s", name);
 
+	if (!all_hooks)
+		return;
+
 	if ((hook = mowgli_patricia_retrieve(all_hooks, name)) == NULL)
 		return;
 
@@ -107,6 +122,9 @@ void *u_hook_first(const char *name, void *arg)
 	void *p;
 
 	u_log(LG_DEBUG, "HOOK:FIRST: %s", name);
+
+	if (!all_hooks)
+		return NULL;
 
 	if ((hook = mowgli_patricia_retrieve(all_hooks, name)) == NULL)
 		return NULL;
@@ -135,6 +153,9 @@ mowgli_list_t *u_hook_all(const char *name, void *arg)
 
 	list = mowgli_list_create();
 
+	if (!all_hooks)
+		return list;
+
 	if ((hook = mowgli_patricia_retrieve(all_hooks, name)) == NULL)
 		return list;
 
@@ -162,7 +183,5 @@ void u_hook_all_cleanup(mowgli_list_t *list)
 
 int init_hook(void)
 {
-	all_hooks = mowgli_patricia_create(NULL);
-
-	return all_hooks == NULL ? -1 : 0;
+	return 0;
 }
