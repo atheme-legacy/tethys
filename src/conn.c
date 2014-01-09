@@ -117,6 +117,9 @@ void u_conn_vf(u_conn *conn, char *fmt, va_list va)
 	char buf[4096];
 	char *p, *s, *end;
 
+	if (!conn)
+		return;
+
 	if (conn->error)
 		conn_out_clear(conn);
 

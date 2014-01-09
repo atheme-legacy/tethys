@@ -43,6 +43,8 @@ static u_umode_info __umodes[32] = {
 u_umode_info *umodes = __umodes;
 uint umode_default = 0;
 
+u_user_local *ircduser;
+
 static int um_on;
 static char *um_buf_p, um_buf[128];
 
@@ -144,20 +146,12 @@ void user_local_event(u_conn *conn, int event)
 	}
 }
 
-void u_user_make_ureg(u_conn *conn)
+static u_user_local *u_user_local_create(char *ip, char *host)
 {
 	u_user_local *ul;
 	u_user *u;
 
-	if (conn->ctx != CTX_UNREG && conn->ctx != CTX_UREG)
-		return;
-
-	conn->ctx = CTX_UREG;
-
-	if (conn->priv != NULL)
-		return;
-
-	conn->priv = ul = malloc(sizeof(*ul));
+	ul = malloc(sizeof(*ul));
 	memset(ul, 0, sizeof(*ul));
 
 	u = USER(ul);
@@ -169,20 +163,40 @@ void u_user_make_ureg(u_conn *conn)
 	u->channels = u_map_new(0);
 	u->invites = u_map_new(0);
 
-	u_strlcpy(u->ip, conn->ip, MAXHOST+1);
-	u_strlcpy(u->realhost, conn->host, MAXHOST+1);
-	u_strlcpy(u->host, conn->host, MAXHOST+1);
+	u_strlcpy(u->ip, ip, MAXHOST+1);
+	u_strlcpy(u->realhost, host, MAXHOST+1);
+	u_strlcpy(u->host, host, MAXHOST+1);
 
-	u_user_state(u, USER_REGISTERING);
-
-	ul->conn = conn;
+	ul->conn = NULL;
 	ul->oper = NULL;
 
-	conn->event = user_local_event;
+	u_user_state(u, USER_NO_STATE);
 
 	me.nusers++;
 
 	u_log(LG_VERBOSE, "New local user uid=%s host=%s", u->uid, u->host);
+
+	return ul;
+}
+
+void u_user_make_ureg(u_conn *conn)
+{
+	u_user_local *ul;
+
+	if (conn->ctx != CTX_UNREG && conn->ctx != CTX_UREG)
+		return;
+
+	conn->ctx = CTX_UREG;
+
+	if (conn->priv != NULL)
+		return;
+
+	conn->priv = ul = u_user_local_create(conn->ip, conn->host);
+	ul->conn = conn;
+
+	u_user_state(USER(ul), USER_REGISTERING);
+
+	conn->event = user_local_event;
 }
 
 u_user_remote *u_user_new_remote(u_server *sv, char *uid)
@@ -452,10 +466,28 @@ void u_user_make_euid(u_user *u, char *buf)
 	    u->acct[0] ? u->acct : "*", u->gecos);
 }
 
+static void *on_conf_end(void *unused1, void *unused2)
+{
+	char buf[5];
+
+	snprintf(buf, 5, "-%s", me.sid);
+	if (strcmp(buf, USER(ircduser)->nick))
+		u_user_set_nick(USER(ircduser), buf, 0);
+
+	return NULL;
+}
+
 int init_user(void)
 {
 	users_by_nick = mowgli_patricia_create(rfc1459_canonize);
 	users_by_uid = mowgli_patricia_create(ascii_canonize);
 
-	return (users_by_nick && users_by_uid) ? 0 : -1;
+	if (!users_by_nick || !users_by_uid)
+		return -1;
+
+	ircduser = u_user_local_create("127.0.0.1", "ircd");
+	u_user_set_nick(USER(ircduser), "-ircd", 0);
+	u_hook_add(HOOK_CONF_END, on_conf_end, NULL);
+
+	return 0;
 }
