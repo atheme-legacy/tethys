@@ -95,20 +95,21 @@ static int try_join_chan(u_user_local *ul, char *chan, char *key)
 	u_del_invite(c, u);
 	u_sendto_chan(c, NULL, ST_USERS, ":%H JOIN %C", u, c);
 
-	if (c->members->size == 1) {
+	if (c->ts == NOW.tv_sec) { /* is this ok? */
 		modes = u_chan_modes(c, 1);
 
 		u_log(LG_VERBOSE, "Channel %C %s created by %U", c, modes, u);
 		cu->flags |= CU_PFX_OP;
 
-		if (!(c->flags & CHAN_LOCAL)) {
-			u_roster_f(R_SERVERS, NULL, ":%S SJOIN %u %C %s :@%U",
-				   &me, c->ts, c, modes, u);
-		}
 		u_conn_f(conn, ":%S MODE %C %s", &me, c, modes);
-	} else {
-		u_log(LG_DEBUG, "%U (local) join %C", u, c);
-		if (!(c->flags & CHAN_LOCAL)) {
+	}
+
+	if (!(c->flags & CHAN_LOCAL)) {
+		if (c->members->size == 1) {
+			u_roster_f(R_SERVERS, NULL, ":%S SJOIN %u %C %s :%s%U",
+			           &me, c->ts, c, modes,
+			           (cu->flags & CU_PFX_OP) ? "@" : "", u);
+		} else {
 			u_roster_f(R_SERVERS, NULL, ":%U JOIN %u %C +",
 			           u, c->ts, c);
 		}
@@ -176,7 +177,7 @@ static int m_part(u_conn *conn, u_msg *msg)
 
 		q += sprintf(q, "%s%s", q==chans?"":",", c->name);
 
-		if (c->members->size == 0) {
+		if (c->members->size == 0 && !(c->flags & CHAN_PERMANENT)) {
 			u_log(LG_DEBUG, "Dropping channel %C", c);
 			u_chan_drop(c);
 		}

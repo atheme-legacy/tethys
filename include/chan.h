@@ -15,6 +15,7 @@
 
 /* channel flags */
 #define CHAN_LOCAL         0x00000001
+#define CHAN_PERMANENT     0x00000002
 
 /* channel modes */
 #define CMODE_PRIVATE      0x00000001  /* +p */
