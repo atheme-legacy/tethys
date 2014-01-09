@@ -239,14 +239,14 @@ void u_user_unlink(u_user *u)
 {
 	u_server *sv = u_user_server(u);
 
+	u_log(LG_VERBOSE, "Unlinking user uid=%s (%U)", u->uid, u);
+
 	if (IS_LOCAL_USER(u)) {
 		u_user_local *ul = USER_LOCAL(u);
 		u_roster_del_all(ul->conn);
 		ul->conn->ctx = CTX_CLOSED;
 		ul->conn->priv = NULL;
 	}
-
-	u_log(LG_VERBOSE, "Unlinking user uid=%s (%U)", u->uid, u);
 
 	u_clr_invites_user(u);
 
