@@ -435,6 +435,8 @@ void u_server_burst_1(u_server *sv, u_link *link)
 
 void u_server_burst_2(u_server *sv, u_link *link)
 {
+	mowgli_patricia_iteration_state_t state;
+	u_server *tsv;
 	u_conn *conn = sv->conn;
 
 	if (conn == NULL) {
@@ -450,6 +452,18 @@ void u_server_burst_2(u_server *sv, u_link *link)
 	u_conn_f(conn, "SVINFO 6 6 0 :%u", NOW.tv_sec);
 
 	/* TODO: "SID and SERVER messages for all known servers" */
+	MOWGLI_PATRICIA_FOREACH(tsv, &state, servers_by_name) {
+		if (tsv == &me)
+			continue;
+
+		if (tsv->sid[0]) {
+			u_conn_f(conn, ":%S SID %s %d %s :%s", tsv->parent,
+			         tsv->name, tsv->hops, tsv->sid, tsv->desc);
+		} else {
+			u_conn_f(conn, ":%S SERVER %s %d :%s", tsv->parent,
+			         tsv->name, tsv->hops, tsv->desc);
+		}
+	}
 
 	/* TODO: "BAN messages for all propagated bans" */
 
