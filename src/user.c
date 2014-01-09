@@ -470,9 +470,11 @@ static void *on_conf_end(void *unused1, void *unused2)
 {
 	char buf[5];
 
+	ircduser = u_user_local_create("127.0.0.1", me.name);
+	strcpy(ircduser->user.ident, "ircd");
+	strcpy(ircduser->user.gecos, "IRCD pseudoclient");
 	snprintf(buf, 5, "-%s", me.sid);
-	if (strcmp(buf, USER(ircduser)->nick))
-		u_user_set_nick(USER(ircduser), buf, 0);
+	u_user_set_nick(USER(ircduser), buf, 0);
 	u_strlcpy(USER(ircduser)->host, me.name, MAXHOST+1);
 
 	return NULL;
@@ -486,10 +488,6 @@ int init_user(void)
 	if (!users_by_nick || !users_by_uid)
 		return -1;
 
-	ircduser = u_user_local_create("127.0.0.1", "127.0.0.1");
-	strcpy(ircduser->user.ident, "ircd");
-	strcpy(ircduser->user.gecos, "IRCD pseudoclient");
-	u_user_set_nick(USER(ircduser), "-ircd", 0);
 	u_hook_add(HOOK_CONF_END, on_conf_end, NULL);
 
 	return 0;

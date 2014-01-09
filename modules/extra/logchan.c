@@ -42,26 +42,30 @@ static void *on_log(void *unused, void *_log)
 	logchanf("%s", log->line);
 }
 
-static int logchan_init(u_module *m)
+static void *on_conf_end(void *a, void *b)
 {
 	u_chanuser *cu;
 
-	if (!(logchan = u_chan_create("&log")))
-		return -1;
+	logchan = u_chan_create("&log");
 
 	cu = u_chan_user_add(logchan, USER(ircduser));
 	cu->flags |= CU_PFX_OP;
 
-	u_cmds_reg(c_logchan);
-
 	u_hook_add(HOOK_LOG, on_log, NULL);
+}
 
+static int logchan_init(u_module *m)
+{
+	logchan = NULL;
+	u_cmds_reg(c_logchan);
+	u_hook_add(HOOK_CONF_END, on_conf_end, NULL);
 	return 0;
 }
 
 static void logchan_deinit(u_module *m)
 {
-	u_chan_drop(logchan);
+	if (logchan != NULL)
+		u_chan_drop(logchan);
 }
 
 MICRO_MODULE_V1(
