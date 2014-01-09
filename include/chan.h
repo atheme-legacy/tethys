@@ -74,6 +74,7 @@ extern u_mode_info *cmodes;
 extern uint cmode_default;
 
 extern u_chan *u_chan_get(char*);
+extern u_chan *u_chan_create(char*);
 extern u_chan *u_chan_get_or_create(char*);
 extern void u_chan_drop(u_chan*);
 
