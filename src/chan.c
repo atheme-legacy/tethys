@@ -301,21 +301,9 @@ static int cb_limit(u_modes *m, int on, char *arg)
 	return 1;
 }
 
-u_chan *u_chan_get(char *name)
-{
-	return mowgli_patricia_retrieve(all_chans, name);
-}
-
-u_chan *u_chan_get_or_create(char *name)
+static u_chan *chan_create_real(char *name)
 {
 	u_chan *chan;
-
-	chan = u_chan_get(name);
-	if (chan != NULL)
-		return chan;
-
-	if (name[0] != '#')
-		return NULL;
 
 	chan = malloc(sizeof(*chan));
 	u_strlcpy(chan->name, name, MAXCHANNAME+1);
@@ -341,6 +329,33 @@ u_chan *u_chan_get_or_create(char *name)
 	return chan;
 }
 
+u_chan *u_chan_get(char *name)
+{
+	return mowgli_patricia_retrieve(all_chans, name);
+}
+
+u_chan *u_chan_create(char *name)
+{
+	if (u_chan_get(name))
+		return NULL;
+
+	return chan_create_real(name);
+}
+
+u_chan *u_chan_get_or_create(char *name)
+{
+	u_chan *chan;
+
+	chan = u_chan_get(name);
+	if (chan != NULL)
+		return chan;
+
+	if (name[0] != '#') /* TODO: hnggg!!! */
+		return NULL;
+
+	return chan_create_real(name);
+}
+
 static void drop_list(mowgli_list_t *list)
 {
 	mowgli_node_t *n, *tn;
@@ -361,6 +376,7 @@ static void drop_param(char **p)
 void u_chan_drop(u_chan *chan)
 {
 	/* TODO: u_map_free callback! */
+	/* TODO: send PART to all users in this channel! */
 	u_map_free(chan->members);
 	drop_list(&chan->ban);
 	drop_list(&chan->quiet);
