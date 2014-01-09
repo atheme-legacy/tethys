@@ -394,6 +394,9 @@ static int burst_chan(const char *key, void *_c, void *_conn)
 	char buf[512];
 	int sz;
 
+	if (c->name[0] != '#')
+		return 0;
+
 	sz = snf(FMT_SERVER, buf, 512, ":%S SJOIN %u %s %s :",
 	         &me, c->ts, c->name, u_chan_modes(c, 1));
 
