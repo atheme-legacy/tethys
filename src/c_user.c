@@ -73,7 +73,7 @@ static int try_join_chan(u_user_local *ul, char *chan, char *key)
 	c = u_chan_get_or_create(chan);
 
 	if (c == NULL) {
-		u_user_num(u, ERR_GENERIC, "Can't get or create channel!");
+		u_user_num(u, ERR_NOSUCHCHANNEL, chan);
 		return 0;
 	}
 
@@ -131,11 +131,6 @@ static int m_join(u_conn *conn, u_msg *msg)
 	while ((s = cut(&p, ",")) != NULL) {
 		u_log(LG_FINE, "  %s$%s", s, p);
 		u_log(LG_FINE, "    key=%s", *keys_p);
-
-		if (s[0] != '#') {
-			if (*s) u_user_num(u, ERR_NOSUCHCHANNEL, s);
-			continue;
-		}
 
 		try_join_chan(USER_LOCAL(u), s, *keys_p++);
 	}
@@ -262,7 +257,7 @@ static int m_mode(u_conn *conn, u_msg *msg)
 	u_modes m;
 	u_mode_info *info;
 
-	if (msg->argv[0][0] != '#') {
+	if (!strchr(CHANTYPES, msg->argv[0][0])) {
 		tu = u_user_by_nick(msg->argv[0]);
 		if (tu == NULL) {
 			/* not sure why charybdis does this */
@@ -486,7 +481,7 @@ static int m_who(u_conn *conn, u_msg *msg)
 
 	/* TODO: WHOX, operspy? */
 
-	if (name[0] == '#') {
+	if (strchr(CHANTYPES, name[0])) {
 		if ((c = u_chan_get(name)) == NULL)
 			goto end;
 

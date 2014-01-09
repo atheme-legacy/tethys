@@ -314,6 +314,9 @@ u_chan *u_chan_get_or_create(char *name)
 	if (chan != NULL)
 		return chan;
 
+	if (name[0] != '#')
+		return NULL;
+
 	chan = malloc(sizeof(*chan));
 	u_strlcpy(chan->name, name, MAXCHANNAME+1);
 	chan->ts = NOW.tv_sec;
@@ -732,6 +735,8 @@ int u_is_muted(u_chanuser *cu)
 
 int init_chan(void)
 {
-	all_chans = mowgli_patricia_create(ascii_canonize);
-	return all_chans != NULL ? 0 : -1;
+	if (!(all_chans = mowgli_patricia_create(ascii_canonize)))
+		return -1;
+
+	return 0;
 }

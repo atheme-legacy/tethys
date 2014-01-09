@@ -11,6 +11,8 @@
 #define MAXTOPICLEN 250
 #define MAXBANLIST  50
 
+#define CHANTYPES "#&"
+
 /* channel modes */
 #define CMODE_PRIVATE      0x00000001  /* +p */
 #define CMODE_SECRET       0x00000002  /* +s */

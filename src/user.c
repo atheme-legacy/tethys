@@ -328,7 +328,7 @@ struct isupport {
 	int i;
 } isupport[] = {
 	{ "PREFIX",       "(ov)@+"                },
-	{ "CHANTYPES",    "#"                     },
+	{ "CHANTYPES",    CHANTYPES               },
 	{ "CHANMODES",    "beIq,k,fl,cgimnpstz"   },
 	{ "MODES",        NULL, 4                 },
 	{ "MAXLIST",      NULL, MAXBANLIST        },
