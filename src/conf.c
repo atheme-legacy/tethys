@@ -20,6 +20,9 @@ void do_cb(char *key, char *val)
 
 	u_log(LG_FINE, "conf: %s=%s", key, val);
 
+	if (!u_conf_handlers)
+		return;
+
 	h = mowgli_patricia_retrieve(u_conf_handlers, key);
 
 	if (h == NULL) {
@@ -162,6 +165,12 @@ void u_conf_add_handler(char *key, u_conf_handler_t *cb)
 {
 	struct conf_handler *h = malloc(sizeof(*h));
 
+	if (!u_conf_handlers) {
+		u_conf_handlers = mowgli_patricia_create(ascii_canonize);
+		if (!u_conf_handlers)
+			abort();
+	}
+
 	h->key = key;
 	h->cb = cb;
 	h->owner = u_module_loading();
@@ -173,6 +182,9 @@ static void *on_module_unload(void *unused, void *m)
 {
 	mowgli_patricia_iteration_state_t state;
 	struct conf_handler *h;
+
+	if (!u_conf_handlers)
+		return NULL;
 
 	MOWGLI_PATRICIA_FOREACH(h, &state, u_conf_handlers) {
 		if (h->owner != m)
@@ -189,7 +201,5 @@ int init_conf(void)
 {
 	u_hook_add(HOOK_MODULE_UNLOAD, on_module_unload, NULL);
 
-	u_conf_handlers = mowgli_patricia_create(ascii_canonize);
-
-	return u_conf_handlers ? 0 : -1;
+	return 0;
 }
