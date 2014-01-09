@@ -750,6 +750,9 @@ static void do_map(struct map_priv *p)
 	u_user_num(p->u, RPL_MAP, p->buf);
 
 	p->indent[depth] = ' ';
+	p->indent[depth - 2] = ' ';
+	if (p->left == 0)
+		p->indent[depth - 3] = ' ';
 
 	if (sv->nlinks > 0) {
 		left = p->left;
