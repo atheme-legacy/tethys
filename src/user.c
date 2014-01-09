@@ -43,8 +43,6 @@ static u_umode_info __umodes[32] = {
 u_umode_info *umodes = __umodes;
 uint umode_default = 0;
 
-u_user_local *ircduser;
-
 static int um_on;
 static char *um_buf_p, um_buf[128];
 
@@ -466,20 +464,6 @@ void u_user_make_euid(u_user *u, char *buf)
 	    u->acct[0] ? u->acct : "*", u->gecos);
 }
 
-static void *on_conf_end(void *unused1, void *unused2)
-{
-	char buf[5];
-
-	ircduser = u_user_local_create("127.0.0.1", me.name);
-	strcpy(ircduser->user.ident, "ircd");
-	strcpy(ircduser->user.gecos, "IRCD pseudoclient");
-	snprintf(buf, 5, "-%s", me.sid);
-	u_user_set_nick(USER(ircduser), buf, 0);
-	u_strlcpy(USER(ircduser)->host, me.name, MAXHOST+1);
-
-	return NULL;
-}
-
 int init_user(void)
 {
 	users_by_nick = mowgli_patricia_create(rfc1459_canonize);
@@ -487,8 +471,6 @@ int init_user(void)
 
 	if (!users_by_nick || !users_by_uid)
 		return -1;
-
-	u_hook_add(HOOK_CONF_END, on_conf_end, NULL);
 
 	return 0;
 }

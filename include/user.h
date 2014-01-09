@@ -94,8 +94,6 @@ extern mowgli_patricia_t *users_by_uid;
 extern u_umode_info *umodes;
 extern uint umode_default;
 
-extern u_user_local *ircduser;
-
 extern void u_user_m_start(u_user*);
 extern void u_user_m_end(u_user*);
 extern void u_user_mode(u_user*, char ch, int on);
