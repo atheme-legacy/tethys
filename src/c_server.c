@@ -106,6 +106,8 @@ static int m_sjoin(u_conn *conn, u_msg *msg)
 	if (!(c = u_chan_get_or_create(msg->argv[1])))
 		return u_log(LG_ERROR, "Could not get/create %s for SJOIN!",
 		             msg->argv[1]);
+	if (c->flags & CHAN_LOCAL)
+		return u_log(LG_ERROR, "Cannot SJOIN to a local channel");
 
 	/* TODO: check TS */
 	/* TODO: apply channel modes?! */
@@ -163,6 +165,11 @@ static int m_join(u_conn *conn, u_msg *msg)
 
 	if (!(c = u_chan_get(msg->argv[1]))) {
 		return u_log(LG_ERROR, "%G tried to JOIN %E to nonexistent chan %s",
+		             conn, msg->src, msg->argv[1]);
+	}
+
+	if (c->flags & CHAN_LOCAL) {
+		return u_log(LG_ERROR, "%G tried to JOIN %E to local chan %s",
 		             conn, msg->src, msg->argv[1]);
 	}
 

@@ -101,12 +101,17 @@ static int try_join_chan(u_user_local *ul, char *chan, char *key)
 		u_log(LG_VERBOSE, "Channel %C %s created by %U", c, modes, u);
 		cu->flags |= CU_PFX_OP;
 
-		u_roster_f(R_SERVERS, NULL, ":%S SJOIN %u %C %s :@%U",
-		           &me, c->ts, c, modes, u);
+		if (!(c->flags & CHAN_LOCAL)) {
+			u_roster_f(R_SERVERS, NULL, ":%S SJOIN %u %C %s :@%U",
+				   &me, c->ts, c, modes, u);
+		}
 		u_conn_f(conn, ":%S MODE %C %s", &me, c, modes);
 	} else {
 		u_log(LG_DEBUG, "%U (local) join %C", u, c);
-		u_roster_f(R_SERVERS, NULL, ":%U JOIN %u %C +", u, c->ts, c);
+		if (!(c->flags & CHAN_LOCAL)) {
+			u_roster_f(R_SERVERS, NULL, ":%U JOIN %u %C +",
+			           u, c->ts, c);
+		}
 	}
 
 	u_chan_send_topic(c, u);

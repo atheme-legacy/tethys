@@ -13,6 +13,9 @@
 
 #define CHANTYPES "#&"
 
+/* channel flags */
+#define CHAN_LOCAL         0x00000001
+
 /* channel modes */
 #define CMODE_PRIVATE      0x00000001  /* +p */
 #define CMODE_SECRET       0x00000002  /* +s */
@@ -42,7 +45,7 @@ struct u_chan {
 	char topic[MAXTOPICLEN+1];
 	char topic_setter[MAXNICKLEN+1];
 	u_ts_t topic_time;
-	uint mode;
+	uint mode, flags;
 	u_cookie ck_flags;
 	u_map *members;
 	mowgli_list_t ban, quiet, banex, invex;

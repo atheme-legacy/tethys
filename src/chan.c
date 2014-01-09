@@ -324,6 +324,7 @@ u_chan *u_chan_get_or_create(char *name)
 	chan->topic_setter[0] = '\0';
 	chan->topic_time = 0;
 	chan->mode = cmode_default;
+	chan->flags = 0;
 	u_cookie_reset(&chan->ck_flags);
 	chan->members = u_map_new(0);
 	mowgli_list_init(&chan->ban);
