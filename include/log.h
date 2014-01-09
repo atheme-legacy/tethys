@@ -15,6 +15,13 @@
 #define LG_DEBUG    5
 #define LG_FINE     6
 
+#define HOOK_LOG "log"
+struct hook_log {
+	int level;
+	char *time;
+	char *line;
+};
+
 extern int (*u_log_handler)(int level, char *time, char *line /* no EOL */);
 extern int u_log_level;
 

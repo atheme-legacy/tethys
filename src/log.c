@@ -43,6 +43,12 @@ int u_log(int level, char* fmt, ...)
 	    tm->tm_year+1900, tm->tm_mon+1, tm->tm_mday,
 	    tm->tm_hour, tm->tm_min, tm->tm_sec);
 
+	struct hook_log hook;
+	hook.level = level;
+	hook.time = tmbuf;
+	hook.line = buf;
+	u_hook_call(HOOK_LOG, &hook);
+
 	return u_log_handler(level, tmbuf, buf);
 }
 
