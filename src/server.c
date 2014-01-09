@@ -451,7 +451,6 @@ void u_server_burst_2(u_server *sv, u_link *link)
 
 	u_conn_f(conn, "SVINFO 6 6 0 :%u", NOW.tv_sec);
 
-	/* TODO: "SID and SERVER messages for all known servers" */
 	MOWGLI_PATRICIA_FOREACH(tsv, &state, servers_by_name) {
 		if (tsv == &me)
 			continue;
