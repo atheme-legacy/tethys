@@ -146,7 +146,7 @@ void user_local_event(u_conn *conn, int event)
 	}
 }
 
-static u_user_local *u_user_local_create(char *ip, char *host)
+u_user_local *u_user_local_create(char *ip, char *host)
 {
 	u_user_local *ul;
 	u_user *u;

@@ -100,6 +100,7 @@ extern void u_user_m_start(u_user*);
 extern void u_user_m_end(u_user*);
 extern void u_user_mode(u_user*, char ch, int on);
 
+extern u_user_local *u_user_local_create(char *ip, char *host);
 extern void u_user_make_ureg(u_conn*);
 extern u_user_remote *u_user_new_remote(u_server*, char *uid);
 extern void u_user_unlink(u_user*);
