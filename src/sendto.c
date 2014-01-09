@@ -27,6 +27,9 @@ void u_st_start(void)
 
 void u_st_exclude(u_conn *conn)
 {
+	if (!conn)
+		return;
+
 	if (u_cookie_cmp(&conn->ck_sendto, &ck_sendto) < 0)
 		u_cookie_cpy(&conn->ck_sendto, &ck_sendto);
 }
@@ -123,6 +126,9 @@ static void sendto_chan_cb(u_map *map, u_user *u, u_chanuser *cu,
 {
 	u_conn *conn = u_user_conn(u);
 	char *s;
+
+	if (!conn)
+		return;
 
 	if (!u_cookie_cmp(&conn->ck_sendto, &ck_sendto))
 		return;
