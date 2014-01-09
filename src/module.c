@@ -203,12 +203,20 @@ u_module *u_module_reload_or_load(const char *name)
 	return do_module_reload(name, false);
 }
 
+static void on_conf_module(char *key, char *val)
+{
+	u_module_load(val);
+}
+
 int init_module(void)
 {
 	/* no canonization, because module names correspond to filenames, so
 	   core/message and core/Message could very well be different modules
 	   (but you won't see that sort of nonsense in the official repo). */
-	u_modules = mowgli_patricia_create(NULL);
+	if (!(u_modules = mowgli_patricia_create(NULL)))
+		return -1;
 
-	return u_modules == NULL ? -1 : 0;
+	u_conf_add_handler("module", on_conf_module);
+
+	return 0;
 }
