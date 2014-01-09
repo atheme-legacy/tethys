@@ -80,7 +80,7 @@ static int m_message(u_conn *conn, u_msg *msg)
 		return 0;
 	}
 
-	if (msg->argv[0][0] == '#')
+	if (strchr(CHANTYPES, msg->argv[0][0]))
 		return m_message_chan(conn, msg);
 	return m_message_user(conn, msg);
 }
