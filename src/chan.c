@@ -305,6 +305,9 @@ static u_chan *chan_create_real(char *name)
 {
 	u_chan *chan;
 
+	if (!strchr(CHANTYPES, name[0]))
+		return NULL;
+
 	chan = malloc(sizeof(*chan));
 	u_strlcpy(chan->name, name, MAXCHANNAME+1);
 	chan->ts = NOW.tv_sec;
@@ -323,6 +326,9 @@ static u_chan *chan_create_real(char *name)
 	chan->forward = NULL;
 	chan->key = NULL;
 	chan->limit = -1;
+
+	if (name[0] == '&')
+		chan->flags |= CHAN_LOCAL;
 
 	mowgli_patricia_add(all_chans, chan->name, chan);
 
