@@ -8,6 +8,11 @@
 # it. Besides, it's very short.
 
 
+# module - pretty straightforward
+
+module "core/c_42"
+
+
 # me{} - this block contains a few options for
 # the local server's configuration.
 

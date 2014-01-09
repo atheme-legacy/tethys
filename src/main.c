@@ -69,10 +69,6 @@ int init(void)
 	COMMAND(c_server);
 	COMMAND(c_user);
 
-	u_module_load("core/hello");
-	u_module_unload("core/hello");
-	u_module_load("core/c_42");
-
 	mowgli_timer_add(base_ev, "ping", u_conn_check_ping_all, base_ev, 10);
 
 	if (opt_port != -1 && !u_conn_origin_create(base_ev, INADDR_ANY, opt_port))
