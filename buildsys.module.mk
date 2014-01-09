@@ -9,12 +9,17 @@ PLUGIN=${SRCS:.c=$(PLUGIN_SUFFIX)}
 all: $(PLUGIN)
 install: $(PLUGIN)
 
-phase_cmd_cc_module = CompileModule
-quiet_cmd_cc_module = $@
-      cmd_cc_module = ${CC} ${DEPFLAGS} ${CFLAGS} ${PLUGIN_CFLAGS} \
-                      ${CPPFLAGS} ${PLUGIN_LDFLAGS} ${LDFLAGS} \
-                      -o $@ $< ${LIBS}
+ifndef V
+COMPILE_MODULE_STATUS = printf "CompileModule: $@\n"
+else
+COMPILE_MODULE_STATUS = printf "CompileModule: $${COMPILE_COMMAND}\n"
+endif
+
+cmd_cc_module = ${CC} ${DEPFLAGS} ${CFLAGS} ${PLUGIN_CFLAGS} \
+                ${CPPFLAGS} ${PLUGIN_LDFLAGS} ${LDFLAGS} \
+                -o $@ $< ${LIBS}
 
 .c$(PLUGIN_SUFFIX):
-	$(call echo-cmd,cmd_cc_module)
-	$(cmd_cc_module)
+	COMPILE_COMMAND="$(cmd_cc_module)"; \
+	${COMPILE_MODULE_STATUS}; \
+	$${COMPILE_COMMAND}
