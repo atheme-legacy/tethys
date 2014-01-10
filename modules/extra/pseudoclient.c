@@ -8,6 +8,13 @@
 
 static u_user_local *pseudo = NULL;
 
+static char *pseudo_create_nick(void)
+{
+	static char buf[10];
+	snprintf(buf, 10, "%s-ircd", me.sid);
+	return buf;
+}
+
 static void pseudo_nick(char *nick)
 {
 	u_user *u = USER(pseudo);
@@ -43,7 +50,7 @@ static void try_add_pseudo(void)
 	pseudo = u_user_local_create("127.0.0.1", me.name);
 	strcpy(pseudo->user.ident, "ircd");
 	strcpy(pseudo->user.gecos, "IRCD pseudoclient");
-	u_user_set_nick(USER(pseudo), me.sid, 0);
+	u_user_set_nick(USER(pseudo), pseudo_create_nick(), 0);
 	u_strlcpy(pseudo->user.host, me.name, MAXHOST+1);
 
 	u_hook_call("pseudoclient:create", pseudo);
@@ -51,10 +58,13 @@ static void try_add_pseudo(void)
 
 static void *on_conf_end(void *a, void *b)
 {
+	char *nick;
+
 	try_add_pseudo();
 
-	if (pseudo && strcmp(me.sid, pseudo->user.nick))
-		pseudo_nick(me.sid);
+	nick = pseudo_create_nick();
+	if (pseudo && strcmp(nick, pseudo->user.nick))
+		pseudo_nick(nick);
 }
 
 static int pseudoclient_init(u_module *m)
