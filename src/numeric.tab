@@ -143,7 +143,7 @@ ERR_ERRONEOUSNICKNAME	432	"%s :Erroneous nickname"
 ERR_NICKNAMEINUSE	433	"%s :Nickname is already in use"
 ERR_NICKCOLLISION	436
 
-ERR_SERVICESDOWN	440
+ERR_SERVICESDOWN	440	"%s :Services are currently unavailable"
 ERR_USERNOTINCHANNEL	441	"%U %C :They aren't on that channel"
 ERR_NOTONCHANNEL	442	"%C :You're not on that channel"
 ERR_USERONCHANNEL	443	"%U %C :They're already on that channel"

@@ -1,7 +1,8 @@
 MODULE = extra
 
 SRCS = logchan.c \
-	pseudoclient.c
+	pseudoclient.c \
+	alias.c
 
 include ../../extra.mk
 include ../../buildsys.mk
