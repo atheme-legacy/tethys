@@ -98,6 +98,11 @@ int u_cmds_reg(u_cmd *cmds)
 	return 0;
 }
 
+int u_cmd_reg(u_cmd *cmd)
+{
+	return reg_one(cmd);
+}
+
 static void *on_module_unload(void *unused, void *m)
 {
 	mowgli_patricia_iteration_state_t state;
