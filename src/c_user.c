@@ -95,9 +95,9 @@ static int try_join_chan(u_user_local *ul, char *chan, char *key)
 	u_del_invite(c, u);
 	u_sendto_chan(c, NULL, ST_USERS, ":%H JOIN %C", u, c);
 
-	if (c->ts == NOW.tv_sec) { /* is this ok? */
-		modes = u_chan_modes(c, 1);
+	modes = u_chan_modes(c, 1);
 
+	if (c->ts == NOW.tv_sec) { /* is this ok? */
 		u_log(LG_VERBOSE, "Channel %C %s created by %U", c, modes, u);
 		cu->flags |= CU_PFX_OP;
 
