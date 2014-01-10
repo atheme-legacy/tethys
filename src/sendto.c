@@ -195,14 +195,14 @@ static char *roster_to_str(unsigned char c)
 
 void u_roster_add(unsigned char r, u_conn *conn)
 {
-	if (!r) return;
+	if (!r || !conn) return;
 	u_log(LG_DEBUG, "Adding %G to roster %s", conn, roster_to_str(r));
 	u_map_set(rosters[r], conn, conn);
 }
 
 void u_roster_del(unsigned char r, u_conn *conn)
 {
-	if (!r) return;
+	if (!r || !conn) return;
 	u_log(LG_DEBUG, "Removing %G from roster %s", conn, roster_to_str(r));
 	u_map_del(rosters[r], conn);
 }
@@ -210,6 +210,7 @@ void u_roster_del(unsigned char r, u_conn *conn)
 void u_roster_del_all(u_conn *conn)
 {
 	unsigned int c;
+	if (!conn) return;
 	u_log(LG_DEBUG, "Removing %G from all rosters", conn);
 	for (c=1; c<256; c++)
 		u_map_del(rosters[c], conn);

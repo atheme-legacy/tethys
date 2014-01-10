@@ -227,17 +227,17 @@ top:
 
 	case 'G': /* generic connection */
 		conn = va_arg(va, u_conn*);
-		user = conn->priv;
-		server = conn->priv;
 
-		switch (conn->ctx) {
+		switch (conn ? conn->ctx : -1) {
 		case CTX_USER:
 		case CTX_UREG:
+			user = conn->priv;
 			s_arg = (type == FMT_SERVER ? user->uid : user->nick);
 			break;
 
 		case CTX_SERVER:
 		case CTX_SREG:
+			server = conn->priv;
 			s_arg = (type == FMT_SERVER ? server->sid : server->name);
 			break;
 
