@@ -43,6 +43,7 @@ struct u_cmd {
 
 extern int u_cmds_reg(u_cmd*); /* terminated with empty name */
 extern int u_cmd_reg(u_cmd*); /* single command */
+extern void u_cmd_unreg(u_cmd*);
 extern void u_cmd_invoke(u_conn*, u_msg*);
 
 extern int init_cmd(void);

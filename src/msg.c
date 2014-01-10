@@ -103,6 +103,11 @@ int u_cmd_reg(u_cmd *cmd)
 	return reg_one(cmd);
 }
 
+void u_cmd_unreg(u_cmd *cmd)
+{
+	mowgli_patricia_delete(commands[cmd->ctx], cmd->name);
+}
+
 static void *on_module_unload(void *unused, void *m)
 {
 	mowgli_patricia_iteration_state_t state;

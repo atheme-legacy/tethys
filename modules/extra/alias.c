@@ -99,7 +99,15 @@ static int alias_init(u_module *m)
 
 static void alias_deinit(u_module *m)
 {
-	/* TODO: unload aliases table */
+	mowgli_patricia_iteration_state_t state;
+	struct alias *to;
+
+	MOWGLI_PATRICIA_FOREACH(to, &state, aliases) {
+		u_cmd_unreg(&to->cmd);
+		free(to);
+	}
+
+	mowgli_patricia_destroy(aliases, NULL, NULL);
 }
 
 MICRO_MODULE_V1(

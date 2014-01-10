@@ -827,6 +827,42 @@ static int m_invite(u_conn *conn, u_msg *msg)
 	return 0;
 }
 
+static int m_modload(u_conn *conn, u_msg *msg)
+{
+	u_user *u = conn->priv;
+
+	if (!(u->flags & UMODE_OPER))
+		return u_user_num(u, ERR_NOPRIVILEGES);
+
+	u_module_load(msg->argv[0]);
+
+	return 0;
+}
+
+static int m_modunload(u_conn *conn, u_msg *msg)
+{
+	u_user *u = conn->priv;
+
+	if (!(u->flags & UMODE_OPER))
+		return u_user_num(u, ERR_NOPRIVILEGES);
+
+	u_module_unload(msg->argv[0]);
+
+	return 0;
+}
+
+static int m_modreload(u_conn *conn, u_msg *msg)
+{
+	u_user *u = conn->priv;
+
+	if (!(u->flags & UMODE_OPER))
+		return u_user_num(u, ERR_NOPRIVILEGES);
+
+	u_module_reload_or_load(msg->argv[0]);
+
+	return 0;
+}
+
 u_cmd c_user[] = {
 	{ "ECHO",      CTX_USER, m_echo,    0 },
 	{ "QUIT",      CTX_USER, m_quit,    0 },
@@ -851,6 +887,10 @@ u_cmd c_user[] = {
 	{ "SUMMON",    CTX_USER, m_summon,  0 },
 	{ "MAP",       CTX_USER, m_map,     0 },
 	{ "INVITE",    CTX_USER, m_invite,  2 },
+
+	{ "MODLOAD",   CTX_USER, m_modload,   1 },
+	{ "MODUNLOAD", CTX_USER, m_modunload, 1 },
+	{ "MODRELOAD", CTX_USER, m_modreload, 1 },
 
 	{ "SQUIT",     CTX_USER, not_implemented, 0 },
 	{ "LINKS",     CTX_USER, not_implemented, 0 },
