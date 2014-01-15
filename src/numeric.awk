@@ -1,6 +1,6 @@
 #!/bin/awk -f
 
-# ircd-micro, numeric.awk -- numeric.[hc] generator
+# tethys, numeric.awk -- numeric.[hc] generator
 # Copyright (C) 2013 Alex Iadicicco
 #
 # This file is protected under the terms contained

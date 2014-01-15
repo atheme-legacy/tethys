@@ -1,4 +1,4 @@
-/* ircd-micro, logchan.c -- logging channel modulue
+/* Tethys, logchan.c -- logging channel modulue
    Copyright (C) 2014 Alex Iadicicco
 
    This file is protected under the terms contained
@@ -97,7 +97,7 @@ static void logchan_deinit(u_module *m)
 		u_chan_drop(logchan);
 }
 
-MICRO_MODULE_V1(
+TETHYS_MODULE_V1(
 	"extra/logchan",
 	"Alex Iadicicco <http://github.com/aji>",
 	"Channel for logging",

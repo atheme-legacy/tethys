@@ -1,4 +1,4 @@
-/* ircd-micro, user.h -- user management
+/* Tethys, user.h -- user management
    Copyright (C) 2013 Alex Iadicicco
 
    This file is protected under the terms contained

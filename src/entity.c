@@ -1,4 +1,4 @@
-/* ircd-micro, entity.c -- generic entity targeting
+/* Tethys, entity.c -- generic entity targeting
    Copyright (C) 2013 Alex Iadicicco
 
    This file is protected under the terms contained

@@ -1,4 +1,4 @@
-/* ircd-micro, cookie.h -- unique, comparable cookies
+/* Tethys, cookie.h -- unique, comparable cookies
    Copyright (C) 2013 Alex Iadicicco
 
    This file is protected under the terms contained

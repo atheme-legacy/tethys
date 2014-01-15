@@ -1,4 +1,4 @@
-/* ircd-micro, pseudoclient.c -- server pseudoclient
+/* Tethys, pseudoclient.c -- server pseudoclient
    Copyright (C) 2014 Alex Iadicicco
 
    This file is protected under the terms contained
@@ -82,7 +82,7 @@ static void pseudoclient_deinit(u_module *m)
 	}
 }
 
-MICRO_MODULE_V1(
+TETHYS_MODULE_V1(
 	"extra/pseudoclient",
 	"Alex Iadicicco <http://github.com/aji>",
 	"IRCD pseudoclient",

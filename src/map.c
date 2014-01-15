@@ -1,4 +1,4 @@
-/* ircd-micro, map.c -- AA tree
+/* Tethys, map.c -- AA tree
    Copyright (C) 2013 Alex Iadicicco
 
    This file is protected under the terms contained

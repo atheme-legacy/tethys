@@ -1,4 +1,4 @@
-/* ircd-micro, core/c_42.c -- Example module
+/* Tethys, core/c_42.c -- Example module
    Copyright (C) 2014 Sam Dodrill
 
    This file is protected under the terms contained
@@ -24,7 +24,7 @@ int c_42_init(u_module *m)
 	u_cmds_reg(c_42);
 }
 
-MICRO_MODULE_V1(
+TETHYS_MODULE_V1(
 	"core/c_42", "Sam Dodrill",
 	"Example command module",
 

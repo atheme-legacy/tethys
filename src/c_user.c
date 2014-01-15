@@ -1,4 +1,4 @@
-/* ircd-micro, c_user.c -- user commands
+/* Tethys, c_user.c -- user commands
    Copyright (C) 2013 Alex Iadicicco
 
    This file is protected under the terms contained

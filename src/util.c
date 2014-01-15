@@ -1,4 +1,4 @@
-/* ircd-micro, util.c -- various utilities
+/* Tethys, util.c -- various utilities
    Copyright (C) 2013 Alex Iadicicco
 
    This file is protected under the terms contained

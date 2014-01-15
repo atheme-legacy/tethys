@@ -1,4 +1,4 @@
-# ircd-micro example configuration file
+# tethys example configuration file
 # Copyright (C) 2013 Alex Iadicicco
 #
 # This file is protected under the terms contained
@@ -26,7 +26,7 @@ me {
 	net AJITEK
 
 	# where to find the MOTD file
-	motd etc/micro.motd
+	motd etc/tethys.motd
 }
 
 # admin{} - admin info. the value of these fields
@@ -74,7 +74,7 @@ auth local {
 
 	# the password to require for users in
 	# this block
-	#password "micro"
+	#password "tethys"
 }
 
 auth lan {

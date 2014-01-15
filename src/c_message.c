@@ -1,4 +1,4 @@
-/* ircd-micro, c_message.c -- message propagation
+/* Tethys, c_message.c -- message propagation
    Copyright (C) 2013 Alex Iadicicco
 
    This file is protected under the terms contained

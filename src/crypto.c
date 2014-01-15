@@ -1,4 +1,4 @@
-/* ircd-micro, crypto.c -- password hashing
+/* Tethys, crypto.c -- password hashing
    Copyright (C) 2013 Alex Iadicicco
 
    This file is protected under the terms contained

@@ -1,4 +1,4 @@
-/* ircd-micro, linebuf.c -- line buffering
+/* Tethys, linebuf.c -- line buffering
    Copyright (C) 2013 Alex Iadicicco
 
    This file is protected under the terms contained

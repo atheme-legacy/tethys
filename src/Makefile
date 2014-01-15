@@ -1,4 +1,4 @@
-PROG = ircd-micro
+PROG = tethys
 SRCS = numeric.c \
 	auth.c \
 	c_generic.c \

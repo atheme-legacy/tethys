@@ -1,4 +1,4 @@
-/* ircd-micro, map.h -- directional pointer pairing
+/* Tethys, map.h -- directional pointer pairing
    Copyright (C) 2013 Alex Iadicicco
 
    This file is protected under the terms contained

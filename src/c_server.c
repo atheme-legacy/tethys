@@ -1,4 +1,4 @@
-/* ircd-micro, c_server.c -- server commands
+/* Tethys, c_server.c -- server commands
    Copyright (C) 2013 Alex Iadicicco
 
    This file is protected under the terms contained

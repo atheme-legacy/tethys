@@ -1,4 +1,4 @@
-/* ircd-micro, server.h -- server data
+/* Tethys, server.h -- server data
    Copyright (C) 2013 Alex Iadicicco
 
    This file is protected under the terms contained

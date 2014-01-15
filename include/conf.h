@@ -1,4 +1,4 @@
-/* ircd-micro, conf.h -- configuration parser
+/* Tethys, conf.h -- configuration parser
    Copyright (C) 2013 Alex Iadicicco
 
    This file is protected under the terms contained

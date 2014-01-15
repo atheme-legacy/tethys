@@ -1,4 +1,4 @@
-/* ircd-micro, module.h -- modules
+/* Tethys, module.h -- modules
    Copyright (C) 2014 Alex Iadicicco
 
    This file is protected under the terms contained
@@ -38,7 +38,7 @@ struct u_module_info {
 	void (*deinit)(u_module*);
 };
 
-#define MICRO_MODULE_V1(NAME, AUTHOR, DESC, INIT, DEINIT)                   \
+#define TETHYS_MODULE_V1(NAME, AUTHOR, DESC, INIT, DEINIT)                  \
 	u_module_info __module_info = {                                     \
 		.name = NAME,                                               \
 		.author = AUTHOR,                                           \

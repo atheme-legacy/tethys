@@ -1,4 +1,4 @@
-/* ircd-micro, c_generic.c -- commands with hunted parameters
+/* Tethys, c_generic.c -- commands with hunted parameters
    Copyright (C) 2013 Alex Iadicicco
 
    This file is protected under the terms contained

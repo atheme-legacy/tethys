@@ -1,4 +1,4 @@
-/* ircd-micro, main.c -- entry point
+/* Tethys, main.c -- entry point
    Copyright (C) 2013 Alex Iadicicco
 
    This file is protected under the terms contained
@@ -74,9 +74,9 @@ int init(void)
 	if (opt_port != -1 && !u_conn_origin_create(base_ev, INADDR_ANY, opt_port))
 		return -1;
 
-	f = fopen("etc/micro.conf", "r");
+	f = fopen("etc/tethys.conf", "r");
 	if (f == NULL) {
-		u_log(LG_SEVERE, "Could not find etc/micro.conf!");
+		u_log(LG_SEVERE, "Could not find etc/tethys.conf!");
 		return -1;
 	}
 	u_conf_read(f);

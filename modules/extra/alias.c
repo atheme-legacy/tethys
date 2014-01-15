@@ -1,4 +1,4 @@
-/* ircd-micro, alias.c -- command alias support
+/* Tethys, alias.c -- command alias support
    Copyright (C) 2014 Alex Iadicicco
 
    This file is protected under the terms contained
@@ -110,7 +110,7 @@ static void alias_deinit(u_module *m)
 	mowgli_patricia_destroy(aliases, NULL, NULL);
 }
 
-MICRO_MODULE_V1(
+TETHYS_MODULE_V1(
 	"extra/alias",
 	"Alex Iadicicco <http://github.com/aji>",
 	"Command aliases",

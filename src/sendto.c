@@ -1,4 +1,4 @@
-/* ircd-micro, sendto.c -- unified message sending
+/* Tethys, sendto.c -- unified message sending
    Copyright (C) 2013 Alex Iadicicco
 
    This file is protected under the terms contained

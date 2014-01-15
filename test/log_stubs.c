@@ -1,4 +1,4 @@
-/* ircd-micro, log_stubs.c -- logging stubs, for debugging
+/* tethys, log_stubs.c -- logging stubs, for debugging
    Copyright (C) 2013 Alex Iadicicco
 
    This file is protected under the terms contained

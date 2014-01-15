@@ -1,4 +1,4 @@
-/* ircd-micro, conn.h -- line-based connection management
+/* Tethys, conn.h -- line-based connection management
    Copyright (C) 2013 Alex Iadicicco
 
    This file is protected under the terms contained

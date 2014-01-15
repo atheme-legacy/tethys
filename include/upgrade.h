@@ -1,4 +1,4 @@
-/* ircd-micro, upgrade.h -- self-exec
+/* Tethys, upgrade.h -- self-exec
    Copyright (C) 2013 Alex Iadicicco
 
    This file is protected under the terms contained

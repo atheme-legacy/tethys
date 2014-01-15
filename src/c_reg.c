@@ -1,4 +1,4 @@
-/* ircd-micro, c_reg.c -- connection registration commands
+/* Tethys, c_reg.c -- connection registration commands
    Copyright (C) 2013 Alex Iadicicco
 
    This file is protected under the terms contained

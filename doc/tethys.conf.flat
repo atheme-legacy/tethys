@@ -1,4 +1,4 @@
-# ircd-micro example configuration file
+# Tethys example configuration file
 # Copyright (C) 2013 Alex Iadicicco
 #
 # This file is protected under the terms contained
@@ -6,7 +6,7 @@
 
 # This file is a "flattened" version of the example
 # configuration file, for the purpose of showing
-# how ircd-micro's config parser views things. This
+# how Tethys' config parser views things. This
 # config file is functionally equivalent to the
 # main example config
 
@@ -17,7 +17,7 @@ me.name             irc.ajitek.net
 me.sid              22U
 me.desc             "Yesterday's Tech Tomorrow"
 me.net              AJITEK
-me.motd             etc/micro.motd
+me.motd             etc/tethys.motd
 
 admin.loc1          "Alex Iadicicco"
 admin.loc2          "http://github.com/aji"
@@ -34,7 +34,7 @@ class.timeout       900
 auth                local
 auth.class          users
 auth.cidr           127.0.0.1/32
-#auth.password       "micro"
+#auth.password       "tethys"
 
 auth                lan
 auth.class          users

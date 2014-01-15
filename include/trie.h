@@ -1,4 +1,4 @@
-/* ircd-micro, trie.h -- radix trie
+/* Tethys, trie.h -- radix trie
    Copyright (C) 2013 Alex Iadicicco
 
    This file is protected under the terms contained
