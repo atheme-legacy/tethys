@@ -1,10 +1,10 @@
-dnl tethys, configure.c -- autoconf input
+dnl Tethys, configure.c -- autoconf input
 dnl Copyright (C) 2013 Alex Iadicicco
 dnl
 dnl This file is protected under the terms contained
 dnl in the COPYING file in the project root
 
-AC_INIT([Tethys], [0.1], [https://github.com/atheme/tethys])
+AC_INIT([Tethys], [0.1-alpha1], [https://github.com/atheme/tethys])
 
 AC_CONFIG_HEADER([include/autoconf.h])
 AC_PREFIX_DEFAULT(~/ircd)
