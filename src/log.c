@@ -32,12 +32,12 @@ int u_log(int level, char* fmt, ...)
 	char buf[BUFSIZE];
 	va_list va;
 
+	if (level > u_log_level)
+		return 0;
+
 	if (logging)
 		return 0;
 	logging = true;
-
-	if (level > u_log_level)
-		return 0;
 
 	va_start(va, fmt);
 	vsnf(FMT_LOG, buf, BUFSIZE, fmt, va);
