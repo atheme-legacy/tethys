@@ -62,7 +62,6 @@ static int m_euid(u_conn *conn, u_msg *msg)
 	u_user *u;
 	u_server *sv;
 	u_user_remote *ur;
-	char buf[512];
 
 	if (!(sv = u_server_by_sid(msg->srcstr)))
 		return idfk(conn, msg);
@@ -86,8 +85,7 @@ static int m_euid(u_conn *conn, u_msg *msg)
 		u_strlcpy(u->acct, msg->argv[9], MAXACCOUNT+1);
 
 	/* servers are required to have EUID */
-	u_user_make_euid(u, buf);
-	u_roster_f(R_SERVERS, conn, "%s", buf);
+	msg->propagate = (char*)1;
 
 	return 0;
 }
@@ -314,9 +312,7 @@ static int m_sid(u_conn *conn, u_msg *msg)
 	                    msg->argv[2], /* sid */
 	                    msg->argv[0], /* name */
 	                    msg->argv[3]); /* description */
-	u_roster_f(R_SERVERS, conn, ":%E SID %s %s %s :%s",
-	           msg->src, msg->argv[0], msg->argv[1],
-	           msg->argv[2], msg->argv[3]);
+	msg->propagate = (char*)1;
 
 	return 0;
 }
@@ -332,9 +328,7 @@ static int m_server(u_conn *conn, u_msg *msg)
 	                    NULL, /* sid */
 	                    msg->argv[0], /* name */
 	                    msg->argv[2]); /* description */
-	u_roster_f(R_SERVERS, conn, ":%E SERVER %s %s :%s",
-	           msg->src, msg->argv[0], msg->argv[1],
-	           msg->argv[2]);
+	msg->propagate = (char*)1;
 
 	return 0;
 }
@@ -427,7 +421,7 @@ u_cmd c_server[] = {
 	{ "ERROR",       CTX_SERVER, m_error,         0 },
 	{ "SVINFO",      CTX_SERVER, m_svinfo,        4 },
 
-	{ "EUID",        CTX_SERVER, m_euid,         11 },
+	{ "EUID",        CTX_SERVER, m_euid,         11, U_CMD_PROP_BROADCAST  },
 
 	{ "SJOIN",       CTX_SERVER, m_sjoin,         4 },
 	{ "JOIN",        CTX_SERVER, m_join,          3 },
@@ -438,8 +432,8 @@ u_cmd c_server[] = {
 	{ "KILL",        CTX_SERVER, m_kill,          1 },
 	{ "QUIT",        CTX_SERVER, m_quit,          0 },
 
-	{ "SID",         CTX_SERVER, m_sid,           4 },
-	{ "SERVER",      CTX_SERVER, m_server,        3 },
+	{ "SID",         CTX_SERVER, m_sid,           4, U_CMD_PROP_BROADCAST  },
+	{ "SERVER",      CTX_SERVER, m_server,        3, U_CMD_PROP_BROADCAST  },
 
 	{ "INVITE",      CTX_SERVER, m_invite,        2 },
 
