@@ -17,15 +17,24 @@ typedef struct u_msg u_msg;
 struct u_msg {
 	u_entity *src;
 	char *srcstr;
+
 	char *command;
+
 	char *argv[U_MSG_MAXARGS];
 	int argc;
+
+	char *propagate;
 };
 
 /* the parser will modify the string */
 extern int u_msg_parse(u_msg*, char*);
 
 #define MAXCOMMANDLEN 16
+
+#define U_CMD_PROP_NONE          0
+#define U_CMD_PROP_BROADCAST     1
+#define U_CMD_PROP_ONE_TO_ONE    2
+#define U_CMD_PROP_HUNTED        3
 
 typedef struct u_cmd u_cmd;
 
@@ -36,6 +45,8 @@ struct u_cmd {
 	int (*cb)(u_conn* src, u_msg*);
 	int nargs;
 
+	int propagation;
+
 	/* users should not initialize the rest of this struct to
 	   anything */
 	u_module *owner;
@@ -44,7 +55,7 @@ struct u_cmd {
 extern int u_cmds_reg(u_cmd*); /* terminated with empty name */
 extern int u_cmd_reg(u_cmd*); /* single command */
 extern void u_cmd_unreg(u_cmd*);
-extern void u_cmd_invoke(u_conn*, u_msg*);
+extern void u_cmd_invoke(u_conn*, u_msg*, char *line);
 
 extern int init_cmd(void);
 

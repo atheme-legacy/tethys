@@ -283,7 +283,7 @@ void u_conn_origin_destroy(u_conn_origin *orig)
 
 static void dispatch_lines(u_conn *conn)
 {
-	char buf[BUFSIZE];
+	char buf[BUFSIZE], line[BUFSIZE];
 	u_msg msg;
 	int sz;
 
@@ -295,8 +295,9 @@ static void dispatch_lines(u_conn *conn)
 			break;
 		}
 		u_log(LG_DEBUG, "[%G] -> %s", conn, buf);
+		memcpy(line, buf, sz + 1);
 		u_msg_parse(&msg, buf);
-		u_cmd_invoke(conn, &msg);
+		u_cmd_invoke(conn, &msg, line);
 		conn->last = NOW.tv_sec;
 		conn->flags &= ~U_CONN_AWAIT_PONG;
 	}

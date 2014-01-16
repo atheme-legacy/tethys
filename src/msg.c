@@ -126,7 +126,7 @@ static void *on_module_unload(void *unused, void *m)
 	return NULL;
 }
 
-void u_cmd_invoke(u_conn *conn, u_msg *msg)
+void u_cmd_invoke(u_conn *conn, u_msg *msg, char *line)
 {
 	u_cmd *cmd;
 	u_entity e;
@@ -169,7 +169,36 @@ void u_cmd_invoke(u_conn *conn, u_msg *msg)
 
 	u_log(LG_FINE, "%E INVOKE %s [%p]", msg->src, cmd->name, cmd->cb);
 
+	msg->propagate = NULL;
+
 	cmd->cb(conn, msg);
+
+	if (msg->propagate && cmd->propagation &&
+	    (conn->ctx == CTX_SERVER || conn->ctx == CTX_SREG)) {
+		switch (cmd->propagation) {
+		case U_CMD_PROP_NONE:
+			break;
+
+		case U_CMD_PROP_BROADCAST:
+			u_roster_f(R_SERVERS, conn, "%s", line);
+			break;
+
+		case U_CMD_PROP_ONE_TO_ONE:
+			if (u_entity_from_ref(&e, msg->propagate) && e.link)
+				u_conn_f(e.link, "%s", line);
+			break;
+
+		case U_CMD_PROP_HUNTED:
+			u_log(LG_WARN, "%s uses unimplemented propagation "
+			      "type U_CMD_PROP_HUNTED");
+			break;
+
+		default:
+			u_log(LG_WARN, "%s has unknown propagation type %d",
+			      cmd->name, cmd->propagation);
+			break;
+		}
+	}
 }
 
 int init_cmd(void)
