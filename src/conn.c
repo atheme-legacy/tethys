@@ -513,9 +513,11 @@ static void u_conn_sync(u_conn *conn)
 	need_recv = need_send = false;
 
 	if (!(conn->flags & U_CONN_CLOSING))
+	{
 		need_recv = true;
-	if (conn->obuflen > 0)
-		need_send = true;
+		if (conn->obuflen > 0)
+			need_send = true;
+	}
 
 	u_log(LG_DEBUG, "  [%G] need_recv=%s need_send=%s", conn,
 	      need_recv ? "true" : "false",
