@@ -55,7 +55,7 @@ static void add_alias(char *from, char *target)
 		return;
 	}
 
-	to = malloc(sizeof(*to));
+	to = calloc(1, sizeof(*to));
 
 	u_strlcpy(to->cmd.name, from, MAXCOMMANDLEN+1);
 	ascii_canonize(to->cmd.name);
