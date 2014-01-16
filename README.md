@@ -1,4 +1,9 @@
-# Tethys 0.1
+**This project is incomplete and very far from ready for production
+networks, even small ones.** There are gobs of critical bugs and missing
+features that will be cleared up for the 0.1 release, but until then,
+this software should not be used for anything but testing the software.
+
+# Tethys 0.1-alpha1
 
 A next-generation replacement for charybdis.
 
