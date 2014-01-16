@@ -292,12 +292,20 @@ u_user *u_user_by_uid(char *uid)
 
 void u_user_set_nick(u_user *u, char *nick, uint ts)
 {
-	/* TODO: check collision? */
-	if (u->nick[0])
-		mowgli_patricia_delete(users_by_nick, u->nick);
-	u_strlcpy(u->nick, nick, MAXNICKLEN+1);
-	mowgli_patricia_add(users_by_nick, u->nick, u);
-	u->nickts = ts;
+	//Check for collision by nick
+	if (mowgli_patricia_elem_find(users_by_nick, u->nick) == NULL) {
+
+		//XXX: check how remote nick collision is handled?
+
+		if (u->nick[0])
+			mowgli_patricia_delete(users_by_nick, u->nick);
+		u_strlcpy(u->nick, nick, MAXNICKLEN+1);
+		mowgli_patricia_add(users_by_nick, u->nick, u);
+		u->nickts = ts;
+	} else {
+		u_log(LG_VERBOSE, "User %s tried to collide with %s", u->nick, nick);
+		u_user_num(u, ERR_NICKNAMEINUSE, nick);
+	}
 }
 
 uint u_user_state(u_user *u, uint state)
