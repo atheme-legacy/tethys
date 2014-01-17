@@ -31,8 +31,8 @@ DISTCLEAN = numeric.c numeric.h
 
 build: all
 
-include ../extra.mk
 include ../buildsys.mk
+include ../extra.mk
 
 CFLAGS += -Wall
 CPPFLAGS += -I. -I../include

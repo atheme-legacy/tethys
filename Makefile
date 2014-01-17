@@ -5,5 +5,5 @@ DISTCLEAN = extra.mk \
 	config.log \
 	config.status
 
-include extra.mk
 include buildsys.mk
+include extra.mk

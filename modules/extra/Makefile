@@ -4,9 +4,9 @@ SRCS = logchan.c \
 	pseudoclient.c \
 	alias.c
 
-include ../../extra.mk
 include ../../buildsys.mk
 include ../../buildsys.module.mk
+include ../../extra.mk
 
 CFLAGS += -I../../include -I../../src
 
