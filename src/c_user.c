@@ -860,6 +860,23 @@ static int m_modreload(u_conn *conn, u_msg *msg)
 	return 0;
 }
 
+static int m_modlist(u_conn *conn, u_msg *msg)
+{
+	mowgli_patricia_iteration_state_t state;
+	u_module *mod;
+	u_user *u = conn->priv;
+
+	if (!(u->flags & UMODE_OPER))
+		return u_user_num(u, ERR_NOPRIVILEGES);
+
+	MOWGLI_PATRICIA_FOREACH(mod, &state, u_modules) {
+		u_conn_f(conn, ":%S NOTICE %G :%s: %s", &me, conn,
+		        mod->info->name, mod->info->description);
+	}
+
+	return 0;
+}
+
 u_cmd c_user[] = {
 	{ "ECHO",      CTX_USER, m_echo,    0 },
 	{ "QUIT",      CTX_USER, m_quit,    0 },
@@ -888,6 +905,7 @@ u_cmd c_user[] = {
 	{ "MODLOAD",   CTX_USER, m_modload,   1 },
 	{ "MODUNLOAD", CTX_USER, m_modunload, 1 },
 	{ "MODRELOAD", CTX_USER, m_modreload, 1 },
+	{ "MODLIST",   CTX_USER, m_modlist,   0 },
 
 	{ "SQUIT",     CTX_USER, not_implemented, 0 },
 	{ "LINKS",     CTX_USER, not_implemented, 0 },
