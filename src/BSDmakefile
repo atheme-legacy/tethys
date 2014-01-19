@@ -1,3 +1,0 @@
-LIBS != $(CC) -lcrypt -o /dev/null probe_crypt.c 2>/dev/null && echo -lcrypt
-
-include Makefile.old
