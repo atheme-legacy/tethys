@@ -748,9 +748,11 @@ static void do_map(struct map_priv *p)
 	u_user_num(p->u, RPL_MAP, p->buf);
 
 	p->indent[depth] = ' ';
-	p->indent[depth - 2] = ' ';
-	if (p->left == 0)
-		p->indent[depth - 3] = ' ';
+	if (depth != 0) {
+		p->indent[depth - 2] = ' ';
+		if (p->left == 0)
+			p->indent[depth - 3] = ' ';
+	}
 
 	if (sv->nlinks > 0) {
 		left = p->left;
@@ -785,6 +787,7 @@ static int m_map(u_conn *conn, u_msg *msg)
 	p.sv = &me;
 	p.depth = 0;
 	p.u = u;
+	p.left = 0;
 	do_map(&p);
 
 	u_user_num(u, RPL_MAPEND);
