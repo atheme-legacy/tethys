@@ -2,11 +2,6 @@
 PROG = tethys
 SRCS = numeric.c \
 	auth.c \
-	c_generic.c \
-	c_message.c \
-	c_reg.c \
-	c_server.c \
-	c_user.c \
 	chan.c \
 	conf.c \
 	conn.c \

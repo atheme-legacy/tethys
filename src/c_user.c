@@ -913,8 +913,7 @@ u_cmd c_user[] = {
 	{ "WHO",       CTX_USER, m_who,               1, 0 },
 	{ "OPER",      CTX_USER, m_oper,              2, 0 },
 	{ "LIST",      CTX_USER, m_list,              0, 0 },
-/*	disabled temporarily, as this conflicts with NICK in c_reg
-	{ "NICK",      CTX_USER, m_nick,              1, 0 }, */
+	{ "NICK",      CTX_USER, m_nick,              1, 0 },
 	{ "STATS",     CTX_USER, m_stats,             1, 0 },
 	{ "MKPASS",    CTX_USER, m_mkpass,            1, 0 },
 	{ "ADMIN",     CTX_USER, m_admin,             0, 0 },

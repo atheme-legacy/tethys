@@ -30,13 +30,6 @@ int usage(char *argv0, int code)
 }
 
 #define INIT(fn) if ((err = (fn)()) < 0) return err
-#define COMMAND_DEF(cmds) extern u_cmd cmds[]
-#define COMMAND(cmds) if ((err = u_cmds_reg(cmds)) < 0) return err
-COMMAND_DEF(c_generic);
-COMMAND_DEF(c_message);
-COMMAND_DEF(c_reg);
-COMMAND_DEF(c_server);
-COMMAND_DEF(c_user);
 int init(void)
 {
 	int err;
@@ -63,11 +56,6 @@ int init(void)
 	INIT(init_server);
 	INIT(init_chan);
 	INIT(init_sendto);
-	COMMAND(c_generic);
-	COMMAND(c_message);
-	COMMAND(c_reg);
-	COMMAND(c_server);
-	COMMAND(c_user);
 
 	mowgli_timer_add(base_ev, "ping", u_conn_check_ping_all, base_ev, 10);
 
