@@ -25,8 +25,8 @@ int c_42_init(u_module *m)
 }
 
 TETHYS_MODULE_V1(
-	"core/c_42", "Sam Dodrill",
-	"Example command module",
+	"contrib/c_42", "Sam Dodrill",
+	"Provides /42",
 
 	c_42_init,
 	NULL

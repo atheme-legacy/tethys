@@ -17,7 +17,7 @@ void hello_deinit(u_module *m)
 }
 
 TETHYS_MODULE_V1(
-	"core/hello", "Alex Iadicicco",
+	"contrib/hello", "Alex Iadicicco",
 	"Example module",
 
 	hello_init,
