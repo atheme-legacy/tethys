@@ -10,7 +10,7 @@
 
 # module - pretty straightforward
 
-module "core/c_42"
+module "contrib/c_42"
 
 
 # me{} - this block contains a few options for
