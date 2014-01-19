@@ -370,12 +370,12 @@ static void origin_rdns(mowgli_dns_reply_t *reply, int reason, void *vptr)
 			reasonstr = "Request timeout";
 			break;
 		}
-		u_conn_f(conn, ":%s NOTICE * :*** Couldn't find your hostname: %s. "
-		         "Using your ip %s", me.name, reasonstr, conn->host);
+		u_conn_f(conn, ":%s NOTICE * :*** Couldn't find your hostname: %s -- "
+		         "using your ip: %s", me.name, reasonstr, conn->host);
 	} else {
 		/* XXX: Validate that rDNS matches Forward DNS. */
 		u_strlcpy(conn->host, reply->h_name, U_CONN_HOSTSIZE);
-		u_conn_f(conn, ":%s NOTICE * :*** Found your hostname. Hi there %s",
+		u_conn_f(conn, ":%s NOTICE * :*** Found your hostname: %s",
 		         me.name, conn->host);
 	}
 
