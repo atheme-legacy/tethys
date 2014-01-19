@@ -1,4 +1,4 @@
-MODULE = core
+MODULE = contrib
 
 SRCS = hello.c \
        c_42.c
