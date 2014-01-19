@@ -373,9 +373,8 @@ static void origin_rdns(mowgli_dns_reply_t *reply, int reason, void *vptr)
 		u_conn_f(conn, ":%s NOTICE * :*** Couldn't find your hostname: %s. "
 		         "Using your ip %s", me.name, reasonstr, conn->host);
 	} else {
-		const struct sockaddr_in *saddr = (void*)&reply->addr.addr;
-		inet_ntop(AF_INET, (void*)&saddr->sin_addr, conn->host,
-		          U_CONN_HOSTSIZE);
+		/* XXX: Validate that rDNS matches Forward DNS. */
+		u_strlcpy(conn->host, reply->h_name, U_CONN_HOSTSIZE);
 		u_conn_f(conn, ":%s NOTICE * :*** Found your hostname. Hi there %s",
 		         me.name, conn->host);
 	}
@@ -423,8 +422,7 @@ static void origin_recv(mowgli_eventloop_t *ev, mowgli_eventloop_io_t *io,
 	query->q.ptr = query;
 	query->q.callback = origin_rdns;
 	conn->dnsq = &query->q;
-	/* mowgli_dns_gethost_byaddr(base_dns, (void*)&addr, conn->dnsq); */
-	origin_rdns(NULL, MOWGLI_DNS_RES_NXDOMAIN, query->q.ptr);
+	mowgli_dns_gethost_byaddr(base_dns, (void*)&addr, conn->dnsq);
 
 	u_log(LG_VERBOSE, "Connection from %s", conn->ip);
 }
