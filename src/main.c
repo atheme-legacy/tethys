@@ -123,7 +123,7 @@ int main(int argc, char **argv)
 
 	u_log(LG_INFO, "Entering IO loop");
 
-	mowgli_eventloop_run(base_ev);
+	u_conn_run(base_ev);
 
 	u_log(LG_VERBOSE, "IO loop died. Bye bye!");
 

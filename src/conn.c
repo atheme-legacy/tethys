@@ -9,27 +9,39 @@
 static mowgli_list_t all_conns;
 static mowgli_list_t all_origs;
 
+static mowgli_list_t need_destroy;
+
 static void origin_rdns();
 static void origin_recv(mowgli_eventloop_t *ev, mowgli_eventloop_io_t *io,
                         mowgli_eventloop_io_dir_t dir, void *priv);
 static void toplev_recv(mowgli_eventloop_t *ev, mowgli_eventloop_io_t *io,
                         mowgli_eventloop_io_dir_t dir, void *priv);
 
-static void u_conn_sync(u_conn *conn);
+static void toplev_set_send(u_conn*, bool);
+static void toplev_set_recv(u_conn*, bool);
+static void toplev_check_set_send(u_conn*);
+
+static void call_shutdown(u_conn*);
 
 struct rdns_query {
 	u_conn *conn;
 	mowgli_dns_query_t q;
 };
 
-void u_conn_init(u_conn *conn)
+u_conn *u_conn_create(mowgli_eventloop_t *ev, int fd)
 {
+	u_conn *conn;
+
+	conn = malloc(sizeof(*conn));
+
 	conn->flags = 0;
 	conn->ctx = CTX_UNREG;
 	conn->auth = NULL;
 	conn->last = NOW.tv_sec;
 
-	conn->poll = NULL;
+	conn->poll = mowgli_pollable_create(ev, fd, conn);
+	mowgli_pollable_set_nonblocking(conn->poll, true);
+
 	conn->ip[0] = '\0';
 	conn->host[0] = '\0';
 	conn->dnsq = NULL;
@@ -44,29 +56,73 @@ void u_conn_init(u_conn *conn)
 	if (conn->obuf == NULL)
 		abort();
 
-	conn->event = NULL;
+	conn->shutdown = NULL;
 	conn->error = NULL;
 
 	conn->priv = NULL;
 	conn->pass = NULL;
 
 	mowgli_node_add(conn, &conn->n, &all_conns);
+
+	toplev_set_recv(conn, true);
+
+	return conn;
 }
 
-void u_conn_cleanup(u_conn *conn)
+void u_conn_destroy(u_conn *conn)
 {
+	if (conn->flags & U_CONN_DESTROY)
+		return;
+	conn->flags |= U_CONN_DESTROY;
 	mowgli_node_delete(&conn->n, &all_conns);
+	mowgli_node_add(conn, &conn->n, &need_destroy);
+}
+
+static void conn_destroy_real(u_conn *conn)
+{
+	mowgli_eventloop_t *ev = conn->poll->eventloop;
+	int fd = conn->poll->fd;
+
+	u_log(LG_VERBOSE, "%G (%s) being destroyed", conn,
+	      conn->host[0] ? conn->host : conn->ip);
+	call_shutdown(conn);
+
 	if (conn->dnsq)
 		mowgli_dns_delete_query(base_dns, conn->dnsq);
 	if (conn->error)
 		free(conn->error);
 	free(conn->obuf);
+
+	mowgli_pollable_destroy(ev, conn->poll);
+	close(fd);
+	free(conn);
 }
 
-void u_conn_close(u_conn *conn)
+static void call_shutdown(u_conn *conn)
 {
+	if (conn->flags & U_CONN_SHUTDOWN)
+		return;
+	if (conn->shutdown)
+		conn->shutdown(conn);
+	conn->flags |= U_CONN_SHUTDOWN;
+}
+
+void u_conn_shutdown(u_conn *conn)
+{
+	call_shutdown(conn);
+	toplev_set_recv(conn, false);
 	conn->flags |= U_CONN_CLOSING;
-	u_conn_sync(conn);
+	toplev_check_set_send(conn);
+}
+
+void u_conn_fatal(u_conn *conn, char *reason)
+{
+	if (conn->error)
+		free(conn->error);
+	conn->error = strdup(reason);
+	call_shutdown(conn);
+	conn->flags |= U_CONN_CLOSING;
+	u_conn_destroy(conn);
 }
 
 /* sadfaec */
@@ -117,11 +173,8 @@ void u_conn_vf(u_conn *conn, char *fmt, va_list va)
 	char buf[4096];
 	char *p, *s, *end;
 
-	if (!conn)
+	if (!conn || (conn->flags & U_CONN_NO_SEND))
 		return;
-
-	if (conn->error)
-		conn_out_clear(conn);
 
 	p = conn->obuf + conn->obuflen;
 	end = conn->obuf + conn->obufsize - 2; /* -2 for \r\n */
@@ -145,7 +198,7 @@ void u_conn_vf(u_conn *conn, char *fmt, va_list va)
 		*p++ = *s++;
 
 	if (p >= end) {
-		u_conn_error(conn, "Sendq full");
+		u_conn_fatal(conn, "Sendq full");
 		return;
 	}
 
@@ -154,7 +207,7 @@ void u_conn_vf(u_conn *conn, char *fmt, va_list va)
 
 	conn->obuflen = p - conn->obuf;
 
-	u_conn_sync(conn);
+	toplev_check_set_send(conn);
 }
 
 void u_conn_f(u_conn *conn, char *fmt, ...)
@@ -202,17 +255,6 @@ int u_conn_num(u_conn *conn, int num, ...)
 	va_end(va);
 
 	return 0;
-}
-
-void u_conn_error(u_conn *conn, char *error)
-{
-	if (conn->flags & U_CONN_CLOSING)
-		return;
-	u_log(LG_FINE, "CONN:ERR: [%p] ERR=\"%s\"", conn, error);
-	if (conn->error != NULL)
-		free(conn->error);
-	conn->error = strdup(error);
-	u_conn_sync(conn);
 }
 
 u_conn_origin *u_conn_origin_create(mowgli_eventloop_t *ev, u_long addr,
@@ -291,7 +333,7 @@ static void dispatch_lines(u_conn *conn)
 		if (sz > 0)
 			buf[sz] = '\0';
 		if (sz < 0 || strlen(buf) != sz) {
-			u_conn_error(conn, "Read error");
+			u_conn_fatal(conn, "Line buffer error");
 			break;
 		}
 		u_log(LG_DEBUG, "[%G] -> %s", conn, buf);
@@ -301,8 +343,6 @@ static void dispatch_lines(u_conn *conn)
 		conn->last = NOW.tv_sec;
 		conn->flags &= ~U_CONN_AWAIT_PONG;
 	}
-
-	u_conn_sync(conn);
 }
 
 static void origin_rdns(mowgli_dns_reply_t *reply, int reason, void *vptr)
@@ -350,7 +390,6 @@ static void origin_recv(mowgli_eventloop_t *ev, mowgli_eventloop_io_t *io,
                         mowgli_eventloop_io_dir_t dir, void *priv)
 {
 	mowgli_eventloop_pollable_t *poll = mowgli_eventloop_io_pollable(io);
-	mowgli_eventloop_pollable_t *cli;
 	struct rdns_query *query;
 	u_conn *conn;
 	struct sockaddr_storage addr;
@@ -365,11 +404,7 @@ static void origin_recv(mowgli_eventloop_t *ev, mowgli_eventloop_io_t *io,
 		return;
 	}
 
-	conn = malloc(sizeof(*conn));
-	u_conn_init(conn);
-	cli = mowgli_pollable_create(poll->eventloop, fd, conn);
-	mowgli_pollable_set_nonblocking(cli, true);
-	conn->poll = cli;
+	conn = u_conn_create(ev, fd);
 
 	addrptr = NULL;
 	switch (addr.ss_family) {
@@ -394,18 +429,6 @@ static void origin_recv(mowgli_eventloop_t *ev, mowgli_eventloop_io_t *io,
 	u_log(LG_VERBOSE, "Connection from %s", conn->ip);
 }
 
-static void toplev_cleanup(u_conn *conn)
-{
-	mowgli_eventloop_t *ev = conn->poll->eventloop;
-	u_log(LG_VERBOSE, "%s disconnecting", conn->host);
-	if (conn->event != NULL)
-		conn->event(conn, EV_DESTROYING);
-	mowgli_pollable_destroy(ev, conn->poll);
-	u_conn_cleanup(conn);
-	close(conn->poll->fd);
-	free(conn);
-}
-
 static void toplev_recv(mowgli_eventloop_t *ev, mowgli_eventloop_io_t *io,
                         mowgli_eventloop_io_dir_t dir, void *priv)
 {
@@ -420,12 +443,12 @@ static void toplev_recv(mowgli_eventloop_t *ev, mowgli_eventloop_io_t *io,
 	if (sz <= 0) {
 		if (sz < 0)
 			u_perror("recv");
-		u_conn_error(conn, sz == 0 ? "End of stream" : "Read error");
+		u_conn_fatal(conn, sz == 0 ? "End of stream" : "Read error");
 		return;
 	}
 
 	if (u_linebuf_data(&conn->ibuf, buf, sz) < 0) {
-		u_conn_error(conn, "Excess flood");
+		u_conn_fatal(conn, "Excess flood");
 		return;
 	}
 
@@ -444,16 +467,50 @@ static void toplev_send(mowgli_eventloop_t *ev, mowgli_eventloop_io_t *io,
 	sz = send(conn->poll->fd, conn->obuf, conn->obuflen, 0);
 
 	if (sz < 0) {
+		/* TODO: determine if error is recoverable */
 		u_perror("send");
-		u_conn_error(conn, "Write error");
-		conn->obuflen = 0;
+		u_conn_fatal(conn, "Write error");
 		return;
 	}
 
 	if (sz > 0) {
 		memmove(conn->obuf, conn->obuf + sz, conn->obufsize - sz);
 		conn->obuflen -= sz;
-		u_conn_sync(conn);
+	}
+
+	toplev_check_set_send(conn);
+}
+
+static inline void toplev_set(u_conn *conn, bool en,
+                              mowgli_eventloop_io_dir_t dir,
+                              mowgli_eventloop_io_cb_t *cb)
+{
+	mowgli_eventloop_t *ev = conn->poll->eventloop;
+
+	mowgli_pollable_setselect(ev, conn->poll, dir, en ? cb : NULL);
+}
+
+static void toplev_set_recv(u_conn *conn, bool en)
+{
+	u_log(LG_DEBUG, "%sable recv on %G", en ? "En" : "Dis", conn);
+	toplev_set(conn, en, MOWGLI_EVENTLOOP_IO_READ, toplev_recv);
+}
+
+static void toplev_set_send(u_conn *conn, bool en)
+{
+	u_log(LG_DEBUG, "%sable send on %G", en ? "En" : "Dis", conn);
+	toplev_set(conn, en, MOWGLI_EVENTLOOP_IO_WRITE, toplev_send);
+}
+
+static void toplev_check_set_send(u_conn *conn)
+{
+	u_log(LG_DEBUG, "%G check send...", conn);
+	if (conn->obuflen == 0 || conn->error) {
+		toplev_set_send(conn, false);
+		if (conn->flags & U_CONN_CLOSING)
+			u_conn_destroy(conn);
+	} else {
+		toplev_set_send(conn, true);
 	}
 }
 
@@ -473,7 +530,7 @@ static void u_conn_check_ping(u_conn *conn)
 	}
 
 	if (tdelta > timeout)
-		u_conn_error(conn, "Ping timeout");
+		u_conn_fatal(conn, "Ping timeout");
 }
 
 void u_conn_check_ping_all(void *priv)
@@ -484,54 +541,6 @@ void u_conn_check_ping_all(void *priv)
 
 	MOWGLI_LIST_FOREACH_SAFE(n, tn, all_conns.head)
 		u_conn_check_ping(n->data);
-}
-
-static void u_conn_sync(u_conn *conn)
-{
-	bool need_recv, need_send;
-	mowgli_eventloop_t *ev = conn->poll->eventloop;
-
-	if (conn->flags & U_CONN_SYNCING)
-		return;
-
-	conn->flags |= U_CONN_SYNCING;
-
-	/* sync is determined by
-	     - existing error conditions
-	     - U_CONN_CLOSING flag
-	     - output buffer size
-	   if any of these things change, then the connection needs synced */
-
-	if (conn->error) {
-		if (conn->event)
-			conn->event(conn, EV_ERROR);
-		free(conn->error);
-		conn->error = NULL;
-		conn->flags |= U_CONN_CLOSING;
-	}
-
-	need_recv = need_send = false;
-
-	if (!(conn->flags & U_CONN_CLOSING))
-	{
-		need_recv = true;
-		if (conn->obuflen > 0)
-			need_send = true;
-	}
-
-	u_log(LG_DEBUG, "  [%G] need_recv=%s need_send=%s", conn,
-	      need_recv ? "true" : "false",
-	      need_send ? "true" : "false");
-
-	mowgli_pollable_setselect(ev, conn->poll, MOWGLI_EVENTLOOP_IO_READ,
-	                          need_recv ? toplev_recv : NULL);
-	mowgli_pollable_setselect(ev, conn->poll, MOWGLI_EVENTLOOP_IO_WRITE,
-	                          need_send ? toplev_send : NULL);
-
-	if (!need_recv && !need_send)
-		toplev_cleanup(conn);
-
-	conn->flags &= ~U_CONN_SYNCING;
 }
 
 static void *conf_end(void *unused, void *unused2)
@@ -587,10 +596,26 @@ static void conf_listen(char *key, char *val)
 	}
 }
 
+void u_conn_run(mowgli_eventloop_t *ev)
+{
+	mowgli_node_t *n, *tn;
+
+	while (!ev->death_requested) {
+		mowgli_eventloop_run_once(ev);
+
+		MOWGLI_LIST_FOREACH_SAFE(n, tn, need_destroy.head) {
+			mowgli_node_delete(n, &need_destroy);
+			conn_destroy_real(n->data);
+		}
+	}
+}
+
 int init_conn(void)
 {
 	mowgli_list_init(&all_conns);
 	mowgli_list_init(&all_origs);
+
+	mowgli_list_init(&need_destroy);
 
 	u_hook_add(HOOK_CONF_END, conf_end, NULL);
 	u_conf_add_handler("listen", conf_listen);

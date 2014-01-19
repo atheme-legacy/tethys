@@ -117,9 +117,9 @@ void u_user_mode(u_user *u, char ch, int on)
 	info->cb(info, u, on);
 }
 
-/* used to simplify user_local_event */
-void user_local_die(u_conn *conn, char *msg)
+void user_shutdown(u_conn *conn)
 {
+	char *msg = conn->error ? conn->error : "conn shutdown";
 	u_user *u = conn->priv;
 	if (u == NULL)
 		return;
@@ -127,21 +127,6 @@ void user_local_die(u_conn *conn, char *msg)
 		u_sendto_visible(u, ST_ALL, ":%H QUIT :%s", u, msg);
 	u_conn_f(conn, "ERROR :%s", msg);
 	u_user_unlink(u);
-}
-
-void user_local_event(u_conn *conn, int event)
-{
-	switch (event) {
-	case EV_ERROR:
-		user_local_die(conn, conn->error);
-		break;
-	default:
-		user_local_die(conn, "unknown error");
-		break;
-
-	case EV_DESTROYING:
-		break;
-	}
 }
 
 u_user_local *u_user_local_create(char *ip, char *host)
@@ -194,7 +179,7 @@ void u_user_make_ureg(u_conn *conn)
 
 	u_user_state(USER(ul), USER_REGISTERING);
 
-	conn->event = user_local_event;
+	conn->shutdown = user_shutdown;
 }
 
 u_user_remote *u_user_new_remote(u_server *sv, char *uid)
@@ -245,6 +230,7 @@ void u_user_unlink(u_user *u)
 			u_roster_del_all(ul->conn);
 			ul->conn->ctx = CTX_CLOSED;
 			ul->conn->priv = NULL;
+			u_conn_shutdown(ul->conn);
 		}
 	}
 

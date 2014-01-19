@@ -23,7 +23,7 @@ static int m_error(u_conn *conn, u_msg *msg)
 {
 	u_log(LG_ERROR, "%S is closing connection via ERROR (%s)", conn->priv,
 	      msg->argc > 0 ? msg->argv[0] : "no message");
-	u_conn_error(conn, "Peer sent ERROR!");
+	u_conn_fatal(conn, "Peer sent ERROR!");
 	return 0;
 }
 
@@ -38,7 +38,7 @@ static int m_svinfo(u_conn *conn, u_msg *msg)
 	}
 
 	if (atoi(msg->argv[0]) < 6) {
-		u_conn_error(conn, "Max TS version is not 6!");
+		u_conn_fatal(conn, "Max TS version is not 6!");
 		return 0;
 	}
 
@@ -50,7 +50,7 @@ static int m_svinfo(u_conn *conn, u_msg *msg)
 		u_log(LG_WARN, "%S has TS delta of %d", conn->priv, tsdelta);
 	if (tsdelta > 60) {
 		u_log(LG_ERROR, "%S has excessive TS delta, killing", conn->priv);
-		u_conn_error(conn, "Excessive TS delta");
+		u_conn_fatal(conn, "Excessive TS delta");
 		return 0;
 	}
 
@@ -259,7 +259,6 @@ static int m_kill(u_conn *conn, u_msg *msg)
 	if (IS_LOCAL_USER(u)) {
 		u_user_local *ul = USER_LOCAL(u);
 		u_conn_f(ul->conn, ":%H QUIT :Killed (%s)", u, r);
-		u_conn_close(ul->conn);
 	}
 
 	u_sendto_visible(u, ST_USERS, ":%H QUIT :Killed (%s)", u, r);
@@ -290,7 +289,6 @@ static int m_quit(u_conn *conn, u_msg *msg)
 		u_user_local *ul = USER_LOCAL(ul);
 		u_log(LG_WARN, "%G sent QUIT for my user %U", conn, u);
 		u_conn_f(ul->conn, ":%H QUIT%s", u, buf);
-		u_conn_close(ul->conn);
 	}
 
 	u_sendto_visible(u, ST_USERS, ":%H QUIT%s", u, buf);

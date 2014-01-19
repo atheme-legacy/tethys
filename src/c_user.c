@@ -40,7 +40,6 @@ static int m_quit(u_conn *conn, u_msg *msg)
 	u_roster_f(R_SERVERS, NULL, ":%H QUIT :Quit: %s", u, r);
 
 	u_user_unlink(u);
-	u_conn_close(conn);
 
 	return 0;
 }
@@ -679,10 +678,8 @@ static int m_kill(u_conn *conn, u_msg *msg)
 	u_sendto_visible(tu, ST_USERS, ":%H QUIT :Killed (%s)", tu, buf);
 	u_roster_f(R_SERVERS, NULL, ":%U KILL %U :%s", u, tu, me.name, buf);
 
-	if (IS_LOCAL_USER(tu)) {
+	if (IS_LOCAL_USER(tu))
 		u_conn_f(USER_LOCAL(tu)->conn, ":%H QUIT :Killed (%s)", tu, buf);
-		u_conn_close(USER_LOCAL(tu)->conn);
-	}
 	u_user_unlink(tu);
 
 	return 0;

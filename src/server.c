@@ -175,8 +175,9 @@ void u_my_capabs(char *buf)
 	capab_to_str(me.capab, buf);
 }
 
-void server_local_die(u_conn *conn, char *msg)
+void server_shutdown(u_conn *conn)
 {
+	char *msg = conn->error ? conn->error : "conn shutdown";
 	u_server *sv = conn->priv;
 	if (sv == NULL)
 		return;
@@ -185,21 +186,6 @@ void server_local_die(u_conn *conn, char *msg)
 	}
 	u_conn_f(conn, "ERROR :%s", msg);
 	u_server_unlink(sv);
-}
-
-void server_local_event(u_conn *conn, int event)
-{
-	switch (event) {
-	case EV_ERROR:
-		server_local_die(conn, conn->error);
-		break;
-	default:
-		server_local_die(conn, "unknown error");
-		break;
-
-	case EV_DESTROYING:
-		break;
-	}
 }
 
 void u_server_make_sreg(u_conn *conn, char *sid)
@@ -232,7 +218,7 @@ void u_server_make_sreg(u_conn *conn, char *sid)
 	sv->nusers = 0;
 	sv->nlinks = 0;
 
-	conn->event = server_local_event;
+	conn->shutdown = server_shutdown;
 
 	u_log(LG_INFO, "New local server sid=%s", sv->sid);
 
@@ -287,8 +273,7 @@ void u_server_unlink(u_server *sv)
 	if (IS_SERVER_LOCAL(sv)) {
 		u_conn *conn = sv->conn;
 		u_roster_del_all(conn);
-		conn->ctx = CTX_CLOSED;
-		conn->priv = NULL;
+		u_conn_shutdown(conn);
 	}
 
 	sv->parent->nlinks--;

@@ -13,7 +13,7 @@ static int err_already(u_conn *conn, u_msg *msg)
 
 static int gtfo(u_conn *conn, u_msg *msg)
 {
-	u_conn_error(conn, "Server doesn't know what it's doing");
+	u_conn_fatal(conn, "Server doesn't know what it's doing");
 	return 0;
 }
 
@@ -32,12 +32,12 @@ static int m_pass(u_conn *conn, u_msg *msg)
 		return 0;
 
 	if (!streq(msg->argv[1], "TS") || !streq(msg->argv[2], "6")) {
-		u_conn_error(conn, "Invalid TS version");
+		u_conn_fatal(conn, "Invalid TS version");
 		return 0;
 	}
 
 	if (!is_valid_sid(msg->argv[3])) {
-		u_conn_error(conn, "Invalid SID");
+		u_conn_fatal(conn, "Invalid SID");
 		return 0;
 	}
 
@@ -237,12 +237,12 @@ static int try_serv(u_conn *conn)
 	uint capab_need = CAPAB_QS | CAPAB_EX | CAPAB_IE | CAPAB_EUID | CAPAB_ENCAP;
 
 	if ((sv->capab & capab_need) != capab_need) {
-		u_conn_error(conn, "Don't have all needed CAPABs!");
+		u_conn_fatal(conn, "Don't have all needed CAPABs!");
 		return 0;
 	}
 
 	if (!(link = u_find_link(conn))) {
-		u_conn_error(conn, "No link{} blocks for your host");
+		u_conn_fatal(conn, "No link{} blocks for your host");
 		return 0;
 	}
 

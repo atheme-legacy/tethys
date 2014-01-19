@@ -16,11 +16,9 @@
 
 #define U_CONN_CLOSING    0x0001
 #define U_CONN_AWAIT_PONG 0x0002
-#define U_CONN_SYNCING    0x0004
-
-/* events */
-#define EV_ERROR          1
-#define EV_DESTROYING     2
+#define U_CONN_SHUTDOWN   0x0004
+#define U_CONN_DESTROY    0x0008
+#define U_CONN_NO_SEND    0x0001 /* !!!: same as U_CONN_CLOSING */
 
 /* connection contexts. used for command processing */
 #define CTX_UNREG       0
@@ -55,7 +53,7 @@ struct u_conn {
 	int obuflen, obufsize;
 	u_cookie ck_sendto;
 
-	void (*event)(u_conn*, int event);
+	void (*shutdown)(u_conn*);
 	char *error;
 
 	void *priv;
@@ -67,8 +65,12 @@ struct u_conn_origin {
 	mowgli_node_t n;
 };
 
-extern void u_conn_init(u_conn*);
-extern void u_conn_close(u_conn*);
+extern u_conn *u_conn_create(mowgli_eventloop_t *ev, int fd);
+extern void u_conn_destroy(u_conn*);
+
+extern void u_conn_shutdown(u_conn*);
+extern void u_conn_fatal(u_conn*, char *reason);
+
 extern void u_conn_obufsize(u_conn*, int obufsize);
 
 extern u_conn *u_conn_by_name(char *nick_or_server);
@@ -79,13 +81,13 @@ extern void u_conn_f(u_conn *conn, char *fmt, ...);
 extern void u_conn_vnum(u_conn*, char *tgt, int num, va_list);
 extern int u_conn_num(u_conn *conn, int num, ...);
 
-extern void u_conn_error(u_conn*, char*);
-
 extern u_conn_origin *u_conn_origin_create(mowgli_eventloop_t*, ulong addr,
                                            ushort port);
 extern void u_conn_origin_destroy(u_conn_origin *orig);
 
 extern void u_conn_check_ping_all(void*);
+
+extern void u_conn_run(mowgli_eventloop_t *ev);
 
 extern int init_conn(void);
 
