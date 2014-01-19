@@ -490,19 +490,16 @@ static inline void toplev_set(u_conn *conn, bool en,
 
 static void toplev_set_recv(u_conn *conn, bool en)
 {
-	u_log(LG_DEBUG, "%sable recv on %G", en ? "En" : "Dis", conn);
 	toplev_set(conn, en, MOWGLI_EVENTLOOP_IO_READ, toplev_recv);
 }
 
 static void toplev_set_send(u_conn *conn, bool en)
 {
-	u_log(LG_DEBUG, "%sable send on %G", en ? "En" : "Dis", conn);
 	toplev_set(conn, en, MOWGLI_EVENTLOOP_IO_WRITE, toplev_send);
 }
 
 static void toplev_check_set_send(u_conn *conn)
 {
-	u_log(LG_DEBUG, "%G check send...", conn);
 	if (conn->obuflen == 0 || conn->error) {
 		toplev_set_send(conn, false);
 		if (conn->flags & U_CONN_CLOSING)
