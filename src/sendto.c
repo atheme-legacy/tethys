@@ -62,7 +62,7 @@ int u_st_match_user(u_st_opts *opt, u_user *u)
 
 int u_st_match_conn(u_st_opts *opt, u_conn *conn)
 {
-	if (conn->ctx == CTX_SERVER || conn->ctx == CTX_SREG)
+	if (conn->ctx == CTX_SERVER)
 		return u_st_match_server(opt, conn->priv);
 	return u_st_match_user(opt, conn->priv);
 }
@@ -78,11 +78,9 @@ static int want_send(struct sendto_priv *pv, u_conn *conn)
 		switch (conn->ctx) {
 		case CTX_USER:
 		case CTX_UNREG:
-		case CTX_UREG:
 			return pv->type == ST_USERS;
 
 		case CTX_SERVER:
-		case CTX_SREG:
 			return pv->type == ST_SERVERS;
 		}
 		return 0;
@@ -98,7 +96,6 @@ static char *ln(struct sendto_priv *pv, u_conn *conn)
 	switch (conn->ctx) {
 	case CTX_USER:
 	case CTX_UNREG:
-	case CTX_UREG:
 		if (!pv->user) {
 			pv->user = buf_user;
 			va_copy(va, pv->va);
@@ -108,7 +105,6 @@ static char *ln(struct sendto_priv *pv, u_conn *conn)
 		return pv->user;
 
 	case CTX_SERVER:
-	case CTX_SREG:
 		if (!pv->serv) {
 			pv->serv = buf_serv;
 			va_copy(va, pv->va);

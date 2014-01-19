@@ -185,7 +185,6 @@ void u_conn_vf(u_conn *conn, char *fmt, va_list va)
 	default:
 		type = FMT_USER;
 		break;
-	case CTX_SREG:
 	case CTX_SERVER:
 		type = FMT_SERVER;
 		break;
@@ -247,7 +246,6 @@ int u_conn_num(u_conn *conn, int num, ...)
 	case CTX_UNREG:
 		u_conn_vnum(conn, "*", num, va);
 		break;
-	case CTX_UREG:
 	case CTX_USER:
 		u_user_vnum(conn->priv, num, va);
 		break;

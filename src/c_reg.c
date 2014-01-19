@@ -19,6 +19,9 @@ static int gtfo(u_conn *conn, u_msg *msg)
 
 static int m_pass(u_conn *conn, u_msg *msg)
 {
+	if (conn->flags & U_CONN_REGISTERED)
+		return err_already(conn, msg);
+
 	if (msg->argc != 1 && msg->argc != 4) {
 		u_conn_num(conn, ERR_NEEDMOREPARAMS, msg->command);
 		return 0;
@@ -64,6 +67,8 @@ static int try_reg(u_conn *conn)
 		return 0;
 	}
 
+	conn->flags |= U_CONN_REGISTERED;
+
 	u_user_welcome(USER_LOCAL(u));
 	return 0;
 }
@@ -72,6 +77,9 @@ static int m_nick(u_conn *conn, u_msg *msg)
 {
 	u_user_local *ul;
 	char buf[MAXNICKLEN+1];
+
+	if (conn->flags & U_CONN_REGISTERED)
+		return err_already(conn, msg);
 
 	u_user_make_ureg(conn);
 	ul = conn->priv;
@@ -98,6 +106,9 @@ static int m_user(u_conn *conn, u_msg *msg)
 {
 	u_user_local *ul;
 	char buf[MAXIDENT+1];
+
+	if (conn->flags & U_CONN_REGISTERED)
+		return err_already(conn, msg);
 
 	u_user_make_ureg(conn);
 	ul = conn->priv;
@@ -246,6 +257,8 @@ static int try_serv(u_conn *conn)
 		return 0;
 	}
 
+	conn->flags |= U_CONN_REGISTERED;
+
 	u_roster_f(R_SERVERS, conn, ":%S SID %s %d %s :%s", &me,
 	           sv->name, sv->hops, sv->sid, sv->desc);
 	u_server_burst_1(sv, link);
@@ -255,6 +268,11 @@ static int try_serv(u_conn *conn)
 
 static int m_capab(u_conn *conn, u_msg *msg)
 {
+	if (conn->flags & U_CONN_REGISTERED) {
+		u_conn_fatal(conn, "Server sent CAPAB after registration");
+		return 0;
+	}
+
 	u_server *sv = conn->priv;
 	u_server_add_capabs(sv, msg->argv[0]);
 	return 0;
@@ -273,23 +291,20 @@ static int m_server(u_conn *conn, u_msg *msg)
 }
 
 u_cmd c_reg[] = {
-	{ "PASS",    CTX_UNREG,  m_pass, 1 },
+	{ "PASS",    CTX_UNREG,     m_pass,   1, CMD_UNREGISTERED, },
 
-	{ "PASS",    CTX_UREG,   m_pass, 1 },
-	{ "PASS",    CTX_USER,   err_already, 0 },
-	{ "NICK",    CTX_UNREG,  m_nick, 1 },
-	{ "NICK",    CTX_UREG,   m_nick, 1 },
-	{ "USER",    CTX_UNREG,  m_user, 4 },
-	{ "USER",    CTX_UREG,   m_user, 4 },
-	{ "USER",    CTX_USER,   err_already, 0 },
-	{ "CAP",     CTX_UNREG,  m_cap,  1 },
-	{ "CAP",     CTX_UREG,   m_cap,  1 },
-	{ "CAP",     CTX_USER,   m_cap,  1 },
+	{ "PASS",    CTX_USER,      m_pass,   0, CMD_UNREGISTERED, },
+	{ "NICK",    CTX_UNREG,     m_nick,   1, CMD_UNREGISTERED, },
+	{ "NICK",    CTX_USER,      m_nick,   1, CMD_UNREGISTERED, },
+	{ "USER",    CTX_UNREG,     m_user,   4, CMD_UNREGISTERED, },
+	{ "USER",    CTX_USER,      m_user,   4, CMD_UNREGISTERED, },
+	{ "CAP",     CTX_UNREG,     m_cap,    1, CMD_UNREGISTERED, },
+	{ "CAP",     CTX_USER,      m_cap,    1, CMD_UNREGISTERED, },
 
-	{ "CAPAB",   CTX_SREG,   m_capab, 1 },
-	{ "CAPAB",   CTX_UNREG,  gtfo, 0 },
-	{ "SERVER",  CTX_SREG,   m_server, 3 },
-	{ "SERVER",  CTX_UNREG,  gtfo, 0 },
+	{ "CAPAB",   CTX_SERVER,    m_capab,  1, CMD_UNREGISTERED, },
+	{ "CAPAB",   CTX_UNREG,     gtfo,     0, CMD_UNREGISTERED, },
+	{ "SERVER",  CTX_SERVER,    m_server, 3, CMD_UNREGISTERED, },
+	{ "SERVER",  CTX_UNREG,     gtfo,     0, CMD_UNREGISTERED, },
 
 	{ "" }
 };

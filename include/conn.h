@@ -18,16 +18,15 @@
 #define U_CONN_AWAIT_PONG 0x0002
 #define U_CONN_SHUTDOWN   0x0004
 #define U_CONN_DESTROY    0x0008
+#define U_CONN_REGISTERED 0x0010
 #define U_CONN_NO_SEND    0x0001 /* !!!: same as U_CONN_CLOSING */
 
 /* connection contexts. used for command processing */
 #define CTX_UNREG       0
 #define CTX_USER        1
 #define CTX_SERVER      2
-#define CTX_UREG        3
-#define CTX_SREG        4
-#define CTX_CLOSED      5
-#define CTX_MAX         6
+#define CTX_CLOSED      3
+#define CTX_MAX         4
 
 typedef struct u_conn u_conn;
 typedef struct u_conn_origin u_conn_origin;

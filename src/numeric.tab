@@ -151,7 +151,7 @@ ERR_NOLOGIN	444
 ERR_SUMMONDISABLED	445	":/SUMMON is disabled on this server"
 ERR_USERSDISABLED	446
 
-ERR_NOTREGISTERED	451
+ERR_NOTREGISTERED	451	":You have not registered"
 
 ERR_NEEDMOREPARAMS	461	"%s :Not enough parameters"
 ERR_ALREADYREGISTERED	462	":You may not reregister"

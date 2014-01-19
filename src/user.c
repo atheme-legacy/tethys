@@ -166,10 +166,10 @@ void u_user_make_ureg(u_conn *conn)
 {
 	u_user_local *ul;
 
-	if (conn->ctx != CTX_UNREG && conn->ctx != CTX_UREG)
+	if (conn->ctx != CTX_UNREG && conn->ctx != CTX_USER)
 		return;
 
-	conn->ctx = CTX_UREG;
+	conn->ctx = CTX_USER;
 
 	if (conn->priv != NULL)
 		return;
@@ -386,7 +386,6 @@ void u_user_welcome(u_user_local *ul)
 	u_wallops("Connect: %H [%s]", u, ul->conn->ip);
 
 	u_user_state(u, USER_CONNECTED);
-	ul->conn->ctx = CTX_USER;
 
 	u_user_num(u, RPL_WELCOME, my_net_name, u->nick);
 	u_user_num(u, RPL_YOURHOST, me.name, PACKAGE_FULLNAME);

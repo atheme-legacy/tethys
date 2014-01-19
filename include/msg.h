@@ -31,10 +31,12 @@ extern int u_msg_parse(u_msg*, char*);
 
 #define MAXCOMMANDLEN 16
 
-#define U_CMD_PROP_NONE          0
-#define U_CMD_PROP_BROADCAST     1
-#define U_CMD_PROP_ONE_TO_ONE    2
-#define U_CMD_PROP_HUNTED        3
+#define CMD_UNREGISTERED   0x01 /* command can be used while unregistered */
+
+#define CMD_PROP_NONE          0
+#define CMD_PROP_BROADCAST     1
+#define CMD_PROP_ONE_TO_ONE    2
+#define CMD_PROP_HUNTED        3
 
 typedef struct u_cmd u_cmd;
 
@@ -45,6 +47,7 @@ struct u_cmd {
 	int (*cb)(u_conn* src, u_msg*);
 	int nargs;
 
+	unsigned options;
 	int propagation;
 
 	/* users should not initialize the rest of this struct to

@@ -296,10 +296,8 @@ char *conn_name(u_conn *conn)
 
 	switch (conn->ctx) {
 	case CTX_USER:
-	case CTX_UREG:
 		name = USER(conn->priv)->nick;
 		break;
-	case CTX_SREG:
 	case CTX_SERVER:
 		name = SERVER(conn->priv)->name;
 		break;
@@ -314,10 +312,8 @@ char *conn_id(u_conn *conn)
 
 	switch (conn->ctx) {
 	case CTX_USER:
-	case CTX_UREG:
 		id = USER(conn->priv)->uid;
 		break;
-	case CTX_SREG:
 	case CTX_SERVER:
 		id = SERVER(conn->priv)->sid;
 		break;

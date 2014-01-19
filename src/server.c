@@ -175,10 +175,10 @@ void u_server_make_sreg(u_conn *conn, char *sid)
 {
 	u_server *sv;
 
-	if (conn->ctx != CTX_UNREG && conn->ctx != CTX_SREG)
+	if (conn->ctx != CTX_UNREG && conn->ctx != CTX_SERVER)
 		return;
 
-	conn->ctx = CTX_SREG;
+	conn->ctx = CTX_SERVER;
 
 	if (conn->priv != NULL)
 		return;
@@ -395,8 +395,6 @@ void u_server_burst_1(u_server *sv, u_link *link)
 		u_log(LG_ERROR, "Attempted to burst to %S, which is not local!", sv);
 		return;
 	}
-
-	conn->ctx = CTX_SERVER;
 
 	u_conn_f(conn, "PASS %s TS 6 :%s", link->sendpass, me.sid);
 	u_my_capabs(buf);

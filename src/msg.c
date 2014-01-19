@@ -134,7 +134,7 @@ void u_cmd_invoke(u_conn *conn, u_msg *msg, char *line)
 	cmd = mowgli_patricia_retrieve(commands[conn->ctx], msg->command);
 
 	if (!cmd) {
-		if (conn->ctx == CTX_USER || conn->ctx == CTX_UREG)
+		if (conn->ctx == CTX_USER)
 			u_conn_num(conn, ERR_UNKNOWNCOMMAND, msg->command);
 		else
 			u_log(LG_ERROR, "%G used unknown command %s",
@@ -151,15 +151,25 @@ void u_cmd_invoke(u_conn *conn, u_msg *msg, char *line)
 		return;
 	}
 
+	if (!(conn->flags & U_CONN_REGISTERED) &&
+	    !(cmd->options & CMD_UNREGISTERED) &&
+	    conn->ctx != CTX_UNREG) {
+		if (conn->ctx == CTX_USER) {
+			u_conn_num(conn, ERR_NOTREGISTERED);
+		} else {
+			u_log(LG_ERROR, "%G used %s while unregistered",
+			      conn, msg->command);
+		}
+		return;
+	}
+
 	msg->src = NULL;
 	switch (conn->ctx) {
 	case CTX_USER:
-	case CTX_UREG:
 		msg->src = u_entity_from_user(&e, conn->priv);
 		break;
 
 	case CTX_SERVER:
-	case CTX_SREG:
 		if (msg->srcstr)
 			msg->src = u_entity_from_ref(&e, msg->srcstr);
 		else
@@ -173,24 +183,23 @@ void u_cmd_invoke(u_conn *conn, u_msg *msg, char *line)
 
 	cmd->cb(conn, msg);
 
-	if (msg->propagate && cmd->propagation &&
-	    (conn->ctx == CTX_SERVER || conn->ctx == CTX_SREG)) {
+	if (msg->propagate && cmd->propagation && conn->ctx == CTX_SERVER) {
 		switch (cmd->propagation) {
-		case U_CMD_PROP_NONE:
+		case CMD_PROP_NONE:
 			break;
 
-		case U_CMD_PROP_BROADCAST:
+		case CMD_PROP_BROADCAST:
 			u_roster_f(R_SERVERS, conn, "%s", line);
 			break;
 
-		case U_CMD_PROP_ONE_TO_ONE:
+		case CMD_PROP_ONE_TO_ONE:
 			if (u_entity_from_ref(&e, msg->propagate) && e.link)
 				u_conn_f(e.link, "%s", line);
 			break;
 
-		case U_CMD_PROP_HUNTED:
+		case CMD_PROP_HUNTED:
 			u_log(LG_WARN, "%s uses unimplemented propagation "
-			      "type U_CMD_PROP_HUNTED");
+			      "type CMD_PROP_HUNTED");
 			break;
 
 		default:
