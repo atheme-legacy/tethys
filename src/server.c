@@ -16,30 +16,7 @@ char my_admin_loc1[MAXADMIN+1] = "-";
 char my_admin_loc2[MAXADMIN+1] = "-";
 char my_admin_email[MAXADMIN+1] = "-";
 
-static void server_conf(mowgli_config_file_t *cf, mowgli_config_file_entry_t *ce)
-{
-	if (streq(ce->varname, "name")) {
-		mowgli_patricia_delete(servers_by_name, me.name);
-		u_strlcpy(me.name, ce->vardata, MAXSERVNAME+1);
-		mowgli_patricia_add(servers_by_name, me.name, &me);
-		u_log(LG_DEBUG, "server_conf: me.name=%s", me.name);
-	} else if (streq(ce->varname, "net")) {
-		u_strlcpy(my_net_name, ce->vardata, MAXNETNAME+1);
-		u_log(LG_DEBUG, "server_conf: me.net=%s", my_net_name);
-	} else if (streq(ce->varname, "sid")) {
-		mowgli_patricia_delete(servers_by_sid, me.sid);
-		u_strlcpy(me.sid, ce->vardata, 4);
-		mowgli_patricia_add(servers_by_sid, me.sid, &me);
-		u_log(LG_DEBUG, "server_conf: me.sid=%s", me.sid);
-	} else if (streq(ce->varname, "desc")) {
-		u_strlcpy(me.desc, ce->vardata, MAXSERVDESC+1);
-		u_log(LG_DEBUG, "server_conf: me.desc=%s", me.desc);
-	} else {
-		u_log(LG_WARN, "server_conf: Can't use %s", ce->varname);
-	}
-}
-
-void load_motd(char *key, char *val)
+static void load_motd(char *val)
 {
 	char *s, *p, buf[BUFSIZE];
 	FILE *f;
@@ -65,22 +42,55 @@ void load_motd(char *key, char *val)
 	fclose(f);
 }
 
+static void server_conf(mowgli_config_file_t *cf, mowgli_config_file_entry_t *ce)
+{
+	mowgli_config_file_entry_t *cce;
+
+	MOWGLI_ITER_FOREACH(cce, ce->entries) {
+		if (streq(cce->varname, "name")) {
+			mowgli_patricia_delete(servers_by_name, me.name);
+			u_strlcpy(me.name, cce->vardata, MAXSERVNAME+1);
+			mowgli_patricia_add(servers_by_name, me.name, &me);
+			u_log(LG_DEBUG, "server_conf: me.name=%s", me.name);
+		} else if (streq(cce->varname, "net")) {
+			u_strlcpy(my_net_name, cce->vardata, MAXNETNAME+1);
+			u_log(LG_DEBUG, "server_conf: me.net=%s", my_net_name);
+		} else if (streq(cce->varname, "sid")) {
+			mowgli_patricia_delete(servers_by_sid, me.sid);
+			u_strlcpy(me.sid, cce->vardata, 4);
+			mowgli_patricia_add(servers_by_sid, me.sid, &me);
+			u_log(LG_DEBUG, "server_conf: me.sid=%s", me.sid);
+		} else if (streq(cce->varname, "desc")) {
+			u_strlcpy(me.desc, cce->vardata, MAXSERVDESC+1);
+			u_log(LG_DEBUG, "server_conf: me.desc=%s", me.desc);
+		} else if (streq(cce->varname, "motd")) {
+			load_motd(cce->vardata);
+		} else {
+			u_log(LG_WARN, "server_conf: Can't use %s", cce->varname);
+		}
+	}
+}
+
 static void admin_conf(mowgli_config_file_t *cf, mowgli_config_file_entry_t *ce)
 {
-	char *dest;
+	mowgli_config_file_entry_t *cce;
 
-	if (streq(ce->varname, "loc1")) {
-		dest = my_admin_loc1;
-	} else if (streq(ce->varname, "loc2")) {
-		dest = my_admin_loc2;
-	} else if (streq(ce->varname, "email")) {
-		dest = my_admin_email;
-	} else {
-		u_log(LG_WARN, "admin_conf: Can't use %s", ce->varname);
-		return;
+	MOWGLI_ITER_FOREACH(cce, ce->entries) {
+		char *dest;
+
+		if (streq(cce->varname, "loc1")) {
+			dest = my_admin_loc1;
+		} else if (streq(cce->varname, "loc2")) {
+			dest = my_admin_loc2;
+		} else if (streq(cce->varname, "email")) {
+			dest = my_admin_email;
+		} else {
+			u_log(LG_WARN, "admin_conf: Can't use %s", cce->varname);
+			continue;
+		}
+
+		u_strlcpy(dest, cce->vardata, MAXADMIN);
 	}
-
-	u_strlcpy(dest, ce->vardata, MAXADMIN);
 }
 
 u_server *u_server_by_sid(char *sid)
