@@ -8,42 +8,41 @@
 # it. Besides, it's very short.
 
 
-# module - pretty straightforward
-
-module "contrib/c_42"
-
+# loadmodule - pretty straightforward
+loadmodule "contrib/c_42";
 
 # me{} - this block contains a few options for
 # the local server's configuration.
 
 me {
 	# the server's name, sid, and description
-	name irc.ajitek.net
-	sid 22U
-	desc "Yesterday's Tech Tomorrow"
+	name = "irc.ajitek.net";
+	sid = "22U";
+	desc = "Yesterday's Tech Tomorrow";
 
 	# the network name, used in 001
-	net AJITEK
+	net = "AJITEK";
 
 	# where to find the MOTD file
-	motd etc/tethys.motd
-}
+	motd = "etc/tethys.motd";
+};
 
 # admin{} - admin info. the value of these fields
 # should be pretty clear from their names
 
 admin {
-	loc1 "Alex Iadicicco"
-	loc2 "http://github.com/aji"
-	email "yes@hello"
-}
+	loc1 = "Alex Iadicicco";
+	loc2 = "http://github.com/aji";
+	email = "yes@hello";
+};
 
 
 # listen - this is pretty straightforward. which
 # ports are we listening on? a range may also be
 # specified with low..hi, or low-hi
-
-listen 6665-6669
+listen {
+	port 6665-6669;
+};
 
 
 # class{} - these blocks define connection
@@ -52,12 +51,12 @@ listen 6665-6669
 
 class users {
 	# ping timeout, in seconds
-	timeout 300
-}
+	timeout = 300;
+};
 
 class server {
-	timeout 900
-}
+	timeout = 900;
+};
 
 
 # auth{} - these blocks specify authentication
@@ -67,39 +66,38 @@ class server {
 auth local {
 	# the connection class to put matching
 	# users into
-	class users
+	class = users;
 
 	# the CIDR block to match to
-	cidr 127.0.0.1/32
+	cidr = "127.0.0.1/32";
 
 	# the password to require for users in
 	# this block
-	#password "tethys"
-}
+	#password = "tethys";
+};
 
 auth lan {
-	class users
-	cidr 192.168.0.0/16
-}
+	class = users;
+	cidr = "192.168.0.0/16";
+};
 
 auth world {
-	class users
-	cidr 0.0.0.0/0
-	#password "flowerpot"
-}
+	class = "users";
+	cidr = "0.0.0.0/0";
+	#password = "flowerpot";
+};
 
 
 # oper{} - operators
-
 oper aji {
 	# the password. currently, no encryption
 	# is available
-	password "god"
+	password = "god";
 
 	# the auth block the user must be in to
 	# be able to oper
-	auth local
-}
+	auth = "local";
+};
 
 
 # link{} - connections to other servers
@@ -107,14 +105,14 @@ oper aji {
 link svc.ajitek.net {
 	# the IP to expect connections from,
 	# or to make connections to
-	host 127.0.0.1
+	host = "127.0.0.1";
 
 	# the password to send when connecting,
 	# and to expect when accepting
-	sendpass "morality"
-	recvpass "soup"
+	sendpass = "morality";
+	recvpass = "soup";
 
 	# the connection class to put this
 	# server into
-	class server
-}
+	class = "server";
+};
