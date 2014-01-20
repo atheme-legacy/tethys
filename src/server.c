@@ -11,10 +11,8 @@ mowgli_patricia_t *servers_by_name;
 
 u_server me;
 mowgli_list_t my_motd;
+mowgli_list_t my_admininfo;
 char my_net_name[MAXNETNAME+1];
-char my_admin_loc1[MAXADMIN+1] = "-";
-char my_admin_loc2[MAXADMIN+1] = "-";
-char my_admin_email[MAXADMIN+1] = "-";
 
 static void load_motd(char *val)
 {
@@ -76,20 +74,7 @@ static void admin_conf(mowgli_config_file_t *cf, mowgli_config_file_entry_t *ce)
 	mowgli_config_file_entry_t *cce;
 
 	MOWGLI_ITER_FOREACH(cce, ce->entries) {
-		char *dest;
-
-		if (streq(cce->varname, "loc1")) {
-			dest = my_admin_loc1;
-		} else if (streq(cce->varname, "loc2")) {
-			dest = my_admin_loc2;
-		} else if (streq(cce->varname, "email")) {
-			dest = my_admin_email;
-		} else {
-			u_log(LG_WARN, "admin_conf: Can't use %s", cce->varname);
-			continue;
-		}
-
-		u_strlcpy(dest, cce->vardata, MAXADMIN);
+		mowgli_list_add(&my_admininfo, strdup(cce->varname));
 	}
 }
 

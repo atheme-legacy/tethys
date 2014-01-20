@@ -669,10 +669,14 @@ static int m_mkpass(u_conn *conn, u_msg *msg)
 
 static int m_admin(u_conn *conn, u_msg *msg)
 {
+	mowgli_node_t *n;
+
 	u_conn_num(conn, RPL_ADMINME, &me);
-	u_conn_num(conn, RPL_ADMINLOC1, my_admin_loc1);
-	u_conn_num(conn, RPL_ADMINLOC2, my_admin_loc2);
-	u_conn_num(conn, RPL_ADMINEMAIL, my_admin_email);
+
+	MOWGLI_ITER_FOREACH(n, my_admininfo.head) {
+		u_conn_num(conn, RPL_ADMINEMAIL, n->data);
+	}
+
 	return 0;
 }
 

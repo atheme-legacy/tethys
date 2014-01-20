@@ -31,9 +31,9 @@ me {
 # should be pretty clear from their names
 
 admin {
-	loc1 = "Alex Iadicicco";
-	loc2 = "http://github.com/aji";
-	email = "yes@hello";
+	"Alex Iadicicco";
+	"http://github.com/aji";
+	"yes@hello";
 };
 
 
