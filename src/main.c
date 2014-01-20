@@ -39,7 +39,6 @@ COMMAND_DEF(c_user);
 int init(void)
 {
 	int err;
-	FILE *f;
 
 	sync_time();
 
@@ -74,13 +73,10 @@ int init(void)
 	if (opt_port != -1 && !u_conn_origin_create(base_ev, INADDR_ANY, opt_port))
 		return -1;
 
-	f = fopen("etc/tethys.conf", "r");
-	if (f == NULL) {
+	if (!u_conf_read("etc/tethys.conf")) {
 		u_log(LG_SEVERE, "Could not find etc/tethys.conf!");
 		return -1;
 	}
-	u_conf_read(f);
-	fclose(f);
 
 	return 0;
 }

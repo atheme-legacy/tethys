@@ -11,6 +11,8 @@ static mowgli_list_t all_origs;
 
 static mowgli_list_t need_destroy;
 
+static mowgli_patricia_t *u_conf_listen_handlers = NULL;
+
 static void origin_rdns();
 static void origin_recv(mowgli_eventloop_t *ev, mowgli_eventloop_io_t *io,
                         mowgli_eventloop_io_dir_t dir, void *priv);
@@ -549,13 +551,18 @@ static void *conf_end(void *unused, void *unused2)
 	return NULL;
 }
 
-static void conf_listen(char *key, char *val)
+static void conf_listen(mowgli_config_file_t *cf, mowgli_config_file_entry_t *ce)
+{
+	u_conf_traverse(cf, ce->entries, u_conf_listen_handlers);
+}
+
+static void conf_listen_port(mowgli_config_file_t *cf, mowgli_config_file_entry_t *ce)
 {
 	ushort low, hi;
 	char buf[512];
 	char *s, *lows, *his;
 
-	snprintf(buf, 512, "%s", val);
+	mowgli_strlcpy(buf, ce->vardata, sizeof buf);
 
 	lows = buf;
 	his = NULL;
@@ -571,7 +578,7 @@ static void conf_listen(char *key, char *val)
 	hi = (his && *his) ? atoi(his) : low;
 
 	if (low == 0 || hi == 0) {
-		u_log(LG_ERROR, "%s: invalid listen range string", val);
+		u_log(LG_ERROR, "%s: invalid listen range string", ce->vardata);
 		return;
 	}
 
@@ -613,7 +620,10 @@ int init_conn(void)
 	mowgli_list_init(&need_destroy);
 
 	u_hook_add(HOOK_CONF_END, conf_end, NULL);
-	u_conf_add_handler("listen", conf_listen);
+	u_conf_add_handler("listen", conf_listen, NULL);
+
+	u_conf_listen_handlers = mowgli_patricia_create(ascii_canonize);
+	u_conf_add_handler("port", conf_listen_port, u_conf_listen_handlers);
 
 	return 0;
 }

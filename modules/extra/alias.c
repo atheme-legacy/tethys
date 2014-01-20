@@ -76,23 +76,29 @@ static void add_alias(char *from, char *target)
 	mowgli_patricia_add(aliases, from, to);
 }
 
-static void conf_alias(char *k, char *val)
+static void conf_alias(mowgli_config_file_t *cf, mowgli_config_file_entry_t *ce)
 {
-	char *old, *new;
+	char *src = ce->vardata;
+	char *dst = NULL;
+	mowgli_config_file_entry_t *cce;
 
-	if (!(new = strchr(val, '='))) {
-		u_log(LG_ERROR, "%s: invalid '%s' value", val, k);
+	MOWGLI_ITER_FOREACH(cce, ce->entries) {
+		if (streq(cce->varname, "target"))
+			dst = cce->vardata;
+	}
+
+	if (dst == NULL) {
+		u_log(LG_ERROR, "%s no target specified", src);
 		return;
 	}
-	*new++ = '\0';
 
-	add_alias(val, new);
+	add_alias(src, dst);
 }
 
 static int alias_init(u_module *m)
 {
 	aliases = mowgli_patricia_create(ascii_canonize);
-	u_conf_add_handler("alias", conf_alias);
+	u_conf_add_handler("alias", conf_alias, NULL);
 
 	return 0;
 }

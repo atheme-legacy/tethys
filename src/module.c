@@ -203,9 +203,9 @@ u_module *u_module_reload_or_load(const char *name)
 	return do_module_reload(name, false);
 }
 
-static void on_conf_module(char *key, char *val)
+static void conf_loadmodule(mowgli_config_file_t *cf, mowgli_config_file_entry_t *ce)
 {
-	u_module_load(val);
+	u_module_load(ce->vardata);
 }
 
 int init_module(void)
@@ -216,7 +216,7 @@ int init_module(void)
 	if (!(u_modules = mowgli_patricia_create(NULL)))
 		return -1;
 
-	u_conf_add_handler("module", on_conf_module);
+	u_conf_add_handler("loadmodule", conf_loadmodule, NULL);
 
 	return 0;
 }

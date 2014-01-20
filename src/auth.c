@@ -25,6 +25,11 @@ u_map *all_links;
 static mowgli_list_t auth_list;
 static mowgli_list_t link_list;
 
+static mowgli_patricia_t *u_conf_auth_handlers = NULL;
+static mowgli_patricia_t *u_conf_class_handlers = NULL;
+static mowgli_patricia_t *u_conf_oper_handlers = NULL;
+static mowgli_patricia_t *u_conf_link_handlers = NULL;
+
 u_auth *u_find_auth(u_conn *conn)
 {
 	mowgli_node_t *n;
@@ -127,20 +132,22 @@ u_link *u_find_link(u_conn *conn)
 
 static u_class *cur_class = NULL;
 
-void conf_class(char *key, char *val)
+void conf_class(mowgli_config_file_t *cf, mowgli_config_file_entry_t *ce)
 {
 	cur_class = malloc(sizeof(*cur_class));
 
-	u_strlcpy(cur_class->name, val, MAXCLASSNAME+1);
+	u_strlcpy(cur_class->name, ce->vardata, MAXCLASSNAME+1);
 	cur_class->timeout = 300;
 
-	u_map_set(all_classes, val, cur_class);
+	u_map_set(all_classes, cur_class->name, cur_class);
+
+	u_conf_traverse(cf, ce->entries, u_conf_class_handlers);
 }
 
-void conf_class_timeout(char *key, char *val)
+void conf_class_timeout(mowgli_config_file_t *cf, mowgli_config_file_entry_t *ce)
 {
-	CONF_CHECK(cur_class, key, "class");
-	cur_class->timeout = atoi(val);
+	CONF_CHECK(cur_class, ce->varname, "class");
+	cur_class->timeout = atoi(ce->vardata);
 	if (cur_class->timeout < 15) {
 		u_log(LG_WARN, msg_timeouttooshort, cur_class->timeout,
 		      cur_class->name, 15);
@@ -150,96 +157,102 @@ void conf_class_timeout(char *key, char *val)
 
 static u_auth *cur_auth = NULL;
 
-void conf_auth(char *key, char *val)
+void conf_auth(mowgli_config_file_t *cf, mowgli_config_file_entry_t *ce)
 {
 	cur_auth = malloc(sizeof(*cur_auth));
 
 	memset(cur_auth, 0, sizeof(*cur_auth));
-	u_strlcpy(cur_auth->name, val, MAXAUTHNAME+1);
+	u_strlcpy(cur_auth->name, ce->vardata, MAXAUTHNAME+1);
 
-	u_map_set(all_auths, val, cur_auth);
+	u_map_set(all_auths, cur_auth->name, cur_auth);
 	mowgli_node_add(cur_auth, &cur_auth->n, &auth_list);
+
+	u_conf_traverse(cf, ce->entries, u_conf_auth_handlers);
 }
 
-void conf_auth_class(char *key, char *val)
+void conf_auth_class(mowgli_config_file_t *cf, mowgli_config_file_entry_t *ce)
 {
-	CONF_CHECK(cur_auth, key, "auth");
-	u_strlcpy(cur_auth->classname, val, MAXCLASSNAME+1);
+	CONF_CHECK(cur_auth, ce->varname, "auth");
+	u_strlcpy(cur_auth->classname, ce->vardata, MAXCLASSNAME+1);
 }
 
-void conf_auth_cidr(char *key, char *val)
+void conf_auth_cidr(mowgli_config_file_t *cf, mowgli_config_file_entry_t *ce)
 {
-	CONF_CHECK(cur_auth, key, "auth");
-	u_str_to_cidr(val, &cur_auth->cidr);
+	CONF_CHECK(cur_auth, ce->varname, "auth");
+	u_str_to_cidr(ce->vardata, &cur_auth->cidr);
 }
 
-void conf_auth_password(char *key, char *val)
+void conf_auth_password(mowgli_config_file_t *cf, mowgli_config_file_entry_t *ce)
 {
-	CONF_CHECK(cur_auth, key, "auth");
-	u_strlcpy(cur_auth->pass, val, MAXPASSWORD+1);
+	CONF_CHECK(cur_auth, ce->varname, "auth");
+	u_strlcpy(cur_auth->pass, ce->vardata, MAXPASSWORD+1);
 }
 
 static u_oper *cur_oper = NULL;
 
-void conf_oper(char *key, char *val)
+void conf_oper(mowgli_config_file_t *cf, mowgli_config_file_entry_t *ce)
 {
 	cur_oper = malloc(sizeof(*cur_oper));
 
-	u_strlcpy(cur_oper->name, val, MAXOPERNAME+1);
+	u_strlcpy(cur_oper->name, ce->vardata, MAXOPERNAME+1);
 	cur_oper->pass[0] = '\0';
 	cur_oper->authname[0] = '\0';
 	cur_oper->auth = NULL;
 
-	u_map_set(all_opers, val, cur_oper);
+	u_map_set(all_opers, cur_oper->name, cur_oper);
+
+	u_conf_traverse(cf, ce->entries, u_conf_oper_handlers);
 }
 
-void conf_oper_password(char *key, char *val)
+void conf_oper_password(mowgli_config_file_t *cf, mowgli_config_file_entry_t *ce)
 {
-	CONF_CHECK(cur_oper, key, "oper");
-	u_strlcpy(cur_oper->pass, val, MAXPASSWORD+1);
+	CONF_CHECK(cur_oper, ce->varname, "oper");
+	u_strlcpy(cur_oper->pass, ce->vardata, MAXPASSWORD+1);
 }
 
-void conf_oper_auth(char *key, char *val)
+void conf_oper_auth(mowgli_config_file_t *cf, mowgli_config_file_entry_t *ce)
 {
-	CONF_CHECK(cur_oper, key, "oper");
-	u_strlcpy(cur_oper->authname, val, MAXAUTHNAME+1);
+	CONF_CHECK(cur_oper, ce->varname, "oper");
+	u_strlcpy(cur_oper->authname, ce->vardata, MAXAUTHNAME+1);
 }
 
 static u_link *cur_link = NULL;
 
-void conf_link(char *key, char *val)
+void conf_link(mowgli_config_file_t *cf, mowgli_config_file_entry_t *ce)
 {
 	cur_link = malloc(sizeof(*cur_link));
 
 	memset(cur_link, 0, sizeof(*cur_link));
-	u_strlcpy(cur_link->name, val, MAXSERVERNAME+1);
+	u_strlcpy(cur_link->name, ce->vardata, MAXSERVERNAME+1);
 
-	u_map_set(all_links, val, cur_link);
+	u_map_set(all_links, cur_link->name, cur_link);
 	mowgli_node_add(cur_link, &cur_link->n, &link_list);
+
+	u_conf_traverse(cf, ce->entries, u_conf_link_handlers);
 }
 
-void conf_link_host(char *key, char *val)
+void conf_link_host(mowgli_config_file_t *cf, mowgli_config_file_entry_t *ce)
 {
-	CONF_CHECK(cur_link, key, "link");
-	u_strlcpy(cur_link->host, val, INET_ADDRSTRLEN);
+	CONF_CHECK(cur_link, ce->varname, "link");
+	u_strlcpy(cur_link->host, ce->vardata, INET_ADDRSTRLEN);
 }
 
-void conf_link_sendpass(char *key, char *val)
+void conf_link_sendpass(mowgli_config_file_t *cf, mowgli_config_file_entry_t *ce)
 {
-	CONF_CHECK(cur_link, key, "link");
-	u_strlcpy(cur_link->sendpass, val, MAXPASSWORD+1);
+	CONF_CHECK(cur_link, ce->varname, "link");
+	u_strlcpy(cur_link->sendpass, ce->vardata, MAXPASSWORD+1);
 }
 
-void conf_link_recvpass(char *key, char *val)
+void conf_link_recvpass(mowgli_config_file_t *cf, mowgli_config_file_entry_t *ce)
 {
-	CONF_CHECK(cur_link, key, "link");
-	u_strlcpy(cur_link->recvpass, val, MAXPASSWORD+1);
+	CONF_CHECK(cur_link, ce->varname, "link");
+	u_strlcpy(cur_link->recvpass, ce->vardata, MAXPASSWORD+1);
 }
 
-void conf_link_class(char *key, char *val)
+void conf_link_class(mowgli_config_file_t *cf, mowgli_config_file_entry_t *ce)
 {
-	CONF_CHECK(cur_link, key, "link");
-	u_strlcpy(cur_link->classname, val, MAXCLASSNAME+1);
+	CONF_CHECK(cur_link, ce->varname, "link");
+	u_strlcpy(cur_link->classname, ce->vardata, MAXCLASSNAME+1);
 }
 
 int init_auth(void)
@@ -255,23 +268,31 @@ int init_auth(void)
 	mowgli_list_init(&auth_list);
 	mowgli_list_init(&link_list);
 
-	u_conf_add_handler("class", conf_class);
-	u_conf_add_handler("class.timeout", conf_class_timeout);
+	u_conf_class_handlers = mowgli_patricia_create(ascii_canonize);
 
-	u_conf_add_handler("auth", conf_auth);
-	u_conf_add_handler("auth.class", conf_auth_class);
-	u_conf_add_handler("auth.cidr", conf_auth_cidr);
-	u_conf_add_handler("auth.password", conf_auth_password);
+	u_conf_add_handler("class", conf_class, NULL);
+	u_conf_add_handler("timeout", conf_class_timeout, u_conf_class_handlers);
 
-	u_conf_add_handler("oper", conf_oper);
-	u_conf_add_handler("oper.password", conf_oper_password);
-	u_conf_add_handler("oper.auth", conf_oper_auth);
+	u_conf_auth_handlers = mowgli_patricia_create(ascii_canonize);
 
-	u_conf_add_handler("link", conf_link);
-	u_conf_add_handler("link.host", conf_link_host);
-	u_conf_add_handler("link.sendpass", conf_link_sendpass);
-	u_conf_add_handler("link.recvpass", conf_link_recvpass);
-	u_conf_add_handler("link.class", conf_link_class);
+	u_conf_add_handler("auth", conf_auth, NULL);
+	u_conf_add_handler("class", conf_auth_class, u_conf_auth_handlers);
+	u_conf_add_handler("cidr", conf_auth_cidr, u_conf_auth_handlers);
+	u_conf_add_handler("password", conf_auth_password, u_conf_auth_handlers);
+
+	u_conf_oper_handlers = mowgli_patricia_create(ascii_canonize);
+
+	u_conf_add_handler("oper", conf_oper, NULL);
+	u_conf_add_handler("password", conf_oper_password, u_conf_oper_handlers);
+	u_conf_add_handler("auth", conf_oper_auth, u_conf_oper_handlers);
+
+	u_conf_link_handlers = mowgli_patricia_create(ascii_canonize);
+
+	u_conf_add_handler("link", conf_link, NULL);
+	u_conf_add_handler("host", conf_link_host, u_conf_link_handlers);
+	u_conf_add_handler("sendpass", conf_link_sendpass, u_conf_link_handlers);
+	u_conf_add_handler("recvpass", conf_link_recvpass, u_conf_link_handlers);
+	u_conf_add_handler("class", conf_link_class, u_conf_link_handlers);
 
 	return 0;
 }

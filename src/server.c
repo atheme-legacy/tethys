@@ -16,32 +16,26 @@ char my_admin_loc1[MAXADMIN+1] = "-";
 char my_admin_loc2[MAXADMIN+1] = "-";
 char my_admin_email[MAXADMIN+1] = "-";
 
-void server_conf(char *key, char *val)
+static void server_conf(mowgli_config_file_t *cf, mowgli_config_file_entry_t *ce)
 {
-	if (strlen(key) < 3 || memcmp(key, "me.", 3)!=0) {
-		u_log(LG_WARN, "server_conf: Can't use %s", key);
-		return;
-	}
-	key += 3;
-
-	if (streq(key, "name")) {
+	if (streq(ce->varname, "name")) {
 		mowgli_patricia_delete(servers_by_name, me.name);
-		u_strlcpy(me.name, val, MAXSERVNAME+1);
+		u_strlcpy(me.name, ce->vardata, MAXSERVNAME+1);
 		mowgli_patricia_add(servers_by_name, me.name, &me);
 		u_log(LG_DEBUG, "server_conf: me.name=%s", me.name);
-	} else if (streq(key, "net")) {
-		u_strlcpy(my_net_name, val, MAXNETNAME+1);
+	} else if (streq(ce->varname, "net")) {
+		u_strlcpy(my_net_name, ce->vardata, MAXNETNAME+1);
 		u_log(LG_DEBUG, "server_conf: me.net=%s", my_net_name);
-	} else if (streq(key, "sid")) {
+	} else if (streq(ce->varname, "sid")) {
 		mowgli_patricia_delete(servers_by_sid, me.sid);
-		u_strlcpy(me.sid, val, 4);
+		u_strlcpy(me.sid, ce->vardata, 4);
 		mowgli_patricia_add(servers_by_sid, me.sid, &me);
 		u_log(LG_DEBUG, "server_conf: me.sid=%s", me.sid);
-	} else if (streq(key, "desc")) {
-		u_strlcpy(me.desc, val, MAXSERVDESC+1);
+	} else if (streq(ce->varname, "desc")) {
+		u_strlcpy(me.desc, ce->vardata, MAXSERVDESC+1);
 		u_log(LG_DEBUG, "server_conf: me.desc=%s", me.desc);
 	} else {
-		u_log(LG_WARN, "server_conf: Can't use %s", key-3);
+		u_log(LG_WARN, "server_conf: Can't use %s", ce->varname);
 	}
 }
 
@@ -71,28 +65,22 @@ void load_motd(char *key, char *val)
 	fclose(f);
 }
 
-void admin_conf(char *key, char *val)
+static void admin_conf(mowgli_config_file_t *cf, mowgli_config_file_entry_t *ce)
 {
 	char *dest;
 
-	if (strlen(key) < 6 || memcmp(key, "admin.", 6) != 0) {
-		u_log(LG_WARN, "admin_conf: Can't use %s", key);
-		return;
-	}
-	key += 6;
-
-	if (streq(key, "loc1")) {
+	if (streq(ce->varname, "loc1")) {
 		dest = my_admin_loc1;
-	} else if (streq(key, "loc2")) {
+	} else if (streq(ce->varname, "loc2")) {
 		dest = my_admin_loc2;
-	} else if (streq(key, "email")) {
+	} else if (streq(ce->varname, "email")) {
 		dest = my_admin_email;
 	} else {
-		u_log(LG_WARN, "admin_conf: Can't use %s", key-6);
+		u_log(LG_WARN, "admin_conf: Can't use %s", ce->varname);
 		return;
 	}
 
-	u_strlcpy(dest, val, MAXADMIN);
+	u_strlcpy(dest, ce->vardata, MAXADMIN);
 }
 
 u_server *u_server_by_sid(char *sid)
@@ -510,15 +498,8 @@ int init_server(void)
 
 	u_strlcpy(my_net_name, "TethysIRC", MAXNETNAME+1);
 
-	u_conf_add_handler("me.name", server_conf);
-	u_conf_add_handler("me.net", server_conf);
-	u_conf_add_handler("me.sid", server_conf);
-	u_conf_add_handler("me.desc", server_conf);
-	u_conf_add_handler("me.motd", load_motd);
-
-	u_conf_add_handler("admin.loc1", admin_conf);
-	u_conf_add_handler("admin.loc2", admin_conf);
-	u_conf_add_handler("admin.email", admin_conf);
+	u_conf_add_handler("me", server_conf, NULL);
+	u_conf_add_handler("admin", admin_conf, NULL);
 
 	return 1;
 }

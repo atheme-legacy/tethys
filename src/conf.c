@@ -1,5 +1,6 @@
 /* Tethys, conf.c -- configuration parser
    Copyright (C) 2013 Alex Iadicicco
+   Copyright (C) 2014 William Pitcock
 
    This file is protected under the terms contained
    in the COPYING file in the project root */
@@ -12,156 +13,50 @@ struct conf_handler {
 	u_module *owner;
 };
 
-mowgli_patricia_t *u_conf_handlers = NULL;
+static mowgli_patricia_t *u_conf_handlers = NULL;
 
-void do_cb(char *key, char *val)
+void u_conf_traverse(mowgli_config_file_t *cf, mowgli_config_file_entry_t *ce, mowgli_patricia_t *handlers)
 {
 	struct conf_handler *h;
 
-	u_log(LG_FINE, "conf: %s=%s", key, val);
+	u_log(LG_FINE, "conf: %s=%s", ce->varname, ce->vardata);
 
-	if (!u_conf_handlers)
+	if (!handlers)
 		return;
 
-	h = mowgli_patricia_retrieve(u_conf_handlers, key);
+	h = mowgli_patricia_retrieve(handlers, ce->varname);
 
 	if (h == NULL) {
-		u_log(LG_WARN, "No config handler for %s=%s", key, val);
+		u_log(LG_WARN, "No config handler for %s=%s", ce->varname, ce->vardata);
 		return;
 	}
 
-	h->cb(key, val);
+	h->cb(cf, ce);
 }
 
-void skip_to_eol(FILE *f)
+bool u_conf_read(const char *path)
 {
-	while (!feof(f) && getc(f) != '\n');
-}
+	mowgli_config_file_t *cf;
+	mowgli_config_file_entry_t *ce;
 
-void skip_ews(FILE *f) /* ews == effective whitespace */
-{
-	int c;
-	for (;;) {
-		c = getc(f);
-		if (c == '#')
-			skip_to_eol(f);
-		else if (c == EOF || !isspace(c))
-			break;
-	}
-	if (c != EOF)
-		ungetc(c, f);
-}
+	cf = mowgli_config_file_load(path);
+	if (cf == NULL)
+		return false;
 
-void read_quoted_value(FILE *f, char *p, int n)
-{
-	int c;
+	u_hook_call(HOOK_CONF_START, cf);
 
-	while (!feof(f) && n > 1) {
-		c = getc(f);
-		if (c == '\\')
-			c = getc(f);
-		else if (c == '"')
-			break;
-		if (c == EOF)
-			break;
-		*p++ = c;
-		n--;
+	MOWGLI_ITER_FOREACH(ce, cf->entries) {
+		u_conf_traverse(cf, ce, u_conf_handlers);
 	}
 
-	*p = '\0';
+	u_hook_call(HOOK_CONF_END, cf);
+
+	mowgli_config_file_free(cf);
+
+	return true;
 }
 
-void read_unquoted_value(FILE *f, char *p, int n)
-{
-	int c;
-
-	while (!feof(f) && n > 1) {
-		c = getc(f);
-		if (c == EOF || isspace(c)) {
-			if (c != EOF)
-				ungetc(c, f);
-			break;
-		}
-		*p++ = c;
-		n--;
-	}
-
-	*p = '\0';
-}
-
-void read_value(FILE *f, char *p, int n)
-{
-	int c;
-
-	skip_ews(f);
-
-	c = getc(f);
-	
-	if (c == EOF) {
-		return;
-	} else if (c == '"') {
-		read_quoted_value(f, p, n);
-	} else {
-		ungetc(c, f);
-		read_unquoted_value(f, p, n);
-	}
-}
-
-void conf_descend(char *key, char *value, FILE *f)
-{
-	int c, n = strlen(key);
-	char *p = key + n;
-	n = U_CONF_MAX_KEY - n;
-
-	for (;;) {
-		skip_ews(f);
-		c = getc(f);
-		if (c == '}' || c == EOF)
-			return;
-		ungetc(c, f);
-
-		read_value(f, p, n);
-
-		skip_ews(f);
-		c = getc(f);
-		if (c == EOF)
-			return;
-
-		if (c != '{') {
-			ungetc(c, f);
-			read_value(f, value, n);
-			do_cb(key, value);
-
-			skip_ews(f);
-			c = getc(f);
-		}
-
-		if (c != '{') {
-			ungetc(c, f);
-			continue;
-		}
-
-		u_strlcat(key, ".", U_CONF_MAX_KEY);
-		conf_descend(key, value, f);
-	}
-}
-
-void u_conf_read(FILE *f)
-{
-	char key[U_CONF_MAX_KEY];
-	char value[U_CONF_MAX_VALUE];
-
-	u_hook_call(HOOK_CONF_START, f);
-
-	key[0] = value[0] = '\0';
-
-	skip_ews(f);
-	conf_descend(key, value, f);
-
-	u_hook_call(HOOK_CONF_END, f);
-}
-
-void u_conf_add_handler(char *key, u_conf_handler_t *cb)
+void u_conf_add_handler(const char *key, u_conf_handler_t *cb, mowgli_patricia_t *handlers)
 {
 	struct conf_handler *h = malloc(sizeof(*h));
 
@@ -171,11 +66,14 @@ void u_conf_add_handler(char *key, u_conf_handler_t *cb)
 			abort();
 	}
 
+	if (!handlers)
+		handlers = u_conf_handlers;
+
 	h->key = key;
 	h->cb = cb;
 	h->owner = u_module_loading();
 
-	mowgli_patricia_add(u_conf_handlers, key, h);
+	mowgli_patricia_add(handlers, key, h);
 }
 
 static void *on_module_unload(void *unused, void *m)
