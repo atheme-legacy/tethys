@@ -1,3 +1,5 @@
+include extra.mk
+
 SUBDIRS = $(LIBMOWGLI) src modules
 CLEANDIRS = $(SUBDIRS) include
 DISTCLEAN = extra.mk \
@@ -6,6 +8,5 @@ DISTCLEAN = extra.mk \
 	config.status
 
 include buildsys.mk
-include extra.mk
 
 src modules: $(LIBMOWGLI)
