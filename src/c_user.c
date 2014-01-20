@@ -234,6 +234,20 @@ static int mode_user(u_user *u, char *s)
 {
 	int on = 1;
 
+	if (!s) {
+		u_umode_info *cur;
+		char buf[512];
+		s = buf;
+		*s++ = '+';
+		for (cur=umodes; cur->ch; cur++) {
+			if (u->flags & cur->mask)
+				*s++ = cur->ch;
+		}
+		*s = '\0';
+		u_user_num(u, RPL_UMODEIS, buf);
+		return 0;
+	}
+
 	u_user_m_start(u);
 
 	for (; *s; s++) {
