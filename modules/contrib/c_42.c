@@ -1,4 +1,4 @@
-/* Tethys, core/c_42.c -- Example module
+/* Tethys, core/c_42.c -- Provides /42
    Copyright (C) 2014 Sam Dodrill
 
    This file is protected under the terms contained
@@ -6,22 +6,18 @@
 
 #include "ircd.h"
 
-static int m_42(u_conn *conn, u_msg *msg)
+static int m_42(u_sourceinfo *si, u_msg *msg)
 {
-	u_user *u = conn->priv;
-	u_conn_f(conn, ":%S NOTICE %U :The Answer to Life, the Universe, and %s",
-			&me, u, (u->flags & UMODE_OPER) ? "matthew" : "Everything");
+	u_conn_f(si->link, ":%S NOTICE %U :The Answer to Life, the Universe, and %s",
+	         &me, si->u, (si->u->flags & UMODE_OPER) ? "matthew" : "Everything");
 	return 0;
 }
 
-u_cmd c_42[] = {
-	{"42",      CTX_USER, m_42, 0},
-	{ "" },
-};
+u_cmd c_42 = {"42", SRC_LOCAL_USER, m_42, 0};
 
 int c_42_init(u_module *m)
 {
-	u_cmds_reg(c_42);
+	u_cmd_reg(&c_42);
 }
 
 TETHYS_MODULE_V1(

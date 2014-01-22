@@ -13,14 +13,14 @@ struct alias {
 
 static mowgli_patricia_t *aliases;
 
-static int m_alias(u_conn *conn, u_msg *msg)
+static int m_alias(u_sourceinfo *si, u_msg *msg)
 {
 	struct alias *to;
 	char line[512];
 	int i, len;
 	u_user *tu;
 
-	if (!ENT_IS_USER(msg->src))
+	if (!SRC_IS_USER(si)) /* needed? */
 		return 0;
 
 	if (!(to = mowgli_patricia_retrieve(aliases, msg->command)))
@@ -37,12 +37,12 @@ static int m_alias(u_conn *conn, u_msg *msg)
 		                i ? " " : "", msg->argv[i]);
 	}
 
-	u_conn_f(u_user_conn(tu), ":%H PRIVMSG %U :%s", msg->src->v.u, tu, line);
+	u_conn_f(u_user_conn(tu), ":%H PRIVMSG %U :%s", si->u, tu, line);
 
 	return 0;
 
 unavailable:
-	u_conn_num(conn, ERR_SERVICESDOWN, to->target);
+	u_conn_num(si->link, ERR_SERVICESDOWN, to->target);
 	return;
 }
 
@@ -59,7 +59,7 @@ static void add_alias(char *from, char *target)
 
 	u_strlcpy(to->cmd.name, from, MAXCOMMANDLEN+1);
 	ascii_canonize(to->cmd.name);
-	to->cmd.ctx = CTX_USER;
+	to->cmd.mask = SRC_USER;
 	to->cmd.cb = m_alias;
 	to->cmd.nargs = 1;
 

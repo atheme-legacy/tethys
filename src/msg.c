@@ -58,44 +58,40 @@ int u_msg_parse(u_msg *msg, char *s)
 }
 
 
-static mowgli_patricia_t *commands[CTX_MAX];
-
-static int reg_one_real(u_cmd *cmd, int ctx)
-{
-	if (mowgli_patricia_retrieve(commands[ctx], cmd->name))
-		return -1;
-
-	mowgli_patricia_add(commands[ctx], cmd->name, cmd);
-	return 0;
-}
+static mowgli_patricia_t *commands;
 
 static int reg_one(u_cmd *cmd)
 {
-	int i, err;
+	u_cmd *at;
 
-	if (cmd->owner != NULL)
+	u_log(LG_DEBUG, "Registering command %s", cmd->name);
+
+	if (cmd->loaded) {
+		u_log(LG_ERROR, "Command %s already registered!", cmd->name);
 		return -1;
+	}
+	cmd->loaded = true;
+
 	cmd->owner = u_module_loading();
 
-	if (cmd->ctx >= 0)
-		return reg_one_real(cmd, cmd->ctx);
+	/* TODO: check mutual exclusivity */
 
-	for (i=0; i<CTX_MAX; i++) {
-		if ((err = reg_one_real(cmd, i)) < 0)
-			return err;
-	}
+	at = mowgli_patricia_retrieve(commands, cmd->name);
+	cmd->next = at;
+	cmd->prev = NULL;
+	if (at != NULL)
+		at->prev = cmd;
+	mowgli_patricia_add(commands, cmd->name, cmd);
 
 	return 0;
 }
 
 int u_cmds_reg(u_cmd *cmds)
 {
-	int err;
-	for (; cmds->name[0]; cmds++) {
-		if ((err = reg_one(cmds)) < 0)
-			return err;
-	}
-	return 0;
+	int err = 0;
+	for (; cmds->name[0]; cmds++)
+		err += reg_one(cmds); /* is this ok? */
+	return err;
 }
 
 int u_cmd_reg(u_cmd *cmd)
@@ -105,21 +101,31 @@ int u_cmd_reg(u_cmd *cmd)
 
 void u_cmd_unreg(u_cmd *cmd)
 {
-	mowgli_patricia_delete(commands[cmd->ctx], cmd->name);
+	if (cmd->next)
+		cmd->next->prev = cmd->prev;
+	if (cmd->prev)
+		cmd->prev->next = cmd->next;
+
+	if (cmd->prev == NULL) {
+		if (cmd->next == NULL) {
+			mowgli_patricia_delete(commands, cmd->name);
+		} else {
+			mowgli_patricia_add(commands, cmd->name, cmd->next);
+		}
+	}
 }
 
 static void *on_module_unload(void *unused, void *m)
 {
 	mowgli_patricia_iteration_state_t state;
-	u_cmd *cmd;
-	int i;
+	u_cmd *cmd, *next;
 
-	for (i=0; i<CTX_MAX; i++) {
-		MOWGLI_PATRICIA_FOREACH(cmd, &state, commands[i]) {
+	MOWGLI_PATRICIA_FOREACH(cmd, &state, commands) {
+		for (; cmd; cmd = next) {
+			next = cmd->next;
 			if (cmd->owner != m)
 				continue;
-
-			mowgli_patricia_delete(commands[i], cmd->name);
+			u_cmd_unreg(cmd);
 		}
 	}
 
@@ -129,59 +135,21 @@ static void *on_module_unload(void *unused, void *m)
 void u_cmd_invoke(u_conn *conn, u_msg *msg, char *line)
 {
 	u_cmd *cmd;
-	u_entity e;
+	u_sourceinfo si;
 
-	cmd = mowgli_patricia_retrieve(commands[conn->ctx], msg->command);
+	cmd = mowgli_patricia_retrieve(commands, msg->command);
 
-	if (!cmd) {
-		if (conn->ctx == CTX_USER)
-			u_conn_num(conn, ERR_UNKNOWNCOMMAND, msg->command);
-		else
-			u_log(LG_ERROR, "%G used unknown command %s",
-			      conn, msg->command);
-		return;
-	}
+	/* TODO */
 
-	if (msg->argc < cmd->nargs) {
-		if (conn->ctx == CTX_USER)
-			u_conn_num(conn, ERR_NEEDMOREPARAMS, msg->command);
-		else
-			u_log(LG_ERROR, "%G did not provide enough args to %s",
-			      conn, msg->command);
-		return;
-	}
+	u_conn_num(conn, ERR_UNKNOWNCOMMAND, msg->command);
 
-	if (!(conn->flags & U_CONN_REGISTERED) &&
-	    !(cmd->options & CMD_UNREGISTERED) &&
-	    conn->ctx != CTX_UNREG) {
-		if (conn->ctx == CTX_USER) {
-			u_conn_num(conn, ERR_NOTREGISTERED);
-		} else {
-			u_log(LG_ERROR, "%G used %s while unregistered",
-			      conn, msg->command);
-		}
-		return;
-	}
+	return;
 
-	msg->src = NULL;
-	switch (conn->ctx) {
-	case CTX_USER:
-		msg->src = u_entity_from_user(&e, conn->priv);
-		break;
-
-	case CTX_SERVER:
-		if (msg->srcstr)
-			msg->src = u_entity_from_ref(&e, msg->srcstr);
-		else
-			msg->src = u_entity_from_server(&e, conn->priv);
-		break;
-	}
-
-	u_log(LG_FINE, "%E INVOKE %s [%p]", msg->src, cmd->name, cmd->cb);
+	u_log(LG_FINE, "%s INVOKE %s [%p]", msg->srcstr, cmd->name, cmd->cb);
 
 	msg->propagate = NULL;
 
-	cmd->cb(conn, msg);
+	cmd->cb(&si, msg);
 
 	if (msg->propagate && cmd->propagation && conn->ctx == CTX_SERVER) {
 		switch (cmd->propagation) {
@@ -193,8 +161,9 @@ void u_cmd_invoke(u_conn *conn, u_msg *msg, char *line)
 			break;
 
 		case CMD_PROP_ONE_TO_ONE:
+			/* TODO: fix this when we decide what to do with u_entity
 			if (u_entity_from_ref(&e, msg->propagate) && e.link)
-				u_conn_f(e.link, "%s", line);
+				u_conn_f(e.link, "%s", line); */
 			break;
 
 		case CMD_PROP_HUNTED:
@@ -212,14 +181,10 @@ void u_cmd_invoke(u_conn *conn, u_msg *msg, char *line)
 
 int init_cmd(void)
 {
-	int i;
-
 	u_hook_add(HOOK_MODULE_UNLOAD, on_module_unload, NULL);
 
-	for (i=0; i<CTX_MAX; i++) {
-		if ((commands[i] = mowgli_patricia_create(NULL)) == NULL)
-			return -1;
-	}
+	if ((commands = mowgli_patricia_create(NULL)) == NULL)
+		return -1;
 
 	return 0;
 }

@@ -30,13 +30,13 @@ static void logchanf(const char *fmt, ...)
 	}
 }
 
-static int m_logchan(u_conn *conn, u_msg *msg)
+static int m_logchan(u_sourceinfo *si, u_msg *msg)
 {
 	logchanf("This command currently does nothing");
 }
 
 u_cmd c_logchan[] = {
-	{ "LOGCHAN", CTX_USER, m_logchan, 0 },
+	{ "LOGCHAN", SRC_LOCAL_OPER, m_logchan, 0 },
 	{ "" },
 };
 

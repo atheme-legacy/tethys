@@ -15,7 +15,6 @@ typedef struct u_msg u_msg;
 #include "entity.h"
 
 struct u_msg {
-	u_entity *src;
 	char *srcstr;
 
 	char *command;
@@ -29,9 +28,60 @@ struct u_msg {
 /* the parser will modify the string */
 extern int u_msg_parse(u_msg*, char*);
 
-#define MAXCOMMANDLEN 16
+/* source mask bits */
+#define SRC_LOCAL_OPER           0x00000001 /* OPER, LOCAL_USER, USER, ANY */
+#define SRC_REMOTE_OPER          0x00000002 /* OPER, REMOTE_USER, USER, ANY */
+#define SRC_LOCAL_UNPRIVILEGED   0x00000004 /* LOCAL_USER, USER, ANY */
+#define SRC_REMOTE_UNPRIVILEGED  0x00000008 /* REMOTE_USER, USER, ANY */
+#define SRC_LOCAL_SERVER         0x00000010 /* SERVER, ANY */
+#define SRC_REMOTE_SERVER        0x00000020 /* SERVER, ANY */
+#define SRC_ENCAP_USER           0x00000040 /* ENCAP */
+#define SRC_ENCAP_SERVER         0x00000080 /* ENCAP */
+#define SRC_UNREGISTERED_USER    0x00000100
+#define SRC_UNREGISTERED_SERVER  0x00000200
+#define SRC_FIRST                0x00000400
+#define SRC_OTHER                0x80000000 /* for possible extensions? */
 
-#define CMD_UNREGISTERED   0x01 /* command can be used while unregistered */
+#define SRC_OPER         (SRC_LOCAL_OPER | SRC_REMOTE_OPER)
+#define SRC_LOCAL_USER   (SRC_LOCAL_OPER | SRC_LOCAL_UNPRIVILEGED)
+#define SRC_REMOTE_USER  (SRC_REMOTE_OPER | SRC_REMOTE_UNPRIVILEGED)
+#define SRC_USER         (SRC_LOCAL_USER | SRC_REMOTE_USER)
+#define SRC_SERVER       (SRC_LOCAL_SERVER | SRC_REMOTE_SERVER)
+#define SRC_ANY          (SRC_USER | SRC_SERVER)
+#define SRC_ENCAP        (SRC_ENCAP_USER | SRC_ENCAP_SERVER)
+#define SRC_UNREGISTERED (SRC_UNREGISTERED_USER | SRC_UNREGISTERED_SERVER)
+
+typedef struct u_sourceinfo u_sourceinfo;
+
+/* Any pointer fields can be NULL. */
+struct u_sourceinfo {
+	/* source = connection message came from,
+	   link = link to reach source. should be equal to source.
+	   local = local link for source, if any */
+	u_conn *source;
+	u_conn *link;
+	u_conn *local;
+
+	/* source mask bits */
+	unsigned mask;
+
+	/* name and id of the source */
+	const char *name;
+	const char *id;
+
+	/* user and server pointers. only one is non-NULL */
+	u_user *u;
+	u_server *s;
+};
+
+#define SRC_HAS_BITS(si, bits) (((si)->mask & (bits)) != 0)
+
+#define SRC_IS_OPER(si) SRC_HAS_BITS(si, SRC_OPER)
+#define SRC_IS_USER(si) SRC_HAS_BITS(si, SRC_USER)
+#define SRC_IS_SERVER(si) SRC_HAS_BITS(si, SRC_SERVER)
+#define SRC_IS_LOCAL_USER(si) SRC_HAS_BITS(si, SRC_LOCAL_USER)
+
+#define MAXCOMMANDLEN 16
 
 #define CMD_PROP_NONE          0
 #define CMD_PROP_BROADCAST     1
@@ -40,19 +90,22 @@ extern int u_msg_parse(u_msg*, char*);
 
 typedef struct u_cmd u_cmd;
 
-/* use -1 for ctx to invoke command in all contexes */
 struct u_cmd {
 	char name[MAXCOMMANDLEN+1];
-	int ctx;
-	int (*cb)(u_conn* src, u_msg*);
+	/* The 'mask' field here specifies which types of source to
+	   match. All commands with a matching  */
+	unsigned mask;
+	int (*cb)(u_sourceinfo *si, u_msg*);
+
 	int nargs;
 
-	unsigned options;
 	int propagation;
 
 	/* users should not initialize the rest of this struct to
 	   anything */
 	u_module *owner;
+	bool loaded;
+	struct u_cmd *next, *prev;
 };
 
 extern int u_cmds_reg(u_cmd*); /* terminated with empty name */
