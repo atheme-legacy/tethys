@@ -93,7 +93,12 @@ typedef struct u_cmd u_cmd;
 struct u_cmd {
 	char name[MAXCOMMANDLEN+1];
 	/* The 'mask' field here specifies which types of source to
-	   match. All commands with a matching  */
+	   match. All commands with a matching name are iterated over,
+	   and the first one matching the source is executed. If no
+	   command has the specified bit, then information about what
+	   bits the command masks have collectively can provide insight
+	   into the correct error message to send back to the user
+	   (instead of just "no such command") */
 	unsigned mask;
 	int (*cb)(u_sourceinfo *si, u_msg*);
 
