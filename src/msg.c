@@ -325,19 +325,49 @@ static void fill_source(u_sourceinfo *si, u_conn *conn, u_msg *msg)
 	}
 }
 
+static u_cmd *find_command(const char *command, unsigned mask, unsigned *bits_tested)
+{
+	u_cmd *cmd;
+
+	*bits_tested = 0;
+
+	cmd = mowgli_patricia_retrieve(commands, command);
+
+	for (; cmd; cmd = cmd->next) {
+		*bits_tested |= cmd->mask;
+		if ((cmd->mask & mask) != 0)
+			break;
+	}
+
+	return cmd;
+}
+
+static void report_failure(u_sourceinfo *si, u_msg *msg, unsigned bits_tested)
+{
+	/* TODO: make this function smarter */
+
+	if (si->mask & SRC_SERVER) {
+		u_log(LG_SEVERE, "%G invocation of %s failed!",
+		      si->source, msg->command);
+		return;
+	}
+
+	u_conn_num(si->source, ERR_UNKNOWNCOMMAND, msg->command);
+}
+
 void u_cmd_invoke(u_conn *conn, u_msg *msg, char *line)
 {
 	u_cmd *cmd;
 	u_sourceinfo si;
+	unsigned bits_tested;
 
 	fill_source(&si, conn, msg);
 	u_log(LG_FINE, "source mask = 0x%x", si.mask);
 
-	/* TODO */
-
-	u_conn_num(conn, ERR_UNKNOWNCOMMAND, msg->command);
-
-	return;
+	if (!(cmd = find_command(msg->command, si.mask, &bits_tested))) {
+		report_failure(&si, msg, bits_tested);
+		return;
+	}
 
 	u_log(LG_FINE, "%s INVOKE %s [%p]", msg->srcstr, cmd->name, cmd->cb);
 

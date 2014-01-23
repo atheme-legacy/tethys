@@ -39,7 +39,7 @@ extern int u_msg_parse(u_msg*, char*);
 #define SRC_ENCAP_SERVER         0x00000080 /* ENCAP */
 #define SRC_UNREGISTERED_USER    0x00000100 /* UNREGISTERED */
 #define SRC_UNREGISTERED_SERVER  0x00000200 /* UNREGISTERED */
-#define SRC_FIRST                0x00000400
+#define SRC_FIRST                0x00000400 /* UNREGISTERED */
 #define SRC_OTHER                0x80000000 /* for possible extensions? */
 
 #define SRC_OPER         (SRC_LOCAL_OPER | SRC_REMOTE_OPER)
@@ -50,7 +50,8 @@ extern int u_msg_parse(u_msg*, char*);
 #define SRC_SERVER       (SRC_LOCAL_SERVER | SRC_REMOTE_SERVER)
 #define SRC_ANY          (SRC_USER | SRC_SERVER)
 #define SRC_ENCAP        (SRC_ENCAP_USER | SRC_ENCAP_SERVER)
-#define SRC_UNREGISTERED (SRC_UNREGISTERED_USER | SRC_UNREGISTERED_SERVER)
+#define SRC_UNREGISTERED (SRC_UNREGISTERED_USER | SRC_UNREGISTERED_SERVER \
+                          | SRC_FIRST)
 
 typedef struct u_sourceinfo u_sourceinfo;
 
