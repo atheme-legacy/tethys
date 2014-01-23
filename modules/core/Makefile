@@ -2,7 +2,8 @@ MODULE = core
 
 SRCS = \
 	nick.c \
-	pass.c
+	pass.c \
+	user.c
 
 include ../../buildsys.mk
 include ../../buildsys.module.mk
