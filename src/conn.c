@@ -37,9 +37,11 @@ u_conn *u_conn_create(mowgli_eventloop_t *ev, int fd)
 	conn = malloc(sizeof(*conn));
 
 	conn->flags = 0;
-	conn->ctx = CTX_UNREG;
+	conn->ctx = CTX_NONE;
+	conn->priv = NULL;
+
+	conn->pass = NULL;
 	conn->auth = NULL;
-	conn->last = NOW.tv_sec;
 
 	conn->poll = mowgli_pollable_create(ev, fd, conn);
 	mowgli_pollable_set_nonblocking(conn->poll, true);
@@ -49,6 +51,7 @@ u_conn *u_conn_create(mowgli_eventloop_t *ev, int fd)
 	conn->dnsq = NULL;
 
 	u_linebuf_init(&conn->ibuf);
+	conn->last = NOW.tv_sec;
 
 	conn->obuf = malloc(U_CONN_OBUFSIZE);
 	conn->obuflen = 0;
@@ -60,9 +63,6 @@ u_conn *u_conn_create(mowgli_eventloop_t *ev, int fd)
 
 	conn->shutdown = NULL;
 	conn->error = NULL;
-
-	conn->priv = NULL;
-	conn->pass = NULL;
 
 	mowgli_node_add(conn, &conn->n, &all_conns);
 
@@ -243,7 +243,7 @@ int u_conn_num(u_conn *conn, int num, ...)
 
 	va_start(va, num);
 	switch (conn->ctx) {
-	case CTX_UNREG:
+	case CTX_NONE:
 		u_conn_vnum(conn, "*", num, va);
 		break;
 	case CTX_USER:

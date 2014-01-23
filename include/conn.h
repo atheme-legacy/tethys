@@ -21,12 +21,10 @@
 #define U_CONN_REGISTERED 0x0010
 #define U_CONN_NO_SEND    0x0001 /* !!!: same as U_CONN_CLOSING */
 
-/* connection contexts. used for command processing */
-#define CTX_UNREG       0
+/* connection contexts. describes nature of conn->priv */
+#define CTX_NONE        0
 #define CTX_USER        1
 #define CTX_SERVER      2
-#define CTX_CLOSED      3
-#define CTX_MAX         4
 
 typedef struct u_conn u_conn;
 typedef struct u_conn_origin u_conn_origin;
@@ -38,8 +36,10 @@ struct u_conn {
 
 	uint flags;
 	int ctx;
+	void *priv;
+
+	char *pass;
 	u_auth *auth;
-	u_ts_t last;
 
 	mowgli_eventloop_pollable_t *poll;
 	char ip[INET6_ADDRSTRLEN];
@@ -47,6 +47,7 @@ struct u_conn {
 	mowgli_dns_query_t *dnsq;
 
 	u_linebuf ibuf;
+	u_ts_t last;
 
 	char *obuf;
 	int obuflen, obufsize;
@@ -54,9 +55,6 @@ struct u_conn {
 
 	void (*shutdown)(u_conn*);
 	char *error;
-
-	void *priv;
-	char *pass;
 };
 
 struct u_conn_origin {

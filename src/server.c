@@ -175,7 +175,7 @@ void u_server_make_sreg(u_conn *conn, char *sid)
 {
 	u_server *sv;
 
-	if (conn->ctx != CTX_UNREG && conn->ctx != CTX_SERVER)
+	if (conn->ctx != CTX_NONE && conn->ctx != CTX_SERVER)
 		return;
 
 	conn->ctx = CTX_SERVER;

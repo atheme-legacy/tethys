@@ -76,8 +76,8 @@ static int want_send(struct sendto_priv *pv, u_conn *conn)
 	case ST_USERS:
 	case ST_SERVERS:
 		switch (conn->ctx) {
+		case CTX_NONE:
 		case CTX_USER:
-		case CTX_UNREG:
 			return pv->type == ST_USERS;
 
 		case CTX_SERVER:
@@ -94,8 +94,8 @@ static char *ln(struct sendto_priv *pv, u_conn *conn)
 	va_list va;
 
 	switch (conn->ctx) {
+	case CTX_NONE:
 	case CTX_USER:
-	case CTX_UNREG:
 		if (!pv->user) {
 			pv->user = buf_user;
 			va_copy(va, pv->va);

@@ -252,8 +252,7 @@ static void fill_source(u_sourceinfo *si, u_conn *conn, u_msg *msg)
 		si->link = si->local = conn;
 
 		switch (conn->ctx) {
-		case CTX_UNREG:
-			/* setting this to FIRST is not 100% correct */
+		case CTX_NONE:
 			si->mask &= SRC_FIRST;
 			break;
 		case CTX_USER:

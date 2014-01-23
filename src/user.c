@@ -166,7 +166,7 @@ void u_user_make_ureg(u_conn *conn)
 {
 	u_user_local *ul;
 
-	if (conn->ctx != CTX_UNREG && conn->ctx != CTX_USER)
+	if (conn->ctx != CTX_NONE && conn->ctx != CTX_USER)
 		return;
 
 	conn->ctx = CTX_USER;
@@ -228,9 +228,9 @@ void u_user_unlink(u_user *u)
 		u_user_local *ul = USER_LOCAL(u);
 		if (ul->conn) {
 			u_roster_del_all(ul->conn);
-			ul->conn->ctx = CTX_CLOSED;
 			ul->conn->priv = NULL;
 			u_conn_shutdown(ul->conn);
+			ul->conn = NULL;
 		}
 	}
 
