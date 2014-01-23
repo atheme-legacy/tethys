@@ -125,14 +125,14 @@ int mapcmp(char *s1, char *s2, char *map)
 	int diff;
 
 	while (*s1 && *s2) {
-		diff = map[(unsigned)*s1] - map[(unsigned)*s2];
+		diff = map[(ulong)*s1] - map[(ulong)*s2];
 		if (diff != 0)
 			return diff;
 		s1++;
 		s2++;
 	}
 
-	return map[(unsigned)*s1] - map[(unsigned)*s2];
+	return map[(ulong)*s1] - map[(ulong)*s2];
 }
 
 int casecmp(char *s1, char *s2)

@@ -57,10 +57,10 @@ extern void u_sendto_visible(u_user*, uint, char*, ...);
 
 #define R_SNOTICE(c)   (0xc0 | ((c) & 0x3f))
 
-extern void u_roster_add(unsigned char r, u_conn*);
-extern void u_roster_del(unsigned char r, u_conn*);
+extern void u_roster_add(uchar r, u_conn*);
+extern void u_roster_del(uchar r, u_conn*);
 extern void u_roster_del_all(u_conn*);
-extern void u_roster_f(unsigned char, u_conn*, char*, ...);
+extern void u_roster_f(uchar, u_conn*, char*, ...);
 
 extern void u_wallops(char*, ...);
 

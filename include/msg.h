@@ -22,7 +22,7 @@ struct u_msg {
 	char *argv[U_MSG_MAXARGS];
 	int argc;
 
-	unsigned flags;
+	ulong flags;
 	char *propagate;
 };
 
@@ -66,7 +66,7 @@ struct u_sourceinfo {
 	u_conn *local;
 
 	/* source mask bits */
-	unsigned mask;
+	ulong mask;
 
 	/* name and id of the source */
 	const char *name;
@@ -102,7 +102,7 @@ struct u_cmd {
 	   bits the command masks have collectively can provide insight
 	   into the correct error message to send back to the user
 	   (instead of just "no such command") */
-	unsigned mask;
+	ulong mask;
 	int (*cb)(u_sourceinfo *si, u_msg*);
 
 	int nargs;

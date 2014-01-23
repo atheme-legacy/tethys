@@ -246,7 +246,7 @@ static void fill_source(u_sourceinfo *si, u_conn *conn, u_msg *msg)
 
 	si->source = conn;
 
-	si->mask = (unsigned) -1; /* all 1's */
+	si->mask = (ulong) -1; /* all 1's */
 
 	if (!(conn->flags & U_CONN_REGISTERED)) {
 		si->link = si->local = conn;
@@ -325,7 +325,7 @@ static void fill_source(u_sourceinfo *si, u_conn *conn, u_msg *msg)
 	}
 }
 
-static u_cmd *find_command(const char *command, unsigned mask, unsigned *bits_tested)
+static u_cmd *find_command(const char *command, ulong mask, ulong *bits_tested)
 {
 	u_cmd *cmd;
 
@@ -342,7 +342,7 @@ static u_cmd *find_command(const char *command, unsigned mask, unsigned *bits_te
 	return cmd;
 }
 
-static void report_failure(u_sourceinfo *si, u_msg *msg, unsigned bits_tested)
+static void report_failure(u_sourceinfo *si, u_msg *msg, ulong bits_tested)
 {
 	/* TODO: make this function smarter */
 
@@ -407,7 +407,7 @@ void u_cmd_invoke(u_conn *conn, u_msg *msg, char *line)
 {
 	u_cmd *cmd, *last_cmd;
 	u_sourceinfo si;
-	unsigned bits_tested;
+	ulong bits_tested;
 
 	last_cmd = NULL;
 
