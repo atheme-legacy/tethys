@@ -352,6 +352,26 @@ static void report_failure(u_sourceinfo *si, u_msg *msg, unsigned bits_tested)
 		return;
 	}
 
+	if (bits_tested == 0) {
+		u_conn_num(si->source, ERR_UNKNOWNCOMMAND, msg->command);
+		return;
+	}
+
+	if ((bits_tested & SRC_USER) && !(si->mask & SRC_USER)) {
+		u_conn_num(si->source, ERR_NOTREGISTERED);
+		return;
+	}
+
+	if ((bits_tested & SRC_UNREGISTERED) && !(si->mask & SRC_UNREGISTERED)) {
+		u_conn_num(si->source, ERR_ALREADYREGISTERED);
+		return;
+	}
+
+	if ((bits_tested & SRC_OPER) && !(si->mask & SRC_OPER)) {
+		u_conn_num(si->source, ERR_NOPRIVILEGES);
+		return;
+	}
+
 	u_conn_num(si->source, ERR_UNKNOWNCOMMAND, msg->command);
 }
 
