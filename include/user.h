@@ -100,6 +100,8 @@ extern u_user *u_user_create_local(u_conn *conn);
 extern u_user *u_user_create_remote(u_server*, char *uid);
 extern void u_user_destroy(u_user*);
 
+extern void u_user_try_register(u_user*);
+
 extern u_conn *u_user_conn(u_user*);
 extern u_server *u_user_server(u_user*);
 

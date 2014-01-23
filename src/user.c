@@ -225,6 +225,31 @@ void u_user_destroy(u_user *u)
 	free(u);
 }
 
+void u_user_try_register(u_user *u)
+{
+	u_user_local *ul;
+	u_conn *conn;
+
+	if (!IS_LOCAL_USER(u))
+		return;
+	ul = USER_LOCAL(u);
+	conn = ul->conn;
+	if (!conn || (conn->flags & U_CONN_REGISTERED))
+		return;
+
+	if (!conn->host[0])
+		return;
+
+	if (!u->nick[0] || !u->ident[0])
+		return;
+
+	conn->flags |= U_CONN_REGISTERED;
+	u_strlcpy(u->ip, conn->ip, INET_ADDRSTRLEN);
+	u_strlcpy(u->realhost, conn->host, MAXHOST+1);
+	u_strlcpy(u->host, conn->host, MAXHOST+1);
+	u_user_welcome(ul);
+}
+
 u_conn *u_user_conn(u_user *u)
 {
 	if (IS_LOCAL_USER(u))

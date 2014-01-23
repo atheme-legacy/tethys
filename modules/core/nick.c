@@ -24,7 +24,7 @@ static int c_uu_nick(u_sourceinfo *si, u_msg *msg)
 
 	u_user_set_nick(si->u, buf, NOW.tv_sec);
 
-	/* TODO: try registration */
+	u_user_try_register(si->u);
 
 	return 0;
 }
