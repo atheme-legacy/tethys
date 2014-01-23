@@ -91,6 +91,8 @@ struct u_sourceinfo {
 #define CMD_PROP_ONE_TO_ONE    2
 #define CMD_PROP_HUNTED        3
 
+#define CMD_DO_BROADCAST ((void*)1)
+
 typedef struct u_cmd u_cmd;
 
 struct u_cmd {
