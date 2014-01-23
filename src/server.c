@@ -256,7 +256,9 @@ void u_server_unlink(u_server *sv)
 	if (IS_SERVER_LOCAL(sv)) {
 		u_conn *conn = sv->conn;
 		u_roster_del_all(conn);
+		conn->priv = NULL;
 		u_conn_shutdown(conn);
+		sv->conn = NULL;
 	}
 
 	sv->parent->nlinks--;
@@ -268,7 +270,7 @@ void u_server_unlink(u_server *sv)
 				continue;
 
 			u_sendto_visible(u, ST_USERS, ":%H QUIT :*.net *.split", u);
-			u_user_unlink(u);
+			u_user_destroy(u);
 		}
 	}
 

@@ -126,103 +126,78 @@ void user_shutdown(u_conn *conn)
 	if (conn->ctx == CTX_USER)
 		u_sendto_visible(u, ST_ALL, ":%H QUIT :%s", u, msg);
 	u_conn_f(conn, "ERROR :%s", msg);
-	u_user_unlink(u);
+	u_user_destroy(u);
 }
 
-u_user_local *u_user_local_create(char *ip, char *host)
+static u_user *create_user(char *uid, size_t sz)
 {
-	u_user_local *ul;
 	u_user *u;
 
-	ul = malloc(sizeof(*ul));
-	memset(ul, 0, sizeof(*ul));
+	if (!(u = calloc(1, sz))) {
+		u_log(LG_SEVERE, "calloc() failed");
+		abort();
+	}
 
-	u = USER(ul);
-
-	u_strlcpy(u->uid, me.sid, 4);
-	u_strlcpy(u->uid + 3, id_next(), 7);
+	u_strlcpy(u->uid, uid, 10);
 	mowgli_patricia_add(users_by_uid, u->uid, u);
-	u->flags = umode_default | USER_IS_LOCAL;
+
 	u->channels = u_map_new(0);
 	u->invites = u_map_new(0);
 
-	u_strlcpy(u->ip, ip, MAXHOST+1);
-	u_strlcpy(u->realhost, host, MAXHOST+1);
-	u_strlcpy(u->host, host, MAXHOST+1);
+	return 0;
+}
 
-	ul->conn = NULL;
-	ul->oper = NULL;
+u_user *u_user_create_local(u_conn *conn)
+{
+	char uid[10];
+	u_user *u;
 
-	u_user_state(u, USER_NO_STATE);
+	if (!conn || conn->priv || conn->ctx != CTX_NONE)
+		return NULL;
+
+	snprintf(uid, 10, "%s%s", me.sid, id_next());
+	u = create_user(uid, sizeof(u_user_local));
+
+	u->flags = umode_default | USER_IS_LOCAL;
+
+	USER_LOCAL(u)->conn = conn;
+	conn->ctx = CTX_USER;
+	conn->priv = u;
 
 	me.nusers++;
+	u_log(LG_VERBOSE, "New local user, uid=%s", u->uid);
 
-	u_log(LG_VERBOSE, "New local user uid=%s host=%s", u->uid, u->host);
-
-	return ul;
+	return u;
 }
 
-void u_user_make_ureg(u_conn *conn)
+u_user *u_user_create_remote(u_server *sv, char *uid)
 {
-	u_user_local *ul;
+	u_user * u;
 
-	if (conn->ctx != CTX_NONE && conn->ctx != CTX_USER)
-		return;
-
-	conn->ctx = CTX_USER;
-
-	if (conn->priv != NULL)
-		return;
-
-	conn->priv = ul = u_user_local_create(conn->ip, conn->host);
-	ul->conn = conn;
-
-	u_user_state(USER(ul), USER_REGISTERING);
-
-	conn->shutdown = user_shutdown;
-}
-
-u_user_remote *u_user_new_remote(u_server *sv, char *uid)
-{
-	u_user_remote *ur;
-	u_user *u;
-
-	ur = malloc(sizeof(*ur));
-	memset(ur, 0, sizeof(*ur));
-
-	u = USER(ur);
-
-	u_strlcpy(u->uid, sv->sid, 4);
 	if (strncmp(uid, sv->sid, 3) != 0) {
-		u_log(LG_WARN, "Tried to add remote user with wrong SID!");
+		u_log(LG_WARN, "Adding remote user with wrong SID!");
 		u_log(LG_INFO, "     uid=%s, sv->sid=%s", uid, sv->sid);
 	}
-	u_strlcpy(u->uid + 3, uid + 3, 7);
-	mowgli_patricia_add(users_by_uid, u->uid, u);
-	u->flags = 0; /* modes are in EUID command */
-	u->channels = u_map_new(0);
-	u->invites = u_map_new(0);
+	u = create_user(uid, sizeof(u_user_remote));
 
-	u_user_state(u, USER_NO_STATE);
+	USER_REMOTE(u)->server = sv;
+	sv->nusers++;
 
-	ur->server = sv;
-	ur->server->nusers++;
+	u_log(LG_VERBOSE, "New remote user, uid=%s", u->uid);
 
-	u_log(LG_VERBOSE, "New remote user uid=%s", u->uid);
-
-	return ur;
+	return u;
 }
 
-void user_unlink_cb(u_map *map, u_chan *c, u_chanuser *cu, void *priv)
+void user_destroy_cb(u_map *map, u_chan *c, u_chanuser *cu, void *priv)
 {
 	u_chan_user_del(cu);
 }
 
-void u_user_unlink(u_user *u)
+void u_user_destroy(u_user *u)
 {
 	u_server *sv = u_user_server(u);
 
-	u_log(LG_VERBOSE, "Unlinking user uid=%s (%U)", u->uid, u);
+	u_log(LG_VERBOSE, "Destroying user uid=%s (%U)", u->uid, u);
 
 	if (IS_LOCAL_USER(u)) {
 		u_user_local *ul = USER_LOCAL(u);
@@ -237,7 +212,7 @@ void u_user_unlink(u_user *u)
 	u_clr_invites_user(u);
 
 	/* part from all channels */
-	u_map_each(u->channels, (u_map_cb_t*)user_unlink_cb, NULL);
+	u_map_each(u->channels, (u_map_cb_t*)user_destroy_cb, NULL);
 	u_map_free(u->channels);
 
 	if (u->nick[0])
