@@ -243,7 +243,7 @@ top:
 			s_arg = "*";
 		}
 
-		string(&buf, s_arg, -1, &spec);
+		string(&buf, (s_arg && s_arg[0]) ? s_arg : "*", -1, &spec);
 		break;
 
 	case 'E': /* entity */

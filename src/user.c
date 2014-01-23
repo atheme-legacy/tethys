@@ -144,7 +144,7 @@ static u_user *create_user(char *uid, size_t sz)
 	u->channels = u_map_new(0);
 	u->invites = u_map_new(0);
 
-	return 0;
+	return u;
 }
 
 u_user *u_user_create_local(u_conn *conn)

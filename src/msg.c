@@ -79,8 +79,10 @@ static int reg_one(u_cmd *cmd)
 	at = mowgli_patricia_retrieve(commands, cmd->name);
 	cmd->next = at;
 	cmd->prev = NULL;
-	if (at != NULL)
+	if (at != NULL) {
 		at->prev = cmd;
+		mowgli_patricia_delete(commands, cmd->name);
+	}
 	mowgli_patricia_add(commands, cmd->name, cmd);
 
 	return 0;
@@ -345,7 +347,7 @@ static void report_failure(u_sourceinfo *si, u_msg *msg, ulong bits_tested)
 {
 	/* TODO: make this function smarter */
 
-	if (si->mask & SRC_SERVER) {
+	if (si->source && si->source->ctx == CTX_SERVER) {
 		u_log(LG_SEVERE, "%G invocation of %s failed!",
 		      si->source, msg->command);
 		return;
@@ -437,6 +439,28 @@ again:
 
 	if (msg->flags & MSG_REPEAT)
 		goto again;
+}
+
+void u_repeat_as_user(u_sourceinfo *si, u_msg *msg)
+{
+	if (!(si->mask & SRC_FIRST)) {
+		u_log(LG_SEVERE, "u_repeat_as_* called outside of SRC_FIRST!");
+		abort();
+	}
+
+	u_user_create_local(si->source);
+	msg->flags |= MSG_REPEAT;
+}
+
+void u_repeat_as_server(u_sourceinfo *si, u_msg *msg, char *sid)
+{
+	if (!(si->mask & SRC_FIRST)) {
+		u_log(LG_SEVERE, "u_repeat_as_* called outside of SRC_FIRST!");
+		abort();
+	}
+
+	u_server_make_sreg(si->source, sid);
+	msg->flags |= MSG_REPEAT;
 }
 
 int init_cmd(void)

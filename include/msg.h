@@ -121,6 +121,9 @@ extern int u_cmd_reg(u_cmd*); /* single command */
 extern void u_cmd_unreg(u_cmd*);
 extern void u_cmd_invoke(u_conn*, u_msg*, char *line);
 
+extern void u_repeat_as_user(u_sourceinfo *si, u_msg *msg);
+extern void u_repeat_as_server(u_sourceinfo *si, u_msg *msg, char *sid);
+
 extern int init_cmd(void);
 
 #endif

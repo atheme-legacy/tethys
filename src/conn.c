@@ -85,7 +85,7 @@ static void conn_destroy_real(u_conn *conn)
 	mowgli_eventloop_t *ev = conn->poll->eventloop;
 	int fd = conn->poll->fd;
 
-	u_log(LG_VERBOSE, "%G (%s) being destroyed", conn,
+	u_log(LG_VERBOSE, "conn %p (%s) being destroyed", conn,
 	      conn->host[0] ? conn->host : conn->ip);
 	call_shutdown(conn);
 
