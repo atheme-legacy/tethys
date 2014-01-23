@@ -441,7 +441,7 @@ again:
 		goto again;
 }
 
-void u_repeat_as_user(u_sourceinfo *si, u_msg *msg)
+int u_repeat_as_user(u_sourceinfo *si, u_msg *msg)
 {
 	if (!(si->mask & SRC_FIRST)) {
 		u_log(LG_SEVERE, "u_repeat_as_* called outside of SRC_FIRST!");
@@ -450,9 +450,11 @@ void u_repeat_as_user(u_sourceinfo *si, u_msg *msg)
 
 	u_user_create_local(si->source);
 	msg->flags |= MSG_REPEAT;
+
+	return 0;
 }
 
-void u_repeat_as_server(u_sourceinfo *si, u_msg *msg, char *sid)
+int u_repeat_as_server(u_sourceinfo *si, u_msg *msg, char *sid)
 {
 	if (!(si->mask & SRC_FIRST)) {
 		u_log(LG_SEVERE, "u_repeat_as_* called outside of SRC_FIRST!");
@@ -461,6 +463,8 @@ void u_repeat_as_server(u_sourceinfo *si, u_msg *msg, char *sid)
 
 	u_server_make_sreg(si->source, sid);
 	msg->flags |= MSG_REPEAT;
+
+	return 0;
 }
 
 int init_cmd(void)

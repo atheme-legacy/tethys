@@ -8,10 +8,8 @@
 
 static int c_first_pass(u_sourceinfo *si, u_msg *msg)
 {
-	if (msg->argc == 1) {
-		u_repeat_as_user(si, msg);
-		return 0;
-	}
+	if (msg->argc == 1)
+		return u_repeat_as_user(si, msg);
 
 	if (msg->argc < 4) {
 		u_conn_num(si->source, ERR_NEEDMOREPARAMS, "PASS");
@@ -28,8 +26,7 @@ static int c_first_pass(u_sourceinfo *si, u_msg *msg)
 		return;
 	}
 
-	u_repeat_as_server(si, msg, msg->argv[3]);
-	return 0;
+	return u_repeat_as_server(si, msg, msg->argv[3]);
 }
 
 static int c_uu_pass(u_sourceinfo *si, u_msg *msg)
