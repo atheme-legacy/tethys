@@ -261,16 +261,6 @@ void u_user_set_nick(u_user *u, char *nick, uint ts)
 	u->nickts = ts;
 }
 
-uint u_user_state(u_user *u, uint state)
-{
-	if (state & USER_MASK_STATE) {
-		u->flags &= ~USER_MASK_STATE;
-		u->flags |= (state & USER_MASK_STATE);
-	}
-
-	return u->flags & USER_MASK_STATE;
-}
-
 void u_user_vnum(u_user *u, int num, va_list va)
 {
 	u_conn *conn;
@@ -359,8 +349,6 @@ void u_user_welcome(u_user_local *ul)
 
 	u_log(LG_DEBUG, "user: welcoming %s", u->nick);
 	u_wallops("Connect: %H [%s]", u, ul->conn->ip);
-
-	u_user_state(u, USER_CONNECTED);
 
 	u_user_num(u, RPL_WELCOME, my_net_name, u->nick);
 	u_user_num(u, RPL_YOURHOST, me.name, PACKAGE_FULLNAME);

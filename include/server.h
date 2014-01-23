@@ -32,6 +32,9 @@
 
 #define SERVER_IS_BURSTING    0x1
 
+/* registration postpone */
+#define SERVER_MASK_WAIT        0xff000000
+
 typedef struct u_server u_server;
 
 struct u_server {

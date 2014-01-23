@@ -32,12 +32,9 @@
 #define CAP_MULTI_PREFIX       0x00010000
 #define CAP_AWAY_NOTIFY        0x00020000
 
-#define USER_MASK_STATE        0xff000000
-#define USER_REGISTERING       0x01000000
-#define USER_CAP_NEGOTIATION   0x02000000
-#define USER_CONNECTED         0x03000000
-#define USER_DISCONNECTED      0x04000000
-#define USER_NO_STATE          0xff000000  /* remote users */
+/* registration postpone */
+#define USER_MASK_WAIT         0xff000000
+#define USER_WAIT_CAPS         0x01000000
 
 typedef struct u_umode_info u_umode_info;
 typedef struct u_user u_user;
@@ -110,7 +107,6 @@ extern u_user *u_user_by_nick(char*);
 extern u_user *u_user_by_uid(char*);
 
 extern void u_user_set_nick(u_user*, char*, uint);
-extern uint u_user_state(u_user*, uint);
 
 extern void u_user_vnum(u_user*, int, va_list);
 extern int u_user_num(u_user*, int num, ...);
