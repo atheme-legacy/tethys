@@ -375,6 +375,34 @@ static void report_failure(u_sourceinfo *si, u_msg *msg, unsigned bits_tested)
 	u_conn_num(si->source, ERR_UNKNOWNCOMMAND, msg->command);
 }
 
+static void propagate_message(u_sourceinfo *si, u_msg *msg, u_cmd *cmd, char *line)
+{
+	switch (cmd->propagation) {
+	case CMD_PROP_NONE:
+		break;
+
+	case CMD_PROP_BROADCAST:
+		u_roster_f(R_SERVERS, si->source, "%s", line);
+		break;
+
+	case CMD_PROP_ONE_TO_ONE:
+		/* TODO: fix this when we decide what to do with u_entity
+		if (u_entity_from_ref(&e, msg->propagate) && e.link)
+			u_conn_f(e.link, "%s", line); */
+		break;
+
+	case CMD_PROP_HUNTED:
+		u_log(LG_WARN, "%s uses unimplemented propagation "
+		      "type CMD_PROP_HUNTED");
+		break;
+
+	default:
+		u_log(LG_WARN, "%s has unknown propagation type %d",
+		      cmd->name, cmd->propagation);
+		break;
+	}
+}
+
 void u_cmd_invoke(u_conn *conn, u_msg *msg, char *line)
 {
 	u_cmd *cmd;
@@ -395,32 +423,8 @@ void u_cmd_invoke(u_conn *conn, u_msg *msg, char *line)
 
 	cmd->cb(&si, msg);
 
-	if (msg->propagate && cmd->propagation && conn->ctx == CTX_SERVER) {
-		switch (cmd->propagation) {
-		case CMD_PROP_NONE:
-			break;
-
-		case CMD_PROP_BROADCAST:
-			u_roster_f(R_SERVERS, conn, "%s", line);
-			break;
-
-		case CMD_PROP_ONE_TO_ONE:
-			/* TODO: fix this when we decide what to do with u_entity
-			if (u_entity_from_ref(&e, msg->propagate) && e.link)
-				u_conn_f(e.link, "%s", line); */
-			break;
-
-		case CMD_PROP_HUNTED:
-			u_log(LG_WARN, "%s uses unimplemented propagation "
-			      "type CMD_PROP_HUNTED");
-			break;
-
-		default:
-			u_log(LG_WARN, "%s has unknown propagation type %d",
-			      cmd->name, cmd->propagation);
-			break;
-		}
-	}
+	if (msg->propagate && cmd->propagation && conn->ctx == CTX_SERVER)
+		propagate_message(&si, msg, cmd, line);
 }
 
 int init_cmd(void)
