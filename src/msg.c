@@ -405,10 +405,13 @@ static void propagate_message(u_sourceinfo *si, u_msg *msg, u_cmd *cmd, char *li
 
 void u_cmd_invoke(u_conn *conn, u_msg *msg, char *line)
 {
-	u_cmd *cmd;
+	u_cmd *cmd, *last_cmd;
 	u_sourceinfo si;
 	unsigned bits_tested;
 
+	last_cmd = NULL;
+
+again:
 	fill_source(&si, conn, msg);
 	u_log(LG_FINE, "source mask = 0x%x", si.mask);
 
@@ -418,13 +421,23 @@ void u_cmd_invoke(u_conn *conn, u_msg *msg, char *line)
 	}
 
 	u_log(LG_FINE, "%s INVOKE %s [%p]", msg->srcstr, cmd->name, cmd->cb);
+	if (cmd == last_cmd) {
+		u_log(LG_SEVERE, "command %s requested repeat to itself!",
+		      cmd->name);
+		abort();
+	}
+	last_cmd = cmd;
 
+	msg->flags = 0;
 	msg->propagate = NULL;
 
 	cmd->cb(&si, msg);
 
 	if (msg->propagate && cmd->propagation && conn->ctx == CTX_SERVER)
 		propagate_message(&si, msg, cmd, line);
+
+	if (msg->flags & MSG_REPEAT)
+		goto again;
 }
 
 int init_cmd(void)

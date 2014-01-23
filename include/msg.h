@@ -12,7 +12,7 @@
 
 typedef struct u_msg u_msg;
 
-#include "entity.h"
+#define MSG_REPEAT 0x0001
 
 struct u_msg {
 	char *srcstr;
@@ -22,6 +22,7 @@ struct u_msg {
 	char *argv[U_MSG_MAXARGS];
 	int argc;
 
+	unsigned flags;
 	char *propagate;
 };
 
