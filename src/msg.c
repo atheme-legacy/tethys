@@ -132,12 +132,206 @@ static void *on_module_unload(void *unused, void *m)
 	return NULL;
 }
 
+static void fill_source_server(u_sourceinfo *si, u_server *s)
+{
+	si->s = s;
+	si->link = si->s->conn;
+	si->local = NULL;
+	if (IS_SERVER_LOCAL(si->s)) {
+		si->local = si->link;
+		si->mask &= SRC_LOCAL_SERVER;
+	} else {
+		si->mask &= SRC_REMOTE_SERVER;
+	}
+}
+
+static void fill_source_user(u_sourceinfo *si, u_user *u)
+{
+	si->u = u;
+	si->link = u_user_conn(si->u);
+	if (IS_LOCAL_USER(si->u)) {
+		si->local = si->link;
+		si->mask &= SRC_LOCAL_USER;
+	} else {
+		si->mask &= SRC_REMOTE_USER;
+	}
+}
+
+static bool fill_source_by_id(u_sourceinfo *si, u_conn *conn, char *src)
+{
+	int n;
+
+	if (!isdigit(*src))
+		return false;
+
+	n = strlen(src);
+
+	switch (n) {
+	case 3:
+		si->s = u_server_by_sid(src);
+		if (si->s == NULL)
+			return false;
+		fill_source_server(si, si->s);
+		break;
+
+	case 9:
+		si->u = u_user_by_uid(src);
+		if (si->u == NULL)
+			return false;
+		fill_source_user(si, si->u);
+		break;
+
+	default:
+		u_log(LG_ERROR, "ID-like source %s is not 3 or 9 chars!", src);
+		return false;
+	}
+
+	return true;
+}
+
+static bool fill_source_by_name(u_sourceinfo *si, u_conn *conn, char *src)
+{
+	if (strchr(src, '.')) {
+		si->s = u_server_by_name(src);
+		if (si->s == NULL)
+			return false;
+		fill_source_server(si, si->s);
+	} else {
+		si->u = u_user_by_nick(src);
+		if (si->u == NULL)
+			return false;
+		fill_source_user(si, si->u);
+	}
+
+	return true;
+}
+
+static bool fill_source_by_unk_id(u_sourceinfo *si, u_conn *conn, char *src)
+{
+	int n;
+
+	/* This function fills a sourceinfo with as much information as
+	   possible about a remote source given only a UID. This sort of thing
+	   could happen if a remote IRCD is sending messages from a user or
+	   server who has not yet registered, as is the case for some ENCAPs
+
+	   As a consequence of this function, a SRC_USER or SRC_SERVER
+	   command handler could be invoked which expects si->u or si->s to
+	   be non-NULL. At some point, command handlers should be allowed
+	   to indicate that a command can come from an unregistered source. */
+
+	if (!isdigit(*src))
+		return false;
+
+	n = strlen(src);
+
+	if (n != 3 && n != 9)
+		return false;
+
+	si->link = si->source;
+	si->local = NULL;
+	si->id = src;
+
+	if (n == 9)
+		si->mask &= SRC_REMOTE_UNPRIVILEGED;
+	else if (n == 3)
+		si->mask &= SRC_REMOTE_SERVER;
+
+	return true;
+}
+
+static void fill_source(u_sourceinfo *si, u_conn *conn, u_msg *msg)
+{
+	memset(si, 0, sizeof(*si));
+
+	si->source = conn;
+
+	si->mask = (unsigned) -1; /* all 1's */
+
+	if (!(conn->flags & U_CONN_REGISTERED)) {
+		si->link = si->local = conn;
+
+		switch (conn->ctx) {
+		case CTX_UNREG:
+			/* setting this to FIRST is not 100% correct */
+			si->mask &= SRC_FIRST;
+			break;
+		case CTX_USER:
+			si->mask &= SRC_UNREGISTERED_USER;
+			si->u = conn->priv;
+			si->id = si->u->uid;
+			break;
+		case CTX_SERVER:
+			si->mask &= SRC_UNREGISTERED_SERVER;
+			si->s = conn->priv;
+			si->id = si->s->sid;
+			break;
+		default:
+			u_log(LG_SEVERE, "fill_source inconsistency");
+			abort();
+		}
+
+		return;
+	}
+
+	switch (conn->ctx) {
+	case CTX_USER:
+		si->mask &= SRC_LOCAL_USER;
+		si->u = conn->priv;
+		si->link = si->local = conn;
+		break;
+
+	case CTX_SERVER:
+		if (!msg->srcstr || !*msg->srcstr) {
+			si->mask &= SRC_LOCAL_SERVER;
+			si->s = conn->priv;
+			si->link = si->local = conn;
+			break;
+		}
+
+		if (!fill_source_by_id(si, conn, msg->srcstr) &&
+		    !fill_source_by_name(si, conn, msg->srcstr) &&
+		    !fill_source_by_unk_id(si, conn, msg->srcstr)) {
+			u_log(LG_WARN, "%G sent source we can't use: %s",
+			      conn->priv, msg->srcstr);
+		}
+		break;
+
+	default:
+		u_log(LG_SEVERE, "fill_source inconsistency");
+		abort();
+	}
+
+	if (si->u && si->s) {
+		u_log(LG_SEVERE, "fill_source inconsistency");
+		abort();
+	}
+
+	if (si->u) {
+		si->name = si->u->nick;
+		si->id = si->u->uid;
+	}
+
+	if (si->s) {
+		si->name = si->s->name;
+		si->id = si->s->sid;
+	}
+
+	if (SRC_IS_USER(si)) {
+		if (!si->u || !(si->u->flags & UMODE_OPER))
+			si->mask &= SRC_UNPRIVILEGED;
+		else
+			si->mask &= SRC_OPER;
+	}
+}
+
 void u_cmd_invoke(u_conn *conn, u_msg *msg, char *line)
 {
 	u_cmd *cmd;
 	u_sourceinfo si;
 
-	cmd = mowgli_patricia_retrieve(commands, msg->command);
+	fill_source(&si, conn, msg);
+	u_log(LG_FINE, "source mask = 0x%x", si.mask);
 
 	/* TODO */
 
