@@ -429,6 +429,11 @@ again:
 	}
 	last_cmd = cmd;
 
+	if (cmd->nargs && msg->argc < cmd->nargs) {
+		u_conn_num(conn, ERR_NEEDMOREPARAMS, cmd->name);
+		return;
+	}
+
 	msg->flags = 0;
 	msg->propagate = NULL;
 
