@@ -243,6 +243,9 @@ void u_user_try_register(u_user *u)
 	if (!u->nick[0] || !u->ident[0])
 		return;
 
+	if (u->flags & USER_MASK_WAIT)
+		return;
+
 	conn->flags |= U_CONN_REGISTERED;
 	u_strlcpy(u->ip, conn->ip, INET_ADDRSTRLEN);
 	u_strlcpy(u->realhost, conn->host, MAXHOST+1);
