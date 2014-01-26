@@ -15,6 +15,10 @@ struct u_map_n {
 	void *key, *data;
 	int level;
 	u_map_n *child[2];
+	/* .n is used by some iterators for keeping nodes in things like
+	   stacks or queues. it is for this reason that map iterations cannot
+	   be nested */
+	mowgli_node_t n;
 };
 
 static void n_key(u_map *map, u_map_n *n, void *k)
@@ -146,6 +150,11 @@ static void u_map_each_n(u_map *map, u_map_n *n, u_map_cb_t *cb, void *priv)
 
 void u_map_each(u_map *map, u_map_cb_t *cb, void *priv)
 {
+	if (map->flags & MAP_TRAVERSING) {
+		u_log(LG_ERROR, "Map traversals cannot be nested");
+		abort();
+	}
+
 	map->flags |= MAP_TRAVERSING;
 	clear_pending(map);
 
@@ -388,4 +397,60 @@ void u_map_dump(u_map *map)
 {
 	map_dump_real(map, map->root, 1);
 	fprintf(stderr, "\n");
+}
+
+static void try_queue(u_map_each_state *state, u_map_n *n)
+{
+	if (n == NULL)
+		return;
+
+	mowgli_node_add(n, &n->n, &state->list);
+}
+
+static u_map_n *try_dequeue(u_map_each_state *state)
+{
+	u_map_n *n;
+
+	if (state->list.head == NULL)
+		return NULL;
+
+	n = state->list.head->data;
+	mowgli_node_delete(&n->n, &state->list);
+
+	return n;
+}
+
+void u_map_each_start(u_map_each_state *state, u_map *map)
+{
+	if (map->flags & MAP_TRAVERSING) {
+		u_log(LG_ERROR, "Map traversals cannot be nested");
+		abort();
+	}
+
+	state->map = map;
+	mowgli_list_init(&state->list);
+
+	map->flags |= MAP_TRAVERSING;
+	clear_pending(map);
+
+	try_queue(state, map->root);
+}
+
+bool u_map_each_next(u_map_each_state *state, void **k, void **v)
+{
+	u_map_n *n;
+
+	if ((n = try_dequeue(state)) == NULL) {
+		state->map->flags &= ~MAP_TRAVERSING;
+		delete_pending(state->map);
+		return false;
+	}
+
+	*k = n->key;
+	*v = n->data;
+
+	try_queue(state, n->child[0]);
+	try_queue(state, n->child[1]);
+
+	return true;
 }

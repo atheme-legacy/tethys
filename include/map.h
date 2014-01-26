@@ -8,8 +8,7 @@
 #define __INC_MAP_H__
 
 typedef struct u_map u_map;
-/* defined internally */
-typedef struct u_map_n u_map_n;
+typedef struct u_map_n u_map_n; /* defined internally */
 
 #define MAP_TRAVERSING  1
 #define MAP_STRING_KEYS 2
@@ -30,5 +29,19 @@ extern void *u_map_get(u_map*, void *key);
 extern void u_map_set(u_map*, void *key, void *data);
 extern void *u_map_del(u_map*, void *key);
 extern void u_map_dump(u_map*);
+
+typedef struct u_map_each_state u_map_each_state;
+
+struct u_map_each_state {
+	u_map *map;
+	mowgli_list_t list;
+};
+
+extern void u_map_each_start(u_map_each_state*, u_map*);
+extern bool u_map_each_next(u_map_each_state*, void **k, void **v);
+
+#define U_MAP_EACH(STATE, MAP, K, V) \
+	for (u_map_each_start((STATE), (MAP)); \
+	     u_map_each_next((STATE), (void**) &(K), &(V)); )
 
 #endif

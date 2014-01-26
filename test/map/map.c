@@ -38,6 +38,16 @@ int main(int argc, char *argv[])
 			u_map_each(map, do_dump, NULL);
 			break;
 
+		case 'D': { /* dump 2 */
+			u_map_each_state state;
+			char *k;
+			void *v;
+
+			U_MAP_EACH(&state, map, k, v)
+				printf("%s=%s\n", k, v);
+			break;
+		}
+
 		case '+': /* insert */
 			p = strchr(s, '=');
 			if (p == NULL) {
