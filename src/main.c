@@ -57,6 +57,8 @@ int init(void)
 	INIT(init_chan);
 	INIT(init_sendto);
 
+	u_module_load_directory("modules/core");
+
 	mowgli_timer_add(base_ev, "ping", u_conn_check_ping_all, base_ev, 10);
 
 	if (opt_port != -1 && !u_conn_origin_create(base_ev, INADDR_ANY, opt_port))
