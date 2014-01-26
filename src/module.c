@@ -213,6 +213,41 @@ u_module *u_module_reload_or_load(const char *name)
 	return do_module_reload(name, false);
 }
 
+void u_module_load_directory(const char *dir)
+{
+	DIR *d;
+	struct dirent *ent;
+	char buf[512], *p;
+	size_t sz, len;
+	u_module *m;
+	const char *err;
+
+	u_log(LG_INFO, "Loading all modules in %s", dir);
+
+	/* XXX: hardcoded path separators and file extensions! */
+
+	if (!(d = opendir(dir)))
+		return;
+
+	sz = snprintf(buf, 512, "%s/", dir);
+	if (buf[sz-2] == '/') {
+		sz--;
+		buf[sz] = '\0';
+	}
+	p = buf + sz;
+	sz = 512 - sz;
+
+	while ((ent = readdir(d)) != NULL) {
+		len = snprintf(p, sz, "%s", ent->d_name);
+		if (!streq(p + len - 3, ".so"))
+			continue;
+		u_log(LG_INFO, "Autoload %s", buf);
+		if ((err = module_load_path(&m, buf, NULL)) != NULL)
+			u_log(LG_ERROR, "Autoload %s failed: %s", buf, err);
+		mowgli_patricia_add(u_modules, m->info->name, m);
+	}
+}
+
 static void conf_loadmodule(mowgli_config_file_t *cf, mowgli_config_file_entry_t *ce)
 {
 	u_module_load(ce->vardata);

@@ -61,6 +61,8 @@ extern bool u_module_unload(const char *name);
 extern u_module *u_module_reload(const char *name);
 extern u_module *u_module_reload_or_load(const char *name);
 
+extern void u_module_load_directory(const char *dir);
+
 extern int init_module(void);
 
 #endif
