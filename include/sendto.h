@@ -11,26 +11,8 @@
 #define ST_SERVERS             1
 #define ST_USERS               2
 
-typedef struct u_st_opts u_st_opts;
-
-struct u_st_opts {
-	uint type;
-
-	uint flags_all;
-	uint flags_none;
-
-	u_chan *c;
-	uint cu_flags;
-
-	char *serv, *user, *fmt;
-	va_list va;
-};
-
 extern void u_st_start(void);
 extern void u_st_exclude(u_conn *conn);
-extern int u_st_match_server(u_st_opts*, u_server*);
-extern int u_st_match_user(u_st_opts*, u_user*);
-extern int u_st_match_conn(u_st_opts*, u_conn*);
 
 /* second argument is excluded from message */
 extern void u_sendto_chan(u_chan*, u_conn*, uint, char*, ...);
