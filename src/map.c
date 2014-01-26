@@ -446,8 +446,8 @@ bool u_map_each_next(u_map_each_state *state, void **k, void **v)
 		return false;
 	}
 
-	*k = n->key;
-	*v = n->data;
+	if (k) *k = n->key;
+	if (v) *v = n->data;
 
 	try_queue(state, n->child[0]);
 	try_queue(state, n->child[1]);
