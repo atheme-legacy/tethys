@@ -163,6 +163,7 @@ u_user *u_user_create_local(u_conn *conn)
 	USER_LOCAL(u)->conn = conn;
 	conn->ctx = CTX_USER;
 	conn->priv = u;
+	conn->shutdown = user_shutdown;
 
 	me.nusers++;
 	u_log(LG_VERBOSE, "New local user, uid=%s", u->uid);
