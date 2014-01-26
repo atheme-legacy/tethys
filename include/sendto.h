@@ -38,6 +38,29 @@ extern void u_sendto_chan(u_chan*, u_conn*, uint, char*, ...);
 /* sends to all connections a user is visible to */
 extern void u_sendto_visible(u_user*, uint, char*, ...);
 
+typedef struct u_sendto_state u_sendto_state;
+
+struct u_sendto_state {
+	u_map_each_state chans;
+	u_map_each_state members;
+	u_chan *c;
+	uint type;
+};
+
+extern void u_sendto_chan_start(u_sendto_state*, u_chan*, u_conn*, uint);
+extern bool u_sendto_chan_next(u_sendto_state*, u_conn**);
+
+#define U_SENDTO_CHAN(STATE, CHAN, EXCLUDE, TYPE, CONN) \
+	for (u_sendto_chan_start((STATE), (CHAN), (EXCLUDE), (TYPE)); \
+	     u_sendto_chan_next((STATE), &(CONN)); )
+
+extern void u_sendto_visible_start(u_sendto_state*, u_user*, u_conn*, uint);
+extern bool u_sendto_visible_next(u_sendto_state*, u_conn**);
+
+#define U_SENDTO_VISIBLE(STATE, USER, EXCLUDE, TYPE, CONN) \
+	for (u_sendto_visible_start((STATE), (USER), (EXCLUDE), (TYPE)); \
+	     u_sendto_visible_next((STATE), &(CONN)); )
+
 /*
       +-----------------------------------------------+
    00 |XX|+w|                                         |

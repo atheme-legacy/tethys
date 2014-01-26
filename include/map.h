@@ -42,6 +42,6 @@ extern bool u_map_each_next(u_map_each_state*, void **k, void **v);
 
 #define U_MAP_EACH(STATE, MAP, K, V) \
 	for (u_map_each_start((STATE), (MAP)); \
-	     u_map_each_next((STATE), (void**) &(K), &(V)); )
+	     u_map_each_next((STATE), (void**) &(K), (void**) &(V)); )
 
 #endif
