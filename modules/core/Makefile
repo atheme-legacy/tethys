@@ -1,6 +1,7 @@
 MODULE = core
 
 SRCS = \
+	join.c \
 	nick.c \
 	pass.c \
 	quit.c \
