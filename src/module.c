@@ -242,8 +242,10 @@ void u_module_load_directory(const char *dir)
 		if (!streq(p + len - 3, ".so"))
 			continue;
 		u_log(LG_INFO, "Autoload %s", buf);
-		if ((err = module_load_path(&m, buf, NULL)) != NULL)
+		if ((err = module_load_path(&m, buf, NULL)) != NULL) {
 			u_log(LG_ERROR, "Autoload %s failed: %s", buf, err);
+			continue;
+		}
 		mowgli_patricia_add(u_modules, m->info->name, m);
 	}
 }
