@@ -52,15 +52,13 @@ static const char *module_find(const char *name)
 	return NULL;
 }
 
-static const char *module_load(u_module **mp, const char *name)
+static const char *module_load_path(u_module **mp, const char *path,
+                                    const char *name)
 {
-	const char *path, *error;
+	const char *error;
 	u_module *m;
 
 	*mp = NULL;
-
-	if (!(path = module_find(name)))
-		return "Could not find the specified module";
 
 	m = malloc(sizeof(*m));
 	m->module = NULL;
@@ -74,7 +72,7 @@ static const char *module_load(u_module **mp, const char *name)
 		goto fail;
 
 	error = "Module name differs from declared module name";
-	if (strcmp(m->info->name, name))
+	if (name && strcmp(m->info->name, name))
 		goto fail;
 
 	m->flags = 0;
@@ -109,6 +107,18 @@ fail:
 		mowgli_module_close(m->module);
 	free(m);
 	return error;
+}
+
+static const char *module_load(u_module **mp, const char *name)
+{
+	const char *path;
+
+	*mp = NULL;
+
+	if (!(path = module_find(name)))
+		return "Could not find the specified module";
+
+	return module_load_path(mp, path, name);
 }
 
 static void module_unload(u_module *m)
