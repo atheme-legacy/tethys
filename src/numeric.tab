@@ -90,7 +90,7 @@ RPL_ENDOFINVITELIST	347	"%C :End of Channel Invite List"
 RPL_EXCEPTLIST	348	"%C %s %s %u"
 RPL_ENDOFEXCEPTLIST	349	"%C :End of Channel Exception List"
 
-RPL_VERSION	351	"%s %s :%s"
+RPL_VERSION	351	"%s %s :[%s] %s"
 
 RPL_WHOREPLY	352	"%C %s %s %s %s %s :%d %s"
 RPL_NAMREPLY	353	"%c %C :%s"

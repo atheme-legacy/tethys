@@ -1,3 +1,4 @@
+.PHONY: version.c
 PROG = tethys
 SRCS = numeric.c \
 	auth.c \
@@ -45,6 +46,9 @@ numeric.h numeric.c: numeric.tab
 	@echo "Creating numeric.[ch]"
 	awk -f numeric.awk < numeric.tab
 
-version.c: version.sh
+version.c.dep:
+	echo >version.c.dep
+
+version.c:
 	@echo "Creating version.c"
 	sh version.sh
