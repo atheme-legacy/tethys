@@ -91,6 +91,7 @@ extern void sync_time(void);
 extern mowgli_eventloop_t *base_ev;
 extern mowgli_dns_t *base_dns;
 extern u_ts_t started;
+extern char startedstr[256];
 
 extern char *crypt(const char*, const char*);
 
