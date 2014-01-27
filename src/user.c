@@ -293,6 +293,8 @@ void u_user_vnum(u_user *u, int num, va_list va)
 int u_user_num(u_user *u, int num, ...)
 {
 	va_list va; 
+	if (!u)
+		return 0;
 	va_start(va, num);
 	u_user_vnum(u, num, va);
 	va_end(va);
