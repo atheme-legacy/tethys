@@ -114,6 +114,39 @@ void u_sendto_servers(u_conn *exclude, char *fmt, ...)
 	va_end(va);
 }
 
+void u_sendto_list(mowgli_list_t *list, u_conn *exclude, char *fmt, ...)
+{
+	mowgli_node_t *n;
+	va_list va;
+
+	st_start();
+	if (exclude != NULL)
+		st_exclude(exclude);
+
+	va_start(va, fmt);
+	MOWGLI_LIST_FOREACH(n, list->head) {
+		u_conn *conn = n->data;
+		u_conn_f(conn, "%s", ln(conn, fmt, va));
+	}
+	va_end(va);
+}
+
+void u_sendto_map(u_map *map, u_conn *exclude, char *fmt, ...)
+{
+	u_map_each_state state;
+	u_conn *conn;
+	va_list va;
+
+	st_start();
+	if (exclude != NULL)
+		st_exclude(exclude);
+
+	va_start(va, fmt);
+	U_MAP_EACH(&state, map, NULL, &conn)
+		u_conn_f(conn, "%s", ln(conn, fmt, va));
+	va_end(va);
+}
+
 void u_sendto_chan_start(u_sendto_state *state, u_chan *c,
                          u_conn *exclude, uint type)
 {

@@ -21,6 +21,8 @@
 extern void u_sendto_chan(u_chan*, u_conn*, uint, char*, ...);
 extern void u_sendto_visible(u_user*, uint, char*, ...);
 extern void u_sendto_servers(u_conn*, char*, ...);
+extern void u_sendto_list(mowgli_list_t *list, u_conn*, char*, ...);
+extern void u_sendto_map(u_map *map, u_conn*, char*, ...); /* to values */
 
 typedef struct u_sendto_state u_sendto_state;
 
