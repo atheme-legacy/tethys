@@ -11,5 +11,6 @@
 extern char *version;
 extern char *date;
 extern char *platform;
+extern char *revision;
 
 #endif

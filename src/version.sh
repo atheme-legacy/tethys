@@ -8,7 +8,8 @@ echo '#include "ircd.h"' >> $OUT
 
 echo "char *version = PACKAGE_FULLNAME;" >> $OUT
 
-# Doesn't account for variances in date and I don't care.
-echo "char *date = \"`date`\";" >> $OUT
+echo "char *date = \"`date -u +%F\ %H:%M\ UTC`\";" >> $OUT
 
 echo "char *platform = \"$(uname -sm)\";"  >> $OUT
+
+echo "char *revision = \"$(git log -1 --pretty=oneline | cut -d' ' -f1 2>/dev/null)\";" >> $OUT
