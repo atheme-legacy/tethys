@@ -27,6 +27,7 @@ struct u_sendto_state {
 	u_map_each_state members;
 	u_chan *c;
 	uint type;
+	mowgli_patricia_iteration_state_t pstate;
 };
 
 extern void u_sendto_chan_start(u_sendto_state*, u_chan*, u_conn*, uint);
@@ -42,6 +43,13 @@ extern bool u_sendto_visible_next(u_sendto_state*, u_conn**);
 #define U_SENDTO_VISIBLE(STATE, USER, EXCLUDE, TYPE, CONN) \
 	for (u_sendto_visible_start((STATE), (USER), (EXCLUDE), (TYPE)); \
 	     u_sendto_visible_next((STATE), &(CONN)); )
+
+extern void u_sendto_servers_start(u_sendto_state*, u_conn*);
+extern bool u_sendto_servers_next(u_sendto_state*, u_conn**);
+
+#define U_SENDTO_SERVERS(STATE, EXCLUDE, CONN) \
+	for (u_sendto_servers_start((STATE), (EXCLUDE)); \
+	     u_sendto_servers_next((STATE), &(CONN)); )
 
 /*
       +-----------------------------------------------+

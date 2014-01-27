@@ -221,6 +221,35 @@ next_conn:
 	return true;
 }
 
+void u_sendto_servers_start(u_sendto_state *state, u_conn *exclude)
+{
+	u_st_start();
+
+	if (exclude != NULL)
+		u_st_exclude(exclude);
+
+	mowgli_patricia_foreach_start(servers_by_sid, &state->pstate);
+}
+
+bool u_sendto_servers_next(u_sendto_state *state, u_conn **conn_ret)
+{
+	u_server *sv;
+
+next_conn:
+	sv = mowgli_patricia_foreach_cur(servers_by_sid, &state->pstate);
+	if (sv == NULL)
+		return false;
+	mowgli_patricia_foreach_next(servers_by_sid, &state->pstate);
+
+	if (!IS_SERVER_LOCAL(sv) || !sv->conn)
+		goto next_conn;
+	if (!u_cookie_cmp(&sv->conn->ck_sendto, &ck_sendto))
+		goto next_conn;
+
+	*conn_ret = sv->conn;
+	return true;
+}
+
 static char *roster_to_str(uchar c)
 {
 	static char buf[16];
