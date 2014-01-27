@@ -16,6 +16,7 @@ void sync_time(void)
 mowgli_eventloop_t *base_ev;
 mowgli_dns_t *base_dns;
 u_ts_t started;
+char startedstr[256];
 
 short opt_port = -1;
 
@@ -82,13 +83,13 @@ int init(void)
 }
 
 extern char *optarg;
-
 int main(int argc, char **argv)
 {
 	int c;
 
 	gettimeofday(&NOW, NULL);
 	started = NOW.tv_sec;
+	strftime(startedstr, 256, "%a %b %d at %T UTC", gmtime((time_t*) &started));
 
 	u_log(LG_INFO, "%s starting...", PACKAGE_FULLNAME);
 
