@@ -8,24 +8,17 @@
 
 static u_cookie ck_sendto;
 
-static u_map *rosters[256];
+static char *ln_user, buf_user[1024];
+static char *ln_serv, buf_serv[1024];
 
-char buf_serv[1024];
-char buf_user[1024];
-
-struct sendto_priv {
-	char *serv, *user;
-	char *fmt;
-	uint type;
-	va_list va;
-};
-
-void u_st_start(void)
+static void st_start(void)
 {
 	u_cookie_inc(&ck_sendto);
+	ln_user = NULL;
+	ln_serv = NULL;
 }
 
-void u_st_exclude(u_conn *conn)
+static void st_exclude(u_conn *conn)
 {
 	if (!conn)
 		return;
@@ -56,99 +49,78 @@ static int want_send(uint type, u_conn *conn)
 	return 0;
 }
 
-static char *ln(struct sendto_priv *pv, u_conn *conn)
+static char *ln(u_conn *conn, char *fmt, va_list va_orig)
 {
 	va_list va;
 
 	switch (conn->ctx) {
 	case CTX_NONE:
 	case CTX_USER:
-		if (!pv->user) {
-			pv->user = buf_user;
-			va_copy(va, pv->va);
-			vsnf(FMT_USER, buf_user, 1024, pv->fmt, va);
-			va_end(va);
-		}
-		return pv->user;
+		if (ln_user != NULL)
+			return ln_user;
+		ln_user = buf_user;
+		va_copy(va, va_orig);
+		vsnf(FMT_USER, buf_user, 1024, fmt, va);
+		va_end(va);
+		return ln_user;
 
 	case CTX_SERVER:
-		if (!pv->serv) {
-			pv->serv = buf_serv;
-			va_copy(va, pv->va);
-			vsnf(FMT_SERVER, buf_serv, 1024, pv->fmt, va);
-			va_end(va);
-		}
-		return pv->serv;
+		if (ln_serv != NULL)
+			return ln_serv;
+		ln_serv = buf_serv;
+		va_copy(va, va_orig);
+		vsnf(FMT_SERVER, buf_serv, 1024, fmt, va);
+		va_end(va);
+		return ln_serv;
 	}
 
 	return NULL;
 }
 
-static void sendto_chan_cb(u_map *map, u_user *u, u_chanuser *cu,
-                           struct sendto_priv *priv)
+void u_sendto_chan(u_chan *c, u_conn *exclude, uint type, char *fmt, ...)
 {
-	u_conn *conn = u_user_conn(u);
-	char *s;
+	u_sendto_state st;
+	u_conn *conn;
+	va_list va;
 
-	if (!conn)
-		return;
-
-	if (!u_cookie_cmp(&conn->ck_sendto, &ck_sendto))
-		return;
-
-	if (want_send(priv->type, conn)) {
-		u_cookie_cpy(&conn->ck_sendto, &ck_sendto);
-		s = ln(priv, conn);
-		u_conn_f(conn, "%s", s);
-	}
+	va_start(va, fmt);
+	U_SENDTO_CHAN(&st, c, exclude, type, &conn)
+		u_conn_f(conn, "%s", ln(conn, fmt, va));
+	va_end(va);
 }
 
-void u_sendto_chan(u_chan *c, u_conn *conn, uint type, char *fmt, ...)
+void u_sendto_visible(u_user *u, uint type, char *fmt, ...)
 {
-	struct sendto_priv priv;
+	u_sendto_state st;
+	u_conn *conn;
+	u_conn *exclude = u_user_conn(u);
+	va_list va;
 
-	u_st_start();
-
-	if (conn != NULL)
-		u_st_exclude(conn);
-
-	priv.user = priv.serv = NULL;
-	priv.fmt = fmt;
-	priv.type = type;
-	va_start(priv.va, fmt);
-	u_map_each(c->members, (u_map_cb_t*)sendto_chan_cb, &priv);
-	va_end(priv.va);
+	va_start(va, fmt);
+	U_SENDTO_VISIBLE(&st, u, exclude, type, &conn)
+		u_conn_f(conn, "%s", ln(conn, fmt, va));
+	va_end(va);
 }
 
-static void sendto_visible_cb(u_map *map, u_chan *c, u_chanuser *cu,
-                              struct sendto_priv *priv)
+void u_sendto_servers(u_conn *exclude, char *fmt, ...)
 {
-	u_map_each(c->members, (u_map_cb_t*)sendto_chan_cb, priv);
-}
+	u_sendto_state st;
+	u_conn *conn;
+	va_list va;
 
-void u_sendto_visible(u_user* u, uint type, char* fmt, ...)
-{
-	struct sendto_priv priv;
-
-	u_st_start();
-
-	u_st_exclude(u_user_conn(u));
-
-	priv.user = priv.serv = NULL;
-	priv.fmt = fmt;
-	priv.type = type;
-	va_start(priv.va, fmt);
-	u_map_each(u->channels, (u_map_cb_t*)sendto_visible_cb, &priv);
-	va_end(priv.va);
+	va_start(va, fmt);
+	U_SENDTO_SERVERS(&st, exclude, &conn)
+		u_conn_f(conn, "%s", ln(conn, fmt, va));
+	va_end(va);
 }
 
 void u_sendto_chan_start(u_sendto_state *state, u_chan *c,
                          u_conn *exclude, uint type)
 {
-	u_st_start();
+	st_start();
 
 	if (exclude != NULL)
-		u_st_exclude(exclude);
+		st_exclude(exclude);
 
 	state->type = type;
 
@@ -178,10 +150,10 @@ next_conn:
 void u_sendto_visible_start(u_sendto_state *state, u_user *u,
                             u_conn *exclude, uint type)
 {
-	u_st_start();
+	st_start();
 
 	if (exclude != NULL)
-		u_st_exclude(exclude);
+		st_exclude(exclude);
 
 	state->type = type;
 
@@ -223,10 +195,10 @@ next_conn:
 
 void u_sendto_servers_start(u_sendto_state *state, u_conn *exclude)
 {
-	u_st_start();
+	st_start();
 
 	if (exclude != NULL)
-		u_st_exclude(exclude);
+		st_exclude(exclude);
 
 	mowgli_patricia_foreach_start(servers_by_sid, &state->pstate);
 }
@@ -250,75 +222,20 @@ next_conn:
 	return true;
 }
 
-static char *roster_to_str(uchar c)
-{
-	static char buf[16];
-	char *high = (c / 0x80) ? "+0x80" : "";
-
-	c &= 0x7f;
-	if (c < 0x20)
-		snf(FMT_LOG, buf, 16, "\\%d%s", c, high);
-	else
-		snf(FMT_LOG, buf, 16, "'%c'%s", c, high);
-
-	return buf;
-}
-
 void u_roster_add(uchar r, u_conn *conn)
 {
-	if (!r || !conn) return;
-	u_log(LG_DEBUG, "Adding %G to roster %s", conn, roster_to_str(r));
-	u_map_set(rosters[r], conn, conn);
 }
 
 void u_roster_del(uchar r, u_conn *conn)
 {
-	if (!r || !conn) return;
-	u_log(LG_DEBUG, "Removing %G from roster %s", conn, roster_to_str(r));
-	u_map_del(rosters[r], conn);
 }
 
 void u_roster_del_all(u_conn *conn)
 {
-	uint c;
-	if (!conn) return;
-	u_log(LG_DEBUG, "Removing %G from all rosters", conn);
-	for (c=1; c<256; c++)
-		u_map_del(rosters[c], conn);
-}
-
-void roster_f_cb(u_map *map, u_conn *unused, u_conn *conn, struct sendto_priv *priv)
-{
-	char *s;
-
-	if (!u_cookie_cmp(&conn->ck_sendto, &ck_sendto))
-		return;
-
-	if (want_send(priv->type, conn)) {
-		u_cookie_cpy(&conn->ck_sendto, &ck_sendto);
-		s = ln(priv, conn);
-		u_conn_f(conn, "%s", s);
-	}
 }
 
 void u_roster_f(uchar c, u_conn *conn, char *fmt, ...)
 {
-	struct sendto_priv priv;
-
-	u_st_start();
-
-	if (conn != NULL)
-		u_st_exclude(conn);
-
-	priv.user = priv.serv = NULL;
-	priv.fmt = fmt;
-	priv.type = ST_ALL;
-
-	u_log(LG_DEBUG, "roster[%s]: %s", roster_to_str(c), fmt);
-
-	va_start(priv.va, fmt);
-	u_map_each(rosters[(ulong)c], (u_map_cb_t*)roster_f_cb, &priv);
-	va_end(priv.va);
 }
 
 void u_wallops(char *fmt, ...)
@@ -335,11 +252,6 @@ void u_wallops(char *fmt, ...)
 
 int init_sendto(void)
 {
-	int i;
-
-	for (i=0; i<256; i++)
-		rosters[i] = u_map_new(0);
-
 	u_cookie_reset(&ck_sendto);
 
 	return 0;

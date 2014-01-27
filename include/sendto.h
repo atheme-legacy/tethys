@@ -11,14 +11,16 @@
 #define ST_SERVERS             1
 #define ST_USERS               2
 
-extern void u_st_start(void);
-extern void u_st_exclude(u_conn *conn);
+/* sends message to the various places. these implementations are based
+   on the sendto iterators below, but are careful not to repeat format
+   evaluation more times than necessary.
 
-/* second argument is excluded from message */
+   the u_conn* arguments are a connection to skip over, e.g. when
+   propagating a server message */
+
 extern void u_sendto_chan(u_chan*, u_conn*, uint, char*, ...);
-
-/* sends to all connections a user is visible to */
 extern void u_sendto_visible(u_user*, uint, char*, ...);
+extern void u_sendto_servers(u_conn*, char*, ...);
 
 typedef struct u_sendto_state u_sendto_state;
 
@@ -35,21 +37,21 @@ extern bool u_sendto_chan_next(u_sendto_state*, u_conn**);
 
 #define U_SENDTO_CHAN(STATE, CHAN, EXCLUDE, TYPE, CONN) \
 	for (u_sendto_chan_start((STATE), (CHAN), (EXCLUDE), (TYPE)); \
-	     u_sendto_chan_next((STATE), &(CONN)); )
+	     u_sendto_chan_next((STATE), (CONN)); )
 
 extern void u_sendto_visible_start(u_sendto_state*, u_user*, u_conn*, uint);
 extern bool u_sendto_visible_next(u_sendto_state*, u_conn**);
 
 #define U_SENDTO_VISIBLE(STATE, USER, EXCLUDE, TYPE, CONN) \
 	for (u_sendto_visible_start((STATE), (USER), (EXCLUDE), (TYPE)); \
-	     u_sendto_visible_next((STATE), &(CONN)); )
+	     u_sendto_visible_next((STATE), (CONN)); )
 
 extern void u_sendto_servers_start(u_sendto_state*, u_conn*);
 extern bool u_sendto_servers_next(u_sendto_state*, u_conn**);
 
 #define U_SENDTO_SERVERS(STATE, EXCLUDE, CONN) \
 	for (u_sendto_servers_start((STATE), (EXCLUDE)); \
-	     u_sendto_servers_next((STATE), &(CONN)); )
+	     u_sendto_servers_next((STATE), (CONN)); )
 
 /*
       +-----------------------------------------------+
