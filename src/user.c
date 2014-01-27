@@ -31,12 +31,10 @@ char *id_next(void)
 
 static void cb_oper();
 static void cb_flag();
-static void cb_wallops();
 
 static u_umode_info __umodes[32] = {
 	{ 'o', UMODE_OPER,      cb_oper         },
 	{ 'i', UMODE_INVISIBLE, cb_flag         },
-	{ 'w', UMODE_WALLOPS,   cb_wallops      },
 	{ 0 }
 };
 
@@ -88,20 +86,6 @@ static void cb_flag(u_umode_info *info, u_user *u, int on)
 		u->flags &= ~info->mask;
 	if (oldm != u->flags)
 		um_put(on, info->ch);
-}
-
-static void cb_wallops(u_umode_info *info, u_user *u, int on)
-{
-	cb_flag(info, u, on);
-
-	/* only add to wallops roster if local user */
-	if (!IS_LOCAL_USER(u))
-		return;
-
-	if (on)
-		u_roster_add(R_WALLOPS, USER_LOCAL(u)->conn);
-	else
-		u_roster_del(R_WALLOPS, USER_LOCAL(u)->conn);
 }
 
 void u_user_mode(u_user *u, char ch, int on)
@@ -203,7 +187,6 @@ void u_user_destroy(u_user *u)
 	if (IS_LOCAL_USER(u)) {
 		u_user_local *ul = USER_LOCAL(u);
 		if (ul->conn) {
-			u_roster_del_all(ul->conn);
 			ul->conn->priv = NULL;
 			u_conn_shutdown(ul->conn);
 			ul->conn = NULL;
@@ -377,7 +360,6 @@ void u_user_welcome(u_user_local *ul)
 	char buf[512];
 
 	u_log(LG_DEBUG, "user: welcoming %s", u->nick);
-	u_wallops("Connect: %H [%s]", u, ul->conn->ip);
 
 	u_user_num(u, RPL_WELCOME, my_net_name, u->nick);
 	u_user_num(u, RPL_YOURHOST, me.name, PACKAGE_FULLNAME);
@@ -386,7 +368,7 @@ void u_user_welcome(u_user_local *ul)
 	u_user_send_motd((u_user_local*)u);
 
 	u_user_make_euid(u, buf);
-	u_roster_f(R_SERVERS, NULL, "%s", buf);
+	u_sendto_servers(NULL, "%s", buf);
 }
 
 void u_user_send_motd(u_user_local *ul)

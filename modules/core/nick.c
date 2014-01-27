@@ -56,7 +56,7 @@ static int c_lu_nick(u_sourceinfo *si, u_msg *msg)
 
 	/* Send these BEFORE clobbered --Elizabeth */
 	u_sendto_visible(si->u, ST_USERS, ":%H NICK :%s", si->u, newnick);
-	u_roster_f(R_SERVERS, NULL, ":%H NICK %s %u", si->u, newnick, NOW.tv_sec);
+	u_sendto_servers(NULL, ":%H NICK %s %u", si->u, newnick, NOW.tv_sec);
 	u_conn_f(si->source, ":%H NICK :%s", si->u, newnick);
 
 	u_user_set_nick(si->u, newnick, NOW.tv_sec);

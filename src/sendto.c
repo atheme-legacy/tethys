@@ -222,34 +222,6 @@ next_conn:
 	return true;
 }
 
-void u_roster_add(uchar r, u_conn *conn)
-{
-}
-
-void u_roster_del(uchar r, u_conn *conn)
-{
-}
-
-void u_roster_del_all(u_conn *conn)
-{
-}
-
-void u_roster_f(uchar c, u_conn *conn, char *fmt, ...)
-{
-}
-
-void u_wallops(char *fmt, ...)
-{
-	char buf[512];
-	va_list va;
-
-	va_start(va, fmt);
-	vsnf(FMT_USER, buf, 512, fmt, va);
-	va_end(va);
-
-	u_roster_f(R_WALLOPS, NULL, ":%S WALLOPS :%s", &me, buf);
-}
-
 int init_sendto(void)
 {
 	u_cookie_reset(&ck_sendto);

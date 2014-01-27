@@ -255,7 +255,6 @@ void u_server_unlink(u_server *sv)
 
 	if (IS_SERVER_LOCAL(sv)) {
 		u_conn *conn = sv->conn;
-		u_roster_del_all(conn);
 		conn->priv = NULL;
 		u_conn_shutdown(conn);
 		sv->conn = NULL;
@@ -463,7 +462,6 @@ void u_server_eob(u_server *sv)
 
 	u_log(LG_VERBOSE, "End of burst with %S", sv);
 	sv->flags &= ~SERVER_IS_BURSTING;
-	u_roster_add(R_SERVERS, sv->conn);
 }
 
 int init_server(void)

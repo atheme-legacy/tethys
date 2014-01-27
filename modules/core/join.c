@@ -49,11 +49,11 @@ static int try_local_join_chan(u_sourceinfo *si, char *chan, char *key)
 
 	if (!(c->flags & CHAN_LOCAL)) {
 		if (c->members->size == 1) {
-			u_roster_f(R_SERVERS, NULL, ":%S SJOIN %u %C %s :%s%U",
+			u_sendto_servers(NULL, ":%S SJOIN %u %C %s :%s%U",
 			           &me, c->ts, c, modes,
 			           (cu->flags & CU_PFX_OP) ? "@" : "", si->u);
 		} else {
-			u_roster_f(R_SERVERS, NULL, ":%U JOIN %u %C +",
+			u_sendto_servers(NULL, ":%U JOIN %u %C +",
 			           si->u, c->ts, c);
 		}
 	}

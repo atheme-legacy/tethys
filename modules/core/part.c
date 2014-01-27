@@ -45,7 +45,7 @@ static int c_lu_part(u_sourceinfo *si, u_msg *msg)
 
 	if (q != chans) {
 		u_log(LG_DEBUG, "%U parted from %s%s", si->u, chans, reason);
-		u_roster_f(R_SERVERS, si->link, ":%U PART %s%s",
+		u_sendto_servers(si->link, ":%U PART %s%s",
 		           si->u, chans, reason);
 	}
 

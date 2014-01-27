@@ -383,7 +383,7 @@ static void propagate_message(u_sourceinfo *si, u_msg *msg, u_cmd *cmd, char *li
 		break;
 
 	case CMD_PROP_BROADCAST:
-		u_roster_f(R_SERVERS, si->source, "%s", line);
+		u_sendto_servers(si->source, "%s", line);
 		break;
 
 	case CMD_PROP_ONE_TO_ONE:

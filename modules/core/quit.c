@@ -15,7 +15,7 @@ static c_u_quit(u_sourceinfo *si, u_msg *msg)
 
 	u_sendto_visible(si->u, ST_USERS, ":%H QUIT :%s%s", si->u, r1, r2);
 	u_conn_f(si->local, ":%H QUIT :%s%s", si->u, r1, r2);
-	u_roster_f(R_SERVERS, si->source, ":%H QUIT :%s%s", si->u, r1, r2);
+	u_sendto_servers(si->source, ":%H QUIT :%s%s", si->u, r1, r2);
 
 	u_user_destroy(si->u);
 

@@ -53,32 +53,6 @@ extern bool u_sendto_servers_next(u_sendto_state*, u_conn**);
 	for (u_sendto_servers_start((STATE), (EXCLUDE)); \
 	     u_sendto_servers_next((STATE), (CONN)); )
 
-/*
-      +-----------------------------------------------+
-   00 |XX|+w|                                         |
-      +--+--+          SIMPLE ROSTERS              +--+
-      |                                            |sv| 1f
-      +-----------------------------------------------+
-      /                   (UNUSED)                    /
-      +-----------------------------------------------+
-   c0 |                                               |
-      |                   SNOMASKS                    |
-      |                                               | ff
-      +-----------------------------------------------+
- */
-
-#define R_WALLOPS      0x01  /* local +w users */
-#define R_SERVERS      0x1f  /* locally connected servers */
-
-#define R_SNOTICE(c)   (0xc0 | ((c) & 0x3f))
-
-extern void u_roster_add(uchar r, u_conn*);
-extern void u_roster_del(uchar r, u_conn*);
-extern void u_roster_del_all(u_conn*);
-extern void u_roster_f(uchar, u_conn*, char*, ...);
-
-extern void u_wallops(char*, ...);
-
 extern int init_sendto(void);
 
 #endif
