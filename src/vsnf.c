@@ -98,6 +98,7 @@ int vsnf(int type, char *s, uint size, const char *fmt, va_list va)
 	u_server *server;
 	u_conn *conn;
 	u_entity *e;
+	u_sourceinfo *si;
 
 	struct buffer buf;
 	struct spec spec;
@@ -254,6 +255,25 @@ top:
 				s_arg = e->id;
 		}
 		string(&buf, s_arg, -1, &spec);
+		break;
+
+	case 'I': /* sourceinfo */
+		si = va_arg(va, u_sourceinfo*);
+		if (type == FMT_SERVER) {
+			string(&buf, (char*)si->id, si->u ? 9 : 3, NULL);
+		} else {
+			if (si->u) {
+				string(&buf, si->u->nick, -1, NULL);
+				character(&buf, '!');
+				string(&buf, si->u->ident, -1, NULL);
+				character(&buf, '@');
+				string(&buf, si->u->host, -1, NULL);
+			} else if (si->s) {
+				string(&buf, si->s->name, -1, &spec);
+			} else {
+				string(&buf, "?", 1, NULL);
+			}
+		}
 		break;
 
 	/* standard printf-family formats */
