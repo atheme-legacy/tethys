@@ -150,6 +150,11 @@ void u_sendto_map(u_map *map, u_conn *exclude, char *fmt, ...)
 void u_sendto_chan_start(u_sendto_state *state, u_chan *c,
                          u_conn *exclude, uint type)
 {
+	if (c == NULL) {
+		state->type = ST_STOP;
+		return;
+	}
+
 	st_start();
 
 	if (exclude != NULL)
@@ -165,6 +170,9 @@ bool u_sendto_chan_next(u_sendto_state *state, u_conn **conn_ret)
 	u_conn *conn;
 	u_user *u;
 	u_chanuser *cu;
+
+	if (state->type == ST_STOP)
+		return false;
 
 	conn = NULL;
 next_conn:
@@ -183,6 +191,11 @@ next_conn:
 void u_sendto_visible_start(u_sendto_state *state, u_user *u,
                             u_conn *exclude, uint type)
 {
+	if (u == NULL) {
+		state->type = ST_STOP;
+		return;
+	}
+
 	st_start();
 
 	if (exclude != NULL)
@@ -199,6 +212,9 @@ bool u_sendto_visible_next(u_sendto_state *state, u_conn **conn_ret)
 	u_conn *conn;
 	u_user *u;
 	u_chanuser *cu;
+
+	if (state->type == ST_STOP)
+		return false;
 
 	conn = NULL;
 next_conn:

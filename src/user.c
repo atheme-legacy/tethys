@@ -239,6 +239,8 @@ void u_user_try_register(u_user *u)
 
 u_conn *u_user_conn(u_user *u)
 {
+	if (u == NULL)
+		return NULL;
 	if (IS_LOCAL_USER(u))
 		return USER_LOCAL(u)->conn;
 	else
@@ -247,6 +249,8 @@ u_conn *u_user_conn(u_user *u)
 
 u_server *u_user_server(u_user *u)
 {
+	if (u == NULL)
+		return NULL;
 	if (IS_LOCAL_USER(u))
 		return &me;
 	else

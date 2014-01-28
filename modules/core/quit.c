@@ -10,6 +10,11 @@ static c_u_quit(u_sourceinfo *si, u_msg *msg)
 {
 	char *r1 = "", *r2 = msg->argc > 0 ? msg->argv[0] : "";
 
+	if (si->u == NULL) {
+		u_log(LG_SEVERE, "Received QUIT from nonexistent %s", si->id);
+		return 0;
+	}
+
 	if (SRC_IS_LOCAL_USER(si))
 		r1 = msg->argc > 0 ? "Quit: " : "Client Quit";
 

@@ -10,6 +10,7 @@
 #define ST_ALL                 0
 #define ST_SERVERS             1
 #define ST_USERS               2
+#define ST_STOP       ((uint)-1)
 
 /* sends message to the various places. these implementations are based
    on the sendto iterators below, but are careful not to repeat format
