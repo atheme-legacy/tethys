@@ -29,6 +29,8 @@ struct u_module {
 };
 
 struct u_module_info {
+	size_t info_size;
+
 	const char *name;
 	const char *author;
 	const char *description;
@@ -44,6 +46,8 @@ struct u_module_info {
 
 #define TETHYS_MODULE_V1(NAME, AUTHOR, DESC, INIT, DEINIT, CMDTAB)          \
 	u_module_info __module_info = {                                     \
+		.info_size = sizeof(u_module_info),                         \
+                                                                            \
 		.name = NAME,                                               \
 		.author = AUTHOR,                                           \
 		.description = DESC,                                        \
