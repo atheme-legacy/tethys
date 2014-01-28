@@ -15,29 +15,33 @@ struct conf_handler {
 
 static mowgli_patricia_t *u_conf_handlers = NULL;
 
-void u_conf_traverse(mowgli_config_file_t *cf, mowgli_config_file_entry_t *ce, mowgli_patricia_t *handlers)
+void u_conf_traverse(mowgli_config_file_t *cf, mowgli_config_file_entry_t *ce,
+                     mowgli_patricia_t *handlers)
 {
 	struct conf_handler *h;
-
-	u_log(LG_FINE, "conf: %s=%s", ce->varname, ce->vardata);
+	mowgli_config_file_entry_t *cce;
 
 	if (!handlers)
 		return;
 
-	h = mowgli_patricia_retrieve(handlers, ce->varname);
+	MOWGLI_ITER_FOREACH(cce, ce) {
+		u_log(LG_FINE, "conf: %s=%s", cce->varname, cce->vardata);
 
-	if (h == NULL) {
-		u_log(LG_WARN, "No config handler for %s=%s", ce->varname, ce->vardata);
-		return;
+		h = mowgli_patricia_retrieve(handlers, cce->varname);
+
+		if (h == NULL) {
+			u_log(LG_WARN, "No config handler for %s=%s",
+			      cce->varname, cce->vardata);
+			continue;
+		}
+
+		h->cb(cf, cce);
 	}
-
-	h->cb(cf, ce);
 }
 
 bool u_conf_read(const char *path)
 {
 	mowgli_config_file_t *cf;
-	mowgli_config_file_entry_t *ce;
 
 	cf = mowgli_config_file_load(path);
 	if (cf == NULL)
@@ -45,9 +49,7 @@ bool u_conf_read(const char *path)
 
 	u_hook_call(HOOK_CONF_START, cf);
 
-	MOWGLI_ITER_FOREACH(ce, cf->entries) {
-		u_conf_traverse(cf, ce, u_conf_handlers);
-	}
+	u_conf_traverse(cf, cf->entries, u_conf_handlers);
 
 	u_hook_call(HOOK_CONF_END, cf);
 
