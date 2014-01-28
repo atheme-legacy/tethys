@@ -19,6 +19,8 @@
    the u_conn* arguments are a connection to skip over, e.g. when
    propagating a server message */
 
+extern void u_sendto(u_conn*, char*, ...);
+
 extern void u_sendto_chan(u_chan*, u_conn*, uint, char*, ...);
 extern void u_sendto_visible(u_user*, uint, char*, ...);
 extern void u_sendto_servers(u_conn*, char*, ...);

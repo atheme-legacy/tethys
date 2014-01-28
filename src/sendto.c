@@ -77,6 +77,17 @@ static char *ln(u_conn *conn, char *fmt, va_list va_orig)
 	return NULL;
 }
 
+void u_sendto(u_conn *conn, char *fmt, ...)
+{
+	va_list va;
+	if (!u_cookie_cmp(&conn->ck_sendto, &ck_sendto))
+		return;
+	u_cookie_cpy(&conn->ck_sendto, &ck_sendto);
+	va_start(va, fmt);
+	u_conn_vf(conn, fmt, va);
+	va_end(va);
+}
+
 void u_sendto_chan(u_chan *c, u_conn *exclude, uint type, char *fmt, ...)
 {
 	u_sendto_state st;
@@ -85,7 +96,7 @@ void u_sendto_chan(u_chan *c, u_conn *exclude, uint type, char *fmt, ...)
 
 	va_start(va, fmt);
 	U_SENDTO_CHAN(&st, c, exclude, type, &conn)
-		u_conn_f(conn, "%s", ln(conn, fmt, va));
+		u_sendto(conn, "%s", ln(conn, fmt, va));
 	va_end(va);
 }
 
@@ -98,7 +109,7 @@ void u_sendto_visible(u_user *u, uint type, char *fmt, ...)
 
 	va_start(va, fmt);
 	U_SENDTO_VISIBLE(&st, u, exclude, type, &conn)
-		u_conn_f(conn, "%s", ln(conn, fmt, va));
+		u_sendto(conn, "%s", ln(conn, fmt, va));
 	va_end(va);
 }
 
@@ -110,7 +121,7 @@ void u_sendto_servers(u_conn *exclude, char *fmt, ...)
 
 	va_start(va, fmt);
 	U_SENDTO_SERVERS(&st, exclude, &conn)
-		u_conn_f(conn, "%s", ln(conn, fmt, va));
+		u_sendto(conn, "%s", ln(conn, fmt, va));
 	va_end(va);
 }
 
@@ -126,7 +137,7 @@ void u_sendto_list(mowgli_list_t *list, u_conn *exclude, char *fmt, ...)
 	va_start(va, fmt);
 	MOWGLI_LIST_FOREACH(n, list->head) {
 		u_conn *conn = n->data;
-		u_conn_f(conn, "%s", ln(conn, fmt, va));
+		u_sendto(conn, "%s", ln(conn, fmt, va));
 	}
 	va_end(va);
 }
@@ -143,7 +154,7 @@ void u_sendto_map(u_map *map, u_conn *exclude, char *fmt, ...)
 
 	va_start(va, fmt);
 	U_MAP_EACH(&state, map, NULL, &conn)
-		u_conn_f(conn, "%s", ln(conn, fmt, va));
+		u_sendto(conn, "%s", ln(conn, fmt, va));
 	va_end(va);
 }
 
@@ -180,6 +191,8 @@ next_conn:
 		return false;
 
 	if (!(conn = u_user_conn(u)))
+		goto next_conn;
+	if (!want_send(state->type, conn))
 		goto next_conn;
 	if (!u_cookie_cmp(&conn->ck_sendto, &ck_sendto))
 		goto next_conn;
