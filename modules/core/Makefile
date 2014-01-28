@@ -9,6 +9,7 @@ SRCS = \
 	part.c \
 	pass.c \
 	quit.c \
+	sid.c \
 	ts6init.c \
 	user.c
 
