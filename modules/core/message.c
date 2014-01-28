@@ -83,11 +83,6 @@ static u_cmd message_cmdtab[] = {
 	{ },
 };
 
-static int init_message(u_module *m)
-{
-	u_cmds_reg(message_cmdtab);
-}
-
 TETHYS_MODULE_V1(
 	"core/message", "Alex Iadicicco", "PRIVMSG and NOTICE",
-	init_message, NULL);
+	NULL, NULL, message_cmdtab);

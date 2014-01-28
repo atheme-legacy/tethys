@@ -29,11 +29,6 @@ static u_cmd user_cmdtab[] = {
 	{ }
 };
 
-static int init_m_user(u_module *m)
-{
-	u_cmds_reg(user_cmdtab);
-}
-
 TETHYS_MODULE_V1(
 	"core/user", "Alex Iadicicco", "USER command",
-	init_m_user, NULL);
+	NULL, NULL, user_cmdtab);

@@ -86,11 +86,6 @@ static u_cmd nick_cmdtab[] = {
 	{ }
 };
 
-static int init_nick(u_module *m)
-{
-	u_cmds_reg(nick_cmdtab);
-}
-
 TETHYS_MODULE_V1(
 	"core/nick", "Alex Iadicicco", "NICK command",
-	init_nick, NULL);
+	NULL, NULL, nick_cmdtab);

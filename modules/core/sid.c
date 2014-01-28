@@ -36,11 +36,6 @@ static u_cmd sid_cmdtab[] = {
 	{ }
 };
 
-static int init_sid(u_module *m)
-{
-	u_cmds_reg(sid_cmdtab);
-}
-
 TETHYS_MODULE_V1(
 	"core/sid", "Alex Iadicicco", "SID and SERVER messages",
-	init_sid, NULL);
+	NULL, NULL, sid_cmdtab);

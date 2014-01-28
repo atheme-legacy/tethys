@@ -200,11 +200,6 @@ static u_cmd join_cmdtab[] = {
 	{ }
 };
 
-static int init_join(u_module *m)
-{
-	u_cmds_reg(join_cmdtab);
-}
-
 TETHYS_MODULE_V1(
 	"core/join", "Alex Iadicicco", "JOIN and SJOIN commands",
-	init_join, NULL);
+	NULL, NULL, join_cmdtab);

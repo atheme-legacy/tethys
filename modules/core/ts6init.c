@@ -92,12 +92,7 @@ static u_cmd ts6init_cmdtab[] = {
 	{ }
 };
 
-static int init_capab(u_module *m)
-{
-	u_cmds_reg(ts6init_cmdtab);
-}
-
 TETHYS_MODULE_V1(
 	"core/ts6init", "Alex Iadicicco",
 	"Initial TS6 commands, PASS CAPAB SERVER and SVINFO",
-	init_capab, NULL);
+	NULL, NULL, ts6init_cmdtab);

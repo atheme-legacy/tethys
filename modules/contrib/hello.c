@@ -21,5 +21,7 @@ TETHYS_MODULE_V1(
 	"Example module",
 
 	hello_init,
-	hello_deinit
+	hello_deinit,
+
+	NULL
 );

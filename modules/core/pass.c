@@ -37,11 +37,6 @@ static u_cmd pass_cmdtab[] = {
 	{ }
 };
 
-static int init_pass(u_module *m)
-{
-	u_cmds_reg(pass_cmdtab);
-}
-
 TETHYS_MODULE_V1(
 	"core/pass", "Alex Iadicicco", "PASS command",
-	init_pass, NULL);
+	NULL, NULL, pass_cmdtab);

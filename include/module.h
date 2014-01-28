@@ -19,6 +19,8 @@
 typedef struct u_module u_module;
 typedef struct u_module_info u_module_info;
 
+#include "msg.h"
+
 struct u_module {
 	u_module_info *info;
 	mowgli_module_t module;
@@ -36,9 +38,11 @@ struct u_module_info {
 
 	int (*init)(u_module*);
 	void (*deinit)(u_module*);
+
+	u_cmd *cmdtab;
 };
 
-#define TETHYS_MODULE_V1(NAME, AUTHOR, DESC, INIT, DEINIT)                  \
+#define TETHYS_MODULE_V1(NAME, AUTHOR, DESC, INIT, DEINIT, CMDTAB)          \
 	u_module_info __module_info = {                                     \
 		.name = NAME,                                               \
 		.author = AUTHOR,                                           \
@@ -49,6 +53,8 @@ struct u_module_info {
                                                                             \
 		.init = INIT,                                               \
 		.deinit = DEINIT,                                           \
+                                                                            \
+		.cmdtab = CMDTAB                                            \
 	}
 
 extern u_module *u_module_loading(void);

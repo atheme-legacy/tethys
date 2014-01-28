@@ -86,11 +86,6 @@ static u_cmd ping_cmdtab[] = {
 	{ }
 };
 
-static int init_ping(u_module *m)
-{
-	u_cmds_reg(ping_cmdtab);
-}
-
 TETHYS_MODULE_V1(
 	"core/ping", "Alex Iadicicco", "PING and PONG commands",
-	init_ping, NULL);
+	NULL, NULL, ping_cmdtab);

@@ -25,5 +25,7 @@ TETHYS_MODULE_V1(
 	"Provides /42",
 
 	c_42_init,
+	NULL,
+
 	NULL
 );

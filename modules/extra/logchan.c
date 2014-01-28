@@ -65,5 +65,7 @@ TETHYS_MODULE_V1(
 	"Channel for logging",
 
 	logchan_init,
-	logchan_deinit
+	logchan_deinit,
+
+	NULL
 );

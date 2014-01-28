@@ -32,11 +32,6 @@ static u_cmd quit_cmdtab[] = {
 	{ }
 };
 
-static int init_quit(u_module *m)
-{
-	u_cmds_reg(quit_cmdtab);
-}
-
 TETHYS_MODULE_V1(
 	"core/quit", "Alex Iadicicco", "QUIT command",
-	init_quit, NULL);
+	NULL, NULL, quit_cmdtab);

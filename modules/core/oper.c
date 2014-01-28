@@ -26,11 +26,6 @@ static u_cmd oper_cmdtab[] = {
 	{ }
 };
 
-static int init_oper(u_module *m)
-{
-	u_cmds_reg(oper_cmdtab);
-}
-
 TETHYS_MODULE_V1(
 	"core/oper", "Alex Iadicicco", "OPER command",
-	init_oper, NULL);
+	NULL, NULL, oper_cmdtab);

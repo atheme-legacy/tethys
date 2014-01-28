@@ -161,11 +161,6 @@ static u_cmd mode_cmdtab[] = {
 	{ }
 };
 
-static int init_mode(u_module *m)
-{
-	u_cmds_reg(mode_cmdtab);
-}
-
 TETHYS_MODULE_V1(
 	"core/mode", "Alex Iadicicco", "MODE and TMODE commands",
-	init_mode, NULL);
+	NULL, NULL, mode_cmdtab);

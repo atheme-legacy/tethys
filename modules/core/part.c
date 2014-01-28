@@ -57,11 +57,6 @@ static u_cmd part_cmdtab[] = {
 	{ }
 };
 
-static int init_part(u_module *m)
-{
-	u_cmds_reg(part_cmdtab);
-}
-
 TETHYS_MODULE_V1(
 	"core/part", "Alex Iadicicco", "PART command",
-	init_part, NULL);
+	NULL, NULL, part_cmdtab);

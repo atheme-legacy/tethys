@@ -87,6 +87,8 @@ static const char *module_load_path(u_module **mp, const char *path,
 	}
 
 	module_load_push(m);
+	if (m->info->cmdtab)
+		u_cmds_reg(m->info->cmdtab);
 	if (m->info->init) {
 		error = "Module initalization failed";
 		if (m->info->init(m) < 0)

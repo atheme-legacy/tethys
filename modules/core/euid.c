@@ -37,11 +37,6 @@ static u_cmd euid_cmdtab[] = {
 	{ }
 };
 
-static int init_euid(u_module *m)
-{
-	u_cmds_reg(euid_cmdtab);
-}
-
 TETHYS_MODULE_V1(
 	"core/euid", "Alex Iadicicco", "EUID command",
-	init_euid, NULL);
+	NULL, NULL, euid_cmdtab);

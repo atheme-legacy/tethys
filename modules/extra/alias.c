@@ -122,5 +122,7 @@ TETHYS_MODULE_V1(
 	"Command aliases",
 
 	alias_init,
-	alias_deinit
+	alias_deinit,
+
+	NULL
 );

@@ -30,11 +30,6 @@ static u_cmd away_cmdtab[] = {
 	{ },
 };
 
-static int init_away(u_module *m)
-{
-	u_cmds_reg(away_cmdtab);
-}
-
 TETHYS_MODULE_V1(
 	"core/away", "Alex Iadicicco", "AWAY command",
-	init_away, NULL);
+	NULL, NULL, away_cmdtab);
