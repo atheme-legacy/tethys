@@ -9,6 +9,7 @@ SRCS = \
 	oper.c \
 	part.c \
 	pass.c \
+	ping.c \
 	quit.c \
 	sid.c \
 	ts6init.c \
