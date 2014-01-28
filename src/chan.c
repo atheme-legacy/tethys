@@ -117,7 +117,7 @@ static char *full_hostmask(char *mask)
 static int cb_list(u_modes *m, int on, char *arg)
 {
 	u_chan *c = m->target;
-	u_user *u = m->setter;
+	u_sourceinfo *si = m->setter;
 	mowgli_list_t *list;
 	mowgli_node_t *n;
 	u_chanban *ban;
@@ -151,14 +151,14 @@ static int cb_list(u_modes *m, int on, char *arg)
 		if (mowgli_list_size(list) >= MAXBANLIST) {
 			u_log(LG_VERBOSE, "%C +%c full, not adding %s",
 		              c, m->info->ch, mask);
-			u_user_num(u, ERR_BANLISTFULL, c, mask);
+			u_user_num(si->u, ERR_BANLISTFULL, c, mask);
 			return 1;
 		}
 
 		ban = malloc(sizeof(*ban));
 
 		u_strlcpy(ban->mask, mask, 256);
-		snf(FMT_USER, ban->setter, 256, "%H", u);
+		snf(FMT_USER, ban->setter, 256, "%I", si);
 		ban->time = NOW.tv_sec;
 
 		u_mode_put(m, on, m->info->ch, " %s", mask);
@@ -171,7 +171,7 @@ static int cb_list(u_modes *m, int on, char *arg)
 static int cb_prefix(u_modes *m, int on, char *arg)
 {
 	u_chan *c = m->target;
-	u_user *u = m->setter;
+	u_sourceinfo *si = m->setter;
 	u_chanuser *cu;
 	u_user *tu;
 
@@ -184,7 +184,7 @@ static int cb_prefix(u_modes *m, int on, char *arg)
 		tu = u_user_by_nick(arg);
 		if (tu == NULL) {
 			/* TODO: u_user_by_nick_history */
-			u_user_num(u, ERR_NOSUCHNICK, arg);
+			u_user_num(si->u, ERR_NOSUCHNICK, arg);
 			return 1;
 		}
 	}
@@ -193,7 +193,7 @@ static int cb_prefix(u_modes *m, int on, char *arg)
 
 	cu = u_chan_user_find(c, tu);
 	if (cu == NULL) {
-		u_user_num(u, ERR_USERNOTINCHANNEL, tu, c);
+		u_user_num(si->u, ERR_USERNOTINCHANNEL, tu, c);
 		return 1;
 	}
 
@@ -208,7 +208,7 @@ static int cb_prefix(u_modes *m, int on, char *arg)
 
 static int cb_fwd(u_modes *m, int on, char *arg)
 {
-	u_user *u = m->setter;
+	u_sourceinfo *si = m->setter;
 	u_chan *tc, *c = m->target;
 	u_chanuser *tcu;
 
@@ -228,15 +228,17 @@ static int cb_fwd(u_modes *m, int on, char *arg)
 		return 0;
 
 	if (!(tc = u_chan_get(arg))) {
-		u_user_num(u, ERR_NOSUCHCHANNEL, arg);
+		u_user_num(si->u, ERR_NOSUCHCHANNEL, arg);
 		return 1;
 	}
 
-	tcu = u_chan_user_find(tc, u);
-	/* TODO: +F */
-	if (tcu == NULL || !(tcu->flags & CU_PFX_OP)) {
-		u_user_num(u, ERR_CHANOPRIVSNEEDED, tc);
-		return 1;
+	if (si->u) {
+		tcu = u_chan_user_find(tc, si->u);
+		/* TODO: +F */
+		if (tcu == NULL || !(tcu->flags & CU_PFX_OP)) {
+			u_user_num(si->u, ERR_CHANOPRIVSNEEDED, tc);
+			return 1;
+		}
 	}
 
 	if (c->forward)

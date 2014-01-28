@@ -53,6 +53,8 @@ extern int u_msg_parse(u_msg*, char*);
 #define SRC_ENCAP        (SRC_ENCAP_USER | SRC_ENCAP_SERVER)
 #define SRC_UNREGISTERED (SRC_UNREGISTERED_USER | SRC_UNREGISTERED_SERVER \
                           | SRC_FIRST)
+#define SRC_C2S (SRC_LOCAL_USER)
+#define SRC_S2S (SRC_REMOTE_USER | SRC_SERVER)
 
 typedef struct u_sourceinfo u_sourceinfo;
 

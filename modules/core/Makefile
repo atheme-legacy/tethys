@@ -3,6 +3,7 @@ MODULE = core
 SRCS = \
 	join.c \
 	message.c \
+	mode.c \
 	nick.c \
 	part.c \
 	pass.c \
