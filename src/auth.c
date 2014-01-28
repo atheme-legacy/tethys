@@ -124,12 +124,6 @@ u_link *u_find_link(u_conn *conn)
 	return NULL;
 }
 
-#define CONF_CHECK(var, key, need) do { \
-	if ((var) == NULL) { \
-		u_log(LG_ERROR, "auth conf: %s before %s!", key, need); \
-		return; \
-	} } while(0)
-
 static u_class *cur_class = NULL;
 
 void conf_class(mowgli_config_file_t *cf, mowgli_config_file_entry_t *ce)
@@ -146,7 +140,6 @@ void conf_class(mowgli_config_file_t *cf, mowgli_config_file_entry_t *ce)
 
 void conf_class_timeout(mowgli_config_file_t *cf, mowgli_config_file_entry_t *ce)
 {
-	CONF_CHECK(cur_class, ce->varname, "class");
 	cur_class->timeout = atoi(ce->vardata);
 	if (cur_class->timeout < 15) {
 		u_log(LG_WARN, msg_timeouttooshort, cur_class->timeout,
@@ -172,19 +165,16 @@ void conf_auth(mowgli_config_file_t *cf, mowgli_config_file_entry_t *ce)
 
 void conf_auth_class(mowgli_config_file_t *cf, mowgli_config_file_entry_t *ce)
 {
-	CONF_CHECK(cur_auth, ce->varname, "auth");
 	u_strlcpy(cur_auth->classname, ce->vardata, MAXCLASSNAME+1);
 }
 
 void conf_auth_cidr(mowgli_config_file_t *cf, mowgli_config_file_entry_t *ce)
 {
-	CONF_CHECK(cur_auth, ce->varname, "auth");
 	u_str_to_cidr(ce->vardata, &cur_auth->cidr);
 }
 
 void conf_auth_password(mowgli_config_file_t *cf, mowgli_config_file_entry_t *ce)
 {
-	CONF_CHECK(cur_auth, ce->varname, "auth");
 	u_strlcpy(cur_auth->pass, ce->vardata, MAXPASSWORD+1);
 }
 
@@ -206,13 +196,11 @@ void conf_oper(mowgli_config_file_t *cf, mowgli_config_file_entry_t *ce)
 
 void conf_oper_password(mowgli_config_file_t *cf, mowgli_config_file_entry_t *ce)
 {
-	CONF_CHECK(cur_oper, ce->varname, "oper");
 	u_strlcpy(cur_oper->pass, ce->vardata, MAXPASSWORD+1);
 }
 
 void conf_oper_auth(mowgli_config_file_t *cf, mowgli_config_file_entry_t *ce)
 {
-	CONF_CHECK(cur_oper, ce->varname, "oper");
 	u_strlcpy(cur_oper->authname, ce->vardata, MAXAUTHNAME+1);
 }
 
@@ -233,25 +221,21 @@ void conf_link(mowgli_config_file_t *cf, mowgli_config_file_entry_t *ce)
 
 void conf_link_host(mowgli_config_file_t *cf, mowgli_config_file_entry_t *ce)
 {
-	CONF_CHECK(cur_link, ce->varname, "link");
 	u_strlcpy(cur_link->host, ce->vardata, INET_ADDRSTRLEN);
 }
 
 void conf_link_sendpass(mowgli_config_file_t *cf, mowgli_config_file_entry_t *ce)
 {
-	CONF_CHECK(cur_link, ce->varname, "link");
 	u_strlcpy(cur_link->sendpass, ce->vardata, MAXPASSWORD+1);
 }
 
 void conf_link_recvpass(mowgli_config_file_t *cf, mowgli_config_file_entry_t *ce)
 {
-	CONF_CHECK(cur_link, ce->varname, "link");
 	u_strlcpy(cur_link->recvpass, ce->vardata, MAXPASSWORD+1);
 }
 
 void conf_link_class(mowgli_config_file_t *cf, mowgli_config_file_entry_t *ce)
 {
-	CONF_CHECK(cur_link, ce->varname, "link");
 	u_strlcpy(cur_link->classname, ce->vardata, MAXCLASSNAME+1);
 }
 
