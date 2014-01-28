@@ -1,6 +1,7 @@
 MODULE = core
 
 SRCS = \
+	away.c \
 	euid.c \
 	join.c \
 	message.c \
