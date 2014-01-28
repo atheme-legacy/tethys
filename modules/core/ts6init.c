@@ -1,4 +1,4 @@
-/* Tethys, core/ts6init -- Initial TS6 commands, PASS CAPAB and SERVER
+/* Tethys, core/ts6init -- Commands for TS6 connection setup
    Copyright (C) 2014 Alex Iadicicco
 
    This file is protected under the terms contained
@@ -55,10 +55,40 @@ static int c_us_server(u_sourceinfo *si, u_msg *msg)
 	return 0;
 }
 
+static int c_ls_svinfo(u_sourceinfo *si, u_msg *msg)
+{
+	int tsdelta;
+
+	/* I suppose this could be sent at any time, but any correct TS6
+	   implementation will send it as the first line of a netburst,
+	   and never any other time. */
+
+	if (atoi(msg->argv[0]) < 6) {
+		u_conn_fatal(si->source, "Max TS version less than 6!");
+		return 0;
+	}
+
+	tsdelta = atoi(msg->argv[3]) - (int)NOW.tv_sec;
+	if (tsdelta < 0)
+		tsdelta = -tsdelta;
+
+	if (tsdelta > 10)
+		u_log(LG_WARN, "%S has TS delta of %d", si->s, tsdelta);
+
+	if (tsdelta > 60) {
+		u_log(LG_ERROR, "%S has excessive TS delta, killing", si->s);
+		u_conn_fatal(si->source, "Excessive TS delta");
+		return 0;
+	}
+
+	return 0;
+}
+
 static u_cmd ts6init_cmdtab[] = {
 	{ "PASS",    SRC_UNREGISTERED_SERVER,  c_us_pass,   4 },
 	{ "CAPAB",   SRC_UNREGISTERED_SERVER,  c_us_capab,  1 },
 	{ "SERVER",  SRC_UNREGISTERED_SERVER,  c_us_server, 3 },
+	{ "SVINFO",  SRC_LOCAL_SERVER,         c_ls_svinfo, 4 },
 	{ }
 };
 
@@ -69,5 +99,5 @@ static int init_capab(u_module *m)
 
 TETHYS_MODULE_V1(
 	"core/ts6init", "Alex Iadicicco",
-	"Initial TS6 commands, PASS CAPAB and SERVER",
+	"Initial TS6 commands, PASS CAPAB SERVER and SVINFO",
 	init_capab, NULL);
