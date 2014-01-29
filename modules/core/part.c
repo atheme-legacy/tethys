@@ -23,6 +23,8 @@ static int c_u_part(u_sourceinfo *si, u_msg *msg)
 	while ((s = cut(&p, ",")) != NULL) {
 		u_log(LG_FINE, "%s PART %s$%s", si->u->nick, s, p);
 
+		cu = NULL;
+
 		if (!(c = u_chan_get(s))) {
 			if (local)
 				u_user_num(si->u, ERR_NOSUCHCHANNEL, s);
