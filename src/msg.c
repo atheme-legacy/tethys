@@ -58,14 +58,14 @@ int u_msg_parse(u_msg *msg, char *s)
 }
 
 
-void u_src_num(u_sourceinfo *si, int num, ...)
+int u_src_num(u_sourceinfo *si, int num, ...)
 {
 	va_list va;
 	const char *tgt;
 
 	if (!si->link) {
 		u_log(LG_WARN, "Tried to u_src_num(%I)", si);
-		return;
+		return -1;
 	}
 
 	va_start(va, num);
@@ -76,6 +76,8 @@ void u_src_num(u_sourceinfo *si, int num, ...)
 	u_conn_vnum(si->link, tgt, num, va);
 
 	va_end(va);
+
+	return -1;
 }
 
 void u_src_f(u_sourceinfo *si, const char *fmt, ...)
