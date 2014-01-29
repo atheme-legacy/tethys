@@ -17,6 +17,7 @@ SRCS = \
 	quit.c \
 	sid.c \
 	ts6init.c \
+	topic.c \
 	user.c
 
 include ../../buildsys.mk
