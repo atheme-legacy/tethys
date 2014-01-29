@@ -19,6 +19,7 @@ SRCS = \
 	ts6init.c \
 	topic.c \
 	user.c \
+	who.c \
 	whois.c
 
 include ../../buildsys.mk
