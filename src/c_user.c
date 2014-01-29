@@ -23,30 +23,6 @@ static int m_echo(u_conn *conn, u_msg *msg)
 	return 0;
 }
 
-static int m_topic(u_conn *conn, u_msg *msg)
-{
-	u_user *u = conn->priv;
-	u_chan *c;
-	u_chanuser *cu;
-
-	if (!(c = u_chan_get(msg->argv[0])))
-		return u_user_num(u, ERR_NOSUCHCHANNEL, msg->argv[0]);
-	if (msg->argc == 1)
-		return u_chan_send_topic(c, u);
-	if (!(cu = u_chan_user_find(c, u)))
-		return u_user_num(u, ERR_NOTONCHANNEL, c);
-	if ((c->mode & CMODE_TOPIC) && !(cu->flags & CU_PFX_OP))
-		return u_user_num(u, ERR_CHANOPRIVSNEEDED, c);
-
-	u_strlcpy(c->topic, msg->argv[1], MAXTOPICLEN+1);
-	u_strlcpy(c->topic_setter, u->nick, MAXNICKLEN+1);
-	c->topic_time = NOW.tv_sec;
-
-	u_sendto_chan(c, NULL, ST_ALL, ":%H TOPIC %C :%s", u, c, c->topic);
-
-	return 0;
-}
-
 static int m_names(u_conn *conn, u_msg *msg)
 {
 	u_user *u = conn->priv;
