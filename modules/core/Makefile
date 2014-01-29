@@ -9,6 +9,7 @@ SRCS = \
 	message.c \
 	mode.c \
 	nick.c \
+	numeric.c \
 	oper.c \
 	part.c \
 	pass.c \

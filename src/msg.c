@@ -353,6 +353,13 @@ static u_cmd *find_command(const char *command, ulong mask, ulong *bits_tested)
 
 	*bits_tested = 0;
 
+	/* map numerics to ### */
+	if (!strcmp(command, "###"))
+		return NULL;
+	if (isdigit(command[0]) && isdigit(command[1])
+	    && isdigit(command[2]) && !command[3])
+		command = "###";
+
 	cmd = mowgli_patricia_retrieve(commands, command);
 
 	for (; cmd; cmd = cmd->next) {
