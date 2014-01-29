@@ -19,7 +19,7 @@ static int c_u_topic(u_sourceinfo *si, u_msg *msg)
 	cu = u_chan_user_find(c, si->u);
 
 	if (msg->argc == 1) {
-		if (!cu && (c->flags & CMODE_SECRET))
+		if (!cu && (c->mode & CMODE_SECRET))
 			return u_src_num(si, ERR_NOTONCHANNEL, c);
 		return u_chan_send_topic(c, si->u);
 	}
