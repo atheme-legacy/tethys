@@ -582,9 +582,18 @@ u_chanuser *u_chan_user_add(u_chan *c, u_user *u)
 
 void u_chan_user_del(u_chanuser *cu)
 {
-	u_map_del(cu->c->members, cu->u);
-	u_map_del(cu->u->channels, cu->c);
+	u_chan *c = cu->c;
+	u_user *u = cu->u;
+
+	u_map_del(c->members, u);
+	u_map_del(u->channels, c);
+
 	free(cu);
+
+	if (c->members->size == 0) {
+		u_log(LG_DEBUG, "u_chan_user_del: %C empty, dropping...", c);
+		u_chan_drop(c);
+	}
 }
 
 u_chanuser *u_chan_user_find(u_chan *c, u_user *u)

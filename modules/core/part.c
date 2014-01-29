@@ -33,14 +33,9 @@ static int c_lu_part(u_sourceinfo *si, u_msg *msg)
 		}
 
 		u_sendto_chan(c, NULL, ST_USERS, ":%H PART %C%s", si->u, c, reason);
-		u_chan_user_del(cu);
-
 		q += sprintf(q, "%s%s", q==chans?"":",", c->name);
 
-		if (c->members->size == 0 && !(c->flags & CHAN_PERMANENT)) {
-			u_log(LG_DEBUG, "Dropping channel %C", c);
-			u_chan_drop(c);
-		}
+		u_chan_user_del(cu);
 	}
 
 	if (q != chans) {
