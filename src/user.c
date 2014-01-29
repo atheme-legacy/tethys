@@ -330,11 +330,10 @@ struct isupport {
 	{ NULL },
 };
 
-void u_user_send_isupport(u_user_local *ul)
+void u_user_send_isupport(u_user *u)
 {
 	/* :host.irc 005 nick ... :are supported by this server
 	   *        *****    *   *....*....*....*....*....*.... = 37 */
-	u_user *u = USER(ul);
 	struct isupport *cur;
 	char *s, *p, buf[512], tmp[512];
 	int w;
@@ -362,27 +361,9 @@ again:
 		u_user_num(u, RPL_ISUPPORT, buf);
 }
 
-void u_user_welcome(u_user_local *ul)
-{
-	u_user *u = USER(ul);
-	char buf[512];
-
-	u_log(LG_DEBUG, "user: welcoming %s", u->nick);
-
-	u_user_num(u, RPL_WELCOME, my_net_name, u->nick);
-	u_user_num(u, RPL_YOURHOST, me.name, PACKAGE_FULLNAME);
-	u_user_num(u, RPL_CREATED, startedstr);
-	u_user_send_isupport((u_user_local*)u);
-	u_user_send_motd((u_user_local*)u);
-
-	u_user_make_euid(u, buf);
-	u_sendto_servers(NULL, "%s", buf);
-}
-
-void u_user_send_motd(u_user_local *ul)
+void u_user_send_motd(u_user *u)
 {
 	mowgli_node_t *n;
-	u_user *u = USER(ul);
 
 	if (mowgli_list_size(&my_motd) == 0) {
 		u_user_num(u, ERR_NOMOTD);
@@ -393,6 +374,23 @@ void u_user_send_motd(u_user_local *ul)
 	MOWGLI_LIST_FOREACH(n, my_motd.head)
 		u_user_num(u, RPL_MOTD, n->data);
 	u_user_num(u, RPL_ENDOFMOTD);
+}
+
+void u_user_welcome(u_user_local *ul)
+{
+	u_user *u = USER(ul);
+	char buf[512];
+
+	u_log(LG_DEBUG, "user: welcoming %s", u->nick);
+
+	u_user_num(u, RPL_WELCOME, my_net_name, u->nick);
+	u_user_num(u, RPL_YOURHOST, me.name, PACKAGE_FULLNAME);
+	u_user_num(u, RPL_CREATED, startedstr);
+	u_user_send_isupport(u);
+	u_user_send_motd(u);
+
+	u_user_make_euid(u, buf);
+	u_sendto_servers(NULL, "%s", buf);
 }
 
 static int is_in_list(char *host, mowgli_list_t *list)

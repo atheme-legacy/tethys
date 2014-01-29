@@ -3,6 +3,7 @@ MODULE = core
 SRCS = \
 	away.c \
 	euid.c \
+	hunted.c \
 	join.c \
 	map.c \
 	message.c \

@@ -23,22 +23,6 @@ static int m_echo(u_conn *conn, u_msg *msg)
 	return 0;
 }
 
-static int m_version(u_conn *conn, u_msg *msg)
-{
-	u_user *u = conn->priv;
-	u_user_num(u, RPL_VERSION, PACKAGE_FULLNAME, me.name, revision,
-	           PACKAGE_COPYRIGHT);
-	u_user_send_isupport(USER_LOCAL(u));
-	return 0;
-}
-
-static int m_motd(u_conn *conn, u_msg *msg)
-{
-	u_user *u = conn->priv;
-	u_user_send_motd(USER_LOCAL(u));
-	return 0;
-}
-
 static int m_topic(u_conn *conn, u_msg *msg)
 {
 	u_user *u = conn->priv;
@@ -358,19 +342,6 @@ static int m_mkpass(u_conn *conn, u_msg *msg)
 	u_crypto_hash(buf, msg->argv[0], salt);
 
 	u_conn_f(conn, ":%S NOTICE %U :%s", &me, conn->priv, buf);
-	return 0;
-}
-
-static int m_admin(u_conn *conn, u_msg *msg)
-{
-	mowgli_node_t *n;
-
-	u_conn_num(conn, RPL_ADMINME, &me);
-
-	MOWGLI_ITER_FOREACH(n, my_admininfo.head) {
-		u_conn_num(conn, RPL_ADMINEMAIL, n->data);
-	}
-
 	return 0;
 }
 

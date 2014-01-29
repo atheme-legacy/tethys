@@ -113,9 +113,10 @@ extern void u_user_set_nick(u_user*, char*, uint);
 extern void u_user_vnum(u_user*, int, va_list);
 extern int u_user_num(u_user*, int num, ...);
 
-extern void u_user_send_isupport(u_user_local*);
+extern void u_user_send_isupport(u_user*);
+extern void u_user_send_motd(u_user*);
+
 extern void u_user_welcome(u_user_local*);
-extern void u_user_send_motd(u_user_local*);
 
 extern void u_user_make_euid(u_user*, char *buf); /* sizeof(buf) > 512 */
 
