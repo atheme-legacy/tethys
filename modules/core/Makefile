@@ -4,6 +4,7 @@ SRCS = \
 	away.c \
 	euid.c \
 	join.c \
+	map.c \
 	message.c \
 	mode.c \
 	nick.c \
