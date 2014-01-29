@@ -53,10 +53,12 @@ void u_user_m_start(u_user *u)
 void u_user_m_end(u_user *u)
 {
 	*um_buf_p = '\0';
-	if (um_buf_p != um_buf)
+	if (um_buf_p != um_buf) {
 		u_conn_f(u_user_conn(u), ":%U MODE %U :%s", u, u, um_buf);
-	else if (um_on < 0)
+		u_sendto_servers(NULL, ":%U MODE %U :%s", u, u, um_buf);
+	} else if (um_on < 0) {
 		u_user_num(u, ERR_UMODEUNKNOWNFLAG);
+	}
 }
 
 static void um_put(int on, char ch)
