@@ -72,7 +72,7 @@ extern void u_conn_obufsize(u_conn*, int obufsize);
 
 extern u_conn *u_conn_by_name(char *nick_or_server);
 
-extern void u_conn_vf(u_conn*, char *fmt, va_list);
+extern void u_conn_vf(u_conn*, const char *fmt, va_list);
 extern void u_conn_f(u_conn *conn, char *fmt, ...);
 
 extern void u_conn_vnum(u_conn*, const char *tgt, int num, va_list);

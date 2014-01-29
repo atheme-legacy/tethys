@@ -58,7 +58,7 @@ int u_msg_parse(u_msg *msg, char *s)
 }
 
 
-extern void u_src_num(u_sourceinfo *si, int num, ...)
+void u_src_num(u_sourceinfo *si, int num, ...)
 {
 	va_list va;
 	const char *tgt;
@@ -75,6 +75,20 @@ extern void u_src_num(u_sourceinfo *si, int num, ...)
 
 	u_conn_vnum(si->link, tgt, num, va);
 
+	va_end(va);
+}
+
+void u_src_f(u_sourceinfo *si, const char *fmt, ...)
+{
+	va_list va;
+
+	if (!si->link) {
+		u_log(LG_WARN, "Tried to u_src_f(%I)", si);
+		return;
+	}
+
+	va_start(va, fmt);
+	u_conn_vf(si->link, fmt, va);
 	va_end(va);
 }
 

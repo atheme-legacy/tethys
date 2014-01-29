@@ -87,6 +87,7 @@ struct u_sourceinfo {
 #define SRC_IS_LOCAL_USER(si) SRC_HAS_BITS(si, SRC_LOCAL_USER)
 
 extern void u_src_num(u_sourceinfo *si, int num, ...);
+extern void u_src_f(u_sourceinfo *si, const char *fmt, ...);
 
 #define MAXCOMMANDLEN 16
 

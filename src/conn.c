@@ -169,7 +169,7 @@ void conn_out_clear(u_conn *conn)
 	conn->obuflen = s - conn->obuf;
 }
 
-void u_conn_vf(u_conn *conn, char *fmt, va_list va)
+void u_conn_vf(u_conn *conn, const char *fmt, va_list va)
 {
 	int type;
 	char buf[4096];
