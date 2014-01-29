@@ -250,6 +250,8 @@ void u_module_load_directory(const char *dir)
 		}
 		mowgli_patricia_add(u_modules, m->info->name, m);
 	}
+
+	closedir(d);
 }
 
 static void conf_loadmodule(mowgli_config_file_t *cf, mowgli_config_file_entry_t *ce)
