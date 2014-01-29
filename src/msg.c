@@ -58,6 +58,27 @@ int u_msg_parse(u_msg *msg, char *s)
 }
 
 
+extern void u_src_num(u_sourceinfo *si, int num, ...)
+{
+	va_list va;
+	const char *tgt;
+
+	if (!si->link) {
+		u_log(LG_WARN, "Tried to u_src_num(%I)", si);
+		return;
+	}
+
+	va_start(va, num);
+
+	tgt = si->link->ctx == CTX_SERVER ? si->id : si->name;
+	tgt = tgt ? tgt : "*";
+
+	u_conn_vnum(si->link, tgt, num, va);
+
+	va_end(va);
+}
+
+
 static mowgli_patricia_t *commands;
 
 static int reg_one(u_cmd *cmd)

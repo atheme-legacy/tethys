@@ -75,7 +75,7 @@ extern u_conn *u_conn_by_name(char *nick_or_server);
 extern void u_conn_vf(u_conn*, char *fmt, va_list);
 extern void u_conn_f(u_conn *conn, char *fmt, ...);
 
-extern void u_conn_vnum(u_conn*, char *tgt, int num, va_list);
+extern void u_conn_vnum(u_conn*, const char *tgt, int num, va_list);
 extern int u_conn_num(u_conn *conn, int num, ...);
 
 extern u_conn_origin *u_conn_origin_create(mowgli_eventloop_t*, ulong addr,

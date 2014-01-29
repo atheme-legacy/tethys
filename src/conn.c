@@ -219,7 +219,7 @@ void u_conn_f(u_conn *conn, char *fmt, ...)
 	va_end(va);
 }
 
-void u_conn_vnum(u_conn *conn, char *tgt, int num, va_list va)
+void u_conn_vnum(u_conn *conn, const char *tgt, int num, va_list va)
 {
 	char buf[4096];
 	char *fmt;
