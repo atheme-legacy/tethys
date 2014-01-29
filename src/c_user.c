@@ -6,13 +6,6 @@
 
 #include "ircd.h"
 
-static int not_implemented(u_conn *conn, u_msg *msg)
-{
-	u_conn_f(conn, ":%S NOTICE %U :*** %s is not yet implemented!",
-	         &me, conn->priv, msg->command);
-	return 0;
-}
-
 static int m_echo(u_conn *conn, u_msg *msg)
 {
 	u_user *u = conn->priv;
@@ -30,20 +23,6 @@ static int m_echo(u_conn *conn, u_msg *msg)
 	return 0;
 }
 
-static int m_quit(u_conn *conn, u_msg *msg)
-{
-	char *r = msg->argc > 0 ? msg->argv[0] : "Client quit";
-	u_user *u = conn->priv;
-
-	u_sendto_visible(u, ST_USERS, ":%H QUIT :Quit: %s", u, r);
-	u_conn_f(conn, ":%H QUIT :Quit: %s", u, r);
-	u_roster_f(R_SERVERS, NULL, ":%H QUIT :Quit: %s", u, r);
-
-	u_user_unlink(u);
-
-	return 0;
-}
-
 static int m_version(u_conn *conn, u_msg *msg)
 {
 	u_user *u = conn->priv;
@@ -57,136 +36,6 @@ static int m_motd(u_conn *conn, u_msg *msg)
 {
 	u_user *u = conn->priv;
 	u_user_send_motd(USER_LOCAL(u));
-	return 0;
-}
-
-static int try_join_chan(u_user_local *ul, char *chan, char *key)
-{
-	u_conn *conn = ul->conn;
-	u_user *u = USER(ul);
-	u_chan *c, *fwd;
-	u_chanuser *cu;
-	int num;
-	char *modes;
-
-	c = u_chan_get_or_create(chan);
-
-	if (c == NULL) {
-		u_user_num(u, ERR_NOSUCHCHANNEL, chan);
-		return 0;
-	}
-
-	cu = u_chan_user_find(c, u);
-	if (cu != NULL)
-		return 0;
-
-	num = u_entry_blocked(c, u, key);
-	if (num != 0) {
-		fwd = u_find_forward(c, u, key);
-		if (fwd == NULL || u_chan_user_find(fwd, u)) {
-			u_user_num(u, num, c);
-			return 0;
-		}
-		c = fwd;
-	}
-
-	cu = u_chan_user_add(c, u);
-	u_del_invite(c, u);
-	u_sendto_chan(c, NULL, ST_USERS, ":%H JOIN %C", u, c);
-
-	modes = u_chan_modes(c, 1);
-
-	if (c->ts == NOW.tv_sec) { /* is this ok? */
-		u_log(LG_VERBOSE, "Channel %C %s created by %U", c, modes, u);
-		cu->flags |= CU_PFX_OP;
-
-		u_conn_f(conn, ":%S MODE %C %s", &me, c, modes);
-	}
-
-	if (!(c->flags & CHAN_LOCAL)) {
-		if (c->members->size == 1) {
-			u_roster_f(R_SERVERS, NULL, ":%S SJOIN %u %C %s :%s%U",
-			           &me, c->ts, c, modes,
-			           (cu->flags & CU_PFX_OP) ? "@" : "", u);
-		} else {
-			u_roster_f(R_SERVERS, NULL, ":%U JOIN %u %C +",
-			           u, c->ts, c);
-		}
-	}
-
-	u_chan_send_topic(c, u);
-	u_chan_send_names(c, u);
-
-	return 0;
-}
-
-static int m_join(u_conn *conn, u_msg *msg)
-{
-	char *keys[128], **keys_p;
-	char *s, *p;
-	u_user *u = conn->priv;
-	int i;
-
-	p = msg->argv[1];
-	for (i=0; i<128; i++)
-		keys[i] = cut(&p, ",");
-	keys_p = keys;
-
-	p = msg->argv[0];
-	while ((s = cut(&p, ",")) != NULL) {
-		u_log(LG_FINE, "  %s$%s", s, p);
-		u_log(LG_FINE, "    key=%s", *keys_p);
-
-		try_join_chan(USER_LOCAL(u), s, *keys_p++);
-	}
-
-	return 0;
-}
-
-static int m_part(u_conn *conn, u_msg *msg)
-{
-	char *q, chans[512], buf[512];
-	u_user *u = conn->priv;
-	u_chan *c;
-	u_chanuser *cu;
-	char *s, *p;
-
-	buf[0] = '\0';
-	if (msg->argv[1])
-		sprintf(buf, " :%s", msg->argv[1]);
-
-	q = chans;
-
-	p = msg->argv[0];
-	while ((s = cut(&p, ",")) != NULL) {
-		u_log(LG_FINE, "%s PART %s$%s", u->nick, s, p);
-
-		if (!(c = u_chan_get(s))) {
-			u_user_num(u, ERR_NOSUCHCHANNEL, s);
-			continue;
-		}
-
-		if (!(cu = u_chan_user_find(c, u))) {
-			u_user_num(u, ERR_NOTONCHANNEL, c);
-			continue;
-		}
-
-		u_sendto_chan(c, NULL, ST_USERS, ":%H PART %C%s", u, c, buf);
-		u_chan_user_del(cu);
-
-		q += sprintf(q, "%s%s", q==chans?"":",", c->name);
-
-		if (c->members->size == 0 && !(c->flags & CHAN_PERMANENT)) {
-			u_log(LG_DEBUG, "Dropping channel %C", c);
-			u_chan_drop(c);
-		}
-	}
-
-	if (q != chans) {
-		u_log(LG_DEBUG, "%U parted from %s%s", u, chans, buf);
-		u_roster_f(R_SERVERS, conn, ":%U PART %s%s", u, chans, buf);
-	}
-
 	return 0;
 }
 
@@ -227,107 +76,6 @@ static int m_names(u_conn *conn, u_msg *msg)
 		return u_user_num(u, ERR_NOSUCHCHANNEL, msg->argv[0]);
 
 	u_chan_send_names(c, u);
-	return 0;
-}
-
-static int mode_user(u_user *u, char *s)
-{
-	int on = 1;
-
-	if (!s) {
-		u_umode_info *cur;
-		char buf[512];
-		s = buf;
-		*s++ = '+';
-		for (cur=umodes; cur->ch; cur++) {
-			if (u->flags & cur->mask)
-				*s++ = cur->ch;
-		}
-		*s = '\0';
-		u_user_num(u, RPL_UMODEIS, buf);
-		return 0;
-	}
-
-	u_user_m_start(u);
-
-	for (; *s; s++) {
-		switch (*s) {
-		case '+':
-		case '-':
-			on = (*s == '+');
-			break;
-
-		default:
-			u_user_mode(u, *s, on);
-		}
-	}
-
-	u_user_m_end(u);
-
-	return 0;
-}
-
-static int m_mode(u_conn *conn, u_msg *msg)
-{
-	int parc;
-	char **parv;
-	u_user *tu, *u = conn->priv;
-	u_chan *c;
-	u_modes m;
-	u_mode_info *info;
-
-	if (!strchr(CHANTYPES, msg->argv[0][0])) {
-		tu = u_user_by_nick(msg->argv[0]);
-		if (tu == NULL) {
-			/* not sure why charybdis does this */
-			u_user_num(u, ERR_NOSUCHCHANNEL, msg->argv[0]);
-		} else if (u != tu) {
-			u_user_num(u, ERR_USERSDONTMATCH);
-		} else {
-			return mode_user(u, msg->argv[1]);
-		}
-		return 0;
-	}
-
-	c = u_chan_get(msg->argv[0]);
-	if (!(c = u_chan_get(msg->argv[0])))
-		return u_user_num(u, ERR_NOSUCHCHANNEL, msg->argv[0]);
-
-	m.perms = u_chan_user_find(c, u);
-
-	if (msg->argv[1] == NULL) {
-		u_user_num(u, RPL_CHANNELMODEIS, c, u_chan_modes(c, !!m.perms));
-		return 0;
-	}
-
-	parc = msg->argc - 1;
-	parv = msg->argv + 1;
-	if (parc > 5)
-		parc = 5;
-
-	m.setter = u;
-	m.target = c;
-	m.flags = 0;
-
-	u_mode_process(&m, cmodes, parc, parv);
-
-	if (m.u.buf[0] || m.u.data[0]) {
-		u_sendto_chan(c, NULL, ST_USERS,
-		              ":%H MODE %C %s%s", u, c, m.u.buf, m.u.data);
-	}
-	if (m.s.buf[0] || m.s.data[0]) {
-		u_roster_f(R_SERVERS, NULL, ":%U TMODE %u %C %s%s",
-		           u, c->ts, c, m.s.buf, m.s.data);
-	}
-
-	for (info=cmodes; info->ch; info++) {
-		if (!strchr(m.list, info->ch))
-			continue;
-		u_chan_send_list(c, u, memberp(c, info->data));
-	}
-
-	if (m.flags & CM_DENY)
-		u_user_num(u, ERR_CHANOPRIVSNEEDED, c);
 	return 0;
 }
 
@@ -518,23 +266,6 @@ end:
 	return 0;
 }
 
-static int m_oper(u_conn *conn, u_msg *msg)
-{
-	u_user_local *ul = conn->priv;
-	u_user *u = USER(ul);
-	u_oper *oper;
-
-	if (!(oper = u_find_oper(conn->auth, msg->argv[0], msg->argv[1])))
-		return u_conn_num(conn, ERR_NOOPERHOST);
-
-	ul->oper = oper;
-	u->flags |= UMODE_OPER;
-	u_conn_f(conn, ":%U MODE %U +o", u, u);
-	u_conn_num(conn, RPL_YOUREOPER);
-
-	return 0;
-}
-
 static int list_entry(u_user *u, u_chan *c)
 {
 	if ((c->mode & (CMODE_PRIVATE | CMODE_SECRET))
@@ -566,43 +297,6 @@ static int m_list(u_conn *conn, u_msg *msg)
 		list_entry(u, c);
 	}
 	u_user_num(u, RPL_LISTEND);
-
-	return 0;
-}
-
-static int m_nick(u_conn *conn, u_msg *msg)
-{
-	u_user *u = conn->priv;
-	char *s, *newnick = msg->argv[0];
-
-	/* cut newnick to nicklen */
-	if (strlen(newnick) > MAXNICKLEN)
-		newnick[MAXNICKLEN] = '\0';
-
-	if (!is_valid_nick(newnick))
-		return u_user_num(u, ERR_ERRONEOUSNICKNAME, newnick);
-
-	/* due to the scandalous origins, (~ being uppercase of ^) and ~
-	 * being disallowed as a nick char, we need to chop the first ~
-	 * instead of just erroring.
-	 */ 
-	if ((s = strchr(newnick, '~')))
-		*s = '\0';
-
-	/* Check for case change */
-	if (irccmp(u->nick, newnick) && u_user_by_nick(newnick))
-		return u_user_num(u, ERR_NICKNAMEINUSE, newnick);
-
-	/* ignore changes to the exact same nick */
-	if (streq(u->nick, newnick))
-		return 0;
-
-	/* Send these BEFORE clobbered --Elizabeth */
-	u_sendto_visible(u, ST_USERS, ":%H NICK :%s", u, newnick);
-	u_roster_f(R_SERVERS, NULL, ":%H NICK %s %u", u, newnick, NOW.tv_sec);
-	u_conn_f(conn, ":%H NICK :%s", u, newnick);
-
-	u_user_set_nick(u, newnick, NOW.tv_sec);
 
 	return 0;
 }
