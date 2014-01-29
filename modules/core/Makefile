@@ -8,6 +8,7 @@ SRCS = \
 	map.c \
 	message.c \
 	mode.c \
+	module.c \
 	nick.c \
 	numeric.c \
 	oper.c \
