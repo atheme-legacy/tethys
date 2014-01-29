@@ -108,6 +108,12 @@ extern u_server *u_user_server(u_user*);
 extern u_user *u_user_by_nick(char*);
 extern u_user *u_user_by_uid(char*);
 
+static inline u_user *u_user_by_ref(char *ref)
+{
+	if (!ref) return NULL;
+	return isdigit(*ref) ? u_user_by_uid(ref) : u_user_by_nick(ref);
+}
+
 extern void u_user_set_nick(u_user*, char*, uint);
 
 extern void u_user_vnum(u_user*, int, va_list);

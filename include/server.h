@@ -70,6 +70,12 @@ extern u_server *u_server_by_sid(char *sid);
 extern u_server *u_server_by_name(char *name);
 extern u_server *u_server_find(char *str);
 
+static inline u_server *u_server_by_ref(char *ref)
+{
+	if (!ref) return NULL;
+	return isdigit(*ref) ? u_server_by_sid(ref) : u_server_by_name(ref);
+}
+
 extern void u_server_add_capabs(u_server*, char *caps);
 extern void u_my_capabs(char *buf);
 

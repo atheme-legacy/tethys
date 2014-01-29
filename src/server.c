@@ -88,13 +88,6 @@ u_server *u_server_by_name(char *name)
 	return mowgli_patricia_retrieve(servers_by_name, name);
 }
 
-u_server *u_server_find(char *str)
-{
-	if (strchr(str, '.'))
-		return u_server_by_name(str);
-	return u_server_by_sid(str);
-}
-
 struct capab_info {
 	char capab[16];
 	uint mask;
