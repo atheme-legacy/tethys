@@ -145,12 +145,12 @@ void u_cmd_unreg(u_cmd *cmd)
 	if (cmd->prev)
 		cmd->prev->next = cmd->next;
 
+	u_log(LG_DEBUG, "Unregistering command %s", cmd->name);
+
 	if (cmd->prev == NULL) {
-		if (cmd->next == NULL) {
-			mowgli_patricia_delete(commands, cmd->name);
-		} else {
+		mowgli_patricia_delete(commands, cmd->name);
+		if (cmd->next != NULL)
 			mowgli_patricia_add(commands, cmd->name, cmd->next);
-		}
 	}
 }
 
