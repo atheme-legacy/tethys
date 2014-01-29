@@ -290,6 +290,27 @@ bool exists(const char *path)
 	return stat(path, &st) == 0;
 }
 
+u_conn *ref_link(char *ref)
+{
+	if (isdigit(ref[0])) {
+		if (ref[3]) {
+			u_user *u = u_user_by_uid(ref);
+			return u ? u_user_conn(u) : NULL;
+		} else {
+			u_server *sv = u_server_by_sid(ref);
+			return sv ? sv->conn : NULL;
+		}
+	} else {
+		if (!strchr(ref, '.')) {
+			u_user *u = u_user_by_nick(ref);
+			return u ? u_user_conn(u) : NULL;
+		} else {
+			u_server *sv = u_server_by_name(ref);
+			return sv ? sv->conn : NULL;
+		}
+	}
+}
+
 char *conn_name(u_conn *conn)
 {
 	char *name = NULL;

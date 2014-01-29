@@ -54,6 +54,8 @@ extern bool exists(const char *path);
 
 #include "conn.h"
 
+extern u_conn *ref_link(char *ref);
+
 extern char *conn_name(u_conn*);
 extern char *conn_id(u_conn*);
 
