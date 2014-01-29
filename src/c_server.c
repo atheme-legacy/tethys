@@ -63,55 +63,6 @@ static int m_kill(u_conn *conn, u_msg *msg)
 	return 0;
 }
 
-static int m_part(u_conn *conn, u_msg *msg)
-{
-	char buf[512];
-	u_chan *c;
-	u_user *u;
-	u_chanuser *cu;
-	char *s, *p;
-	
-	if (!msg->src || !ENT_IS_USER(msg->src)) {
-		return u_log(LG_ERROR, "Can't use PART source %s from %G!",
-		             msg->srcstr, conn);
-	}
-
-	buf[0] = '\0';
-	if (msg->argv[1])
-		sprintf(buf, " :%s", msg->argv[1]);
-	
-	u = msg->src->v.u;
-
-	p = msg->argv[0];
-	while ((s = cut(&p, ",")) != NULL) {
-		u_log(LG_FINE, "%s PART %s$%s", u->nick, s, p);
-
-		if (!(c = u_chan_get(s))) {
-			u_log(LG_WARN, "%G tried to part %U from %s (missing)",
-			      conn, u, s);
-			continue;
-		}
-		if (!(cu = u_chan_user_find(c, u))) {
-			u_log(LG_WARN, "%G tried to part %U from %C, but %s",
-			      conn, u, c, "user is not on that channel");
-			continue;
-		}
-
-		u_sendto_chan(c, conn, ST_USERS, ":%H PART %C%s", u, c, buf);
-		u_chan_user_del(cu);
-
-		if (c->members->size == 0) {
-			u_log(LG_DEBUG, "Dropping channel %C", c);
-			u_chan_drop(c);
-		}
-	}
-
-	u_roster_f(R_SERVERS, conn, ":%E PART %s%s", msg->src,
-	           msg->argv[0], buf);
-
-	return 0;
-}
-
 static int m_invite(u_conn *conn, u_msg *msg)
 {
 	u_entity te;
