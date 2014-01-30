@@ -9,13 +9,13 @@
 int default_handler(int level, char *tm, char *line)
 {
 	static char *prefix[] =
-		{ "!!! SEVERE: ",
-		  "!!! ERROR: ",
-		  "Warning: ",
-		  "",
-		  "",
-		  "  ",
-		  "    "
+		{ "!!! ",
+		  "(E) ",
+		  "-W- ",
+		  "--- ",
+		  "    ",
+		  "      ",
+		  "        "
 	};
 	printf("[%s] %s%s\n", tm, prefix[level], line);
 	return 0;
