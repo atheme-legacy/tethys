@@ -109,8 +109,10 @@ void user_shutdown(u_conn *conn)
 	u_user *u = conn->priv;
 	if (u == NULL)
 		return;
-	if (conn->ctx == CTX_USER)
-		u_sendto_visible(u, ST_ALL, ":%H QUIT :%s", u, msg);
+	if (conn->ctx == CTX_USER) {
+		u_sendto_visible(u, ST_USERS, ":%H QUIT :%s", u, msg);
+		u_sendto_servers(NULL, ":%H QUIT :%s", u, msg);
+	}
 	u_conn_f(conn, "ERROR :%s", msg);
 	u_user_destroy(u);
 }
