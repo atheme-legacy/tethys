@@ -27,6 +27,7 @@ SRCS = \
 	ts6init.c \
 	topic.c \
 	user.c \
+	userhost.c \
 	who.c \
 	whois.c
 
