@@ -1,4 +1,4 @@
-/* Tethys, msg.c -- IRC messages and commands
+/* Tethys, msg.c -- IRC messages and all_commands
    Copyright (C) 2013 Alex Iadicicco
 
    This file is protected under the terms contained
@@ -95,7 +95,7 @@ void u_src_f(u_sourceinfo *si, const char *fmt, ...)
 }
 
 
-static mowgli_patricia_t *commands;
+mowgli_patricia_t *all_commands;
 
 static int reg_one(u_cmd *cmd)
 {
@@ -113,14 +113,14 @@ static int reg_one(u_cmd *cmd)
 
 	/* TODO: check mutual exclusivity */
 
-	at = mowgli_patricia_retrieve(commands, cmd->name);
+	at = mowgli_patricia_retrieve(all_commands, cmd->name);
 	cmd->next = at;
 	cmd->prev = NULL;
 	if (at != NULL) {
 		at->prev = cmd;
-		mowgli_patricia_delete(commands, cmd->name);
+		mowgli_patricia_delete(all_commands, cmd->name);
 	}
-	mowgli_patricia_add(commands, cmd->name, cmd);
+	mowgli_patricia_add(all_commands, cmd->name, cmd);
 
 	return 0;
 }
@@ -148,9 +148,9 @@ void u_cmd_unreg(u_cmd *cmd)
 	u_log(LG_DEBUG, "Unregistering command %s", cmd->name);
 
 	if (cmd->prev == NULL) {
-		mowgli_patricia_delete(commands, cmd->name);
+		mowgli_patricia_delete(all_commands, cmd->name);
 		if (cmd->next != NULL)
-			mowgli_patricia_add(commands, cmd->name, cmd->next);
+			mowgli_patricia_add(all_commands, cmd->name, cmd->next);
 	}
 }
 
@@ -159,7 +159,7 @@ static void *on_module_unload(void *unused, void *m)
 	mowgli_patricia_iteration_state_t state;
 	u_cmd *cmd, *next;
 
-	MOWGLI_PATRICIA_FOREACH(cmd, &state, commands) {
+	MOWGLI_PATRICIA_FOREACH(cmd, &state, all_commands) {
 		for (; cmd; cmd = next) {
 			next = cmd->next;
 			if (cmd->owner != m)
@@ -376,7 +376,7 @@ static u_cmd *find_command(const char *command, ulong mask, ulong *bits_tested)
 	    && isdigit(command[2]) && !command[3])
 		command = "###";
 
-	cmd = mowgli_patricia_retrieve(commands, command);
+	cmd = mowgli_patricia_retrieve(all_commands, command);
 
 	for (; cmd; cmd = cmd->next) {
 		*bits_tested |= cmd->mask;
@@ -520,7 +520,7 @@ int init_cmd(void)
 {
 	u_hook_add(HOOK_MODULE_UNLOAD, on_module_unload, NULL);
 
-	if ((commands = mowgli_patricia_create(NULL)) == NULL)
+	if ((all_commands = mowgli_patricia_create(NULL)) == NULL)
 		return -1;
 
 	return 0;

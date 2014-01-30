@@ -123,6 +123,8 @@ struct u_cmd {
 	struct u_cmd *next, *prev;
 };
 
+extern mowgli_patricia_t *all_commands;
+
 extern int u_cmds_reg(u_cmd*); /* terminated with empty name */
 extern int u_cmd_reg(u_cmd*); /* single command */
 extern void u_cmd_unreg(u_cmd*);
