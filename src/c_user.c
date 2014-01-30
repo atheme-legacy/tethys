@@ -99,55 +99,6 @@ static int m_list(u_conn *conn, u_msg *msg)
 	return 0;
 }
 
-static void stats_o_cb(u_map *map, char *k, u_oper *o, u_user *u)
-{
-	char *auth = o->authname[0] ? o->authname : "<any>";
-	u_user_num(u, RPL_STATSOLINE, o->name, o->pass, auth);
-}
-
-static void stats_i_cb(u_map *map, char *k, u_auth *v, u_user *u)
-{
-	char buf[CIDR_ADDRSTRLEN];
-	u_cidr_to_str(&v->cidr, buf);
-	u_user_num(u, RPL_STATSILINE, v->name, v->classname, buf);
-}
-
-static int m_stats(u_conn *conn, u_msg *msg)
-{
-	u_user *u = conn->priv;
-	int c, days, hr, min, sec;
-
-	if (!(c = msg->argv[0][0])) /* "STATS :" will do this */
-		return u_user_num(u, ERR_NEEDMOREPARAMS, "STATS");
-
-	if (strchr("oi", c) && !(u->flags & UMODE_OPER)) {
-		u_user_num(u, ERR_NOPRIVILEGES);
-		u_user_num(u, RPL_ENDOFSTATS, c);
-		return 0;
-	}
-
-	switch (c) {
-	case 'o':
-		u_map_each(all_opers, (u_map_cb_t*)stats_o_cb, u);
-		break;
-	case 'i':
-		u_map_each(all_auths, (u_map_cb_t*)stats_i_cb, u);
-		break;
-
-	case 'u':
-		sec = NOW.tv_sec - started;
-		min = sec / 60; sec %= 60;
-		hr = min / 60; min %= 60;
-		days = hr / 24; hr %= 24;
-
-		u_user_num(u, RPL_STATSUPTIME, days, hr, min, sec);
-		break;
-	}
-
-	u_user_num(u, RPL_ENDOFSTATS, c);
-	return 0;
-}
-
 u_cmd c_user[] = {
 	{ "ECHO",      CTX_USER, m_echo,              0, 0 },
 	{ "QUIT",      CTX_USER, m_quit,              0, 0 },
