@@ -12,6 +12,7 @@ SRCS = \
 	message.c \
 	mode.c \
 	module.c \
+	names.c \
 	nick.c \
 	numeric.c \
 	oper.c \

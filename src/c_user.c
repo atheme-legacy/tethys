@@ -23,22 +23,6 @@ static int m_echo(u_conn *conn, u_msg *msg)
 	return 0;
 }
 
-static int m_names(u_conn *conn, u_msg *msg)
-{
-	u_user *u = conn->priv;
-	u_chan *c;
-
-	/* TODO: no arguments version */
-	if (msg->argc == 0)
-		return 0;
-
-	if (!(c = u_chan_get(msg->argv[0])))
-		return u_user_num(u, ERR_NOSUCHCHANNEL, msg->argv[0]);
-
-	u_chan_send_names(c, u);
-	return 0;
-}
-
 static int m_userhost(u_conn *conn, u_msg *msg)
 {
 	/* USERHOST user1 user2... usern 
