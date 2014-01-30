@@ -7,6 +7,7 @@ SRCS = \
 	invite.c \
 	join.c \
 	kick.c \
+	kill.c \
 	map.c \
 	message.c \
 	mode.c \
