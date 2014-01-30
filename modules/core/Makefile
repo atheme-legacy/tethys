@@ -10,6 +10,7 @@ SRCS = \
 	kill.c \
 	map.c \
 	message.c \
+	mkpass.c \
 	mode.c \
 	module.c \
 	names.c \

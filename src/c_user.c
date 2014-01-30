@@ -148,17 +148,6 @@ static int m_stats(u_conn *conn, u_msg *msg)
 	return 0;
 }
 
-static int m_mkpass(u_conn *conn, u_msg *msg)
-{
-	char buf[CRYPTLEN], salt[CRYPTLEN];
-
-	u_crypto_gen_salt(salt);
-	u_crypto_hash(buf, msg->argv[0], salt);
-
-	u_conn_f(conn, ":%S NOTICE %U :%s", &me, conn->priv, buf);
-	return 0;
-}
-
 u_cmd c_user[] = {
 	{ "ECHO",      CTX_USER, m_echo,              0, 0 },
 	{ "QUIT",      CTX_USER, m_quit,              0, 0 },
