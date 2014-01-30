@@ -112,7 +112,6 @@ static void call_shutdown(u_conn *conn)
 void u_conn_shutdown(u_conn *conn)
 {
 	conn->flags |= U_CONN_CLOSING;
-	call_shutdown(conn);
 	toplev_set_recv(conn, false);
 	toplev_check_set_send(conn);
 }
@@ -123,7 +122,6 @@ void u_conn_fatal(u_conn *conn, char *reason)
 		free(conn->error);
 	conn->error = strdup(reason);
 	conn->flags |= U_CONN_CLOSING;
-	call_shutdown(conn);
 	u_conn_destroy(conn);
 }
 
