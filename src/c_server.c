@@ -27,42 +27,6 @@ static int m_error(u_conn *conn, u_msg *msg)
 	return 0;
 }
 
-static int m_kill(u_conn *conn, u_msg *msg)
-{
-	char *r, buf[512];
-	u_user *u;
-
-	if (!msg->src) {
-		u_entity_from_server(msg->src, &me);
-		u_log(LG_WARN, "Can't use KILL source %s from %G, using %E.",
-		      msg->srcstr, conn, msg->src);
-	}
-
-	if (!(u = u_user_by_uid(msg->argv[0]))) {
-		return u_log(LG_ERROR, "%G tried to KILL nonexistent user %s",
-		             conn, msg->argv[0]);
-	}
-
-	r = "<No reason given>";
-	buf[0] = '\0';
-	if (msg->argc > 1) {
-		r = msg->argv[1];
-		sprintf(buf, " :%s", msg->argv[1]);
-	}
-
-	if (IS_LOCAL_USER(u)) {
-		u_user_local *ul = USER_LOCAL(u);
-		u_conn_f(ul->conn, ":%H QUIT :Killed (%s)", u, r);
-	}
-
-	u_sendto_visible(u, ST_USERS, ":%H QUIT :Killed (%s)", u, r);
-	u_roster_f(R_SERVERS, conn, ":%E KILL %U%s", msg->src, u, buf);
-
-	u_user_unlink(u);
-
-	return 0;
-}
-
 u_cmd c_server[] = {
 	{ "ERROR",       CTX_SERVER, m_error,         0, 0 },
 	{ "SVINFO",      CTX_SERVER, m_svinfo,        4, 0 },

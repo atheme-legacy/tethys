@@ -175,57 +175,6 @@ static int m_mkpass(u_conn *conn, u_msg *msg)
 	return 0;
 }
 
-static int m_kill(u_conn *conn, u_msg *msg)
-{
-	u_user *tu, *u = conn->priv;
-	char *reason = msg->argv[1] ? msg->argv[1] : "<No reason given>";
-	char buf[512];
-
-	if (!(u->flags & UMODE_OPER))
-		return u_user_num(u, ERR_NOPRIVILEGES);
-	if (!(tu = u_user_by_nick(msg->argv[0])))
-		return u_user_num(u, ERR_NOSUCHNICK, msg->argv[0]);
-
-	snf(FMT_USER, buf, 512, "%U (%s)", u, reason);
-
-	u_sendto_visible(tu, ST_USERS, ":%H QUIT :Killed (%s)", tu, buf);
-	u_roster_f(R_SERVERS, NULL, ":%U KILL %U :%s", u, tu, me.name, buf);
-
-	if (IS_LOCAL_USER(tu))
-		u_conn_f(USER_LOCAL(tu)->conn, ":%H QUIT :Killed (%s)", tu, buf);
-	u_user_unlink(tu);
-
-	return 0;
-}
-
-static int m_kick(u_conn *conn, u_msg *msg)
-{
-	u_user *tu, *u = conn->priv;
-	u_chan *c;
-	u_chanuser *tcu, *cu;
-	char *r = msg->argv[2];
-
-	if (!(c = u_chan_get(msg->argv[0])))
-		return u_user_num(u, ERR_NOSUCHCHANNEL, msg->argv[0]);
-	if (!(tu = u_user_by_nick(msg->argv[1])))
-		return u_user_num(u, ERR_NOSUCHNICK, msg->argv[1]);
-	if (!(cu = u_chan_user_find(c, u)))
-		return u_user_num(u, ERR_NOTONCHANNEL, c);
-	if (!(tcu = u_chan_user_find(c, tu)))
-		return u_user_num(u, ERR_USERNOTINCHANNEL, tu, c);
-	if (!(cu->flags & CU_PFX_OP))
-		return u_user_num(u, ERR_CHANOPRIVSNEEDED, c);
-
-	u_log(LG_FINE, "%U KICK %U from %C (reason=%s)", u, tu, c, r);
-	r = r ? r : tu->nick;
-	u_sendto_chan(c, NULL, ST_USERS, ":%H KICK %C %U :%s", u, c, tu, r);
-	u_roster_f(R_SERVERS, NULL, ":%H KICK %C %U :%s", u, c, tu, r);
-
-	u_chan_user_del(tcu);
-
-	return 0;
-}
-
 static int m_summon(u_conn *conn, u_msg *msg)
 {
 	u_conn_num(conn, ERR_SUMMONDISABLED);
