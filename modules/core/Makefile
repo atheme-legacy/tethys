@@ -22,6 +22,7 @@ SRCS = \
 	ping.c \
 	quit.c \
 	sid.c \
+	stats.c \
 	ts6init.c \
 	topic.c \
 	user.c \
