@@ -9,6 +9,13 @@ AC_INIT([Tethys], [0.1-alpha1], [https://github.com/atheme/tethys])
 AC_CONFIG_HEADER([include/autoconf.h])
 AC_PREFIX_DEFAULT(~/ircd)
 
+AC_MSG_CHECKING([if you read the readme])
+if ! test -f libmowgli-2/Makefile; then
+	AC_MSG_RESULT(no)
+	AC_ERROR([please read the readme before trying to build from git])
+fi
+AC_MSG_RESULT(yes)
+
 MOWGLI="libmowgli-2/src/libmowgli"
 
 MOWGLI_CFLAGS="-I../$MOWGLI -I../../$MOWGLI"
