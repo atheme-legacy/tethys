@@ -8,6 +8,7 @@ SRCS = \
 	join.c \
 	kick.c \
 	kill.c \
+	list.c \
 	map.c \
 	message.c \
 	mkpass.c \
