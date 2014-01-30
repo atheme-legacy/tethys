@@ -38,7 +38,7 @@ static int cap_add(u_user *u, char *cap)
 	return 0;
 }
 
-static int c_uu_cap(u_sourceinfo *si, u_msg *msg)
+static int c_lu_cap(u_sourceinfo *si, u_msg *msg)
 {
 	char *s, *p, buf[512];
 	struct cap *cur;
@@ -101,14 +101,15 @@ static int c_uu_cap(u_sourceinfo *si, u_msg *msg)
 		u_conn_f(si->link, ":%S CAP %U LIST :%s", &me, si->u, buf + 1);
 	}
 
+	/* harmless if already registered */
 	u_user_try_register(si->u);
 
 	return 0;
 }
 
 static u_cmd cap_cmdtab[] = {
-	{ "CAP", SRC_FIRST,               u_repeat_as_user, 0 },
-	{ "CAP", SRC_UNREGISTERED_USER,   c_uu_cap, 1 },
+	{ "CAP", SRC_FIRST, u_repeat_as_user, 0 },
+	{ "CAP", SRC_LOCAL_USER | SRC_UNREGISTERED_USER, c_lu_cap, 1 },
 	{ }
 };
 
