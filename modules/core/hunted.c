@@ -75,10 +75,17 @@ static int c_u_admin(u_sourceinfo *si, u_msg *msg)
 	return 0;
 }
 
+static int c_u_summon(u_sourceinfo *si, u_msg *msg)
+{
+	u_src_num(si, ERR_SUMMONDISABLED);
+	return 0;
+}
+
 static u_cmd hunted_cmdtab[] = {
 	{ "VERSION",  SRC_USER, c_u_version,  0 },
 	{ "MOTD",     SRC_USER, c_u_motd,     0 },
 	{ "ADMIN",    SRC_USER, c_u_admin,    0 },
+	{ "SUMMON",   SRC_USER, c_u_summon,   0 },
 	{ }
 };
 

@@ -175,12 +175,6 @@ static int m_mkpass(u_conn *conn, u_msg *msg)
 	return 0;
 }
 
-static int m_summon(u_conn *conn, u_msg *msg)
-{
-	u_conn_num(conn, ERR_SUMMONDISABLED);
-	return 0;
-}
-
 u_cmd c_user[] = {
 	{ "ECHO",      CTX_USER, m_echo,              0, 0 },
 	{ "QUIT",      CTX_USER, m_quit,              0, 0 },
