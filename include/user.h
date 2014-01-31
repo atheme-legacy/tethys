@@ -23,6 +23,7 @@
 #define UMODE_INVISIBLE        0x00000002
 #define UMODE_WALLOPS          0x00000004
 #define UMODE_CLOAKED          0x00000008
+#define UMODE_SERVICE          0x00000010
 
 #define USER_MASK_FLAGS        0x0000ff00
 #define USER_IS_LOCAL          0x00000100

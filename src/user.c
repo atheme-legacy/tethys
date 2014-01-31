@@ -31,10 +31,12 @@ char *id_next(void)
 
 static int cb_oper(u_modes*, int, char*);
 static int cb_flag(u_modes*, int, char*);
+static int cb_svc(u_modes*, int, char*);
 
 static u_mode_info __umodes[] = {
 	{ 'o', cb_oper,  UMODE_OPER                },
 	{ 'i', cb_flag,  UMODE_INVISIBLE           },
+	{ 'S', cb_svc,   UMODE_SERVICE             },
 	{ }
 };
 
@@ -71,6 +73,14 @@ static int cb_flag(u_modes *m, int on, char *arg)
 		u_mode_put(m, on, m->info->ch, NULL, NULL);
 
 	return 0;
+}
+
+static int cb_svc(u_modes *m, int on, char *arg)
+{
+	if (!um_force(m))
+		return 0;
+
+	return cb_flag(m, on, arg);
 }
 
 void user_shutdown(u_conn *conn)
@@ -255,6 +265,8 @@ char *u_user_modes(u_user *u)
 
 	if (u->flags & UMODE_OPER)
 		*s++ = 'o';
+	if (u->flags & UMODE_SERVICE)
+		*s++ = 'S';
 
 	*s = '\0';
 
