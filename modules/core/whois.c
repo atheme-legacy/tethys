@@ -96,6 +96,9 @@ static int c_u_whois(u_sourceinfo *si, u_msg *msg)
 	else if (tu->flags & UMODE_OPER)
 		u_src_num(si, RPL_WHOISOPERATOR, tu->nick, "an IRC operator");
 
+	if (tu->acct[0])
+		u_src_num(si, RPL_WHOISLOGGEDIN, tu->nick, tu->acct);
+
 	/* TODO: use long_whois */
 
 	u_src_num(si, RPL_ENDOFWHOIS, tu->nick);
