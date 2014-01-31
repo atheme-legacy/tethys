@@ -418,7 +418,7 @@ void u_user_make_euid(u_user *u, char *buf)
                                                         ident                    */
 	snf(FMT_SERVER, buf, 512, ":%S EUID %s %d %u %s %s %s %s %s %s %s :%s",
 	    sv, u->nick, sv->hops + 1, u->nickts,
-	    "+", /* TODO: this */
+	    u_user_modes(u),
 	    u->ident, u->host, u->ip, u->uid, u->realhost,
 	    u->acct[0] ? u->acct : "*", u->gecos);
 }
