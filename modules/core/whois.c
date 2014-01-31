@@ -91,8 +91,10 @@ static int c_u_whois(u_sourceinfo *si, u_msg *msg)
 	if (tu->away[0])
 		u_src_num(si, RPL_AWAY, tu->nick, tu->away);
 
-	if (tu->flags & UMODE_OPER)
-		u_src_num(si, RPL_WHOISOPERATOR, tu->nick);
+	if (tu->flags & UMODE_SERVICE)
+		u_src_num(si, RPL_WHOISOPERATOR, tu->nick, "a Network Service");
+	else if (tu->flags & UMODE_OPER)
+		u_src_num(si, RPL_WHOISOPERATOR, tu->nick, "an IRC operator");
 
 	/* TODO: use long_whois */
 

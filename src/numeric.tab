@@ -60,7 +60,7 @@ RPL_NOWAWAY	306	":You have been marked as being away"
 
 RPL_WHOISUSER	311	"%s %s %s * :%s"
 RPL_WHOISSERVER	312	"%s %s :%s"
-RPL_WHOISOPERATOR	313	"%s :is an IRC operator"
+RPL_WHOISOPERATOR	313	"%s :is %s"
 
 RPL_WHOWASUSER	314
 RPL_ENDOFWHO	315	"%s :End of /WHO list."
