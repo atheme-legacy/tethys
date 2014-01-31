@@ -47,22 +47,25 @@ static int message_chan(u_sourceinfo *si, u_msg *msg)
 
 static int message_user(u_sourceinfo *si, u_msg *msg)
 {
-	u_entity tgt;
+	u_user *tu;
+	u_conn *link;
 
-	if (!u_entity_from_ref(&tgt, msg->argv[0]) || ENT_IS_SERVER(&tgt))
+	if (!(tu = u_user_by_ref(si->source, msg->argv[0])))
 		return u_user_num(si->u, ERR_NOSUCHNICK, msg->argv[0]);
 
-	if (tgt.link == si->source) {
+	link = u_user_conn(tu);
+
+	if (link == si->source) {
 		u_log(LG_ERROR, "%s came from destination??", msg->command);
 		return 0;
 	}
 
 	if (SRC_IS_USER(si)) {
-		u_conn_f(tgt.link, ":%H %s %U :%s", si->u, msg->command,
-		         tgt.v.u, msg->argv[1]);
+		u_conn_f(link, ":%H %s %U :%s", si->u, msg->command,
+		         tu, msg->argv[1]);
 	} else {
-		u_conn_f(tgt.link, ":%S NOTICE %U :%s", si->s,
-		         tgt.v.u, msg->argv[1]);
+		u_conn_f(link, ":%S NOTICE %U :%s", si->s,
+		         tu, msg->argv[1]);
 	}
 
 	return 0;

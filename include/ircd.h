@@ -77,7 +77,6 @@ typedef unsigned long u_ts_t;
 #include "mode.h"
 #include "server.h"
 #include "user.h"
-#include "entity.h"
 #include "chan.h"
 #include "module.h"
 #include "hook.h"

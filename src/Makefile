@@ -7,7 +7,6 @@ SRCS = numeric.c \
 	conn.c \
 	cookie.c \
 	crypto.c \
-	entity.c \
 	hook.c \
 	linebuf.c \
 	log.c \

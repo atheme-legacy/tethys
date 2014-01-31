@@ -97,7 +97,6 @@ int vsnf(int type, char *s, uint size, const char *fmt, va_list va)
 	u_chan *chan;
 	u_server *server;
 	u_conn *conn;
-	u_entity *e;
 	u_sourceinfo *si;
 
 	struct buffer buf;
@@ -245,16 +244,6 @@ top:
 		}
 
 		string(&buf, (s_arg && s_arg[0]) ? s_arg : "*", -1, &spec);
-		break;
-
-	case 'E': /* entity */
-		s_arg = "(none)"; 
-		if ((e = va_arg(va, u_entity*))) {
-			s_arg = e->name;
-			if (type == FMT_SERVER)
-				s_arg = e->id;
-		}
-		string(&buf, s_arg, -1, &spec);
 		break;
 
 	case 'I': /* sourceinfo */
