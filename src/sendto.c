@@ -11,14 +11,14 @@ static u_cookie ck_sendto;
 static char *ln_user, buf_user[1024];
 static char *ln_serv, buf_serv[1024];
 
-static void st_start(void)
+void u_sendto_start(void)
 {
 	u_cookie_inc(&ck_sendto);
 	ln_user = NULL;
 	ln_serv = NULL;
 }
 
-static void st_exclude(u_conn *conn)
+void u_sendto_skip(u_conn *conn)
 {
 	if (!conn)
 		return;
@@ -130,9 +130,9 @@ void u_sendto_list(mowgli_list_t *list, u_conn *exclude, char *fmt, ...)
 	mowgli_node_t *n;
 	va_list va;
 
-	st_start();
+	u_sendto_start();
 	if (exclude != NULL)
-		st_exclude(exclude);
+		u_sendto_skip(exclude);
 
 	va_start(va, fmt);
 	MOWGLI_LIST_FOREACH(n, list->head) {
@@ -148,9 +148,9 @@ void u_sendto_map(u_map *map, u_conn *exclude, char *fmt, ...)
 	u_conn *conn;
 	va_list va;
 
-	st_start();
+	u_sendto_start();
 	if (exclude != NULL)
-		st_exclude(exclude);
+		u_sendto_skip(exclude);
 
 	va_start(va, fmt);
 	U_MAP_EACH(&state, map, NULL, &conn)
@@ -166,10 +166,10 @@ void u_sendto_chan_start(u_sendto_state *state, u_chan *c,
 		return;
 	}
 
-	st_start();
+	u_sendto_start();
 
 	if (exclude != NULL)
-		st_exclude(exclude);
+		u_sendto_skip(exclude);
 
 	state->type = type;
 
@@ -209,10 +209,10 @@ void u_sendto_visible_start(u_sendto_state *state, u_user *u,
 		return;
 	}
 
-	st_start();
+	u_sendto_start();
 
 	if (exclude != NULL)
-		st_exclude(exclude);
+		u_sendto_skip(exclude);
 
 	state->type = type;
 
@@ -257,10 +257,10 @@ next_conn:
 
 void u_sendto_servers_start(u_sendto_state *state, u_conn *exclude)
 {
-	st_start();
+	u_sendto_start();
 
 	if (exclude != NULL)
-		st_exclude(exclude);
+		u_sendto_skip(exclude);
 
 	mowgli_patricia_foreach_start(servers_by_sid, &state->pstate);
 }

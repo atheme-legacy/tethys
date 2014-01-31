@@ -12,14 +12,20 @@
 #define ST_USERS               2
 #define ST_STOP       ((uint)-1)
 
+/* manual sendto interface. If using the iterators below, you should
+   still use u_sendto to send messages, or risk duplication */
+
+extern void u_sendto_start(void);
+extern void u_sendto_skip(u_conn*);
+
+extern void u_sendto(u_conn*, char*, ...);
+
 /* sends message to the various places. these implementations are based
    on the sendto iterators below, but are careful not to repeat format
    evaluation more times than necessary.
 
    the u_conn* arguments are a connection to skip over, e.g. when
    propagating a server message */
-
-extern void u_sendto(u_conn*, char*, ...);
 
 extern void u_sendto_chan(u_chan*, u_conn*, uint, char*, ...);
 extern void u_sendto_visible(u_user*, uint, char*, ...);
