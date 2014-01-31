@@ -12,7 +12,7 @@ static int c_a_kill(u_sourceinfo *si, u_msg *msg)
 	char *reason = msg->argv[1];
 	char buf[512];
 
-	if (!(tu = u_user_by_ref(msg->argv[0])))
+	if (!(tu = u_user_by_ref(si->source, msg->argv[0])))
 		return u_src_num(si, ERR_NOSUCHNICK, msg->argv[0]);
 
 	if (SRC_IS_LOCAL_USER(si)) {

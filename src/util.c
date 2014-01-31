@@ -290,9 +290,9 @@ bool exists(const char *path)
 	return stat(path, &st) == 0;
 }
 
-u_conn *ref_link(char *ref)
+u_conn *ref_link(u_conn *ctx, char *ref)
 {
-	if (isdigit(ref[0])) {
+	if (ctx && ctx->ctx == CTX_SERVER && isdigit(ref[0])) {
 		if (ref[3]) {
 			u_user *u = u_user_by_uid(ref);
 			return u ? u_user_conn(u) : NULL;

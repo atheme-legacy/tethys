@@ -172,7 +172,7 @@ static int c_u_stats(u_sourceinfo *si, u_msg *msg)
 		return u_src_num(si, ERR_NEEDMOREPARAMS, "STATS");
 
 	if (msg->argc > 1) {
-		if (!(sv = u_server_by_ref(msg->argv[1])))
+		if (!(sv = u_server_by_ref(si->source, msg->argv[1])))
 			return u_src_num(si, ERR_NOSUCHSERVER, msg->argv[1]);
 
 		if (sv != &me) {

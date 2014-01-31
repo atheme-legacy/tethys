@@ -31,7 +31,8 @@ static int c_u_whois(u_sourceinfo *si, u_msg *msg)
 	if (msg->argc > 1) {
 		char *server = msg->argv[0];
 		long_whois = true;
-		if (!(sv = u_server_by_ref(server)) && irccmp(server, nick)) {
+		if (!(sv = u_server_by_ref(si->source, server))
+		    && irccmp(server, nick)) {
 			u_src_num(si, ERR_NOSUCHSERVER, server);
 			return 0;
 		}

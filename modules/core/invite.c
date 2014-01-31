@@ -13,7 +13,7 @@ static int c_u_invite(u_sourceinfo *si, u_msg *msg)
 	u_chanuser *cu;
 	u_conn *tlink;
 
-	if (!(tu = u_user_by_ref(msg->argv[0])))
+	if (!(tu = u_user_by_ref(si->source, msg->argv[0])))
 		return u_src_num(si, ERR_NOSUCHNICK, msg->argv[0]);
 	if (!(c = u_chan_get(msg->argv[1])))
 		return u_src_num(si, ERR_NOSUCHCHANNEL, msg->argv[1]);
