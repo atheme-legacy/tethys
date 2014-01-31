@@ -6,29 +6,33 @@
 
 #include "ircd.h"
 
-static int mode_user(u_user *u, char *s)
+static int mode_user(u_sourceinfo *si, char *s)
 {
 	u_modes m;
-	u_conn *conn = u_user_conn(u);
 
 	if (!s || !*s) {
-		u_user_num(u, RPL_UMODEIS, u_user_modes(u));
+		u_src_num(si, RPL_UMODEIS, u_user_modes(si->u));
 		return 0;
 	}
 
-	m.perms = NULL;
-	m.target = u;
+	m.perms = SRC_IS_LOCAL_USER(si) ? NULL : &me;
+	m.target = si->u;
 
 	u_mode_process(&m, umodes, 1, &s);
 
-	if (m.u.buf[0] || m.u.data[0]) {
-		u_conn_f(conn, ":%U MODE %U %s%s", u, u, m.u.buf, m.u.data);
+	if ((m.u.buf[0] || m.u.data[0]) && IS_LOCAL_USER(si->u)) {
+		u_conn *conn = u_user_conn(si->u);
+		u_conn_f(conn, ":%U MODE %U %s%s",
+		         si->u, si->u, m.u.buf, m.u.data);
 	}
 
 	if (m.s.buf[0] || m.s.data[0]) {
-		u_sendto_servers(NULL, ":%U MODE %U %s%S",
-		                 u, u, m.s.buf, m.s.data);
+		u_sendto_servers(si->link, ":%U MODE %U %s%s",
+		                 si->u, si->u, m.s.buf, m.s.data);
 	}
+
+	u_log(LG_VERBOSE, "%U now has user mode %s",
+	      si->u, u_user_modes(si->u));
 
 	return 0;
 }
@@ -65,7 +69,7 @@ static int c_a_mode(u_sourceinfo *si, u_msg *msg)
 		} else if (si->u != tu) {
 			u_user_num(si->u, ERR_USERSDONTMATCH);
 		} else {
-			return mode_user(si->u, msg->argv[1]);
+			return mode_user(si, msg->argv[1]);
 		}
 		return 0;
 	}
