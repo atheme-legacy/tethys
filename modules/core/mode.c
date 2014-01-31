@@ -62,7 +62,7 @@ static int c_a_mode(u_sourceinfo *si, u_msg *msg)
 	u_mode_info *info;
 
 	if (!strchr(CHANTYPES, *target)) {
-		u_user *tu = u_user_by_nick(target);
+		u_user *tu = u_user_by_ref(si->source, target);
 		if (tu == NULL) {
 			/* legacy chary behavior */
 			u_user_num(si->u, ERR_NOSUCHCHANNEL, target);
