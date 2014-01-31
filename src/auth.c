@@ -74,7 +74,7 @@ u_oper *u_find_oper(u_auth *auth, char *name, char *pass)
 
 	if (oper->auth == NULL && oper->authname[0]) {
 		oper->auth = u_map_get(all_auths, oper->authname);
-		if (auth->cls == NULL) {
+		if (auth && auth->cls == NULL) {
 			u_log(LG_WARN, msg_authnotfound,
 			      oper->name, oper->authname);
 		}
