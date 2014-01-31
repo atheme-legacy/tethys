@@ -29,78 +29,55 @@ char *id_next(void)
 	return id_buf;
 }
 
-static void cb_oper();
-static void cb_flag();
+static int cb_oper(u_modes*, int, char*);
+static int cb_flag(u_modes*, int, char*);
 
-static u_umode_info __umodes[32] = {
-	{ 'o', UMODE_OPER,      cb_oper         },
-	{ 'i', UMODE_INVISIBLE, cb_flag         },
-	{ 0 }
+static u_mode_info __umodes[] = {
+	{ 'o', cb_oper,                            },
+	{ 'i', cb_flag,  UMODE_INVISIBLE           },
+	{ }
 };
 
-u_umode_info *umodes = __umodes;
+u_mode_info *umodes = __umodes;
 uint umode_default = 0;
 
-static int um_on;
-static char *um_buf_p, um_buf[128];
-
-void u_user_m_start(u_user *u)
+static bool um_force(u_modes *m)
 {
-	um_on = -1;
-	um_buf_p = um_buf;
+	if (m->perms)
+		return true;
+
+	return false;
 }
 
-void u_user_m_end(u_user *u)
+static int cb_oper(u_modes *m, int on, char *arg)
 {
-	*um_buf_p = '\0';
-	if (um_buf_p != um_buf) {
-		u_conn_f(u_user_conn(u), ":%U MODE %U :%s", u, u, um_buf);
-		u_sendto_servers(NULL, ":%U MODE %U :%s", u, u, um_buf);
-	} else if (um_on < 0) {
-		u_user_num(u, ERR_UMODEUNKNOWNFLAG);
+	u_user *u = m->target;
+
+	if (!um_force(m) && on)
+		return 0;
+
+	if (u->flags & UMODE_OPER) {
+		u->flags &= ~UMODE_OPER;
+		u_mode_put(m, on, m->info->ch, NULL, NULL);
 	}
+
+	return 0;
 }
 
-static void um_put(int on, char ch)
+static int cb_flag(u_modes *m, int on, char *arg)
 {
-	if (on != um_on) {
-		um_on = on;
-		*um_buf_p++ = on ? '+' : '-';
-	}
-	*um_buf_p++ = ch;
-}
+	u_user *u = m->target;
+	uint oldf = u->flags;
 
-static void cb_oper(u_umode_info *info, u_user *u, int on)
-{
 	if (on)
-		return;
-
-	u->flags &= ~info->mask;
-	um_put(on, info->ch);
-}
-
-static void cb_flag(u_umode_info *info, u_user *u, int on)
-{
-	uint oldm = u->flags;
-	if (on)
-		u->flags |= info->mask;
+		u->flags |= m->info->data;
 	else
-		u->flags &= ~info->mask;
-	if (oldm != u->flags)
-		um_put(on, info->ch);
-}
+		u->flags &= ~m->info->data;
 
-void u_user_mode(u_user *u, char ch, int on)
-{
-	u_umode_info *info = umodes;
+	if (oldf != u->flags)
+		u_mode_put(m, on, m->info->ch, NULL, NULL);
 
-	while (info->ch && info->ch != ch)
-		info++;
-
-	if (!info->ch)
-		return;
-
-	info->cb(info, u, on);
+	return 0;
 }
 
 void user_shutdown(u_conn *conn)
@@ -269,6 +246,26 @@ u_user *u_user_by_nick(char *nick)
 u_user *u_user_by_uid(char *uid)
 {
 	return mowgli_patricia_retrieve(users_by_uid, uid);
+}
+
+char *u_user_modes(u_user *u)
+{
+	static char buf[512];
+	char *s = buf;
+	u_mode_info *info;
+
+	*s++ = '+';
+	for (info=umodes; info->ch; info++) {
+		if (info->cb == cb_flag && (u->flags & info->data))
+			*s++ = info->ch;
+	}
+
+	if (u->flags & UMODE_OPER)
+		*s++ = 'o';
+
+	*s = '\0';
+
+	return buf;
 }
 
 void u_user_set_nick(u_user *u, char *nick, uint ts)

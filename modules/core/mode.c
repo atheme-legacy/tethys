@@ -8,39 +8,27 @@
 
 static int mode_user(u_user *u, char *s)
 {
-	int on = 1;
+	u_modes m;
+	u_conn *conn = u_user_conn(u);
 
 	if (!s || !*s) {
-		u_umode_info *cur;
-		char buf[512];
-		s = buf;
-
-		*s++ = '+';
-		for (cur = umodes; cur->ch; cur++) {
-			if (u->flags & cur->mask)
-				*s++ = cur->ch;
-		}
-		*s = '\0';
-
-		u_user_num(u, RPL_UMODEIS, buf);
+		u_user_num(u, RPL_UMODEIS, u_user_modes(u));
 		return 0;
 	}
 
-	u_user_m_start(u);
+	m.perms = NULL;
+	m.target = u;
 
-	for (; *s; s++) {
-		switch (*s) {
-		case '+':
-		case '-':
-			on = (*s == '+');
-			break;
+	u_mode_process(&m, umodes, 1, &s);
 
-		default:
-			u_user_mode(u, *s, on);
-		}
+	if (m.u.buf[0] || m.u.data[0]) {
+		u_conn_f(conn, ":%U MODE %U %s%s", u, u, m.u.buf, m.u.data);
 	}
 
-	u_user_m_end(u);
+	if (m.s.buf[0] || m.s.data[0]) {
+		u_sendto_servers(NULL, ":%U MODE %U %s%S",
+		                 u, u, m.s.buf, m.s.data);
+	}
 
 	return 0;
 }

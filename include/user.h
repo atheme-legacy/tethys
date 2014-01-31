@@ -36,16 +36,9 @@
 #define USER_MASK_WAIT         0xff000000
 #define USER_WAIT_CAPS         0x01000000
 
-typedef struct u_umode_info u_umode_info;
 typedef struct u_user u_user;
 typedef struct u_user_local u_user_local;
 typedef struct u_user_remote u_user_remote;
-
-struct u_umode_info {
-	char ch;
-	uint mask;
-	void (*cb)(u_umode_info*, u_user*, int on);
-};
 
 struct u_user {
 	char uid[10];
@@ -89,12 +82,8 @@ struct u_user_remote {
 extern mowgli_patricia_t *users_by_nick;
 extern mowgli_patricia_t *users_by_uid;
 
-extern u_umode_info *umodes;
+extern u_mode_info *umodes;
 extern uint umode_default;
-
-extern void u_user_m_start(u_user*);
-extern void u_user_m_end(u_user*);
-extern void u_user_mode(u_user*, char ch, int on);
 
 extern u_user *u_user_create_local(u_conn *conn);
 extern u_user *u_user_create_remote(u_server*, char *uid);
@@ -114,6 +103,8 @@ static inline u_user *u_user_by_ref(u_conn *conn, char *ref)
 	return (conn && conn->ctx == CTX_SERVER && isdigit(*ref)) ?
 	        u_user_by_uid(ref) : u_user_by_nick(ref);
 }
+
+extern char *u_user_modes(u_user*);
 
 extern void u_user_set_nick(u_user*, char*, uint);
 
