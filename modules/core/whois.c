@@ -6,49 +6,12 @@
 
 #include "ircd.h"
 
-static int c_u_whois(u_sourceinfo *si, u_msg *msg)
+static void whois_channels(u_sourceinfo *si, u_user *tu)
 {
-	char *nick, *s;
-	u_user *tu;
-	u_server *sv;
-	bool long_whois = false;
 	u_map_each_state state;
 	u_chan *c; u_chanuser *cu;
-	char buf[512];
+	char *s, buf[512];
 	uint w;
-
-	nick = msg->argv[msg->argc - 1];
-	if ((s = strchr(nick, ','))) /* cut at ',' idk why */
-		*s = '\0';
-
-	if (!(tu = u_user_by_nick(nick)))
-		return u_src_num(si, ERR_NOSUCHNICK, nick);
-
-
-	/* check hunted */
-
-	sv = NULL;
-	if (msg->argc > 1) {
-		char *server = msg->argv[0];
-		long_whois = true;
-		if (!(sv = u_server_by_ref(si->source, server))
-		    && irccmp(server, nick)) {
-			u_src_num(si, ERR_NOSUCHSERVER, server);
-			return 0;
-		}
-	}
-
-	if (sv != NULL && sv != &me) {
-		u_conn_f(sv->conn, ":%I WHOIS %S %s", si, sv, nick);
-		return 0;
-	}
-
-
-	/* perform whois */
-
-	sv = u_user_server(tu);
-	u_src_num(si, RPL_WHOISUSER, tu->nick, tu->ident, tu->host, tu->gecos);
-
 
 	s = buf;
 	w = 512 - MAXSERVNAME - MAXNICKLEN - MAXNICKLEN - 9; /* ??? */
@@ -84,7 +47,49 @@ static int c_u_whois(u_sourceinfo *si, u_msg *msg)
 
 	if (s != buf) /* leftovers */
 		u_src_num(si, RPL_WHOISCHANNELS, tu->nick, buf);
+}
 
+static int c_u_whois(u_sourceinfo *si, u_msg *msg)
+{
+	char *nick, *s;
+	u_user *tu;
+	u_server *sv;
+	bool long_whois = false;
+
+	nick = msg->argv[msg->argc - 1];
+	if ((s = strchr(nick, ','))) /* cut at ',' idk why */
+		*s = '\0';
+
+	if (!(tu = u_user_by_nick(nick)))
+		return u_src_num(si, ERR_NOSUCHNICK, nick);
+
+
+	/* check hunted */
+
+	sv = NULL;
+	if (msg->argc > 1) {
+		char *server = msg->argv[0];
+		long_whois = true;
+		if (!(sv = u_server_by_ref(si->source, server))
+		    && irccmp(server, nick)) {
+			u_src_num(si, ERR_NOSUCHSERVER, server);
+			return 0;
+		}
+	}
+
+	if (sv != NULL && sv != &me) {
+		u_conn_f(sv->conn, ":%I WHOIS %S %s", si, sv, nick);
+		return 0;
+	}
+
+
+	/* perform whois */
+
+	sv = u_user_server(tu);
+	u_src_num(si, RPL_WHOISUSER, tu->nick, tu->ident, tu->host, tu->gecos);
+
+	if (!(tu->flags & UMODE_SERVICE))
+		whois_channels(si, tu);
 
 	u_src_num(si, RPL_WHOISSERVER, tu->nick, sv->name, sv->desc);
 
