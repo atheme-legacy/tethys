@@ -139,7 +139,18 @@ static int c_s_sjoin(u_sourceinfo *si, u_msg *msg)
 		return u_log(LG_ERROR, "Cannot SJOIN to a local channel");
 
 	/* TODO: check TS */
-	/* TODO: apply channel modes */
+
+	/* XXX: this method of processing channel modes is not 100% correct */
+	u_modes modes;
+	modes.setter = si;
+	modes.target = c;
+	modes.perms = &me;
+	modes.flags = 0;
+	u_mode_process(&modes, cmodes, msg->argc - 3, msg->argv + 2);
+	if (modes.u.buf[0] || modes.u.data[0]) {
+		u_sendto_chan(c, NULL, ST_USERS, ":%I MODE %C %s%s",
+		              si, c, modes.u.buf, modes.u.data);
+	}
 
 	p = msg->argv[msg->argc - 1];
 	while ((s = cut(&p, " "))) {
