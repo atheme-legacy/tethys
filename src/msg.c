@@ -111,6 +111,9 @@ static int reg_one(u_cmd *cmd)
 
 	cmd->owner = u_module_loading();
 
+	cmd->runs = 0;
+	cmd->usecs = 0;
+
 	/* TODO: check mutual exclusivity */
 
 	at = mowgli_patricia_retrieve(all_commands, cmd->name);
@@ -453,6 +456,7 @@ void u_cmd_invoke(u_conn *conn, u_msg *msg, char *line)
 	u_cmd *cmd, *last_cmd;
 	u_sourceinfo si;
 	ulong bits_tested;
+	struct timeval start, end, diff;
 
 	last_cmd = NULL;
 
@@ -481,7 +485,13 @@ again:
 	msg->flags = 0;
 	msg->propagate = NULL;
 
+	gettimeofday(&start, NULL);
 	cmd->cb(&si, msg);
+	gettimeofday(&end, NULL);
+	timersub(&end, &start, &diff);
+
+	cmd->runs++;
+	cmd->usecs += diff.tv_sec * 1000000 + diff.tv_usec;
 
 	if (msg->propagate && cmd->propagation && conn->ctx == CTX_SERVER)
 		propagate_message(&si, msg, cmd, line);

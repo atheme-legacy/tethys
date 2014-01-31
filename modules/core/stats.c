@@ -71,6 +71,7 @@ static void stats_u(u_sourceinfo *si, struct stats_info *info)
 static void do_command(u_sourceinfo *si, u_cmd *cmd)
 {
 	char mask[15], *prop;
+	char usecs[15];
 	int i;
 
 	for (i=0; i<12; i++)
@@ -86,8 +87,13 @@ static void do_command(u_sourceinfo *si, u_cmd *cmd)
 	case CMD_PROP_HUNTED:      prop = "hnt"; break;
 	}
 
-	notice(si, "%16s  %s  %2d  %s  module %s", cmd->name, mask,
-	       cmd->nargs, prop,
+	usecs[0] = '-';
+	usecs[1] = '\0';
+	if (cmd->runs > 0)
+		snprintf(usecs, 15, "%d,%dus", cmd->runs, cmd->usecs / cmd->runs);
+
+	notice(si, "%16s  %s  %2d  %s  %15s  module %s", cmd->name, mask,
+	       cmd->nargs, prop, usecs,
 	       cmd->owner ? cmd->owner->info->name : "(none)");
 }
 

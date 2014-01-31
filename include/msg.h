@@ -121,6 +121,7 @@ struct u_cmd {
 	u_module *owner;
 	bool loaded;
 	struct u_cmd *next, *prev;
+	int runs, usecs;
 };
 
 extern mowgli_patricia_t *all_commands;
