@@ -451,18 +451,87 @@ static void propagate_message(u_sourceinfo *si, u_msg *msg, u_cmd *cmd, char *li
 	}
 }
 
+static bool run_command(u_cmd *cmd, u_sourceinfo *si, u_msg *msg)
+{
+	struct timeval start, end, diff;
+
+	if (cmd->nargs && msg->argc < cmd->nargs) {
+		u_conn_num(si->source, ERR_NEEDMOREPARAMS, cmd->name);
+		return false;
+	}
+
+	msg->flags = 0;
+	msg->propagate = NULL;
+
+	gettimeofday(&start, NULL);
+	cmd->cb(si, msg);
+	gettimeofday(&end, NULL);
+	timersub(&end, &start, &diff);
+
+	cmd->runs++;
+	cmd->usecs += diff.tv_sec * 1000000 + diff.tv_usec;
+
+	return true;
+}
+
+static bool invoke_encap(u_sourceinfo *si, u_msg *msg, char *line)
+{
+	mowgli_patricia_iteration_state_t state;
+	u_server *sv;
+	char *mask, *subcmd;
+	ulong bits, bits_tested;
+	u_cmd *cmd;
+
+	if (msg->argc < 2) {
+		u_conn_num(si->source, ERR_NEEDMOREPARAMS, "ENCAP");
+		return false;
+	}
+
+	mask = msg->argv[0];
+	subcmd = msg->argv[1];
+
+	if (!streq(mask, "*") && !streq(mask, me.name)
+	    && !matchcase(mask, me.name)) {
+		goto propagate;
+	}
+
+	bits = si->u ? SRC_ENCAP_USER : SRC_ENCAP_SERVER;
+
+	if ((cmd = find_command(subcmd, bits, &bits_tested))) {
+		u_log(LG_FINE, "%I INVOKE ENCAP %s [%p]", si, subcmd);
+		run_command(cmd, si, msg);
+	} else {
+		u_log(LG_VERBOSE, "%I used unknown ENCAP %s", si, subcmd);
+	}
+
+propagate:
+	u_sendto_start();
+	u_sendto_skip(si->source);
+	MOWGLI_PATRICIA_FOREACH(sv, &state, servers_by_sid) {
+		if (!matchcase(mask, sv->name) || !sv->conn)
+			continue;
+		u_sendto(sv->conn, line);
+	}
+
+	return true;
+}
+
 void u_cmd_invoke(u_conn *conn, u_msg *msg, char *line)
 {
 	u_cmd *cmd, *last_cmd;
 	u_sourceinfo si;
 	ulong bits_tested;
-	struct timeval start, end, diff;
 
 	last_cmd = NULL;
 
 again:
 	fill_source(&si, conn, msg);
 	u_log(LG_FINE, "source mask = 0x%x", si.mask);
+
+	if (conn->ctx == CTX_SERVER && streq(msg->command, "ENCAP")) {
+		invoke_encap(&si, msg, line);
+		return;
+	}
 
 	if (!(cmd = find_command(msg->command, si.mask, &bits_tested))) {
 		report_failure(&si, msg, bits_tested);
@@ -477,21 +546,8 @@ again:
 	}
 	last_cmd = cmd;
 
-	if (cmd->nargs && msg->argc < cmd->nargs) {
-		u_conn_num(conn, ERR_NEEDMOREPARAMS, cmd->name);
+	if (!run_command(cmd, &si, msg))
 		return;
-	}
-
-	msg->flags = 0;
-	msg->propagate = NULL;
-
-	gettimeofday(&start, NULL);
-	cmd->cb(&si, msg);
-	gettimeofday(&end, NULL);
-	timersub(&end, &start, &diff);
-
-	cmd->runs++;
-	cmd->usecs += diff.tv_sec * 1000000 + diff.tv_usec;
 
 	if (msg->propagate && cmd->propagation && conn->ctx == CTX_SERVER)
 		propagate_message(&si, msg, cmd, line);
