@@ -2027,6 +2027,16 @@ ac_config_headers="$ac_config_headers include/autoconf.h"
 
 
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if you read the readme" >&5
+$as_echo_n "checking if you read the readme... " >&6; }
+if ! test -f libmowgli-2/Makefile; then
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+	as_fn_error $? "please read the readme before trying to build from git" "$LINENO" 5
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
 MOWGLI="libmowgli-2/src/libmowgli"
 
 MOWGLI_CFLAGS="-I../$MOWGLI -I../../$MOWGLI"
