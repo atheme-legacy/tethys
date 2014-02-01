@@ -78,7 +78,7 @@ static int c_u_whois(u_sourceinfo *si, u_msg *msg)
 	sv = u_user_server(tu);
 	u_src_num(si, RPL_WHOISUSER, tu->nick, tu->ident, tu->host, tu->gecos);
 
-	if (!(tu->flags & UMODE_SERVICE))
+	if (!(tu->mode & UMODE_SERVICE))
 		whois_channels(si, tu);
 
 	u_src_num(si, RPL_WHOISSERVER, tu->nick, sv->name, sv->desc);
@@ -86,9 +86,9 @@ static int c_u_whois(u_sourceinfo *si, u_msg *msg)
 	if (tu->away[0])
 		u_src_num(si, RPL_AWAY, tu->nick, tu->away);
 
-	if (tu->flags & UMODE_SERVICE)
+	if (tu->mode & UMODE_SERVICE)
 		u_src_num(si, RPL_WHOISOPERATOR, tu->nick, "a Network Service");
-	else if (tu->flags & UMODE_OPER)
+	else if (tu->mode & UMODE_OPER)
 		u_src_num(si, RPL_WHOISOPERATOR, tu->nick, "an IRC operator");
 
 	if (tu->acct[0])

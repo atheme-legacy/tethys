@@ -23,7 +23,7 @@ static int c_lu_userhost(u_sourceinfo *si, u_msg *msg)
 			continue;
 
 		w = snprintf(data, 512, "%s%s=%c%s@%s", tu->nick,
-		             (tu->flags & UMODE_OPER) ? "*" : "",
+		             (tu->mode & UMODE_OPER) ? "*" : "",
 		             (tu->away[0] ? '-' : '+'),
 		             tu->ident, tu->host);
 

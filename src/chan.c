@@ -597,7 +597,7 @@ struct extban {
 
 static int ex_oper(extb_t *ex, u_chan *c, u_user *u, char *data)
 {
-	return u->flags & UMODE_OPER;
+	return u->mode & UMODE_OPER;
 }
 
 static int ex_account(extb_t *ex, u_chan *c, u_user *u, char *data)

@@ -17,25 +17,24 @@
 
 #define MAXAWAY 256
 
-/* all users */
-#define USER_MASK_UMODE        0x000000ff
 #define UMODE_OPER             0x00000001
 #define UMODE_INVISIBLE        0x00000002
 #define UMODE_WALLOPS          0x00000004
 #define UMODE_CLOAKED          0x00000008
 #define UMODE_SERVICE          0x00000010
 
-#define USER_MASK_FLAGS        0x0000ff00
-#define USER_IS_LOCAL          0x00000100
+/* all users */
+#define USER_MASK_FLAGS        0x000000ff
+#define USER_IS_LOCAL          0x00000001
 
 /* local */
-#define USER_MASK_CAP          0x00ff0000
-#define CAP_MULTI_PREFIX       0x00010000
-#define CAP_AWAY_NOTIFY        0x00020000
+#define USER_MASK_CAP          0x0000ff00
+#define CAP_MULTI_PREFIX       0x00000100
+#define CAP_AWAY_NOTIFY        0x00000200
 
 /* registration postpone */
-#define USER_MASK_WAIT         0xff000000
-#define USER_WAIT_CAPS         0x01000000
+#define USER_MASK_WAIT         0x00ff0000
+#define USER_WAIT_CAPS         0x00010000
 
 typedef struct u_user u_user;
 typedef struct u_user_local u_user_local;
@@ -44,7 +43,7 @@ typedef struct u_user_remote u_user_remote;
 struct u_user {
 	char uid[10];
 
-	uint flags;
+	uint mode, flags;
 	u_map *channels;
 	u_map *invites;
 

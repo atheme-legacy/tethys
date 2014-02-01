@@ -29,7 +29,7 @@ static void who_reply(u_sourceinfo *si, u_user *u, u_chan *c, u_chanuser *cu)
 
 	s = buf;
 	*s++ = u->away[0] ? 'G' : 'H';
-	if (u->flags & UMODE_OPER)
+	if (u->mode & UMODE_OPER)
 		*s++ = '*';
 	if (cu && (cu->flags & CU_PFX_OP))
 		*s++ = '@';
@@ -62,7 +62,7 @@ static c_lu_who(u_sourceinfo *si, u_msg *msg)
 		}
 
 		U_MAP_EACH(&state, c->members, &u, &cu) {
-			if (visible_only && (u->flags & UMODE_INVISIBLE))
+			if (visible_only && (u->mode & UMODE_INVISIBLE))
 				continue;
 			who_reply(si, u, c, cu);
 		}

@@ -9,7 +9,7 @@
 static int m_42(u_sourceinfo *si, u_msg *msg)
 {
 	u_conn_f(si->link, ":%S NOTICE %U :The Answer to Life, the Universe, and %s",
-	         &me, si->u, (si->u->flags & UMODE_OPER) ? "matthew" : "Everything");
+	         &me, si->u, (si->u->mode & UMODE_OPER) ? "matthew" : "Everything");
 	return 0;
 }
 

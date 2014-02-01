@@ -14,7 +14,7 @@ static int c_lu_oper(u_sourceinfo *si, u_msg *msg)
 		return u_user_num(si->u, ERR_NOOPERHOST);
 
 	USER_LOCAL(si->u)->oper = oper;
-	si->u->flags |= UMODE_OPER;
+	si->u->mode |= UMODE_OPER;
 	u_conn_f(si->source, ":%U MODE %U :+o", si->u, si->u);
 	u_sendto_servers(NULL, ":%U MODE %U :+o", si->u, si->u);
 	u_user_num(si->u, RPL_YOUREOPER);

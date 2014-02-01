@@ -62,14 +62,14 @@ static int cb_oper(u_modes *m, int on, char *arg)
 static int cb_flag(u_modes *m, int on, char *arg)
 {
 	u_user *u = m->target;
-	uint oldf = u->flags;
+	uint oldf = u->mode;
 
 	if (on)
-		u->flags |= m->info->data;
+		u->mode |= m->info->data;
 	else
-		u->flags &= ~m->info->data;
+		u->mode &= ~m->info->data;
 
-	if (oldf != u->flags)
+	if (oldf != u->mode)
 		u_mode_put(m, on, m->info->ch, NULL, NULL);
 
 	return 0;
@@ -126,7 +126,8 @@ u_user *u_user_create_local(u_conn *conn)
 	snprintf(uid, 10, "%s%s", me.sid, id_next());
 	u = create_user(uid, sizeof(u_user_local));
 
-	u->flags = umode_default | USER_IS_LOCAL;
+	u->mode = umode_default;
+	u->flags = USER_IS_LOCAL;
 
 	USER_LOCAL(u)->conn = conn;
 	conn->ctx = CTX_USER;
@@ -259,13 +260,13 @@ char *u_user_modes(u_user *u)
 
 	*s++ = '+';
 	for (info=umodes; info->ch; info++) {
-		if (info->cb == cb_flag && (u->flags & info->data))
+		if (info->cb == cb_flag && (u->mode & info->data))
 			*s++ = info->ch;
 	}
 
-	if (u->flags & UMODE_OPER)
+	if (u->mode & UMODE_OPER)
 		*s++ = 'o';
-	if (u->flags & UMODE_SERVICE)
+	if (u->mode & UMODE_SERVICE)
 		*s++ = 'S';
 
 	*s = '\0';
