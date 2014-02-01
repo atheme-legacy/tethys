@@ -372,6 +372,11 @@ static int burst_chan(const char *key, void *_c, void *_conn)
 	if (priv.s != priv.buf)
 		u_conn_f(conn, "%s%s", buf, priv.buf);
 
+	if (c->topic[0]) {
+		u_conn_f(conn, ":%S TB %C %u %s :%s", &me, c,
+		         c->topic_time, c->topic_setter, c->topic);
+	}
+
 	return 0;
 }
 

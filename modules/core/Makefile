@@ -26,6 +26,7 @@ SRCS = \
 	sid.c \
 	stats.c \
 	su.c \
+	tb.c \
 	ts6init.c \
 	topic.c \
 	user.c \
