@@ -64,6 +64,7 @@ typedef unsigned long u_ts_t;
 #define _stringify(x) #x
 #define stringify(x) _stringify(x)
 
+#include "strop.h"
 #include "numeric.h"
 #include "version.h"
 #include "vsnf.h"
