@@ -31,7 +31,7 @@ static int c_s_tb(u_sourceinfo *si, u_msg *msg)
 
 	u_strlcpy(c->topic, msg->argv[msg->argc - 1], MAXTOPICLEN+1);
 
-	u_sendto_chan(c, NULL, ST_USERS, ":%I TOPIC :%s", si, c->topic);
+	u_sendto_chan(c, NULL, ST_USERS, ":%I TOPIC %C :%s", si, c, c->topic);
 
 	return 0;
 }

@@ -153,7 +153,7 @@ static int c_s_sjoin(u_sourceinfo *si, u_msg *msg)
 	}
 
 	p = msg->argv[msg->argc - 1];
-	while ((s = cut(&p, " "))) {
+	while ((s = cut(&p, " ")) && *s) {
 		/* TODO: verify user is behind si->source! */
 
 		/* parse prefix into mode chars and flags */
