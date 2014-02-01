@@ -25,6 +25,7 @@ SRCS = \
 	ping.c \
 	quit.c \
 	sid.c \
+	sjoin.c \
 	stats.c \
 	su.c \
 	tb.c \
