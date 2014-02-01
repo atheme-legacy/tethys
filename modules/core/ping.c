@@ -13,17 +13,19 @@ static int c_a_ping(u_sourceinfo *si, u_msg *msg)
 	u_server *sv;
 	char *tgt = msg->argv[1];
 
-	if (msg->command[1] == '0') /* local user PONG */
+	if (msg->command[1] == 'O') /* local user PONG */
 		return 0;
 
 	/* I hate this command so much  --aji */
 
 	if (!tgt || !*tgt) {
-		u_conn_f(conn, ":%S PONG %s :%s", &me, me.name, msg->argv[0]);
+		sv = u_server_by_ref(si->source, msg->argv[0]);
+		tgt = sv ? sv->sid : msg->argv[0]; /* idk */
+		u_conn_f(conn, ":%S PONG %s :%s", &me, me.name, tgt);
 		return 0;
 	}
 
-	if (!(sv = u_server_by_name(msg->argv[1]))) {
+	if (!(sv = u_server_by_ref(conn, tgt))) {
 		if (conn->ctx == CTX_USER) {
 			u_conn_num(conn, ERR_NOSUCHSERVER, tgt);
 		} else {
@@ -34,14 +36,15 @@ static int c_a_ping(u_sourceinfo *si, u_msg *msg)
 	}
 
 	if (sv == &me) {
-		u_conn_f(conn, ":%S PONG %s %s", &me, me.name, si->name);
+		u_conn_f(conn, ":%S PONG %s :%s", &me, me.name,
+		         SRC_IS_LOCAL_USER(si) ? si->name : si->id);
 		return 0;
 	}
 
 	if (sv->conn == si->source)
 		return u_log(LG_ERROR, "%G sent PING for wrong subtree", conn);
 
-	u_conn_f(sv->conn, ":%s PING %s %s", si->id, si->name, sv->name);
+	u_conn_f(sv->conn, ":%s PING %s :%s", si->id, si->name, sv->sid);
 
 	return 0;
 }
@@ -52,29 +55,23 @@ static int c_s_pong(u_sourceinfo *si, u_msg *msg)
 	char *name, *dest = msg->argv[1];
 	u_conn *link;
 
-	if (strchr(dest, '.')) {
-		u_server *sv = u_server_by_name(dest);
-		link = sv ? sv->conn : NULL;
-		name = sv ? sv->name : NULL;
+	link = ref_link(si->source, dest);
+	name = ref_to_ref(si->source, dest);
 
-		if (sv == &me) {
-			if (si->s->flags & SERVER_IS_BURSTING)
-				u_server_eob(si->s);
-			return 0;
-		}
-	} else {
-		u_user *u = u_user_by_nick(dest);
-		link = u_user_conn(u);
-		name = u ? u->nick : NULL;
+	if (!link && name) { /* PONG to me */
+		u_log(LG_VERBOSE, "PONG to me");
+		if (si->s->flags & SERVER_IS_BURSTING)
+			u_server_eob(si->s);
+		return 0;
 	}
 
-	if (!link || !name) {
+	if (!name) {
 		u_log(LG_ERROR, "%G sent PONG for nonexistent %s",
 		      si->source, dest);
 		return 0;
 	}
 
-	u_conn_f(link, ":%S PONG %s %s", si->s, si->s->name, name);
+	u_conn_f(link, ":%S PONG %s :%s", si->s, si->s->name, name);
 
 	return 0;
 }
