@@ -128,7 +128,8 @@ static int c_s_sjoin(u_sourceinfo *si, u_msg *msg)
 	u_user *u;
 	u_chan *c;
 	u_chanuser *cu;
-	char *p, *s;
+	u_strop_state st;
+	char *s;
 	char *m, mbuf[16];
 	uint flags;
 
@@ -152,8 +153,7 @@ static int c_s_sjoin(u_sourceinfo *si, u_msg *msg)
 		              si, c, modes.u.buf, modes.u.data);
 	}
 
-	p = msg->argv[msg->argc - 1];
-	while ((s = cut(&p, " ")) && *s) {
+	U_STROP_SPLIT(&st, msg->argv[msg->argc - 1], " ", &s) {
 		/* TODO: verify user is behind si->source! */
 
 		/* parse prefix into mode chars and flags */

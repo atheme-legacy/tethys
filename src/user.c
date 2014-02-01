@@ -339,12 +339,11 @@ void u_user_send_isupport(u_user *u)
 	/* :host.irc 005 nick ... :are supported by this server
 	   *        *****    *   *....*....*....*....*....*.... = 37 */
 	struct isupport *cur;
-	char *s, *p, buf[512], tmp[512];
-	int w;
+	u_strop_wrap wrap;
+	char *s, *p, tmp[512];
 
-	w = 475 - strlen(me.name) - strlen(u->nick);
+	u_strop_wrap_start(&wrap, 475 - strlen(me.name) - strlen(u->nick));
 
-	s = buf;
 	for (cur=isupport; cur->name; cur++) {
 		p = tmp;
 		if (cur->s) {
@@ -355,14 +354,11 @@ void u_user_send_isupport(u_user *u)
 			p = cur->name;
 		}
 
-again:
-		if (!wrap(buf, &s, w, p)) {
-			u_user_num(u, RPL_ISUPPORT, buf);
-			goto again;
-		}
+		if ((s = u_strop_wrap_word(&wrap, p)) != NULL)
+			u_user_num(u, RPL_ISUPPORT, s);
 	}
-	if (s != buf)
-		u_user_num(u, RPL_ISUPPORT, buf);
+	if ((s = u_strop_wrap_word(&wrap, NULL)) != NULL)
+		u_user_num(u, RPL_ISUPPORT, s);
 }
 
 void u_user_send_motd(u_user *u)

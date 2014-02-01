@@ -67,7 +67,7 @@ char *u_strop_wrap_word(u_strop_wrap *w, char *word)
 	}
 
 	w->sz += snprintf(w->buf + w->sz, U_STROP_WRAP_MAX + 1 - w->sz,
-	                  " %s", word);
+	                  "%s%s", w->sz ? " " : "", word);
 
 	return NULL;
 }

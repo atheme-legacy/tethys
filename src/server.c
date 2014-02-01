@@ -322,38 +322,15 @@ static int burst_uid(const char *key, void *value, void *priv)
 	return 0;
 }
 
-struct burst_chan_priv {
-	u_chan *c;
-	u_conn *conn;
-	char *rest, *s, buf[512];
-	uint w;
-};
-
-static void burst_chan_cb(u_map *map, u_user *u, u_chanuser *cu,
-                          struct burst_chan_priv *priv)
-{
-	char *p, nbuf[12];
-
-	p = nbuf;
-	if (cu->flags & CU_PFX_OP)
-		*p++ = '@';
-	if (cu->flags & CU_PFX_VOICE)
-		*p++ = '+';
-	strcpy(p, u->uid);
-
-try_again:
-	if (!wrap(priv->buf, &priv->s, priv->w, nbuf)) {
-		u_conn_f(priv->conn, "%s%s", priv->rest, priv->buf);
-		goto try_again;
-	}
-}
-
 static int burst_chan(const char *key, void *_c, void *_conn)
 {
 	u_chan *c = _c;
 	u_conn *conn = _conn;
-	struct burst_chan_priv priv;
-	char buf[512];
+	u_user *u;
+	u_chanuser *cu;
+	u_map_each_state st;
+	u_strop_wrap wrap;
+	char *s, buf[512];
 	int sz;
 
 	if (c->flags & CHAN_LOCAL)
@@ -362,15 +339,22 @@ static int burst_chan(const char *key, void *_c, void *_conn)
 	sz = snf(FMT_SERVER, buf, 512, ":%S SJOIN %u %s %s :",
 	         &me, c->ts, c->name, u_chan_modes(c, 1));
 
-	priv.c = c;
-	priv.conn = conn;
-	priv.rest = buf;
-	priv.s = priv.buf;
-	priv.w = 512 - sz;
+	u_strop_wrap_start(&wrap, 512 - sz);
+	U_MAP_EACH(&st, c->members, &u, &cu) {
+		char *p, nbuf[12];
 
-	u_map_each(c->members, (u_map_cb_t*)burst_chan_cb, &priv);
-	if (priv.s != priv.buf)
-		u_conn_f(conn, "%s%s", buf, priv.buf);
+		p = nbuf;
+		if (cu->flags & CU_PFX_OP)
+			*p++ = '@';
+		if (cu->flags & CU_PFX_VOICE)
+			*p++ = '+';
+		strcpy(p, u->uid);
+
+		if ((s = u_strop_wrap_word(&wrap, nbuf)) != NULL)
+			u_conn_f(conn, "%s%s", buf, s);
+	}
+	if ((s = u_strop_wrap_word(&wrap, NULL)) != NULL)
+		u_conn_f(conn, "%s%s", buf, s);
 
 	if (c->topic[0]) {
 		u_conn_f(conn, ":%S TB %C %u %s :%s", &me, c,

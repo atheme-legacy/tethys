@@ -43,6 +43,7 @@ static int c_lu_cap(u_sourceinfo *si, u_msg *msg)
 	char *s, *p, buf[512];
 	struct cap *cur;
 	char *subcmd = msg->argv[0];
+	u_strop_state st;
 
 	ascii_canonize(subcmd);
 
@@ -71,8 +72,7 @@ static int c_lu_cap(u_sourceinfo *si, u_msg *msg)
 		}
 
 		u_strlcpy(buf, msg->argv[1], BUFSIZE);
-		p = buf;
-		while ((s = cut(&p, " \t")) != NULL) {
+		U_STROP_SPLIT(&st, buf, " \t", &s) {
 			if (!cap_add(si->u, s)) {
 				si->u->flags = old;
 				ack = 0;

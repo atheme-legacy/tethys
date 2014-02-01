@@ -444,54 +444,40 @@ int u_chan_send_topic(u_chan *c, u_user *u)
 	return 0;
 }
 
-struct send_names_priv {
-	u_chan *c;
-	u_user *u;
-	char pfx, *s, buf[512];
-	uint w;
-};
-
-void send_names_cb(u_map *map, u_user *u, u_chanuser *cu,
-                   struct send_names_priv *priv)
-{
-	char *p, nbuf[MAXNICKLEN+3];
-	int retrying = 0;
-
-	p = nbuf;
-	if (cu->flags & CU_PFX_OP)
-		*p++ = '@';
-	if ((cu->flags & CU_PFX_VOICE)
-	    && (p == nbuf || (priv->u->flags & CAP_MULTI_PREFIX)))
-		*p++ = '+';
-	strcpy(p, u->nick);
-
-try_again:
-	if (!wrap(priv->buf, &priv->s, priv->w, nbuf)) {
-		if (retrying) {
-			u_log(LG_SEVERE, "Can't fit %s into RPL_NAMREPLY!", nbuf);
-			return;
-		}
-		u_user_num(priv->u, RPL_NAMREPLY, priv->pfx, priv->c, priv->buf);
-		retrying = 1;
-		goto try_again;
-	}
-}
-
 /* :my.name 353 nick = #chan :...
    *       *****    ***     **  = 11 */
 int u_chan_send_names(u_chan *c, u_user *u)
 {
-	struct send_names_priv priv;
+	u_map_each_state st;
+	u_strop_wrap wrap;
+	u_user *tu;
+	u_chanuser *cu;
+	char *s, pfx;
+	int sz;
 
-	priv.c = c;
-	priv.u = u;
-	priv.pfx = (c->mode&CMODE_PRIVATE)?'*':((c->mode&CMODE_SECRET)?'@':'=');
-	priv.s = priv.buf;
-	priv.w = 512 - (strlen(me.name) + strlen(u->nick) + strlen(c->name) + 11);
+	pfx = c->mode & CMODE_PRIVATE ? '*'
+	    : c->mode & CMODE_SECRET ? '@'
+	    : '=';
 
-	u_map_each(c->members, (u_map_cb_t*)send_names_cb, &priv);
-	if (priv.s != priv.buf)
-		u_user_num(u, RPL_NAMREPLY, priv.pfx, c, priv.buf);
+	sz = strlen(me.name) + strlen(u->nick) + strlen(c->name) + 11;
+	u_strop_wrap_start(&wrap, 512 - sz);
+	U_MAP_EACH(&st, c->members, &tu, &cu) {
+		char *p, nbuf[MAXNICKLEN+3];
+
+		p = nbuf;
+		if (cu->flags & CU_PFX_OP)
+			*p++ = '@';
+		if ((cu->flags & CU_PFX_VOICE)
+		    && (p == nbuf || u->flags & CAP_MULTI_PREFIX))
+			*p++ = '+';
+		strcpy(p, tu->nick);
+
+		if ((s = u_strop_wrap_word(&wrap, nbuf)) != NULL)
+			u_user_num(u, RPL_NAMREPLY, pfx, c, s);
+	}
+	if ((s = u_strop_wrap_word(&wrap, NULL)) != NULL)
+		u_user_num(u, RPL_NAMREPLY, pfx, c, s);
+
 	u_user_num(u, RPL_ENDOFNAMES, c);
 
 	return 0;

@@ -10,11 +10,11 @@ static void whois_channels(u_sourceinfo *si, u_user *tu)
 {
 	u_map_each_state state;
 	u_chan *c; u_chanuser *cu;
-	char *s, buf[512];
-	uint w;
+	u_strop_wrap wrap;
+	char *s;
 
-	s = buf;
-	w = 512 - MAXSERVNAME - MAXNICKLEN - MAXNICKLEN - 9; /* ??? */
+	u_strop_wrap_start(&wrap,
+	    512 - MAXSERVNAME - MAXNICKLEN - MAXNICKLEN - 9);
 
 	U_MAP_EACH(&state, tu->channels, &c, &cu) {
 		char *p, cbuf[MAXCHANNAME+3];
@@ -31,22 +31,12 @@ static void whois_channels(u_sourceinfo *si, u_user *tu)
 			*p++ = '+';
 		strcpy(p, c->name);
 
-	try_again:
-		if (!wrap(buf, &s, w, cbuf)) {
-			if (retrying) {
-				u_log(LG_SEVERE, "Can't fit %s into %s!",
-				      cbuf, "RPL_WHOISCHANNELS");
-				continue;
-			}
-
-			u_src_num(si, RPL_WHOISCHANNELS, tu->nick, buf);
-			retrying = 1;
-			goto try_again;
-		}
+		if (s = u_strop_wrap_word(&wrap, cbuf))
+			u_src_num(si, RPL_WHOISCHANNELS, tu->nick, s);
 	}
 
-	if (s != buf) /* leftovers */
-		u_src_num(si, RPL_WHOISCHANNELS, tu->nick, buf);
+	if (s = u_strop_wrap_word(&wrap, NULL)) /* leftovers */
+		u_src_num(si, RPL_WHOISCHANNELS, tu->nick, s);
 }
 
 static int c_u_whois(u_sourceinfo *si, u_msg *msg)
