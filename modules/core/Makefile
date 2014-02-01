@@ -2,6 +2,7 @@ MODULE = core
 
 SRCS = \
 	away.c \
+	bmask.c \
 	cap.c \
 	euid.c \
 	hunted.c \
