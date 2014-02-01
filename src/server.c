@@ -350,7 +350,7 @@ static int burst_chan(const char *key, void *_c, void *_conn)
 			*p++ = '+';
 		strcpy(p, u->uid);
 
-		if ((s = u_strop_wrap_word(&wrap, nbuf)) != NULL)
+		while ((s = u_strop_wrap_word(&wrap, nbuf)) != NULL)
 			u_conn_f(conn, "%s%s", buf, s);
 	}
 	if ((s = u_strop_wrap_word(&wrap, NULL)) != NULL)

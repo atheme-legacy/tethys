@@ -472,7 +472,7 @@ int u_chan_send_names(u_chan *c, u_user *u)
 			*p++ = '+';
 		strcpy(p, tu->nick);
 
-		if ((s = u_strop_wrap_word(&wrap, nbuf)) != NULL)
+		while ((s = u_strop_wrap_word(&wrap, nbuf)) != NULL)
 			u_user_num(u, RPL_NAMREPLY, pfx, c, s);
 	}
 	if ((s = u_strop_wrap_word(&wrap, NULL)) != NULL)

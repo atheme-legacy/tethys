@@ -354,7 +354,7 @@ void u_user_send_isupport(u_user *u)
 			p = cur->name;
 		}
 
-		if ((s = u_strop_wrap_word(&wrap, p)) != NULL)
+		while ((s = u_strop_wrap_word(&wrap, p)) != NULL)
 			u_user_num(u, RPL_ISUPPORT, s);
 	}
 	if ((s = u_strop_wrap_word(&wrap, NULL)) != NULL)
