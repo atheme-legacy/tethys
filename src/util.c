@@ -197,41 +197,6 @@ char *cut(char **p, char *delim)
 	return s;
 }
 
-/* example usage:
-   char *s, buf[51];
-   int i;
-   s = buf;
-   for (i=0; i<parc; ) {
-           if (!wrap(buf, &s, 50, parv[i])) {
-                   puts(buf);
-                   continue;
-           }
-           i++;
-   }
-   if (s != buf)
-           puts(buf);
- */
-int wrap(char *base, char **p, uint w, char *str)
-{
-	uint len = strlen(str) + (base != *p);
-
-	if (*p + len > base + w) {
-		*p = base;
-		return 0;
-	}
-
-	if (base != *p) {
-		*(*p)++ = ' ';
-		len--;
-	}
-
-	memcpy(*p, str, len);
-	*p += len;
-	**p = '\0';
-
-	return 1;
-}
-
 void null_canonize(char *s)
 {
 }

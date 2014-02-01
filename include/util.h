@@ -39,7 +39,6 @@ extern void u_ntop(struct in_addr*, char*);
 extern void u_aton(char*, struct in_addr*);
 
 extern char *cut(char **p, char *delim);
-extern int wrap(char *base, char **p, uint w, char *str);
 
 extern void null_canonize();
 extern void rfc1459_canonize();
