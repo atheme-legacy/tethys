@@ -343,7 +343,7 @@ void u_user_send_isupport(u_user *u)
 	u_strop_wrap wrap;
 	char *s, *p, tmp[512];
 
-	u_strop_wrap_start(&wrap, 473 - strlen(me.name) - strlen(u->nick));
+	u_strop_wrap_start(&wrap, 510 - 37 - strlen(me.name) - strlen(u->nick));
 
 	for (cur=isupport; cur->name; cur++) {
 		p = tmp;
