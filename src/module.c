@@ -8,6 +8,9 @@
 
 static mowgli_list_t module_load_stack;
 
+static u_hook *module_load_hook = NULL;
+static u_hook *module_unload_hook = NULL;
+
 u_module *u_module_loading(void)
 {
 	if (module_load_stack.count == 0)
@@ -98,7 +101,7 @@ static const char *module_load_path(u_module **mp, const char *path,
 
 	m->flags |= MODULE_LOADED;
 
-	u_hook_call(HOOK_MODULE_LOAD, m);
+	u_hook_call(module_load_hook, m);
 
 	*mp = m;
 	return NULL;
@@ -125,7 +128,7 @@ static const char *module_load(u_module **mp, const char *name)
 
 static void module_unload(u_module *m)
 {
-	u_hook_call(HOOK_MODULE_UNLOAD, m);
+	u_hook_call(module_unload_hook, m);
 
 	if (m->info->deinit)
 		m->info->deinit(m);
@@ -266,6 +269,9 @@ int init_module(void)
 	   (but you won't see that sort of nonsense in the official repo). */
 	if (!(u_modules = mowgli_patricia_create(NULL)))
 		return -1;
+
+	module_load_hook = u_hook_get(HOOK_MODULE_LOAD);
+	module_unload_hook = u_hook_get(HOOK_MODULE_UNLOAD);
 
 	u_conf_add_handler("loadmodule", conf_loadmodule, NULL);
 

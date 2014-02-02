@@ -8,8 +8,11 @@
 #define __INC_HOOK_H__
 
 /* some tokens, to make using void* as a return type less clunky */
-#define U_HOOK_FALSE NULL
-#define U_HOOK_TRUE ((void*)1)
+#define U_HOOK_FALSE  NULL
+#define U_HOOK_TRUE   ((void*)1)
+
+#define U_HOOK_YES    U_HOOK_TRUE
+#define U_HOOK_MAYBE  U_HOOK_FALSE
 
 typedef void *(u_hook_fn_t)(void *priv, void *arg);
 
@@ -32,11 +35,13 @@ struct u_hook_cb {
 extern void u_hook_add(const char *name, u_hook_fn_t *fn, void *priv);
 extern void u_hook_delete(const char *name, u_hook_fn_t *fn, void *priv);
 
+extern u_hook *u_hook_get(const char *name);
+
 /* see hook.c for more in-depth explanations of the different ways to
    invoke a hook */
-extern void u_hook_call(const char *name, void *arg);
-extern void *u_hook_first(const char *name, void *arg);
-extern mowgli_list_t *u_hook_all(const char *name, void *arg);
+extern void u_hook_call(u_hook*, void *arg);
+extern void *u_hook_first(u_hook*, void *arg);
+extern mowgli_list_t *u_hook_all(u_hook*, void *arg);
 extern void u_hook_all_cleanup(mowgli_list_t*);
 
 extern int init_hook(void);
