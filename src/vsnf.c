@@ -228,7 +228,7 @@ top:
 	case 'G': /* generic connection */
 		conn = va_arg(va, u_conn*);
 
-		switch (conn ? conn->ctx : -1) {
+		switch ((conn && conn->priv) ? conn->ctx : -1) {
 		case CTX_USER:
 			user = conn->priv;
 			s_arg = (type == FMT_SERVER ? user->uid : user->nick);
