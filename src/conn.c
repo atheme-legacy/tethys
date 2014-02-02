@@ -189,7 +189,7 @@ void u_conn_vf(u_conn *conn, const char *fmt, va_list va)
 	}
 
 	vsnf(type, buf, 4096, fmt, va);
-	buf[512] = '\0'; /* i guess it works... */
+	buf[510] = '\0'; /* i guess it works... */
 
 	u_log(LG_DEBUG, "[%G] <- %s", conn, buf);
 
