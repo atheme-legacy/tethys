@@ -460,7 +460,7 @@ int u_chan_send_names(u_chan *c, u_user *u)
 	    : '=';
 
 	sz = strlen(me.name) + strlen(u->nick) + strlen(c->name) + 11;
-	u_strop_wrap_start(&wrap, 512 - sz);
+	u_strop_wrap_start(&wrap, 510 - sz);
 	U_MAP_EACH(&st, c->members, &tu, &cu) {
 		char *p, nbuf[MAXNICKLEN+3];
 

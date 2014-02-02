@@ -14,7 +14,7 @@ static void whois_channels(u_sourceinfo *si, u_user *tu)
 	char *s;
 
 	u_strop_wrap_start(&wrap,
-	    512 - MAXSERVNAME - MAXNICKLEN - MAXNICKLEN - 9);
+	    510 - MAXSERVNAME - MAXNICKLEN - MAXNICKLEN - 9);
 
 	U_MAP_EACH(&state, tu->channels, &c, &cu) {
 		char *p, cbuf[MAXCHANNAME+3];

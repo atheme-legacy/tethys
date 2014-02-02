@@ -338,7 +338,7 @@ static int burst_chan(const char *key, void *_c, void *_conn)
 	sz = snf(FMT_SERVER, buf, 512, ":%S SJOIN %u %s %s :",
 	         &me, c->ts, c->name, u_chan_modes(c, 1));
 
-	u_strop_wrap_start(&wrap, 512 - sz);
+	u_strop_wrap_start(&wrap, 510 - sz);
 	U_MAP_EACH(&st, c->members, &u, &cu) {
 		char *p, nbuf[12];
 
