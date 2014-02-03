@@ -50,7 +50,7 @@ static int c_u_whois(u_sourceinfo *si, u_msg *msg)
 	if ((s = strchr(nick, ','))) /* cut at ',' idk why */
 		*s = '\0';
 
-	if (!(tu = u_user_by_nick(nick)))
+	if (!(tu = u_user_by_ref(si->source, nick)))
 		return u_src_num(si, ERR_NOSUCHNICK, nick);
 
 
@@ -61,10 +61,12 @@ static int c_u_whois(u_sourceinfo *si, u_msg *msg)
 		char *server = msg->argv[0];
 		long_whois = true;
 		if (!(sv = u_server_by_ref(si->source, server))
-		    && irccmp(server, nick)) {
+		    && u_user_by_ref(si->source, server) != tu) {
 			u_src_num(si, ERR_NOSUCHSERVER, server);
 			return 0;
 		}
+		if (sv == NULL)
+			sv = u_user_server(tu);
 	}
 
 	if (sv != NULL && sv != &me) {
