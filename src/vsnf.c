@@ -158,16 +158,6 @@ top:
 
 	switch (*fmt) {
 	/* useful IRC formats */
-	case 'T': /* timestamp */
-		if (type == FMT_LOG) {
-			character(&buf, '(');
-			string(&buf, ctime(&NOW.tv_sec), 24, &spec);
-			character(&buf, ')');
-		} else {
-			integer(&buf, NOW.tv_sec, 0, 10, &spec);
-		}
-		break;
-
 	case 'U': /* user */
 		user = va_arg(va, u_user*);
 		if (type == FMT_SERVER) {
