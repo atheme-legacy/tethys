@@ -41,7 +41,7 @@ extern int snf(int, char*, uint, char*, ...);
    %S, u_server*   Prints the server name for USER and LOG, and a SID
                    for SERVER.
 
-   %C, u_char*     Prints the channel name in all cases.
+   %C, u_chan*     Prints the channel name in all cases.
 
    Only a limited subset of format specifier parameters (width, etc.) are
    supported. These go between % and the letter. I don't know how to
