@@ -31,15 +31,24 @@ static int do_mode_status(u_modes *m, int on, char *param)
 		return 1;
 	}
 
-	if (!(tgt = m->ctx->get_status_target(m, param)))
+	if (!m->ctx->get_status_target
+	    || !(tgt = m->ctx->get_status_target(m, param)))
 		return 1;
 
 	if (on) {
-		m->ctx->set_status_bits(m, tgt,
-		    m->info->arg.data);
+		if (m->stacker && m->stacker->put_status)
+			m->stacker->put_status(m, 1, tgt);
+
+		if (m->ctx->set_status_bits)
+			m->ctx->set_status_bits(m, tgt,
+			    m->info->arg.data);
 	} else {
-		m->ctx->reset_status_bits(m, tgt,
-		    m->info->arg.data);
+		if (m->stacker && m->stacker->put_status)
+			m->stacker->put_status(m, 0, tgt);
+
+		if (m->ctx->reset_status_bits)
+			m->ctx->reset_status_bits(m, tgt,
+			    m->info->arg.data);
 	}
 
 	u_log(LG_INFO, "%I %s status on %s", m->setter,
@@ -50,20 +59,30 @@ static int do_mode_status(u_modes *m, int on, char *param)
 
 static int do_mode_flag(u_modes *m, int on)
 {
-	ulong flags, flag;
+	ulong flags = 0, flag;
 
 	if (!m->access) {
 		m->errors |= MODE_ERR_NO_ACCESS;
 		return 0;
 	}
 
-	flags = m->ctx->get_flag_bits(m);
+	if (m->ctx->get_flag_bits)
+		flags = m->ctx->get_flag_bits(m);
 	flag = m->info->arg.data;
 
 	if (on && !(flags & flag)) {
-		m->ctx->set_flag_bits(m, flag);
+		if (m->stacker && m->stacker->put_flag)
+			m->stacker->put_flag(m, 1);
+
+		if (m->ctx->set_flag_bits)
+			m->ctx->set_flag_bits(m, flag);
+
 	} else if (!on && (flags & flag)) {
-		m->ctx->reset_flag_bits(m, flag);
+		if (m->stacker && m->stacker->put_flag)
+			m->stacker->put_flag(m, 0);
+
+		if (m->ctx->reset_flag_bits)
+			m->ctx->reset_flag_bits(m, flag);
 	}
 
 	u_log(LG_INFO, "%I %s 0x%x", m->setter,
@@ -103,6 +122,9 @@ int u_mode_process(u_modes *m, int parc, char **parv)
 	if (strlen(s) > MAX_MODES)
 		return -1;
 
+	if (m->stacker && m->stacker->start)
+		m->stacker->start(m);
+
 	for (; *s; s++) {
 		if (*s == '+' || *s == '-') {
 			on = *s == '+';
@@ -132,7 +154,13 @@ int u_mode_process(u_modes *m, int parc, char **parv)
 
 		switch (m->info->type) {
 		case MODE_EXTERNAL:
-			used = m->info->arg.fn(m, on, param);
+			if (m->info->arg.fn) {
+				used = m->info->arg.fn(m, on, param);
+			} else {
+				/* ??? */
+				m->errors |= MODE_ERR_UNK_CHAR;
+				*unk++ = *s;
+			}
 			break;
 
 		case MODE_STATUS:
@@ -155,6 +183,9 @@ int u_mode_process(u_modes *m, int parc, char **parv)
 	}
 
 	*unk = '\0';
+
+	if (m->stacker && m->stacker->end)
+		m->stacker->end(m);
 
 	return 0;
 }

@@ -11,6 +11,7 @@
 
 typedef struct u_mode_info u_mode_info;
 typedef struct u_mode_ctx u_mode_ctx;
+typedef struct u_mode_stacker u_mode_stacker;
 typedef struct u_modes u_modes;
 
 #include "msg.h"
@@ -50,6 +51,15 @@ struct u_mode_ctx {
 	mowgli_list_t *(*get_list)(u_modes*, u_mode_info*);
 };
 
+struct u_mode_stacker {
+	void (*start)(u_modes*);
+	void (*put_external)(u_modes*, int on, char *param);
+	void (*put_status)(u_modes*, int on, void *tgt);
+	void (*put_flag)(u_modes*, int on);
+	void (*put_banlist)(u_modes*, int on, u_chanban*);
+	void (*end)(u_modes*);
+};
+
 #define MODE_ERR_UNK_CHAR         0x0001
 #define MODE_ERR_NO_ACCESS        0x0002
 #define MODE_ERR_NOT_OPER         0x0004
@@ -58,6 +68,7 @@ struct u_mode_ctx {
 
 struct u_modes {
 	u_mode_ctx *ctx;
+	u_mode_stacker *stacker;
 	u_sourceinfo *setter;
 	void *target;
 	void *access;
@@ -66,6 +77,7 @@ struct u_modes {
 
 	ulong errors;
 	char unk[MAX_MODES+1];
+	void *stack; /* private use, by stacker */
 };
 
 extern int u_mode_process(u_modes *m, int parc, char **parv);
