@@ -29,7 +29,7 @@ static int c_a_squit(u_sourceinfo *si, u_msg *msg)
 	}
 
 	is_local = false;
-	if (sv == &me || sv->conn == si->source) {
+	if (sv == &me || sv == si->source->priv) {
 		if (sv == &me && SRC_IS_LOCAL_USER(si)) {
 			u_conn_f(si->source, ":%S NOTICE %U :%s",
 				 &me, si->u, "you are trying to squit me");
