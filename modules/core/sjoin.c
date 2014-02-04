@@ -61,6 +61,7 @@ static void apply_modes(u_sourceinfo *si, u_chan *c, u_msg *msg)
 {
 	u_modes m;
 
+	/*
 	m.setter = si;
 	m.target = c;
 	m.perms = &me;
@@ -71,6 +72,7 @@ static void apply_modes(u_sourceinfo *si, u_chan *c, u_msg *msg)
 		u_sendto_chan(c, NULL, ST_USERS, ":%I MODE %C %s%s",
 		              si, c, m.u.buf, m.u.data);
 	}
+	*/
 }
 
 static void join_uids(u_sourceinfo *si, u_chan *c, bool use_status,

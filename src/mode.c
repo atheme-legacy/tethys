@@ -6,76 +6,102 @@
 
 #include "ircd.h"
 
-static void changes_reset(u_mode_changes *c)
-{
-	c->setting = -1;
-	*(c->b = c->buf) = '\0';
-	*(c->d = c->data) = '\0';
-}
-
-static void changes_end(u_mode_changes *c)
-{
-	*c->b = '\0';
-	*c->d = '\0';
-}
-
-static void mode_put(u_mode_changes *c, int on, char ch, int type,
-                     char *fmt, void *p)
-{
-	if (c->setting != on) {
-		c->setting = on;
-		*c->b++ = (on ? '+' : '-');
-	}
-	*c->b++ = ch;
-	if (fmt != NULL)
-		c->d += snf(type, c->d, c->data+512-c->d, fmt, p);
-}
-
-void u_mode_put(u_modes *m, int on, char ch, char *fmt, void *p)
-{
-	u_mode_put_u(m, on, ch, fmt, p);
-	u_mode_put_s(m, on, ch, fmt, p);
-}
-
-void u_mode_put_u(u_modes *m, int on, char ch, char *fmt, void *p)
-{
-	mode_put(&m->u, on, ch, FMT_USER, fmt, p);
-}
-
-void u_mode_put_s(u_modes *m, int on, char ch, char *fmt, void *p)
-{
-	mode_put(&m->s, on, ch, FMT_SERVER, fmt, p);
-}
-
-void u_mode_put_l(u_modes *m, char ch)
-{
-	if (!strchr(m->list, ch)) {
-		*m->l++ = ch;
-		*m->l = '\0';
-	}
-}
-
 static u_mode_info *find_info(u_mode_info *info, char ch)
 {
-	for (; info->ch; info++) {
-		if (info->ch == ch)
-			return info;
-	}
-	return NULL;
+	info += ((unsigned) ch) & 0x7f; /* jump to offset in table */
+	return info->ch ? info : NULL;
 }
 
-void u_mode_process(u_modes *m, u_mode_info *infos, int parc, char **parv)
+static bool can_set_oper_only(u_sourceinfo *si)
 {
-	int used, on = 1;
-	char *s;
+	return SRC_HAS_BITS(si, SRC_LOCAL_OPER | SRC_REMOTE_USER | SRC_SERVER);
+}
 
-	changes_reset(&m->u);
-	changes_reset(&m->s);
-	m->l = m->list;
-	*m->l = '\0';
+static int do_mode_status(u_modes *m, int on, char *param)
+{
+	void *tgt;
 
-	s = *parv++;
+	if (!m->access) {
+		m->errors |= MODE_ERR_NO_ACCESS;
+		return 1;
+	}
+
+	if (param == NULL) {
+		m->errors |= MODE_ERR_MISSING_PARAM;
+		return 1;
+	}
+
+	if (!(tgt = m->ctx->get_status_target(m, param)))
+		return 1;
+
+	if (on) {
+		m->ctx->set_status_bits(m, tgt,
+		    m->info->arg.data);
+	} else {
+		m->ctx->reset_status_bits(m, tgt,
+		    m->info->arg.data);
+	}
+
+	u_log(LG_INFO, "%I %s status on %s", m->setter,
+	      on ? "set" : "cleared", param);
+
+	return 1;
+}
+
+static int do_mode_flag(u_modes *m, int on)
+{
+	ulong flags, flag;
+
+	if (!m->access) {
+		m->errors |= MODE_ERR_NO_ACCESS;
+		return 0;
+	}
+
+	flags = m->ctx->get_flag_bits(m);
+	flag = m->info->arg.data;
+
+	if (on && !(flags & flag)) {
+		m->ctx->set_flag_bits(m, flag);
+	} else if (!on && (flags & flag)) {
+		m->ctx->reset_flag_bits(m, flag);
+	}
+
+	u_log(LG_INFO, "%I %s 0x%x", m->setter,
+	      on ? "set" : "cleared", flag);
+
+	return 0;
+}
+
+static int do_mode_banlist(u_modes *m, int on, char *param)
+{
+	/* TODO: implement */
+
+	if (!param) {
+		u_log(LG_INFO, "%I wants to view list %c", m->setter,
+		      m->info->ch);
+		return 0;
+	}
+
+	u_log(LG_INFO, "%I wants to %s in list %c", m->setter,
+	      on ? "add" : "delete", param, on ? "to" : "from",
+	      m->info->ch);
+
+	return 0;
+}
+
+int u_mode_process(u_modes *m, int parc, char **parv)
+{
+	int used, any = 0, on = 1;
+	char *param;
+	char *s = *parv++;
+	char *unk = m->unk;
+
+	*unk = '\0';
+	m->errors = 0;
 	parc--;
+
+	if (strlen(s) > MAX_MODES)
+		return -1;
 
 	for (; *s; s++) {
 		if (*s == '+' || *s == '-') {
@@ -83,15 +109,52 @@ void u_mode_process(u_modes *m, u_mode_info *infos, int parc, char **parv)
 			continue;
 		}
 
-		/* TODO: *SAY SOMETHING* */
-		if (!(m->info = find_info(infos, *s)))
+		if (!(m->info = find_info(m->ctx->infotab, *s))) {
+			m->errors |= MODE_ERR_UNK_CHAR;
+			*unk++ = *s;
 			continue;
+		}
 
-		used = m->info->cb(m, on, parc > 0 ? parv[0] : NULL);
-		parc -= used;
-		parv += used;
+		if ((m->info->flags & MODE_OPER_ONLY) &&
+		    !can_set_oper_only(m->setter)) {
+			m->errors |= MODE_ERR_NOT_OPER;
+			continue;
+		}
+
+		if ((m->info->flags & MODE_UNSET_ONLY) && on) {
+			m->errors |= MODE_ERR_SET_UNSET_ONLY;
+			continue;
+		}
+
+		any++;
+		param = parc > 0 ? *parv : NULL;
+		used = 0;
+
+		switch (m->info->type) {
+		case MODE_EXTERNAL:
+			used = m->info->arg.fn(m, on, param);
+			break;
+
+		case MODE_STATUS:
+			used = do_mode_status(m, on, param);
+			break;
+
+		case MODE_FLAG:
+			do_mode_flag(m, on);
+			break;
+
+		case MODE_BANLIST:
+			used = do_mode_banlist(m, on, param);
+			break;
+		}
+
+		if (used && parc) {
+			parc--;
+			parv++;
+		}
 	}
 
-	changes_end(&m->u);
-	changes_end(&m->s);
+	*unk = '\0';
+
+	return 0;
 }

@@ -8,298 +8,126 @@
 
 mowgli_patricia_t *all_chans;
 
-static int cb_flag(u_modes*, int, char*);
-static int cb_list(u_modes*, int, char*);
-static int cb_prefix(u_modes*, int, char*);
+static ulong cmode_get_flag_bits(u_modes *m)
+{
+	return ((u_chan*) m->target)->mode;
+}
+
+static bool cmode_set_flag_bits(u_modes *m, ulong fl)
+{
+	((u_chan*) m->target)->mode |= fl;
+	return true;
+}
+
+static bool cmode_reset_flag_bits(u_modes *m, ulong fl)
+{
+	((u_chan*) m->target)->mode &= ~fl;
+	return true;
+}
+
+static void *cmode_get_status_target(u_modes *m, char *user)
+{
+	u_chan *c = m->target;
+	u_user *u;
+	u_chanuser *cu;
+
+	if (!(u = u_user_by_ref(m->setter->source, user))) {
+		u_src_num(m->setter, ERR_NOSUCHNICK, user);
+		return NULL;
+	}
+
+	if (!(cu = u_chan_user_find(c, u))) {
+		u_src_num(m->setter, ERR_USERNOTINCHANNEL, c, u);
+		return NULL;
+	}
+
+	return cu;
+}
+
+static bool cmode_set_status_bits(u_modes *m, void *tgt, ulong st)
+{
+	((u_chanuser*) tgt)->flags |= st;
+	return true;
+}
+
+static bool cmode_reset_status_bits(u_modes *m, void *tgt, ulong st)
+{
+	((u_chanuser*) tgt)->flags &= ~st;
+	return true;
+}
+
+static mowgli_list_t *cmode_get_list(u_modes *m, u_mode_info *info)
+{
+	u_chan *c = m->target;
+
+	switch (info->ch) {
+	case 'b': return &c->ban;
+	case 'e': return &c->banex;
+	case 'I': return &c->invex;
+	case 'q': return &c->quiet;
+	}
+
+	return NULL;
+}
+
 static int cb_fwd(u_modes*, int, char*);
 static int cb_key(u_modes*, int, char*);
 static int cb_limit(u_modes*, int, char*);
 
-static u_mode_info __cmodes[] = {
-	{ 'c', cb_flag,   CMODE_NOCOLOR              },
-	{ 'g', cb_flag,   CMODE_FREEINVITE           },
-	{ 'i', cb_flag,   CMODE_INVITEONLY           },
-	{ 'm', cb_flag,   CMODE_MODERATED            },
-	{ 'n', cb_flag,   CMODE_NOEXTERNAL           },
-	{ 'p', cb_flag,   CMODE_PRIVATE              },
-	{ 's', cb_flag,   CMODE_SECRET               },
-	{ 't', cb_flag,   CMODE_TOPIC                },
-	{ 'z', cb_flag,   CMODE_OPMOD                },
-	{ 'f', cb_fwd,                               },
-	{ 'k', cb_key,                               },
-	{ 'l', cb_limit,                             },
-	{ 'b', cb_list,   offsetof(u_chan, ban)      },
-	{ 'q', cb_list,   offsetof(u_chan, quiet)    },
-	{ 'e', cb_list,   offsetof(u_chan, banex)    },
-	{ 'I', cb_list,   offsetof(u_chan, invex)    },
-	{ 'o', cb_prefix, CU_PFX_OP                  },
-	{ 'v', cb_prefix, CU_PFX_VOICE               },
-	{ 0 }
+u_mode_info cmode_infotab[128] = {
+	['c'] = { 'c', MODE_FLAG, 0, { .data = CMODE_NOCOLOR } },
+	['g'] = { 'g', MODE_FLAG, 0, { .data = CMODE_FREEINVITE } },
+	['i'] = { 'i', MODE_FLAG, 0, { .data = CMODE_INVITEONLY } },
+	['m'] = { 'm', MODE_FLAG, 0, { .data = CMODE_MODERATED } },
+	['n'] = { 'n', MODE_FLAG, 0, { .data = CMODE_NOEXTERNAL } },
+	['p'] = { 'p', MODE_FLAG, 0, { .data = CMODE_PRIVATE } },
+	['s'] = { 's', MODE_FLAG, 0, { .data = CMODE_SECRET } },
+	['t'] = { 't', MODE_FLAG, 0, { .data = CMODE_TOPIC } },
+	['z'] = { 'z', MODE_FLAG, 0, { .data = CMODE_OPMOD } },
+
+	['f'] = { 'f', MODE_EXTERNAL, 0, { .fn = cb_fwd } },
+	['k'] = { 'k', MODE_EXTERNAL, 0, { .fn = cb_key } },
+	['l'] = { 'l', MODE_EXTERNAL, 0, { .fn = cb_limit } },
+
+	['b'] = { 'b', MODE_BANLIST },
+	['q'] = { 'q', MODE_BANLIST },
+	['e'] = { 'e', MODE_BANLIST },
+	['I'] = { 'I', MODE_BANLIST },
+
+	['o'] = { 'o', MODE_STATUS, 0, { .data = CU_PFX_OP } },
+	['v'] = { 'v', MODE_STATUS, 0, { .data = CU_PFX_VOICE } },
 };
 
-u_mode_info *cmodes = __cmodes;
+u_mode_ctx cmodes = {
+	.infotab             = cmode_infotab,
+
+	.get_flag_bits       = cmode_get_flag_bits,
+	.set_flag_bits       = cmode_set_flag_bits,
+	.reset_flag_bits     = cmode_reset_flag_bits,
+
+	.get_status_target   = cmode_get_status_target,
+	.set_status_bits     = cmode_set_status_bits,
+	.reset_status_bits   = cmode_reset_status_bits,
+
+	.get_list            = cmode_get_list,
+};
+
 uint cmode_default = CMODE_TOPIC | CMODE_NOEXTERNAL;
 
-static int cm_deny(u_modes *m)
-{
-	u_chanuser *cu;
-
-	if (m->perms == &me) /* dirty but clever but dirty */
-		return 0;
-
-	cu = m->perms;
-	if ((m->flags & CM_DENY) || !cu || !(cu->flags & CU_PFX_OP))
-		m->flags |= CM_DENY;
-	return m->flags & CM_DENY;
-}
-
-static int cb_flag(u_modes *m, int on, char *arg)
-{
-	u_chan *c = m->target;
-	uint oldm = c->mode;
-
-	if (cm_deny(m))
-		return 0;
-
-	if (on)
-		c->mode |= m->info->data;
-	else
-		c->mode &= ~m->info->data;
-
-	if (oldm != c->mode)
-		u_mode_put(m, on, m->info->ch, NULL, NULL);
-
-	return 0;
-}
-
-/* foo -> foo!*@*, aji@ -> *!aji@*, etc */
-static char *full_hostmask(char *mask)
-{
-	static char buf[512];
-	char *nick, *ident, *host, *ex, *at;
-
-	if (*mask == '$') {
-		/* extbans are untouched */
-		strcpy(buf, mask);
-		return buf;
-	}
-
-	nick = ident = host = "*";
-
-	ex = strchr(mask, '!');
-	at = strchr(mask, '@');
-
-	if (ex) *ex++ = '\0';
-	if (at) *at++ = '\0';
-
-	if (!ex && !at) { /* foo */
-		nick = mask;
-	} else if (!ex) { /* foo@bar, @bar, foo@ */
-		ident = mask;
-		host = at;
-	} else if (!at) { /* aji!ex, aji!, !ex */
-		nick = mask;
-		ident = ex;
-	} else { /* aji!i@host, !@host, etc. */
-		nick = mask;
-		ident = ex;
-		host = at;
-	}
-
-	if (!*nick) nick = "*";
-	if (!*ident) ident = "*";
-	if (!*host) host = "*";
-
-	sprintf(buf, "%s!%s@%s", nick, ident, host);
-	return buf;
-}
-
-static int cb_list(u_modes *m, int on, char *arg)
-{
-	u_chan *c = m->target;
-	u_sourceinfo *si = m->setter;
-	mowgli_list_t *list;
-	mowgli_node_t *n;
-	u_chanban *ban;
-	char *mask;
-
-	if (arg == NULL) {
-		if (on && (!strchr("eI", m->info->ch) || !cm_deny(m)))
-			u_mode_put_l(m, m->info->ch);
-		return 0;
-	}
-
-	if (cm_deny(m))
-		return 1;
-
-	list = (mowgli_list_t*)memberp(c, m->info->data);
-	mask = full_hostmask(arg);
-
-	MOWGLI_LIST_FOREACH(n, list->head) {
-		ban = n->data;
-		if (streq(ban->mask, mask)) {
-			if (!on) {
-				u_mode_put(m, on, m->info->ch, " %s", ban->mask);
-				mowgli_node_delete(&ban->n, list);
-				free(ban);
-			}
-			return 1;
-		}
-	}
-
-	if (on) {
-		if (mowgli_list_size(list) >= MAXBANLIST) {
-			u_log(LG_VERBOSE, "%C +%c full, not adding %s",
-		              c, m->info->ch, mask);
-			u_user_num(si->u, ERR_BANLISTFULL, c, mask);
-			return 1;
-		}
-
-		ban = malloc(sizeof(*ban));
-
-		u_strlcpy(ban->mask, mask, 256);
-		snf(FMT_USER, ban->setter, 256, "%I", si);
-		ban->time = NOW.tv_sec;
-
-		u_mode_put(m, on, m->info->ch, " %s", mask);
-		mowgli_node_add(ban, &ban->n, list);
-	}
-
-	return 1;
-}
-
-static int cb_prefix(u_modes *m, int on, char *arg)
-{
-	u_chan *c = m->target;
-	u_sourceinfo *si = m->setter;
-	u_chanuser *cu;
-	u_user *tu;
-
-	if (cm_deny(m) || arg == NULL)
-		return 1;
-
-	if (isdigit(arg[0])) {
-		tu = u_user_by_uid(arg);
-	} else {
-		tu = u_user_by_nick(arg);
-		if (tu == NULL) {
-			/* TODO: u_user_by_nick_history */
-			u_user_num(si->u, ERR_NOSUCHNICK, arg);
-			return 1;
-		}
-	}
-	if (tu == NULL)
-		return 1;
-
-	cu = u_chan_user_find(c, tu);
-	if (cu == NULL) {
-		u_user_num(si->u, ERR_USERNOTINCHANNEL, tu, c);
-		return 1;
-	}
-
-	if (on)
-		cu->flags |= m->info->data;
-	else
-		cu->flags &= ~m->info->data;
-	u_mode_put(m, on, m->info->ch, " %U", tu);
-
-	return 1;
-}
+/* I can always go back and look at master for what used to be here */
 
 static int cb_fwd(u_modes *m, int on, char *arg)
 {
-	u_sourceinfo *si = m->setter;
-	u_chan *tc, *c = m->target;
-	u_chanuser *tcu;
-
-	if (cm_deny(m))
-		return on;
-
-	if (!on) {
-		if (c->forward) {
-			free(c->forward);
-			c->forward = NULL;
-			u_mode_put(m, on, m->info->ch, NULL, NULL);
-		}
-		return 0;
-	}
-
-	if (arg == NULL)
-		return 0;
-
-	if (!(tc = u_chan_get(arg))) {
-		u_user_num(si->u, ERR_NOSUCHCHANNEL, arg);
-		return 1;
-	}
-
-	if (si->u) {
-		tcu = u_chan_user_find(tc, si->u);
-		/* TODO: +F */
-		if (tcu == NULL || !(tcu->flags & CU_PFX_OP)) {
-			u_user_num(si->u, ERR_CHANOPRIVSNEEDED, tc);
-			return 1;
-		}
-	}
-
-	if (c->forward)
-		free(c->forward);
-	c->forward = strdup(arg);
-
-	u_mode_put(m, on, m->info->ch, " %C", tc);
 	return 1;
 }
 
 static int cb_key(u_modes *m, int on, char *arg)
 {
-	u_chan *c = m->target;
-
-	if (cm_deny(m))
-		return 1;
-
-	if (!on) {
-		if (c->key) {
-			free(c->key);
-			c->key = NULL;
-			u_mode_put(m, on, m->info->ch, " %s", "*");
-		}
-		return 1;
-	}
-
-	if (!arg)
-		return 1;
-
-	if (c->key)
-		free(c->key);
-	c->key = strdup(arg);
-
-	u_mode_put(m, on, m->info->ch, " %s", arg);
-
 	return 1;
 }
 
 static int cb_limit(u_modes *m, int on, char *arg)
 {
-	u_chan *c = m->target;
-	int lim;
-
-	if (cm_deny(m))
-		return on;
-
-	if (!on) {
-		if (c->limit > 0)
-			u_mode_put(m, 0, 'l', NULL, NULL);
-		c->limit = -1;
-		return 0;
-	}
-
-	if (arg == NULL)
-		return 0;
-	lim = atoi(arg);
-	if (lim < 1)
-		return 1;
-	c->limit = lim;
-
-	u_mode_put(m, 1, 'l', " %d", (void*)c->limit);
 	return 1;
 }
 
@@ -402,13 +230,14 @@ char *u_chan_modes(u_chan *c, int on_chan)
 {
 	static char buf[512];
 	char chs[64], args[512];
-	u_mode_info *info;
+	const char *bit = CMODE_BITS;
 	char *s = chs, *p = args;
+	ulong mode = c->mode;
 
 	*s++ = '+';
-	for (info=cmodes; info->ch; info++) {
-		if (info->cb == cb_flag && (c->mode & info->data))
-			*s++ = info->ch;
+	for (; mode; bit++, mode >>= 1) {
+		if (mode & 1)
+			*s++ = *bit;
 	}
 
 	if (c->forward) {

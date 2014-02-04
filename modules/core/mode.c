@@ -6,6 +6,7 @@
 
 #include "ircd.h"
 
+/*
 static int mode_user(u_sourceinfo *si, char *s)
 {
 	u_modes m;
@@ -49,11 +50,13 @@ static void send_chan_mode_change(u_sourceinfo *si, u_modes *m, u_chan *c)
 		                 si, c->ts, c, m->s.buf, m->s.data);
 	}
 }
+*/
 
 /* this function is carefully written to handle both local and remote users
    and servers. */
 static int c_a_mode(u_sourceinfo *si, u_msg *msg)
 {
+/*
 	char *target = msg->argv[0];
 	int parc;
 	char **parv;
@@ -64,7 +67,7 @@ static int c_a_mode(u_sourceinfo *si, u_msg *msg)
 	if (!strchr(CHANTYPES, *target)) {
 		u_user *tu = u_user_by_ref(si->source, target);
 		if (tu == NULL) {
-			/* legacy chary behavior */
+			* legacy chary behavior *
 			u_user_num(si->u, ERR_NOSUCHCHANNEL, target);
 		} else if (si->u != tu) {
 			u_user_num(si->u, ERR_USERSDONTMATCH);
@@ -84,7 +87,7 @@ static int c_a_mode(u_sourceinfo *si, u_msg *msg)
 			return u_user_num(si->u, RPL_CHANNELMODEIS, c,
 					  u_chan_modes(c, !!m.perms));
 		}
-	} else { /* source is local server or remote user/server */
+	} else { * source is local server or remote user/server *
 		m.perms = &me;
 
 		if (msg->argc == 1)
@@ -117,10 +120,12 @@ static int c_a_mode(u_sourceinfo *si, u_msg *msg)
 	}
 
 	return 0;
+*/
 }
 
 static int c_r_tmode(u_sourceinfo *si, u_msg *msg)
 {
+/*
 	char *target = msg->argv[1];
 	int parc;
 	char **parv;
@@ -132,7 +137,7 @@ static int c_r_tmode(u_sourceinfo *si, u_msg *msg)
 		             si->source, target);
 	}
 
-	/* TODO: check TS */
+	* TODO: check TS *
 
 	parc = msg->argc - 2;
 	parv = msg->argv + 2;
@@ -145,6 +150,7 @@ static int c_r_tmode(u_sourceinfo *si, u_msg *msg)
 	u_mode_process(&m, cmodes, parc, parv);
 
 	send_chan_mode_change(si, &m, c);
+*/
 }
 
 static u_cmd mode_cmdtab[] = {

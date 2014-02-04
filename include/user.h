@@ -40,6 +40,9 @@ typedef struct u_user u_user;
 typedef struct u_user_local u_user_local;
 typedef struct u_user_remote u_user_remote;
 
+#include "conn.h"
+#include "server.h"
+
 struct u_user {
 	char uid[10];
 
@@ -82,7 +85,7 @@ struct u_user_remote {
 extern mowgli_patricia_t *users_by_nick;
 extern mowgli_patricia_t *users_by_uid;
 
-extern u_mode_info *umodes;
+/*extern u_mode_info *umodes;*/
 extern uint umode_default;
 
 extern u_user *u_user_create_local(u_conn *conn);

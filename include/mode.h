@@ -7,46 +7,67 @@
 #ifndef __INC_MODE_H__
 #define __INC_MODE_H__
 
-#define MODE_BUFSIZE 512
+#define MAX_MODES 256
 
 typedef struct u_mode_info u_mode_info;
-typedef struct u_mode_changes u_mode_changes;
+typedef struct u_mode_ctx u_mode_ctx;
 typedef struct u_modes u_modes;
+
+#include "msg.h"
+
+typedef enum u_mode_type {
+	MODE_EXTERNAL,
+	MODE_STATUS,
+	MODE_FLAG,
+	MODE_BANLIST,
+} u_mode_type;
+
+#define MODE_OPER_ONLY         0x0001
+#define MODE_UNSET_ONLY        0x0002
 
 struct u_mode_info {
 	char ch;
-	/* return bool, if used arg or not */
-	int (*cb)(u_modes*, int on, char *arg);
-	ulong data;
-};
-
-struct u_mode_changes {
-	int setting;
-	char *b, buf[MODE_BUFSIZE];
-	char *d, data[MODE_BUFSIZE];
-};
-
-struct u_modes {
-	/* opaque, untouched by mode */
-	void *setter;
-	void *target;
-	void *perms;
+	u_mode_type type;
 	ulong flags;
 
-	/* in callback, currently-processed info */
-	u_mode_info *info;
-
-	/* string buffers, edited by u_mode_put functions */
-	u_mode_changes u;
-	u_mode_changes s;
-	char *l, list[32];
+	union {
+		int (*fn)(u_modes*, int on, char *arg);
+		ulong data;
+	} arg;
 };
 
-extern void u_mode_put(u_modes*, int on, char ch, char *fmt, void *p);
-extern void u_mode_put_u(u_modes*, int on, char ch, char *fmt, void *p);
-extern void u_mode_put_s(u_modes*, int on, char ch, char *fmt, void *p);
-extern void u_mode_put_l(u_modes*, char ch);
+struct u_mode_ctx {
+	u_mode_info *infotab;
 
-extern void u_mode_process(u_modes *m, u_mode_info *info, int parc, char **parv);
+	ulong (*get_flag_bits)(u_modes*);
+	bool (*set_flag_bits)(u_modes*, ulong); /* |= */
+	bool (*reset_flag_bits)(u_modes*, ulong); /* &= ~ */
+
+	void *(*get_status_target)(u_modes*, char*);
+	bool (*set_status_bits)(u_modes*, void *tgt, ulong);
+	bool (*reset_status_bits)(u_modes*, void *tgt, ulong);
+
+	mowgli_list_t *(*get_list)(u_modes*, u_mode_info*);
+};
+
+#define MODE_ERR_UNK_CHAR         0x0001
+#define MODE_ERR_NO_ACCESS        0x0002
+#define MODE_ERR_NOT_OPER         0x0004
+#define MODE_ERR_SET_UNSET_ONLY   0x0008
+#define MODE_ERR_MISSING_PARAM    0x0010
+
+struct u_modes {
+	u_mode_ctx *ctx;
+	u_sourceinfo *setter;
+	void *target;
+	void *access;
+
+	u_mode_info *info;
+
+	ulong errors;
+	char unk[MAX_MODES+1];
+};
+
+extern int u_mode_process(u_modes *m, int parc, char **parv);
 
 #endif

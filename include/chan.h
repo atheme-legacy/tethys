@@ -28,6 +28,8 @@
 #define CMODE_NOCOLOR      0x00000080  /* +c */
 #define CMODE_FREEINVITE   0x00000100  /* +g */
 
+#define CMODE_BITS "psitnmzcg" /* kind of terrible */
+
 #define CM_DENY   0x01
 
 /* prefixes */
@@ -39,6 +41,10 @@
 typedef struct u_chan u_chan;
 typedef struct u_chanuser u_chanuser;
 typedef struct u_chanban u_chanban;
+
+#include "chan.h"
+#include "user.h"
+#include "mode.h"
 
 struct u_chan {
 	u_ts_t ts;
@@ -71,7 +77,8 @@ struct u_chanban {
 
 extern mowgli_patricia_t *all_chans;
 
-extern u_mode_info *cmodes;
+extern u_mode_info cmode_infotab[128];
+extern u_mode_ctx cmodes;
 extern uint cmode_default;
 
 extern u_chan *u_chan_get(char*);
