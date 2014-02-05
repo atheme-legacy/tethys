@@ -89,10 +89,10 @@ u_mode_info cmode_infotab[128] = {
 	['k'] = { 'k', MODE_EXTERNAL, 0, { .fn = cb_key } },
 	['l'] = { 'l', MODE_EXTERNAL, 0, { .fn = cb_limit } },
 
-	['b'] = { 'b', MODE_BANLIST },
-	['q'] = { 'q', MODE_BANLIST },
-	['e'] = { 'e', MODE_BANLIST },
-	['I'] = { 'I', MODE_BANLIST },
+	['b'] = { 'b', MODE_LIST },
+	['q'] = { 'q', MODE_LIST },
+	['e'] = { 'e', MODE_LIST },
+	['I'] = { 'I', MODE_LIST },
 
 	['o'] = { 'o', MODE_STATUS, 0, { .data = CU_PFX_OP } },
 	['v'] = { 'v', MODE_STATUS, 0, { .data = CU_PFX_VOICE } },
@@ -315,7 +315,7 @@ int u_chan_send_names(u_chan *c, u_user *u)
 int u_chan_send_list(u_chan *c, u_user *u, mowgli_list_t *list)
 {
 	mowgli_node_t *n;
-	u_chanban *ban;
+	u_listent *ban;
 	int entry, end;
 
 	if (list == &c->quiet) {
@@ -499,7 +499,7 @@ static int matches_ban(u_chan *c, u_user *u, char *mask, char *host)
 static int is_in_list(u_chan *c, u_user *u, char *host, mowgli_list_t *list)
 {
 	mowgli_node_t *n;
-	u_chanban *ban;
+	u_listent *ban;
 
 	MOWGLI_LIST_FOREACH(n, list->head) {
 		ban = n->data;

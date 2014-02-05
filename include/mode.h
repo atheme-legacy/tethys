@@ -9,10 +9,20 @@
 
 #define MAX_MODES 256
 
+typedef struct u_listent u_listent;
 typedef struct u_mode_info u_mode_info;
 typedef struct u_mode_ctx u_mode_ctx;
 typedef struct u_mode_stacker u_mode_stacker;
 typedef struct u_modes u_modes;
+
+#define MAXBANLIST  50
+
+struct u_listent {
+	char mask[256];
+	char setter[256];
+	u_ts_t time;
+	mowgli_node_t n;
+};
 
 #include "msg.h"
 
@@ -20,7 +30,7 @@ typedef enum u_mode_type {
 	MODE_EXTERNAL,
 	MODE_STATUS,
 	MODE_FLAG,
-	MODE_BANLIST,
+	MODE_LIST,
 } u_mode_type;
 
 #define MODE_OPER_ONLY         0x0001
@@ -53,11 +63,14 @@ struct u_mode_ctx {
 
 struct u_mode_stacker {
 	void (*start)(u_modes*);
+	void (*end)(u_modes*);
+
 	void (*put_external)(u_modes*, int on, char *param);
 	void (*put_status)(u_modes*, int on, void *tgt);
 	void (*put_flag)(u_modes*, int on);
-	void (*put_banlist)(u_modes*, int on, u_chanban*);
-	void (*end)(u_modes*);
+	void (*put_listent)(u_modes*, int on, u_listent*);
+
+	void (*send_list)(u_modes*);
 };
 
 #define MODE_ERR_UNK_CHAR         0x0001
@@ -65,6 +78,7 @@ struct u_mode_stacker {
 #define MODE_ERR_NOT_OPER         0x0004
 #define MODE_ERR_SET_UNSET_ONLY   0x0008
 #define MODE_ERR_MISSING_PARAM    0x0010
+#define MODE_ERR_LIST_FULL        0x0020
 
 struct u_modes {
 	u_mode_ctx *ctx;

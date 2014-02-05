@@ -405,7 +405,7 @@ void u_user_welcome(u_user_local *ul)
 static int is_in_list(char *host, mowgli_list_t *list)
 {
 	mowgli_node_t *n;
-	u_chanban *ban;
+	u_listent *ban;
 
 	if (!host || !list)
 		return 0;

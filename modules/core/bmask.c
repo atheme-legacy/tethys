@@ -32,7 +32,7 @@ static void apply_bmask(u_sourceinfo *si, u_chan *c, char type,
                         mowgli_list_t *list, char *mask)
 {
 	mowgli_node_t *n;
-	u_chanban *ban;
+	u_listent *ban;
 
 	/* there's GOT to be a better way! */
 	MOWGLI_LIST_FOREACH(n, list->head) {

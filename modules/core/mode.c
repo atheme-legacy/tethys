@@ -61,7 +61,7 @@ static void cmode_stacker_put_flag(u_modes *m, int on)
 	              m->setter, on ? '+' : '-', m->info->ch);
 }
 
-static void cmode_stacker_put_banlist(u_modes *m, int on, u_chanban *ban)
+static void cmode_stacker_put_listent(u_modes *m, int on, u_listent *ban)
 {
 	u_sendto_chan(m->target, NULL, ST_USERS, ":%I MODE %c%c %s",
 	              m->setter, on ? '+' : '-', m->info->ch, ban->mask);
@@ -69,11 +69,14 @@ static void cmode_stacker_put_banlist(u_modes *m, int on, u_chanban *ban)
 
 static u_mode_stacker cmode_stacker = {
 	.start          = NULL,
+	.end            = NULL,
+
 	.put_external   = cmode_stacker_put_external,
 	.put_status     = cmode_stacker_put_status,
 	.put_flag       = cmode_stacker_put_flag,
-	.put_banlist    = cmode_stacker_put_banlist,
-	.end            = NULL,
+	.put_listent    = cmode_stacker_put_listent,
+
+	.send_list      = NULL,
 };
 
 /* this function is carefully written to handle both local and remote users

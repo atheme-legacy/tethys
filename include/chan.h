@@ -9,7 +9,6 @@
 
 #define MAXCHANNAME 50
 #define MAXTOPICLEN 250
-#define MAXBANLIST  50
 
 #define CHANTYPES "#&"
 
@@ -40,7 +39,6 @@
 
 typedef struct u_chan u_chan;
 typedef struct u_chanuser u_chanuser;
-typedef struct u_chanban u_chanban;
 
 #include "chan.h"
 #include "user.h"
@@ -66,13 +64,6 @@ struct u_chanuser {
 	u_cookie ck_flags;
 	u_chan *c;
 	u_user *u;
-};
-
-struct u_chanban {
-	char mask[256];
-	char setter[256];
-	u_ts_t time;
-	mowgli_node_t n;
 };
 
 extern mowgli_patricia_t *all_chans;

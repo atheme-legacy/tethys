@@ -17,6 +17,48 @@ static bool can_set_oper_only(u_sourceinfo *si)
 	return SRC_HAS_BITS(si, SRC_LOCAL_OPER | SRC_REMOTE_USER | SRC_SERVER);
 }
 
+/* foo -> foo!*@*, aji@ -> *!aji@*, etc */
+static char *fix_hostmask(char *mask)
+{
+	static char buf[512];
+	char *nick, *ident, *host, *ex, *at;
+
+	if (*mask == '$') {
+		/* extbans are untouched */
+		strcpy(buf, mask);
+		return buf;
+	}
+
+	nick = ident = host = "*";
+
+	ex = strchr(mask, '!');
+	at = strchr(mask, '@');
+
+	if (ex) *ex++ = '\0';
+	if (at) *at++ = '\0';
+
+	if (!ex && !at) { /* foo */
+		nick = mask;
+	} else if (!ex) { /* foo@bar, @bar, foo@ */
+		ident = mask;
+		host = at;
+	} else if (!at) { /* aji!ex, aji!, !ex */
+		nick = mask;
+		ident = ex;
+	} else { /* aji!i@host, !@host, etc. */
+		nick = mask;
+		ident = ex;
+		host = at;
+	}
+
+	if (!*nick) nick = "*";
+	if (!*ident) ident = "*";
+	if (!*host) host = "*";
+
+	snprintf(buf, 512, "%s!%s@%s", nick, ident, host);
+	return buf;
+}
+
 static int do_mode_status(u_modes *m, int on, char *param)
 {
 	void *tgt;
@@ -91,19 +133,64 @@ static int do_mode_flag(u_modes *m, int on)
 	return 0;
 }
 
-static int do_mode_banlist(u_modes *m, int on, char *param)
+static int do_mode_list(u_modes *m, int on, char *param)
 {
-	/* TODO: implement */
+	mowgli_list_t *list;
+	mowgli_node_t *n;
+	u_listent *ban;
+	char *mask;
 
 	if (!param) {
-		u_log(LG_INFO, "%I wants to view list %c", m->setter,
-		      m->info->ch);
+		if (m->stacker && m->stacker->send_list)
+			m->stacker->send_list(m);
 		return 0;
 	}
 
-	u_log(LG_INFO, "%I wants to %s %s %s list %c", m->setter,
-	      on ? "add" : "delete", param, on ? "to" : "from",
-	      m->info->ch);
+	if (!m->access) {
+		m->errors |= MODE_ERR_NO_ACCESS;
+		return 1;
+	}
+
+	if (!m->ctx->get_list) {
+		u_log(LG_SEVERE, "List mode without list support in context!");
+		return 1;
+	}
+
+	list = m->ctx->get_list(m, m->info);
+	mask = fix_hostmask(param);
+
+	MOWGLI_LIST_FOREACH(n, list->head) {
+		ban = n->data;
+		if (streq(ban->mask, mask)) {
+			if (!on) {
+				if (m->stacker && m->stacker->put_listent)
+					m->stacker->put_listent(m, 0, ban);
+				mowgli_node_delete(&ban->n, list);
+				free(ban);
+			}
+			return 1;
+		}
+	}
+
+	if (on) {
+		if (mowgli_list_size(list) >= MAXBANLIST) {
+			/* should this be handed to stacker? */
+			u_log(LG_VERBOSE, "+%c full, not adding %s",
+		              m->info->ch, mask);
+			m->errors |= MODE_ERR_LIST_FULL;
+			return 1;
+		}
+
+		ban = malloc(sizeof(*ban));
+
+		u_strlcpy(ban->mask, mask, 256);
+		snf(FMT_USER, ban->setter, 256, "%I", m->setter);
+		ban->time = NOW.tv_sec;
+
+		if (m->stacker && m->stacker->put_listent)
+			m->stacker->put_listent(m, 1, ban);
+		mowgli_node_add(ban, &ban->n, list);
+	}
 
 	return 1;
 }
@@ -171,8 +258,8 @@ int u_mode_process(u_modes *m, int parc, char **parv)
 			do_mode_flag(m, on);
 			break;
 
-		case MODE_BANLIST:
-			used = do_mode_banlist(m, on, param);
+		case MODE_LIST:
+			used = do_mode_list(m, on, param);
 			break;
 		}
 
