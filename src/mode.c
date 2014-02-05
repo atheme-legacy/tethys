@@ -101,11 +101,11 @@ static int do_mode_banlist(u_modes *m, int on, char *param)
 		return 0;
 	}
 
-	u_log(LG_INFO, "%I wants to %s in list %c", m->setter,
+	u_log(LG_INFO, "%I wants to %s %s %s list %c", m->setter,
 	      on ? "add" : "delete", param, on ? "to" : "from",
 	      m->info->ch);
 
-	return 0;
+	return 1;
 }
 
 int u_mode_process(u_modes *m, int parc, char **parv)
