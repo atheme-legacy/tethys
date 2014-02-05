@@ -18,17 +18,17 @@
 #define CHAN_PERMANENT     0x00000002
 
 /* channel modes */
-#define CMODE_PRIVATE      0x00000001  /* +p */
-#define CMODE_SECRET       0x00000002  /* +s */
+#define CMODE_NOCOLOR      0x00000001  /* +c */
+#define CMODE_FREEINVITE   0x00000002  /* +g */
 #define CMODE_INVITEONLY   0x00000004  /* +i */
-#define CMODE_TOPIC        0x00000008  /* +t */
+#define CMODE_MODERATED    0x00000008  /* +m */
 #define CMODE_NOEXTERNAL   0x00000010  /* +n */
-#define CMODE_MODERATED    0x00000020  /* +m */
-#define CMODE_OPMOD        0x00000040  /* +z */
-#define CMODE_NOCOLOR      0x00000080  /* +c */
-#define CMODE_FREEINVITE   0x00000100  /* +g */
+#define CMODE_PRIVATE      0x00000020  /* +p */
+#define CMODE_SECRET       0x00000040  /* +s */
+#define CMODE_TOPIC        0x00000080  /* +t */
+#define CMODE_OPMOD        0x00000100  /* +z */
 
-#define CMODE_BITS "psitnmzcg" /* kind of terrible */
+#define CMODE_BITS "cgimnpstz" /* kind of terrible */
 
 #define CM_DENY   0x01
 
