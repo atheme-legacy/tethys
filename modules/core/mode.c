@@ -67,6 +67,23 @@ static void cmode_stacker_put_listent(u_modes *m, int on, u_listent *ban)
 	              m->setter, on ? '+' : '-', m->info->ch, ban->mask);
 }
 
+static void cmode_stacker_send_list(u_modes *m)
+{
+	mowgli_list_t *list;
+
+	if (!m->setter->u) {
+		u_log(LG_WARN, "Tried to send list to non-user");
+		return;
+	}
+
+	if (!(list = m->ctx->get_list(m, m->info))) {
+		u_log(LG_SEVERE, "Can't send a list we don't have!!");
+		return;
+	}
+
+	u_chan_send_list(m->target, m->setter->u, list);
+}
+
 static u_mode_stacker cmode_stacker = {
 	.start          = NULL,
 	.end            = NULL,
@@ -76,7 +93,7 @@ static u_mode_stacker cmode_stacker = {
 	.put_flag       = cmode_stacker_put_flag,
 	.put_listent    = cmode_stacker_put_listent,
 
-	.send_list      = NULL,
+	.send_list      = cmode_stacker_send_list,
 };
 
 /* this function is carefully written to handle both local and remote users
