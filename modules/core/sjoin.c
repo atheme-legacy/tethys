@@ -223,6 +223,7 @@ static int c_s_sjoin(u_sourceinfo *si, u_msg *msg)
 		return ts_rules(si, c, ts, msg);
 
 	c = u_chan_create(channame);
+	c->ts = ts;
 	ts_equal(si, c, msg);
 }
 
