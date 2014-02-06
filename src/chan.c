@@ -70,6 +70,12 @@ static mowgli_list_t *cmode_get_list(u_modes *m, u_mode_info *info)
 	return NULL;
 }
 
+static void cmode_sync(u_modes *m)
+{
+	u_chan *c = m->target;
+	u_cookie_inc(&c->ck_flags);
+}
+
 static int cb_fwd(u_modes*, int, char*);
 static int cb_key(u_modes*, int, char*);
 static int cb_limit(u_modes*, int, char*);
@@ -110,6 +116,8 @@ u_mode_ctx cmodes = {
 	.reset_status_bits   = cmode_reset_status_bits,
 
 	.get_list            = cmode_get_list,
+
+	.sync                = cmode_sync,
 };
 
 uint cmode_default = CMODE_TOPIC | CMODE_NOEXTERNAL;

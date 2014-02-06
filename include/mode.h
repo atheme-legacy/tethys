@@ -59,6 +59,8 @@ struct u_mode_ctx {
 	bool (*reset_status_bits)(u_modes*, void *tgt, ulong);
 
 	mowgli_list_t *(*get_list)(u_modes*, u_mode_info*);
+
+	void (*sync)(u_modes*);
 };
 
 struct u_mode_stacker {

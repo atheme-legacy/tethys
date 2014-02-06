@@ -274,5 +274,8 @@ int u_mode_process(u_modes *m, int parc, char **parv)
 	if (m->stacker && m->stacker->end)
 		m->stacker->end(m);
 
+	if (m->ctx->sync)
+		m->ctx->sync(m);
+
 	return 0;
 }
