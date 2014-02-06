@@ -215,6 +215,11 @@ void u_user_try_register(u_user *u)
 	if (u->flags & USER_MASK_WAIT)
 		return;
 
+	if (!(conn->auth = u_find_auth(conn))) {
+		u_conn_fatal(conn, "No auth blocks for your host");
+		return;
+	}
+
 	conn->flags |= U_CONN_REGISTERED;
 	u_strlcpy(u->ip, conn->ip, INET_ADDRSTRLEN);
 	u_strlcpy(u->realhost, conn->host, MAXHOST+1);
