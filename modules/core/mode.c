@@ -39,32 +39,92 @@ static int mode_user(u_sourceinfo *si, char *s)
 */
 }
 
-/* TODO: this is kind of brain-damaged and needs to be redone to use buffers */
+struct cmode_stacker_buf {
+	int on;
+	char *c, cbuf[512]; /* mode char buffer */
+	char *d, dbuf[512]; /* mode data buffer */
+};
+
+struct cmode_stacker_private {
+	struct cmode_stacker_buf u, s;
+};
+
+static void cmode_stacker_buf_init(struct cmode_stacker_buf *b)
+{
+	b->on = -1;
+	b->c = b->cbuf;
+	b->d = b->dbuf;
+	*b->c = '\0';
+	*b->d = '\0';
+}
+
+static void cmode_stacker_buf_put(struct cmode_stacker_buf *b, int on,
+                                  char ch, char *param)
+{
+	if (b->on != on) {
+		*b->c++ = on ? '+' : '-';
+		b->on = on;
+	}
+
+	*b->c++ = ch;
+
+	if (param != NULL)
+		b->d += snprintf(b->d, b->dbuf + 512 - b->d, " %s", param);
+
+	*b->c = '\0';
+	*b->d = '\0';
+}
+
+static void cmode_stacker_start(u_modes *m)
+{
+	struct cmode_stacker_private *p = m->stack;
+	cmode_stacker_buf_init(&p->u);
+	cmode_stacker_buf_init(&p->s);
+}
+
+static void cmode_stacker_end(u_modes *m)
+{
+	u_chan *c = m->target;
+	struct cmode_stacker_private *p = m->stack;
+
+	if (p->u.on != -1) {
+		u_sendto_chan(m->target, NULL, ST_USERS, ":%I MODE %C %s%s",
+		              m->setter, c, p->u.cbuf, p->u.dbuf);
+	}
+
+	if (p->s.on != -1) {
+		u_sendto_servers(m->setter->source, ":%I TMODE %u %C %s%s",
+		                 m->setter, c->ts, c, p->s.cbuf, p->s.dbuf);
+	}
+}
 
 static void cmode_stacker_put_external(u_modes *m, int on, char *param)
 {
-	u_sendto_chan(m->target, NULL, ST_USERS, ":%I MODE %c%c%s%s",
-	              m->setter, on ? '+' : '-',
-	              m->info->ch, param ? " " : "", param ? param : "");
+	struct cmode_stacker_private *p = m->stack;
+	cmode_stacker_buf_put(&p->u, on, m->info->ch, param);
+	cmode_stacker_buf_put(&p->s, on, m->info->ch, param);
 }
 
 static void cmode_stacker_put_status(u_modes *m, int on, void *tgt)
 {
+	struct cmode_stacker_private *p = m->stack;
 	u_chanuser *cu = tgt;
-	u_sendto_chan(m->target, NULL, ST_USERS, ":%I MODE %c%c %U",
-	              m->setter, on ? '+' : '-', m->info->ch, cu->u);
+	cmode_stacker_buf_put(&p->u, on, m->info->ch, cu->u->nick);
+	cmode_stacker_buf_put(&p->s, on, m->info->ch, cu->u->uid);
 }
 
 static void cmode_stacker_put_flag(u_modes *m, int on)
 {
-	u_sendto_chan(m->target, NULL, ST_USERS, ":%I MODE %c%c",
-	              m->setter, on ? '+' : '-', m->info->ch);
+	struct cmode_stacker_private *p = m->stack;
+	cmode_stacker_buf_put(&p->u, on, m->info->ch, NULL);
+	cmode_stacker_buf_put(&p->s, on, m->info->ch, NULL);
 }
 
 static void cmode_stacker_put_listent(u_modes *m, int on, u_listent *ban)
 {
-	u_sendto_chan(m->target, NULL, ST_USERS, ":%I MODE %c%c %s",
-	              m->setter, on ? '+' : '-', m->info->ch, ban->mask);
+	struct cmode_stacker_private *p = m->stack;
+	cmode_stacker_buf_put(&p->u, on, m->info->ch, ban->mask);
+	cmode_stacker_buf_put(&p->s, on, m->info->ch, ban->mask);
 }
 
 static void cmode_stacker_send_list(u_modes *m)
@@ -85,8 +145,8 @@ static void cmode_stacker_send_list(u_modes *m)
 }
 
 static u_mode_stacker cmode_stacker = {
-	.start          = NULL,
-	.end            = NULL,
+	.start          = cmode_stacker_start,
+	.end            = cmode_stacker_end,
 
 	.put_external   = cmode_stacker_put_external,
 	.put_status     = cmode_stacker_put_status,
@@ -105,6 +165,7 @@ static int c_a_mode(u_sourceinfo *si, u_msg *msg)
 	char **parv;
 	u_chan *c;
 	u_modes m;
+	struct cmode_stacker_private stack;
 
 	if (!strchr(CHANTYPES, *target)) {
 		u_user *tu = u_user_by_ref(si->source, target);
@@ -151,6 +212,7 @@ static int c_a_mode(u_sourceinfo *si, u_msg *msg)
 	m.stacker = &cmode_stacker;
 	m.setter = si;
 	m.target = c;
+	m.stack = &stack;
 
 	u_mode_process(&m, parc, parv);
 
