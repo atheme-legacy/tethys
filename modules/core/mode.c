@@ -228,32 +228,34 @@ static int c_a_mode(u_sourceinfo *si, u_msg *msg)
 
 static int c_r_tmode(u_sourceinfo *si, u_msg *msg)
 {
-/*
 	char *target = msg->argv[1];
 	int parc;
 	char **parv;
 	u_chan *c;
 	u_modes m;
+	struct cmode_stacker_private stack;
 
 	if (!(c = u_chan_get(target))) {
 		return u_log(LG_ERROR, "%G tried to TMODE nonexistent %s",
 		             si->source, target);
 	}
 
-	* TODO: check TS *
+	if (atoi(msg->argv[0]) > c->ts)
+		return 0;
 
 	parc = msg->argc - 2;
 	parv = msg->argv + 2;
 
+	m.ctx = &cmodes;
+	m.stacker = &cmode_stacker;
 	m.setter = si;
 	m.target = c;
-	m.perms = &me;
-	m.flags = 0;
+	m.access = &me;
+	m.stack = &stack;
 
-	u_mode_process(&m, cmodes, parc, parv);
+	u_mode_process(&m, parc, parv);
 
-	send_chan_mode_change(si, &m, c);
-*/
+	return 0;
 }
 
 static u_cmd mode_cmdtab[] = {
