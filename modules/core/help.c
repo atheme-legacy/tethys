@@ -167,25 +167,22 @@ static void help_destroy(const char *key, void *data, void *unused)
 	free(help);
 }
 
+static inline int filter_cmd(int ch)
+{
+	if (!isalnum(ch))
+		return '\0';
+	else
+		return tolower(ch);
+}
+
 static int c_lu_help(u_sourceinfo *si, u_msg *msg)
 {
-	const char *cmd = msg->argv[0];
-	char *c = msg->argv[0];
+	char *cmd = msg->argv[0];
 	mowgli_list_t *lines = NULL;
 	mowgli_node_t *n;
 	bool invalid = false;
 
-	for ( ; *c; ++c)
-	{
-		/* Downcase (case-sensitive FS etc.) and strip out non-alnum */
-		if (!isalnum(*c))
-			/* Finish lowercasing but mark as invalid */
-			invalid = true;
-
-		*c = tolower(*c);
-	}
-
-	if (invalid)
+	if (!(invalid = str_transform(cmd, &filter_cmd)))
 		return u_src_num(si, ERR_HELPNOTFOUND, cmd);
 
 	/* Check for oper status */

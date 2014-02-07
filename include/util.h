@@ -94,4 +94,31 @@ static inline int mowgli_list_size(mowgli_list_t *list)
 	return list->count;
 }
 
+static inline bool str_transform(char *ch, int (*filter)(int))
+{
+	char *c;
+	bool pass = true;
+
+	for (c = ch; *c; ++c)
+	{
+		char nc = filter(*c);
+		if (nc == '\0')
+			pass = false;
+		else
+			*c = nc;
+	}
+
+	return pass;
+}
+
+static inline void str_lower(char *ch)
+{
+	str_transform(ch, &tolower);
+}
+
+static inline void str_upper(char *ch)
+{
+	str_transform(ch, &toupper);
+}
+
 #endif
