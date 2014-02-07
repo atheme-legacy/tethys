@@ -104,6 +104,22 @@ struct u_modes {
 
 extern int u_mode_process(u_modes *m, int parc, char **parv);
 
+static inline void u_mode_put(u_modes *m, int on, char *param)
+{
+	if (m && m->stacker && m->stacker->put_external)
+		m->stacker->put_external(m, on, param);
+}
+
+static inline bool u_mode_has_access(u_modes *m)
+{
+	if (!m->access && !(m->flags & MODE_FORCE_ALL)) {
+		m->errors |= MODE_ERR_NO_ACCESS;
+		return false;
+	}
+
+	return true;
+}
+
 /* simple buffered mode stacker. provides put_external, put_flag, and
    put_listent, but sending the result must be handled by the user. */
 extern u_mode_stacker u_mode_buf_stacker;

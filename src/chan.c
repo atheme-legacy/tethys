@@ -122,20 +122,102 @@ u_mode_ctx cmodes = {
 
 uint cmode_default = CMODE_TOPIC | CMODE_NOEXTERNAL;
 
-/* I can always go back and look at master for what used to be here */
-
 static int cb_fwd(u_modes *m, int on, char *arg)
 {
+	u_chan *tc, *c = m->target;
+	u_chanuser *tcu;
+
+	if (!u_mode_has_access(m))
+		return on;
+
+	if (!on) {
+		if (c->forward) {
+			free(c->forward);
+			c->forward = NULL;
+			u_mode_put(m, on, NULL);
+		}
+		return 0;
+	}
+
+	if (arg == NULL)
+		return 0;
+
+	if (!(tc = u_chan_get(arg))) {
+		u_src_num(m->setter, ERR_NOSUCHCHANNEL, arg);
+		return 1;
+	}
+
+	if (m->setter->u && !(m->flags & MODE_FORCE_ALL)) {
+		tcu = u_chan_user_find(tc, m->setter->u);
+
+		if (tcu == NULL || !(tcu->flags & CU_PFX_OP)) {
+			u_src_num(m->setter, ERR_CHANOPRIVSNEEDED, tc);
+			return 1;
+		}
+	}
+
+	if (c->forward)
+		free(c->forward);
+	c->forward = strdup(arg);
+	u_mode_put(m, on, arg);
+
 	return 1;
 }
 
 static int cb_key(u_modes *m, int on, char *arg)
 {
+	u_chan *c = m->target;
+
+	if (!u_mode_has_access(m))
+		return 1;
+
+	if (!on) {
+		if (c->key) {
+			free(c->key);
+			c->key = NULL;
+			u_mode_put(m, on, "*");
+		}
+		return 1;
+	}
+
+	if (arg == NULL)
+		return 0;
+
+	if (c->key)
+		free(c->key);
+	c->key = strdup(arg);
+
+	u_mode_put(m, on, c->key);
 	return 1;
 }
 
 static int cb_limit(u_modes *m, int on, char *arg)
 {
+	char buf[128];
+	u_chan *c = m->target;
+	int lim;
+
+	if (!u_mode_has_access(m))
+		return on;
+
+	if (!on) {
+		if (c->limit > 0)
+			u_mode_put(m, 0, NULL);
+		c->limit = -1;
+		return 0;
+	}
+
+	if (arg == NULL)
+		return 0;
+
+	lim = atoi(arg);
+	if (lim < 1)
+		return 1;
+
+	c->limit = lim;
+	snprintf(buf, 128, "%d", lim);
+	u_mode_put(m, 1, buf);
+
 	return 1;
 }
 

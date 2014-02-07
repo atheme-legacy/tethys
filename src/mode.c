@@ -63,10 +63,8 @@ static int do_mode_status(u_modes *m, int on, char *param)
 {
 	void *tgt;
 
-	if (!m->access && !(m->flags & MODE_FORCE_ALL)) {
-		m->errors |= MODE_ERR_NO_ACCESS;
+	if (!u_mode_has_access(m))
 		return 1;
-	}
 
 	if (param == NULL) {
 		m->errors |= MODE_ERR_MISSING_PARAM;
@@ -103,10 +101,8 @@ static int do_mode_flag(u_modes *m, int on)
 {
 	ulong flags = 0, flag;
 
-	if (!m->access && !(m->flags & MODE_FORCE_ALL)) {
-		m->errors |= MODE_ERR_NO_ACCESS;
-		return 0;
-	}
+	if (!u_mode_has_access(m))
+		return 1;
 
 	if (m->ctx->get_flag_bits)
 		flags = m->ctx->get_flag_bits(m);
@@ -146,10 +142,8 @@ static int do_mode_list(u_modes *m, int on, char *param)
 		return 0;
 	}
 
-	if (!m->access && !(m->flags & MODE_FORCE_ALL)) {
-		m->errors |= MODE_ERR_NO_ACCESS;
+	if (!u_mode_has_access(m))
 		return 1;
-	}
 
 	if (!m->ctx->get_list) {
 		u_log(LG_SEVERE, "List mode without list support in context!");
