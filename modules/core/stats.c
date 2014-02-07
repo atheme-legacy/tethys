@@ -177,7 +177,7 @@ static int c_u_stats(u_sourceinfo *si, u_msg *msg)
 
 		if (sv != &me) {
 			u_conn_f(sv->conn, ":%I STATS %s %S", si, name, sv);
-			return;
+			return 0;
 		}
 	}
 
