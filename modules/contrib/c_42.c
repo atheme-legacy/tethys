@@ -18,6 +18,7 @@ u_cmd c_42 = {"42", SRC_LOCAL_USER, m_42, 0};
 int c_42_init(u_module *m)
 {
 	u_cmd_reg(&c_42);
+	return 0;
 }
 
 TETHYS_MODULE_V1(

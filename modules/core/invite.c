@@ -29,7 +29,7 @@ static int c_u_invite(u_sourceinfo *si, u_msg *msg)
 		int ts = atoi(msg->argv[2]);
 		if (ts > c->ts) {
 			u_log(LG_INFO, "Dropping s2s INVITE for newer channel");
-			return;
+			return 0;
 		}
 	} else {
 		u_log(LG_WARN, "%G sent s2s INVITE without channel TS",
@@ -46,6 +46,8 @@ static int c_u_invite(u_sourceinfo *si, u_msg *msg)
 
 	if (SRC_IS_LOCAL_USER(si))
 		u_src_num(si, RPL_INVITING, tu, c);
+
+	return 0;
 }
 
 static u_cmd invite_cmdtab[] = {

@@ -43,7 +43,7 @@ static int m_alias(u_sourceinfo *si, u_msg *msg)
 
 unavailable:
 	u_conn_num(si->link, ERR_SERVICESDOWN, to->target);
-	return;
+	return 0;
 }
 
 static void add_alias(char *from, char *target)

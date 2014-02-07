@@ -31,11 +31,11 @@ static void whois_channels(u_sourceinfo *si, u_user *tu)
 			*p++ = '+';
 		strcpy(p, c->name);
 
-		while (s = u_strop_wrap_word(&wrap, cbuf))
+		while ((s = u_strop_wrap_word(&wrap, cbuf)))
 			u_src_num(si, RPL_WHOISCHANNELS, tu->nick, s);
 	}
 
-	if (s = u_strop_wrap_word(&wrap, NULL)) /* leftovers */
+	if ((s = u_strop_wrap_word(&wrap, NULL))) /* leftovers */
 		u_src_num(si, RPL_WHOISCHANNELS, tu->nick, s);
 }
 

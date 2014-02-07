@@ -145,6 +145,8 @@ static int c_r_tmode(u_sourceinfo *si, u_msg *msg)
 	u_mode_process(&m, cmodes, parc, parv);
 
 	send_chan_mode_change(si, &m, c);
+
+	return 0;
 }
 
 static u_cmd mode_cmdtab[] = {

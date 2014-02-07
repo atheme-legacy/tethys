@@ -299,7 +299,7 @@ static int cb_limit(u_modes *m, int on, char *arg)
 		return 1;
 	c->limit = lim;
 
-	u_mode_put(m, 1, 'l', " %d", (void*)c->limit);
+	u_mode_put(m, 1, 'l', " %d", (void *)&c->limit);
 	return 1;
 }
 

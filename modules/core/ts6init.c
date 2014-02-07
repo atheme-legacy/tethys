@@ -16,6 +16,8 @@ static int c_us_pass(u_sourceinfo *si, u_msg *msg)
 	if (si->source->pass != NULL)
 		free(si->source->pass);
 	si->source->pass = strdup(msg->argv[0]);
+
+	return 0;
 }
 
 static int c_us_capab(u_sourceinfo *si, u_msg *msg)

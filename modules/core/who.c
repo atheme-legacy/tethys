@@ -41,7 +41,7 @@ static void who_reply(u_sourceinfo *si, u_user *u, u_chan *c, u_chanuser *cu)
 	          u->nick, buf, 0, u->gecos);
 }
 
-static c_lu_who(u_sourceinfo *si, u_msg *msg)
+static int c_lu_who(u_sourceinfo *si, u_msg *msg)
 {
 	u_user *u;
 	u_chan *c = NULL;

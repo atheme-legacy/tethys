@@ -167,7 +167,7 @@ top:
 			q = (user && user->nick[0]) ? user->nick : "*";
 			string(&buf, q, -1, &spec);
 			if (debug) {
-				integer(&buf, (int)user, 0, 16, NULL);
+				integer(&buf, (size_t)user, 0, 16, NULL);
 				character(&buf, ']');
 			}
 		}
@@ -185,7 +185,7 @@ top:
 			string(&buf, user->host, -1, NULL);
 			if (debug) {
 				character(&buf, '[');
-				integer(&buf, (int)user, 0, 16, NULL);
+				integer(&buf, (size_t)user, 0, 16, NULL);
 				character(&buf, ']');
 			}
 		}
@@ -196,7 +196,7 @@ top:
 		string(&buf, chan?chan->name:"*", -1, &spec);
 		if (debug) {
 			character(&buf, '[');
-			integer(&buf, (int)chan, 0, 16, NULL);
+			integer(&buf, (size_t)chan, 0, 16, NULL);
 			character(&buf, ']');
 		}
 		break;
@@ -209,7 +209,7 @@ top:
 			string(&buf, server->name, -1, &spec);
 			if (debug) {
 				character(&buf, '[');
-				integer(&buf, (int)server, 0, 16, NULL);
+				integer(&buf, (size_t)server, 0, 16, NULL);
 				character(&buf, ']');
 			}
 		}

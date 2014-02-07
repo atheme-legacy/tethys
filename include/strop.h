@@ -19,7 +19,7 @@ struct u_strop_state {
 
 #define U_STROP_SPLIT(STATE, STRING, DELIM, LOC) \
 	for (u_strop_split_start((STATE), (STRING), (DELIM)); \
-	     *(LOC) = u_strop_split_next((STATE)); )
+	     (*(LOC) = u_strop_split_next((STATE))); )
 
 extern void u_strop_split_start(u_strop_state*, char*, char*);
 extern char *u_strop_split_next(u_strop_state*);

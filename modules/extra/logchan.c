@@ -38,8 +38,10 @@ static void *on_log(void *unused, void *_log)
 {
 	struct hook_log *log = _log;
 	if (log->level > LG_VERBOSE)
-		return;
+		return NULL;
 	logchanf("%s", log->line);
+
+	return NULL;
 }
 
 static int logchan_init(u_module *m)
