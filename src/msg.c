@@ -455,6 +455,13 @@ static bool run_command(u_cmd *cmd, u_sourceinfo *si, u_msg *msg)
 {
 	struct timeval start, end, diff;
 
+	/* Rate limiting */
+	if (cmd->rate.deduction > 0 && si->u != NULL &&
+	    !u_ratelimit_allow(si->u, &cmd->rate, cmd->name))
+	{
+		return false;
+	}
+
 	if (cmd->nargs && msg->argc < cmd->nargs) {
 		u_conn_num(si->source, ERR_NEEDMOREPARAMS, cmd->name);
 		return false;

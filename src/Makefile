@@ -14,6 +14,7 @@ SRCS = numeric.c \
 	mode.c \
 	module.c \
 	msg.c \
+	ratelimit.c \
 	sendto.c \
 	server.c \
 	strop.c \

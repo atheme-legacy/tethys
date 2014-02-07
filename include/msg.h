@@ -114,6 +114,8 @@ struct u_cmd {
 
 	int nargs;
 
+	u_ratelimit_cmd_t rate;
+
 	int propagation;
 
 	/* users should not initialize the rest of this struct to

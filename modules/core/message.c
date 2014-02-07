@@ -81,8 +81,8 @@ static int c_a_message(u_sourceinfo *si, u_msg *msg)
 
 static u_cmd message_cmdtab[] = {
 	/* I'm pretty sure this will drop a PRIVMSG from a server */
-	{ "PRIVMSG",  SRC_USER,  c_a_message, 2 },
-	{ "NOTICE",   SRC_ANY,   c_a_message, 2 },
+	{ "PRIVMSG",  SRC_USER,  c_a_message, 2, U_RATELIMIT_STD },
+	{ "NOTICE",   SRC_ANY,   c_a_message, 2, U_RATELIMIT_STD },
 	{ },
 };
 

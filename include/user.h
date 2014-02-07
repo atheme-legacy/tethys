@@ -60,6 +60,8 @@ struct u_user {
 	char gecos[MAXGECOS+1];
 
 	char away[MAXAWAY+1];
+
+	u_ratelimit_t limit;
 };
 
 struct u_user_local {

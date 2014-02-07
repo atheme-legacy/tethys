@@ -37,7 +37,7 @@ static int c_s_tb(u_sourceinfo *si, u_msg *msg)
 }
 
 static u_cmd tb_cmdtab[] = {
-	{ "TB", SRC_SERVER, c_s_tb, 3, CMD_PROP_BROADCAST },
+	{ "TB", SRC_SERVER, c_s_tb, 3, U_RATELIMIT_NONE, CMD_PROP_BROADCAST },
 	{ }
 };
 

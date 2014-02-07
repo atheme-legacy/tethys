@@ -77,6 +77,7 @@ typedef unsigned long u_ts_t;
 #include "conn.h"
 #include "mode.h"
 #include "server.h"
+#include "ratelimit.h"
 #include "user.h"
 #include "chan.h"
 #include "module.h"

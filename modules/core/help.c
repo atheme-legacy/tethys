@@ -184,7 +184,7 @@ static int c_lu_help(u_sourceinfo *si, u_msg *msg)
 }
 
 static u_cmd help_cmdtab[] = {
-	{ "HELP", SRC_LOCAL_USER,         c_lu_help, 1 },
+	{ "HELP", SRC_LOCAL_USER,         c_lu_help, 1, U_RATELIMIT_MID },
 	{ }
 };
 
