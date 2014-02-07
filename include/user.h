@@ -37,8 +37,6 @@
 #define USER_WAIT_CAPS         0x00010000
 
 typedef struct u_user u_user;
-typedef struct u_user_local u_user_local;
-typedef struct u_user_remote u_user_remote;
 
 #include "conn.h"
 #include "server.h"
@@ -66,24 +64,13 @@ struct u_user {
 	char away[MAXAWAY+1];
 
 	u_ratelimit_t limit;
+
+	u_conn *link; /* never null, except when shutting down */
+	u_oper *oper; /* local opers only */
+	u_server *sv; /* never null */
 };
 
-struct u_user_local {
-	u_user user;
-	u_conn *conn;
-	u_oper *oper;
-};
-
-struct u_user_remote {
-	u_user user;
-	u_server *server;
-};
-
-#define USER(U) ((u_user*)(U))
-#define USER_LOCAL(U) ((u_user_local*)(U))
-#define USER_REMOTE(U) ((u_user_remote*)(U))
-
-#define IS_LOCAL_USER(u) ((USER(u)->flags & USER_IS_LOCAL) != 0)
+#define IS_LOCAL_USER(u) ((u->flags & USER_IS_LOCAL) != 0)
 
 extern mowgli_patricia_t *users_by_nick;
 extern mowgli_patricia_t *users_by_uid;
@@ -97,9 +84,6 @@ extern u_user *u_user_create_remote(u_server*, char *uid);
 extern void u_user_destroy(u_user*);
 
 extern void u_user_try_register(u_user*);
-
-extern u_conn *u_user_conn(u_user*);
-extern u_server *u_user_server(u_user*);
 
 extern u_user *u_user_by_nick(char*);
 extern u_user *u_user_by_uid(char*);
@@ -121,7 +105,7 @@ extern int u_user_num(u_user*, int num, ...);
 extern void u_user_send_isupport(u_user*);
 extern void u_user_send_motd(u_user*);
 
-extern void u_user_welcome(u_user_local*);
+extern void u_user_welcome(u_user*);
 
 extern void u_user_make_euid(u_user*, char *buf); /* sizeof(buf) > 512 */
 

@@ -25,8 +25,6 @@ static void who_reply(u_sourceinfo *si, u_user *u, u_chan *c, u_chanuser *cu)
 	if (cu == NULL) /* this is an error */
 		c = NULL;
 
-	sv = u_user_server(u);
-
 	s = buf;
 	*s++ = u->away[0] ? 'G' : 'H';
 	if (u->mode & UMODE_OPER)
@@ -37,7 +35,7 @@ static void who_reply(u_sourceinfo *si, u_user *u, u_chan *c, u_chanuser *cu)
 		*s++ = '+';
 	*s = '\0';
 
-	u_src_num(si, RPL_WHOREPLY, c, u->ident, u->host, sv->name,
+	u_src_num(si, RPL_WHOREPLY, c, u->ident, u->host, u->sv->name,
 	          u->nick, buf, 0, u->gecos);
 }
 

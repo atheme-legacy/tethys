@@ -11,7 +11,6 @@ static int c_u_invite(u_sourceinfo *si, u_msg *msg)
 	u_user *tu;
 	u_chan *c;
 	u_chanuser *cu;
-	u_conn *tlink;
 
 	if (!(tu = u_user_by_ref(si->source, msg->argv[0])))
 		return u_src_num(si, ERR_NOSUCHNICK, msg->argv[0]);
@@ -36,12 +35,11 @@ static int c_u_invite(u_sourceinfo *si, u_msg *msg)
 		      si->source);
 	}
 
-	tlink = u_user_conn(tu);
 	if (IS_LOCAL_USER(tu)) {
 		u_add_invite(c, tu);
-		u_conn_f(tlink, ":%I INVITE %U :%C", si, tu, c);
+		u_conn_f(tu->link, ":%I INVITE %U :%C", si, tu, c);
 	} else {
-		u_conn_f(tlink, ":%I INVITE %U %C :%u", si, tu, c, c->ts);
+		u_conn_f(tu->link, ":%I INVITE %U %C :%u", si, tu, c, c->ts);
 	}
 
 	if (SRC_IS_LOCAL_USER(si))

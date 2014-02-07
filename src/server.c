@@ -298,7 +298,6 @@ static int burst_uid(const char *key, void *value, void *priv)
 {
 	u_user *u = value;
 	u_conn *conn = priv;
-	u_server *sv = u_user_server(u);
 
 	/* NOTE: this is legacy, but I'm keeping it around anyway */
 
@@ -306,8 +305,8 @@ static int burst_uid(const char *key, void *value, void *priv)
                                    hops     ident    uid
                                       nickts   host     gecos    */
 	u_conn_f(conn, ":%S UID %s %d %u %s %s %s %s %s :%s",
-	         sv,
-	         u->nick, sv->hops + 1, u->nickts,
+	         u->sv,
+	         u->nick, u->sv->hops + 1, u->nickts,
 	         "+", u->ident, u->host,
 	         u->ip, u->uid, u->gecos);
 

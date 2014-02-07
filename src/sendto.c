@@ -104,11 +104,10 @@ void u_sendto_visible(u_user *u, uint type, char *fmt, ...)
 {
 	u_sendto_state st;
 	u_conn *conn;
-	u_conn *exclude = u_user_conn(u);
 	va_list va;
 
 	va_start(va, fmt);
-	U_SENDTO_VISIBLE(&st, u, exclude, type, &conn)
+	U_SENDTO_VISIBLE(&st, u, u->link, type, &conn)
 		u_sendto(conn, "%s", ln(conn, fmt, va));
 	va_end(va);
 }
@@ -178,26 +177,22 @@ void u_sendto_chan_start(u_sendto_state *state, u_chan *c,
 
 bool u_sendto_chan_next(u_sendto_state *state, u_conn **conn_ret)
 {
-	u_conn *conn;
 	u_user *u;
 	u_chanuser *cu;
 
 	if (state->type == ST_STOP)
 		return false;
 
-	conn = NULL;
 next_conn:
 	if (!u_map_each_next(&state->members, (void**)&u, (void**)&cu))
 		return false;
 
-	if (!(conn = u_user_conn(u)))
+	if (!want_send(state->type, u->link))
 		goto next_conn;
-	if (!want_send(state->type, conn))
-		goto next_conn;
-	if (!u_cookie_cmp(&conn->ck_sendto, &ck_sendto))
+	if (!u_cookie_cmp(&u->link->ck_sendto, &ck_sendto))
 		goto next_conn;
 
-	*conn_ret = conn;
+	*conn_ret = u->link;
 	return true;
 }
 
@@ -222,14 +217,12 @@ void u_sendto_visible_start(u_sendto_state *state, u_user *u,
 
 bool u_sendto_visible_next(u_sendto_state *state, u_conn **conn_ret)
 {
-	u_conn *conn;
 	u_user *u;
 	u_chanuser *cu;
 
 	if (state->type == ST_STOP)
 		return false;
 
-	conn = NULL;
 next_conn:
 	if (!state->c) {
 		if (!u_map_each_next(&state->chans, (void**)&state->c, NULL))
@@ -244,14 +237,12 @@ next_conn:
 		goto next_conn;
 	}
 
-	if (!(conn = u_user_conn(u)))
+	if (!u_cookie_cmp(&u->link->ck_sendto, &ck_sendto))
 		goto next_conn;
-	if (!u_cookie_cmp(&conn->ck_sendto, &ck_sendto))
-		goto next_conn;
-	if (!want_send(state->type, conn))
+	if (!want_send(state->type, u->link))
 		goto next_conn;
 
-	*conn_ret = conn;
+	*conn_ret = u->link;
 	return true;
 }
 

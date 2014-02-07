@@ -238,11 +238,8 @@ static void ts_lose(u_sourceinfo *si, u_chan *c, u_modes *m, u_msg *msg)
 
 	/* remove all statuses from local users */
 	U_MAP_EACH(&st, c->members, &u, &cu) {
-		u_conn *link;
-
 		if (!IS_LOCAL_USER(u))
 			continue;
-		link = u_user_conn(u);
 
 		get_status(cu, 0, m, NULL);
 		cu->flags = 0;

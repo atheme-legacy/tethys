@@ -76,11 +76,11 @@ void user_shutdown(u_conn *conn)
 	u_user_destroy(u);
 }
 
-static u_user *create_user(char *uid, size_t sz)
+static u_user *create_user(char *uid, u_conn *link, u_server *sv)
 {
 	u_user *u;
 
-	if (!(u = calloc(1, sz))) {
+	if (!(u = calloc(1, sizeof(*u)))) {
 		u_log(LG_SEVERE, "calloc() failed");
 		abort();
 	}
@@ -92,6 +92,12 @@ static u_user *create_user(char *uid, size_t sz)
 	u->invites = u_map_new(0);
 
 	u_ratelimit_init(u);
+
+	u->link = link;
+	u->oper = NULL;
+	u->sv = sv;
+
+	u->sv->nusers++;
 
 	return u;
 }
@@ -105,17 +111,15 @@ u_user *u_user_create_local(u_conn *conn)
 		return NULL;
 
 	snprintf(uid, 10, "%s%s", me.sid, id_next());
-	u = create_user(uid, sizeof(u_user_local));
+	u = create_user(uid, conn, &me);
 
 	u->mode = umode_default;
 	u->flags = USER_IS_LOCAL;
 
-	USER_LOCAL(u)->conn = conn;
 	conn->ctx = CTX_USER;
 	conn->priv = u;
 	conn->shutdown = user_shutdown;
 
-	me.nusers++;
 	u_log(LG_VERBOSE, "New local user, uid=%s", u->uid);
 
 	return u;
@@ -129,10 +133,7 @@ u_user *u_user_create_remote(u_server *sv, char *uid)
 		u_log(LG_WARN, "Adding remote user with wrong SID!");
 		u_log(LG_INFO, "     uid=%s, sv->sid=%s", uid, sv->sid);
 	}
-	u = create_user(uid, sizeof(u_user_remote));
-
-	USER_REMOTE(u)->server = sv;
-	sv->nusers++;
+	u = create_user(uid, sv->conn, &me);
 
 	u_log(LG_VERBOSE, "New remote user, uid=%s", u->uid);
 
@@ -146,16 +147,13 @@ void user_destroy_cb(u_map *map, u_chan *c, u_chanuser *cu, void *priv)
 
 void u_user_destroy(u_user *u)
 {
-	u_server *sv = u_user_server(u);
-
 	u_log(LG_VERBOSE, "Destroying user uid=%s (%U)", u->uid, u);
 
 	if (IS_LOCAL_USER(u)) {
-		u_user_local *ul = USER_LOCAL(u);
-		if (ul->conn) {
-			ul->conn->priv = NULL;
-			u_conn_shutdown(ul->conn);
-			ul->conn = NULL;
+		if (u->link) {
+			u->link->priv = NULL;
+			u_conn_shutdown(u->link);
+			u->link = NULL;
 		}
 	}
 
@@ -169,25 +167,20 @@ void u_user_destroy(u_user *u)
 		mowgli_patricia_delete(users_by_nick, u->nick);
 	mowgli_patricia_delete(users_by_uid, u->uid);
 
-	if (sv != NULL)
-		sv->nusers--;
+	u->sv->nusers--;
 
 	free(u);
 }
 
 void u_user_try_register(u_user *u)
 {
-	u_user_local *ul;
-	u_conn *conn;
-
 	if (!IS_LOCAL_USER(u))
 		return;
-	ul = USER_LOCAL(u);
-	conn = ul->conn;
-	if (!conn || (conn->flags & U_CONN_REGISTERED))
+
+	if (!u->link || (u->link->flags & U_CONN_REGISTERED))
 		return;
 
-	if (!conn->host[0])
+	if (!u->link->host[0])
 		return;
 
 	if (!u->nick[0] || !u->ident[0])
@@ -196,36 +189,16 @@ void u_user_try_register(u_user *u)
 	if (u->flags & USER_MASK_WAIT)
 		return;
 
-	if (!(conn->auth = u_find_auth(conn))) {
-		u_conn_fatal(conn, "No auth blocks for your host");
+	if (!(u->link->auth = u_find_auth(u->link))) {
+		u_conn_fatal(u->link, "No auth blocks for your host");
 		return;
 	}
 
-	conn->flags |= U_CONN_REGISTERED;
-	u_strlcpy(u->ip, conn->ip, INET_ADDRSTRLEN);
-	u_strlcpy(u->realhost, conn->host, MAXHOST+1);
-	u_strlcpy(u->host, conn->host, MAXHOST+1);
-	u_user_welcome(ul);
-}
-
-u_conn *u_user_conn(u_user *u)
-{
-	if (u == NULL)
-		return NULL;
-	if (IS_LOCAL_USER(u))
-		return USER_LOCAL(u)->conn;
-	else
-		return USER_REMOTE(u)->server->conn;
-}
-
-u_server *u_user_server(u_user *u)
-{
-	if (u == NULL)
-		return NULL;
-	if (IS_LOCAL_USER(u))
-		return &me;
-	else
-		return USER_REMOTE(u)->server;
+	u->link->flags |= U_CONN_REGISTERED;
+	u_strlcpy(u->ip, u->link->ip, INET_ADDRSTRLEN);
+	u_strlcpy(u->realhost, u->link->host, MAXHOST+1);
+	u_strlcpy(u->host, u->link->host, MAXHOST+1);
+	u_user_welcome(u);
 }
 
 u_user *u_user_by_nick(char *nick)
@@ -275,7 +248,6 @@ void u_user_set_nick(u_user *u, char *nick, uint ts)
 
 void u_user_vnum(u_user *u, int num, va_list va)
 {
-	u_conn *conn;
 	char *tgt;
 
 	if (!IS_LOCAL_USER(u)) {
@@ -286,8 +258,7 @@ void u_user_vnum(u_user *u, int num, va_list va)
 			tgt = "*";
 	}
 
-	conn = u_user_conn(u);
-	u_conn_vnum(conn, tgt, num, va);
+	u_conn_vnum(u->link, tgt, num, va);
 }
 
 int u_user_num(u_user *u, int num, ...)
@@ -366,9 +337,8 @@ void u_user_send_motd(u_user *u)
 	u_user_num(u, RPL_ENDOFMOTD);
 }
 
-void u_user_welcome(u_user_local *ul)
+void u_user_welcome(u_user *u)
 {
-	u_user *u = USER(ul);
 	char buf[512];
 
 	u_log(LG_DEBUG, "user: welcoming %s", u->nick);
@@ -409,13 +379,11 @@ int u_user_in_list(u_user *u, mowgli_list_t *list)
 
 void u_user_make_euid(u_user *u, char *buf)
 {
-	u_server *sv = u_user_server(u);
-
 	/* still ridiculous...              nick  nickts   host  uid   acct
                                                hops  modes    ip    rlhost gecos
                                                         ident                    */
 	snf(FMT_SERVER, buf, 512, ":%S EUID %s %d %u %s %s %s %s %s %s %s :%s",
-	    sv, u->nick, sv->hops + 1, u->nickts,
+	    u->sv, u->nick, u->sv->hops + 1, u->nickts,
 	    u_user_modes(u),
 	    u->ident, u->host, u->ip, u->uid, u->realhost,
 	    u->acct[0] ? u->acct : "*", u->gecos);

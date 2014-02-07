@@ -265,7 +265,7 @@ u_conn *ref_link(u_conn *ctx, char *ref)
 	if (ctx && ctx->ctx == CTX_SERVER && isdigit(ref[0])) {
 		if (ref[3]) {
 			u_user *u = u_user_by_uid(ref);
-			return u ? u_user_conn(u) : NULL;
+			return u ? u->link : NULL;
 		} else {
 			u_server *sv = u_server_by_sid(ref);
 			return sv ? sv->conn : NULL;
@@ -273,7 +273,7 @@ u_conn *ref_link(u_conn *ctx, char *ref)
 	} else {
 		if (!strchr(ref, '.')) {
 			u_user *u = u_user_by_nick(ref);
-			return u ? u_user_conn(u) : NULL;
+			return u ? u->link : NULL;
 		} else {
 			u_server *sv = u_server_by_name(ref);
 			return sv ? sv->conn : NULL;
@@ -287,7 +287,7 @@ char *conn_name(u_conn *conn)
 
 	switch (conn->ctx) {
 	case CTX_USER:
-		name = USER(conn->priv)->nick;
+		name = ((u_user*)conn->priv)->nick;
 		break;
 	case CTX_SERVER:
 		name = SERVER(conn->priv)->name;
@@ -303,7 +303,7 @@ char *conn_id(u_conn *conn)
 
 	switch (conn->ctx) {
 	case CTX_USER:
-		id = USER(conn->priv)->uid;
+		id = ((u_user*)conn->priv)->uid;
 		break;
 	case CTX_SERVER:
 		id = SERVER(conn->priv)->sid;

@@ -48,23 +48,20 @@ static int message_chan(u_sourceinfo *si, u_msg *msg)
 static int message_user(u_sourceinfo *si, u_msg *msg)
 {
 	u_user *tu;
-	u_conn *link;
 
 	if (!(tu = u_user_by_ref(si->source, msg->argv[0])))
 		return u_user_num(si->u, ERR_NOSUCHNICK, msg->argv[0]);
 
-	link = u_user_conn(tu);
-
-	if (link == si->source) {
+	if (tu->link == si->source) {
 		u_log(LG_ERROR, "%s came from destination??", msg->command);
 		return 0;
 	}
 
 	if (SRC_IS_USER(si)) {
-		u_conn_f(link, ":%H %s %U :%s", si->u, msg->command,
+		u_conn_f(tu->link, ":%H %s %U :%s", si->u, msg->command,
 		         tu, msg->argv[1]);
 	} else {
-		u_conn_f(link, ":%S NOTICE %U :%s", si->s,
+		u_conn_f(tu->link, ":%S NOTICE %U :%s", si->s,
 		         tu, msg->argv[1]);
 	}
 

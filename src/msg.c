@@ -190,7 +190,7 @@ static void fill_source_server(u_sourceinfo *si, u_server *s)
 static void fill_source_user(u_sourceinfo *si, u_user *u)
 {
 	si->u = u;
-	si->link = u_user_conn(si->u);
+	si->link = si->u->link;
 	if (IS_LOCAL_USER(si->u)) {
 		si->local = si->link;
 		si->mask &= SRC_LOCAL_USER;

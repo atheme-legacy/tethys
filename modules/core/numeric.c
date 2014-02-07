@@ -59,8 +59,7 @@ static int c_s_num(u_sourceinfo *si, u_msg *msg)
 	case 9:
 		if (!(u = u_user_by_uid(tgtid)))
 			goto badtgt;
-		conn = u_user_conn(u);
-		u_conn_f(conn, ":%I %03d %U%s", si, num, u, buf);
+		u_conn_f(u->link, ":%I %03d %U%s", si, num, u, buf);
 		break;
 
 	default:

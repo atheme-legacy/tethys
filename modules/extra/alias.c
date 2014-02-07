@@ -37,7 +37,7 @@ static int m_alias(u_sourceinfo *si, u_msg *msg)
 		                i ? " " : "", msg->argv[i]);
 	}
 
-	u_conn_f(u_user_conn(tu), ":%H PRIVMSG %U :%s", si->u, tu, line);
+	u_conn_f(tu->link, ":%H PRIVMSG %U :%s", si->u, tu, line);
 
 	return 0;
 

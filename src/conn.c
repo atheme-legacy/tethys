@@ -150,7 +150,7 @@ u_conn *u_conn_by_name(char *s)
 		return sv ? sv->conn : NULL;
 	} else {
 		u_user *u = u_user_by_nick(s);
-		return u ? u_user_conn(u) : NULL;
+		return u ? u->link : NULL;
 	}
 }
 

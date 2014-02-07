@@ -66,7 +66,7 @@ static int c_u_whois(u_sourceinfo *si, u_msg *msg)
 			return 0;
 		}
 		if (sv == NULL)
-			sv = u_user_server(tu);
+			sv = tu->sv;
 	}
 
 	if (sv != NULL && sv != &me) {
@@ -77,7 +77,7 @@ static int c_u_whois(u_sourceinfo *si, u_msg *msg)
 
 	/* perform whois */
 
-	sv = u_user_server(tu);
+	sv = tu->sv;
 	u_src_num(si, RPL_WHOISUSER, tu->nick, tu->ident, tu->host, tu->gecos);
 
 	if (!(tu->mode & UMODE_SERVICE))
