@@ -19,6 +19,8 @@ typedef void *(u_hook_fn_t)(void *priv, void *arg);
 typedef struct u_hook u_hook;
 typedef struct u_hook_cb u_hook_cb;
 
+#include "module.h"
+
 struct u_hook {
 	const char *name;
 	mowgli_list_t callbacks;

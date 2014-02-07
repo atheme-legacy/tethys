@@ -53,11 +53,7 @@ extern bool exists(const char *path);
 
 #include "conn.h"
 
-static inline char *ref_to_ref(u_conn *ctx, char *ref)
-{
-	return ctx->ctx == CTX_SERVER ? ref_to_id(ref) : ref_to_name(ref);
-}
-
+extern char *ref_to_ref(u_conn *ctx, char *ref);
 extern u_conn *ref_link(u_conn *ctx, char *ref);
 
 extern char *conn_name(u_conn*);

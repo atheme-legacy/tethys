@@ -7,8 +7,6 @@
 #ifndef __INC_AUTH_H__
 #define __INC_AUTH_H__
 
-#include "ircd.h"
-
 #define MAXCLASSNAME 64
 #define MAXAUTHNAME 64
 #define MAXPASSWORD 256
@@ -19,6 +17,9 @@ typedef struct u_class u_class;
 typedef struct u_auth u_auth;
 typedef struct u_oper u_oper;
 typedef struct u_link u_link;
+
+#include "conn.h"
+#include "util.h"
 
 struct u_class {
 	char name[MAXCLASSNAME+1];
@@ -55,8 +56,6 @@ extern u_map *all_classes;
 extern u_map *all_auths;
 extern u_map *all_opers;
 extern u_map *all_links;
-
-#include "conn.h"
 
 extern u_auth *u_find_auth(u_conn*);
 extern u_oper *u_find_oper(u_auth*, char*, char*);

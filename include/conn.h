@@ -7,10 +7,6 @@
 #ifndef __INC_CONN_H__
 #define __INC_CONN_H__
 
-#include "ircd.h"
-#include "linebuf.h"
-#include "cookie.h"
-
 #define U_CONN_OBUFSIZE 32768
 #define U_CONN_HOSTSIZE 256
 

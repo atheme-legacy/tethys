@@ -7,6 +7,10 @@
 #ifndef __INC_SENDTO_H__
 #define __INC_SENDTO_H__
 
+#include "chan.h"
+#include "user.h"
+#include "conn.h"
+
 #define ST_ALL                 0
 #define ST_SERVERS             1
 #define ST_USERS               2

@@ -255,6 +255,11 @@ bool exists(const char *path)
 	return stat(path, &st) == 0;
 }
 
+char *ref_to_ref(u_conn *ctx, char *ref)
+{
+	return ctx->ctx == CTX_SERVER ? ref_to_id(ref) : ref_to_name(ref);
+}
+
 u_conn *ref_link(u_conn *ctx, char *ref)
 {
 	if (ctx && ctx->ctx == CTX_SERVER && isdigit(ref[0])) {
