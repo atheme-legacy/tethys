@@ -1,0 +1,4 @@
+NICK <nickname>
+
+Lets you change your nickname, if the given nickname is
+not currently in use.

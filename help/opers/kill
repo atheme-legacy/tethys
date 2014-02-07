@@ -1,0 +1,5 @@
+KILL <nick> [<reason>]
+
+Disconnects the given user with the given reason. If no
+reason is given, the reason "<No reason given>" will be
+used. But please, no senseless KILLing.
