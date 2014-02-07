@@ -8,35 +8,39 @@
 
 static int mode_user(u_sourceinfo *si, char *s)
 {
-/*
 	u_modes m;
+	u_mode_buf_stack stack;
 
 	if (!s || !*s) {
 		u_src_num(si, RPL_UMODEIS, u_user_modes(si->u));
 		return 0;
 	}
 
-	m.perms = SRC_IS_LOCAL_USER(si) ? NULL : &me;
+	m.ctx = &umodes;
+	m.stacker = &u_mode_buf_stacker;
+	m.setter = si;
 	m.target = si->u;
+	m.access = si;
+	m.flags = SRC_IS_LOCAL_USER(si) ? 0 : MODE_FORCE_ALL;
+	m.stack = &stack;
 
-	u_mode_process(&m, umodes, 1, &s);
+	u_mode_process(&m, 1, &s);
 
-	if ((m.u.buf[0] || m.u.data[0]) && IS_LOCAL_USER(si->u)) {
-		u_conn *conn = u_user_conn(si->u);
-		u_conn_f(conn, ":%U MODE %U %s%s",
-		         si->u, si->u, m.u.buf, m.u.data);
-	}
+	if (stack.on != -1) {
+		if (IS_LOCAL_USER(si->u)) {
+			u_conn *conn = u_user_conn(si->u);
+			u_conn_f(conn, ":%U MODE %U %s%s",
+			         si->u, si->u, stack.cbuf, stack.dbuf);
+		}
 
-	if (m.s.buf[0] || m.s.data[0]) {
 		u_sendto_servers(si->link, ":%U MODE %U %s%s",
-		                 si->u, si->u, m.s.buf, m.s.data);
+		                 si->u, si->u, stack.cbuf, stack.dbuf);
 	}
 
 	u_log(LG_VERBOSE, "%U now has user mode %s",
 	      si->u, u_user_modes(si->u));
 
 	return 0;
-*/
 }
 
 struct cmode_stacker_buf {
