@@ -169,24 +169,24 @@ static void help_destroy(const char *key, void *data, void *unused)
 
 static int c_lu_help(u_sourceinfo *si, u_msg *msg)
 {
-	const char *cmd = msg->argv[0], *c = cmd;
-	char cmd_lower[strlen(cmd) + 1], *d = cmd_lower;
+	const char *cmd = msg->argv[0];
+	char *c = msg->argv[0];
 	mowgli_list_t *lines = NULL;
 	mowgli_node_t *n;
+	bool invalid = false;
 
-	for ( ; *c; ++c, ++d)
+	for ( ; *c; ++c)
 	{
 		/* Downcase (case-sensitive FS etc.) and strip out non-alnum */
 		if (!isalnum(*c))
-			/* I think it's better to return an error */
-			return u_src_num(si, ERR_HELPNOTFOUND, cmd);
+			/* Finish lowercasing but mark as invalid */
+			invalid = true;
 
-		*d = tolower(*c);
+		*c = tolower(*c);
 	}
-	*d = '\0';
 
-	/* Repoint */
-	cmd = cmd_lower;
+	if (invalid)
+		return u_src_num(si, ERR_HELPNOTFOUND, cmd);
 
 	/* Check for oper status */
 	if (si->u->mode & UMODE_OPER)
