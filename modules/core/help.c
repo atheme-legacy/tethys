@@ -53,7 +53,17 @@ static inline void read_lines(FILE *f, mowgli_list_t *lines)
 
 	/* Read lines from a given file into a list */
 	while (fgets(line, sizeof(line) - 1, f) != NULL)
+	{
+		/* Chop off line ending */
+		if (line[strlen(line) - 2] == '\r')
+			/* Windows */
+			line[strlen(line) - 2] = '\0';
+		else if (line[strlen(line) - 1] == '\n' || line[strlen(line) - 1] == '\r')
+			/* Linux/Mac OS X */
+			line[strlen(line) - 1] = '\0';
+
 		mowgli_list_add(lines, strdup(line));
+	}
 }
 
 static inline void delete_lines(mowgli_list_t *lines)
