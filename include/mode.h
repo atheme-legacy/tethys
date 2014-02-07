@@ -78,6 +78,8 @@ struct u_mode_stacker {
 	void (*send_list)(u_modes*);
 };
 
+#define MODE_FORCE_ALL   0x0001
+
 #define MODE_ERR_UNK_CHAR         0x0001
 #define MODE_ERR_NO_ACCESS        0x0002
 #define MODE_ERR_NOT_OPER         0x0004
@@ -90,6 +92,7 @@ struct u_modes {
 	u_sourceinfo *setter;
 	void *target;
 	void *access;
+	ulong flags;
 
 	u_mode_info *info;
 

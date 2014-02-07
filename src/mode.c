@@ -63,7 +63,7 @@ static int do_mode_status(u_modes *m, int on, char *param)
 {
 	void *tgt;
 
-	if (!m->access) {
+	if (!m->access && !(m->flags & MODE_FORCE_ALL)) {
 		m->errors |= MODE_ERR_NO_ACCESS;
 		return 1;
 	}
@@ -103,7 +103,7 @@ static int do_mode_flag(u_modes *m, int on)
 {
 	ulong flags = 0, flag;
 
-	if (!m->access) {
+	if (!m->access && !(m->flags & MODE_FORCE_ALL)) {
 		m->errors |= MODE_ERR_NO_ACCESS;
 		return 0;
 	}
@@ -146,7 +146,7 @@ static int do_mode_list(u_modes *m, int on, char *param)
 		return 0;
 	}
 
-	if (!m->access) {
+	if (!m->access && !(m->flags & MODE_FORCE_ALL)) {
 		m->errors |= MODE_ERR_NO_ACCESS;
 		return 1;
 	}
@@ -224,17 +224,19 @@ int u_mode_process(u_modes *m, int parc, char **parv)
 			continue;
 		}
 
-		if ((m->info->flags & MODE_OPER_ONLY) &&
-		    !can_set_oper_only(m->setter)) {
-			m->errors |= MODE_ERR_NOT_OPER;
-			continue;
+		if (!(m->flags & MODE_FORCE_ALL)) {
+			if ((m->info->flags & MODE_OPER_ONLY) &&
+			    !can_set_oper_only(m->setter)) {
+				m->errors |= MODE_ERR_NOT_OPER;
+				continue;
+			}
+
+			if ((m->info->flags & MODE_NO_SET) && on)
+				continue;
+
+			if ((m->info->flags & MODE_NO_RESET) && !on)
+				continue;
 		}
-
-		if ((m->info->flags & MODE_NO_SET) && on)
-			continue;
-
-		if ((m->info->flags & MODE_NO_RESET) && !on)
-			continue;
 
 		any++;
 		param = parc > 0 ? *parv : NULL;

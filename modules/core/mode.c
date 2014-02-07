@@ -184,6 +184,7 @@ static int c_a_mode(u_sourceinfo *si, u_msg *msg)
 		return u_user_num(si->u, ERR_NOSUCHCHANNEL, target);
 
 	m.access = NULL;
+	m.flags = 0;
 
 	if (SRC_IS_LOCAL_USER(si)) {
 		u_chanuser *cu = u_chan_user_find(c, si->u);
@@ -197,7 +198,7 @@ static int c_a_mode(u_sourceinfo *si, u_msg *msg)
 			m.access = cu;
 
 	} else { /* source is local server or remote user/server */
-		m.access = &me;
+		m.flags |= MODE_FORCE_ALL;
 
 		if (msg->argc == 1)
 			return 0;
