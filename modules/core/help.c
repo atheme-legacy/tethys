@@ -98,52 +98,47 @@ static mowgli_list_t *find_help(const char *cmd, bool is_oper)
 	if (!exists)
 		err = errno;
 
-	if (!(help = mowgli_patricia_retrieve(tree, cmd))) {
-		if (!exists || !(f = fopen(path, "r")))
+	help = mowgli_patricia_retrieve(tree, cmd);
+
+	if (!help && !exists)
+		return NULL;
+
+	if (!help) {
+		if (!(f = fopen(path, "r")))
 			return NULL;
-
-		help = malloc(sizeof(help_t));
+		help = malloc(sizeof(*help));
 		mowgli_list_init(&help->lines);
-		read_lines(f, &help->lines);
-
-		fclose(f);
-
-		help->mtime = s.st_mtime;
-
 		mowgli_patricia_add(tree, cmd, help);
-	} else {
-		if (!exists) {
-			if (err == ENOENT || err == ENOTDIR) {
-				/* Delete the help if the file's gone */
-				delete_lines(&help->lines);
-				mowgli_patricia_delete(tree, cmd);
-				free(help);
-
-				return NULL;
-			} else {
-				/* A non-fatal and possibly transient error */
-				return &help->lines;
-			}
-		}
-
-		if(help->mtime == s.st_mtime) {
-			/* File is unmodified 
-			 * XXX doesn't check for usec/nsec level precision. I 
-			 * don't consider this a major problem though. */
-			return &help->lines;
-		}
-
-		if (!(f = fopen(path, "r"))) /* Return old copy */
-			return &help->lines;
-
-		/* Out with the old, in with the new */
-		delete_lines(&help->lines);
-		read_lines(f, &help->lines);
-
-		fclose(f);
-
-		help->mtime = s.st_mtime;
+		goto read_help;
 	}
+
+	if (!exists) {
+		if (err == ENOENT || err == ENOTDIR) {
+			/* Delete the help if the file's gone */
+			u_log(LG_DEBUG, "Deleting help item %s", cmd);
+			delete_lines(&help->lines);
+			mowgli_patricia_delete(tree, cmd);
+			free(help);
+			return NULL;
+		}
+
+		/* non-fatal and possibly transient error */
+		return &help->lines;
+	}
+
+	/* cached fresh or can't fopen somehow (weird race conditions) */
+	if (help->mtime == s.st_mtime || !(f = fopen(path, "r")))
+		return &help->lines;
+
+	delete_lines(&help->lines);
+
+read_help:
+	u_log(LG_DEBUG, "Loading %s help from %s", cmd, path);
+
+	read_lines(f, &help->lines);
+	fclose(f);
+
+	help->mtime = s.st_mtime;
 
 	return &help->lines;
 }
