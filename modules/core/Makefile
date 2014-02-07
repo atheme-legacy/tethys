@@ -5,6 +5,7 @@ SRCS = \
 	bmask.c \
 	cap.c \
 	euid.c \
+	help.c \
 	hunted.c \
 	invite.c \
 	join.c \

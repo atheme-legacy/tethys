@@ -180,9 +180,11 @@ ERR_NOOPERHOST	491	":No O-lines for your host"
 ERR_UMODEUNKNOWNFLAG	501	":Unknown MODE flag"
 ERR_USERSDONTMATCH	502	":Can't change mode for other users"
 
-RPL_HELPSTART	704
-RPL_HELPTXT	705
-RPL_ENDOFHELP	706
+ERR_HELPNOTFOUND	524	"%s :Help not found"
+
+RPL_HELPSTART	704	"%s :%s"
+RPL_HELPTXT	705	"%s :%s"
+RPL_ENDOFHELP	706	"%s :End of /HELP."
 
 RPL_QUIETLIST	728	"%C q %s %s %u"
 RPL_ENDOFQUIETLIST	729	"%C q :End of Channel Quiet List"
