@@ -153,7 +153,8 @@ static void help_destroy(const char *key, void *data, void *unused)
 
 static inline int filter_cmd(int ch)
 {
-	return (isalnum(ch) ? tolower(ch) : (ch == ':' ? ch : '\0'));
+	/* Replace colons with dashes so IRC parsers don't choke */ 
+	return (isalnum(ch) ? tolower(ch) : (ch == ':' ? '-' : '\0'));
 }
 
 static int c_lu_help(u_sourceinfo *si, u_msg *msg)
