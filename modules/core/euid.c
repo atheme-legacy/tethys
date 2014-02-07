@@ -44,7 +44,7 @@ static int c_s_euid(u_sourceinfo *si, u_msg *msg)
 }
 
 static u_cmd euid_cmdtab[] = {
-	{ "EUID", SRC_SERVER, c_s_euid, 11, U_RATELIMIT_NONE, CMD_PROP_BROADCAST },
+	{ "EUID", SRC_SERVER, c_s_euid, 11, CMD_PROP_BROADCAST },
 	{ }
 };
 

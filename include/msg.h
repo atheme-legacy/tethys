@@ -97,10 +97,12 @@ extern void u_src_f(u_sourceinfo *si, const char *fmt, ...);
 
 #define MAXCOMMANDLEN 16
 
-#define CMD_PROP_NONE          0
-#define CMD_PROP_BROADCAST     1
-#define CMD_PROP_ONE_TO_ONE    2
-#define CMD_PROP_HUNTED        3
+/* command flags */
+#define CMD_PROP_MASK          0x0003
+#define CMD_PROP_NONE          0x0000
+#define CMD_PROP_BROADCAST     0x0001
+#define CMD_PROP_ONE_TO_ONE    0x0002
+#define CMD_PROP_HUNTED        0x0003
 
 #define CMD_DO_BROADCAST ((void*)1)
 
@@ -118,9 +120,9 @@ struct u_cmd {
 
 	int nargs;
 
-	u_ratelimit_cmd_t rate;
+	ulong flags;
 
-	int propagation;
+	u_ratelimit_cmd_t rate;
 
 	/* users should not initialize the rest of this struct to
 	   anything */

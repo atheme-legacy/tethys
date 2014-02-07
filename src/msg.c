@@ -425,7 +425,7 @@ static void report_failure(u_sourceinfo *si, u_msg *msg, ulong bits_tested)
 
 static void propagate_message(u_sourceinfo *si, u_msg *msg, u_cmd *cmd, char *line)
 {
-	switch (cmd->propagation) {
+	switch (cmd->flags & CMD_PROP_MASK) {
 	case CMD_PROP_NONE:
 		break;
 
@@ -446,7 +446,7 @@ static void propagate_message(u_sourceinfo *si, u_msg *msg, u_cmd *cmd, char *li
 
 	default:
 		u_log(LG_WARN, "%s has unknown propagation type %d",
-		      cmd->name, cmd->propagation);
+		      cmd->name, cmd->flags & CMD_PROP_MASK);
 		break;
 	}
 }
@@ -556,7 +556,8 @@ again:
 	if (!run_command(cmd, &si, msg))
 		return;
 
-	if (msg->propagate && cmd->propagation && conn->ctx == CTX_SERVER)
+	if (msg->propagate && (cmd->flags & CMD_PROP_MASK)
+	    && conn->ctx == CTX_SERVER)
 		propagate_message(&si, msg, cmd, line);
 
 	if (msg->flags & MSG_REPEAT)

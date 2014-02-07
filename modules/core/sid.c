@@ -31,8 +31,8 @@ static int c_s_server(u_sourceinfo *si, u_msg *msg)
 }
 
 static u_cmd sid_cmdtab[] = {
-	{ "SID",    SRC_SERVER,  c_s_sid,    4, U_RATELIMIT_NONE, CMD_PROP_BROADCAST },
-	{ "SERVER", SRC_SERVER,  c_s_server, 3, U_RATELIMIT_NONE, CMD_PROP_BROADCAST },
+	{ "SID",    SRC_SERVER,  c_s_sid,    4, CMD_PROP_BROADCAST },
+	{ "SERVER", SRC_SERVER,  c_s_server, 3, CMD_PROP_BROADCAST },
 	{ }
 };
 

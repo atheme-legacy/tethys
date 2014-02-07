@@ -81,8 +81,8 @@ static int c_ru_nick(u_sourceinfo *si, u_msg *msg)
 static u_cmd nick_cmdtab[] = {
 	{ "NICK", SRC_FIRST,              u_repeat_as_user, 0 },
 	{ "NICK", SRC_UNREGISTERED_USER,  c_uu_nick, 1 },
-	{ "NICK", SRC_LOCAL_USER,         c_lu_nick, 1, U_RATELIMIT_MID },
-	{ "NICK", SRC_REMOTE_USER,        c_ru_nick, 2, U_RATELIMIT_NONE, CMD_PROP_BROADCAST },
+	{ "NICK", SRC_LOCAL_USER,         c_lu_nick, 1, 0, U_RATELIMIT_MID },
+	{ "NICK", SRC_REMOTE_USER,        c_ru_nick, 2, CMD_PROP_BROADCAST },
 	{ }
 };
 

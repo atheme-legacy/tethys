@@ -127,8 +127,8 @@ static int c_ru_join(u_sourceinfo *si, u_msg *msg)
 }
 
 static u_cmd join_cmdtab[] = {
-	{ "JOIN",   SRC_LOCAL_USER,   c_lu_join, 1, U_RATELIMIT_MID },
-	{ "JOIN",   SRC_REMOTE_USER,  c_ru_join, 3, U_RATELIMIT_NONE, CMD_PROP_BROADCAST },
+	{ "JOIN",   SRC_LOCAL_USER,   c_lu_join, 1, 0, U_RATELIMIT_MID },
+	{ "JOIN",   SRC_REMOTE_USER,  c_ru_join, 3, CMD_PROP_BROADCAST },
 	{ }
 };
 

@@ -80,7 +80,7 @@ static void do_command(u_sourceinfo *si, u_cmd *cmd)
 	mask[14] = '\0';
 
 	prop = "???";
-	switch (cmd->propagation) {
+	switch (cmd->flags & CMD_PROP_MASK) {
 	case CMD_PROP_NONE:        prop = "   "; break;
 	case CMD_PROP_BROADCAST:   prop = "brd"; break;
 	case CMD_PROP_ONE_TO_ONE:  prop = "1-1"; break;
