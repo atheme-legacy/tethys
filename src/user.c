@@ -42,7 +42,7 @@ static bool umode_set_flag_bits(u_modes *m, ulong fl)
 
 static bool umode_reset_flag_bits(u_modes *m, ulong fl)
 {
-	((u_user*) m->target)->mode |= fl;
+	((u_user*) m->target)->mode &= ~fl;
 	return true;
 }
 
