@@ -282,3 +282,58 @@ int u_mode_process(u_modes *m, int parc, char **parv)
 
 	return 0;
 }
+
+static void buf_stacker_start(u_modes *m)
+{
+	struct u_mode_buf_stack *b = m->stack;
+	b->on = -1;
+	b->c = b->cbuf;
+	b->d = b->dbuf;
+}
+
+static void buf_stacker_end(u_modes *m)
+{
+	struct u_mode_buf_stack *b = m->stack;
+	*b->c = '\0';
+	*b->d = '\0';
+}
+
+static void buf_stacker_put(u_modes *m, int on, char *param)
+{
+	struct u_mode_buf_stack *b = m->stack;
+	char ch = m->info->ch;
+
+	if (b->on != on) {
+		*b->c++ = on ? '+' : '-';
+		b->on = on;
+	}
+
+	*b->c++ = ch;
+
+	if (param != NULL)
+		b->d += snprintf(b->d, b->dbuf + 512 - b->d, " %s", param);
+}
+
+static void buf_stacker_put_external(u_modes *m, int on, char *param)
+{
+	buf_stacker_put(m, on, param);
+}
+
+static void buf_stacker_put_flag(u_modes *m, int on)
+{
+	buf_stacker_put(m, on, NULL);
+}
+
+static void buf_stacker_put_listent(u_modes *m, int on, u_listent *ban)
+{
+	buf_stacker_put(m, on, ban->mask);
+}
+
+u_mode_stacker u_mode_buf_stacker = {
+	.start           = buf_stacker_start,
+	.end             = buf_stacker_end,
+
+	.put_external    = buf_stacker_put_external,
+	.put_flag        = buf_stacker_put_flag,
+	.put_listent     = buf_stacker_put_listent,
+};

@@ -14,6 +14,7 @@ typedef struct u_mode_info u_mode_info;
 typedef struct u_mode_ctx u_mode_ctx;
 typedef struct u_mode_stacker u_mode_stacker;
 typedef struct u_modes u_modes;
+typedef struct u_mode_buf_stack u_mode_buf_stack;
 
 #define MAXBANLIST  50
 
@@ -102,5 +103,14 @@ struct u_modes {
 };
 
 extern int u_mode_process(u_modes *m, int parc, char **parv);
+
+/* simple buffered mode stacker. provides put_external, put_flag, and
+   put_listent, but sending the result must be handled by the user. */
+extern u_mode_stacker u_mode_buf_stacker;
+struct u_mode_buf_stack {
+	int on;
+	char *c, cbuf[512];
+	char *d, dbuf[512];
+};
 
 #endif
