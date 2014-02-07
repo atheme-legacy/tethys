@@ -29,64 +29,38 @@ char *id_next(void)
 	return id_buf;
 }
 
-uint umode_default = 0;
+static ulong umode_get_flag_bits(u_modes *m)
+{
+	return ((u_user*) m->target)->mode;
+}
 
-/*
+static bool umode_set_flag_bits(u_modes *m, ulong fl)
+{
+	((u_user*) m->target)->mode |= fl;
+	return true;
+}
 
-static int cb_oper(u_modes*, int, char*);
-static int cb_flag(u_modes*, int, char*);
-static int cb_svc(u_modes*, int, char*);
+static bool umode_reset_flag_bits(u_modes *m, ulong fl)
+{
+	((u_user*) m->target)->mode |= fl;
+	return true;
+}
 
-static u_mode_info __umodes[] = {
-	{ 'o', cb_oper,  UMODE_OPER                },
-	{ 'i', cb_flag,  UMODE_INVISIBLE           },
-	{ 'S', cb_svc,   UMODE_SERVICE             },
-	{ }
+u_mode_info umode_infotab[128] = {
+	['o'] = { 'o', MODE_FLAG, MODE_NO_SET,    { .data = UMODE_OPER } },
+	['i'] = { 'i', MODE_FLAG, 0,              { .data = UMODE_INVISIBLE } },
+	['S'] = { 'S', MODE_FLAG, MODE_NO_CHANGE, { .data = UMODE_SERVICE } },
 };
 
-u_mode_info *umodes = __umodes;
+u_mode_ctx umodes = {
+	.infotab             = umode_infotab,
 
-static bool um_force(u_modes *m)
-{
-	if (m->perms)
-		return true;
+	.get_flag_bits       = umode_get_flag_bits,
+	.set_flag_bits       = umode_set_flag_bits,
+	.reset_flag_bits     = umode_reset_flag_bits,
+};
 
-	return false;
-}
-
-static int cb_oper(u_modes *m, int on, char *arg)
-{
-	if (!um_force(m) && on)
-		return 0;
-
-	return cb_flag(m, on, arg);
-}
-
-static int cb_flag(u_modes *m, int on, char *arg)
-{
-	u_user *u = m->target;
-	uint oldf = u->mode;
-
-	if (on)
-		u->mode |= m->info->data;
-	else
-		u->mode &= ~m->info->data;
-
-	if (oldf != u->mode)
-		u_mode_put(m, on, m->info->ch, NULL, NULL);
-
-	return 0;
-}
-
-static int cb_svc(u_modes *m, int on, char *arg)
-{
-	if (!um_force(m))
-		return 0;
-
-	return cb_flag(m, on, arg);
-}
-
-*/
+uint umode_default = 0;
 
 void user_shutdown(u_conn *conn)
 {
