@@ -13,8 +13,7 @@
 
 
 /* Storage place for all the help info */
-typedef struct
-{
+typedef struct {
 	time_t mtime; /* Last modified time of the help entry from stat() */
 	mowgli_list_t lines; /* Lines for help */
 } help_t;
@@ -48,19 +47,17 @@ static inline void read_lines(FILE *f, mowgli_list_t *lines)
 {
 	/* From a given file opened at f, read in all the help into list lines */
 
+	int n;
 	char line[HELPLINESIZE];
 	line[HELPLINESIZE - 1] = '\0';
 
-	/* Read lines from a given file into a list */
-	while (fgets(line, sizeof(line) - 1, f) != NULL)
-	{
-		/* Chop off line ending */
-		if (line[strlen(line) - 2] == '\r')
-			/* Windows */
-			line[strlen(line) - 2] = '\0';
-		else if (line[strlen(line) - 1] == '\n' || line[strlen(line) - 1] == '\r')
-			/* Linux/Mac OS X */
-			line[strlen(line) - 1] = '\0';
+	while (fgets(line, sizeof(line) - 1, f) != NULL) {
+		n = strlen(line);
+
+		if (line[n-2] == '\r') /* Windows */
+			line[n-2] = '\0';
+		else if (line[n-1] == '\n' || line[n-1] == '\r') /* Linux / OS X */
+			line[n-1] = '\0';
 
 		mowgli_list_add(lines, strdup(line));
 	}
@@ -75,14 +72,13 @@ static inline void delete_lines(mowgli_list_t *lines)
 	/* Take the list AND THROW IT ON THE GROUND
 	 * (IT'S NO LONGER PART OF OUR SYSTEM)
 	 */
-	MOWGLI_LIST_FOREACH_SAFE(n, tn, lines->head)
-	{
+	MOWGLI_LIST_FOREACH_SAFE(n, tn, lines->head) {
 		free(n->data);
 		mowgli_list_delete(n, lines);
 	}
 }
 
-static mowgli_list_t * find_help(const char *cmd, bool is_oper)
+static mowgli_list_t *find_help(const char *cmd, bool is_oper)
 {
 	/* Find a given help list. Returns NULL if there is none, else a
 	 * pointer to the correct help */
@@ -95,17 +91,14 @@ static mowgli_list_t * find_help(const char *cmd, bool is_oper)
 	mowgli_patricia_t *tree = (is_oper ? oper_help : user_help);
 	help_t *help = NULL;
 
-	/* Build the path string */
 	snprintf(path, sizeof(path), "help/%s/%s",
 			(is_oper ? "opers" : "users"), cmd);
 
 	exists = (stat(path, &s) == 0);
 	if (!exists)
-		/* Make a copy */
 		err = errno;
 
-	if (!(help = mowgli_patricia_retrieve(tree, cmd)))
-	{
+	if (!(help = mowgli_patricia_retrieve(tree, cmd))) {
 		if (!exists || !(f = fopen(path, "r")))
 			return NULL;
 
@@ -118,33 +111,29 @@ static mowgli_list_t * find_help(const char *cmd, bool is_oper)
 		help->mtime = s.st_mtime;
 
 		mowgli_patricia_add(tree, cmd, help);
-	}
-	else
-	{
-		if (!exists)
-		{
-			if (err == ENOENT || err == ENOTDIR)
-			{
+	} else {
+		if (!exists) {
+			if (err == ENOENT || err == ENOTDIR) {
 				/* Delete the help if the file's gone */
 				delete_lines(&help->lines);
 				mowgli_patricia_delete(tree, cmd);
 				free(help);
 
 				return NULL;
-			}
-			else
+			} else {
 				/* A non-fatal and possibly transient error */
 				return &help->lines;
+			}
 		}
 
-		if(help->mtime == s.st_mtime)
+		if(help->mtime == s.st_mtime) {
 			/* File is unmodified 
 			 * XXX doesn't check for usec/nsec level precision. I 
 			 * don't consider this a major problem though. */
 			return &help->lines;
+		}
 
-		if (!(f = fopen(path, "r")))
-			/* Return old copy */
+		if (!(f = fopen(path, "r"))) /* Return old copy */
 			return &help->lines;
 
 		/* Out with the old, in with the new */
@@ -181,8 +170,7 @@ static int c_lu_help(u_sourceinfo *si, u_msg *msg)
 	if (!str_transform(cmd, &filter_cmd))
 		return u_src_num(si, ERR_HELPNOTFOUND, cmd);
 
-	/* Check for oper status */
-	if (si->u->mode & UMODE_OPER)
+	if (SRC_IS_OPER(si))
 		lines = find_help(cmd, true);
 
 	if ((!lines && !(lines = find_help(cmd, false))) ||
@@ -192,9 +180,7 @@ static int c_lu_help(u_sourceinfo *si, u_msg *msg)
 	/* Spew the lines */ 
 	u_src_num(si, RPL_HELPSTART, cmd, lines->head->data);
 	MOWGLI_LIST_FOREACH(n, lines->head->next)
-	{
 		u_src_num(si, RPL_HELPTXT, cmd, n->data);
-	}
 
 	u_src_num(si, RPL_ENDOFHELP, cmd);
 
