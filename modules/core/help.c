@@ -177,9 +177,8 @@ static int c_lu_help(u_sourceinfo *si, u_msg *msg)
 	char *cmd = msg->argv[0];
 	mowgli_list_t *lines = NULL;
 	mowgli_node_t *n;
-	bool invalid = false;
 
-	if (!(invalid = str_transform(cmd, &filter_cmd)))
+	if (!str_transform(cmd, &filter_cmd))
 		return u_src_num(si, ERR_HELPNOTFOUND, cmd);
 
 	/* Check for oper status */
