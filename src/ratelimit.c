@@ -18,8 +18,7 @@ bool u_ratelimit_allow(u_user *user, u_ratelimit_cmd_t *deduct, const char *cmd)
 {
 	time_t lastrate, numtokens;
 
-	if ((strcasecmp(cmd, "WHO") == 0) && (user->limit.whotokens > 0))
-	{
+	if ((strcasecmp(cmd, "WHO") == 0) && (user->limit.whotokens > 0)) {
 		/* Compensate for WHO */
 		u_ratelimit_who_deduct(user);
 		return true;
@@ -38,8 +37,7 @@ bool u_ratelimit_allow(u_user *user, u_ratelimit_cmd_t *deduct, const char *cmd)
 
 	/* Subtract tokens */
 	if ((user->limit.tokens <= deduct->deduction) ||
-	    (user->limit.tokens - deduct->deduction) == 0)
-	{
+	    (user->limit.tokens - deduct->deduction) == 0) {
 		user->limit.tokens = 0;
 
 		u_log(LG_WARN, "User %U flooding!", user);

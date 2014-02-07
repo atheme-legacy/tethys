@@ -19,8 +19,7 @@ typedef struct u_user u_user;
 /* Refil after this time of no activity */
 #define REFILLPERIOD 10 
 
-typedef struct
-{
+typedef struct {
 	/* Token count */
 	unsigned int tokens;
 
@@ -38,8 +37,7 @@ typedef struct
 	time_t last;
 } u_ratelimit_t;
 
-typedef struct
-{
+typedef struct {
 	/* Number of tokens deducted per use */
 	unsigned int deduction;
 
