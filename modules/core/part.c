@@ -37,7 +37,7 @@ static int c_u_part(u_sourceinfo *si, u_msg *msg)
 		}
 
 		if (cu || !local)
-			q += sprintf(q, "%s%s", q==chans?"":",", c->name);
+			q += sprintf(q, "%s%s", q==chans?"":",", s);
 
 		if (cu)
 			u_chan_user_del(cu);
