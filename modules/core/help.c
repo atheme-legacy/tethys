@@ -92,7 +92,7 @@ static mowgli_list_t * find_help(const char *cmd, bool is_oper)
 	struct stat s;
 	FILE *f;
 	int err = 0;
-	mowgli_patricia_t *tree = is_oper ? oper_help : user_help;
+	mowgli_patricia_t *tree = (is_oper ? oper_help : user_help);
 	help_t *help = NULL;
 
 	/* Build the path string */
@@ -169,10 +169,7 @@ static void help_destroy(const char *key, void *data, void *unused)
 
 static inline int filter_cmd(int ch)
 {
-	if (!isalnum(ch))
-		return '\0';
-	else
-		return tolower(ch);
+	return (isalnum(ch) ? tolower(ch) : '\0');
 }
 
 static int c_lu_help(u_sourceinfo *si, u_msg *msg)
