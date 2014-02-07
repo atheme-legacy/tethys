@@ -207,10 +207,33 @@ static void ts_lose(u_sourceinfo *si, u_chan *c, u_modes *m, u_msg *msg)
 	u_chanuser *cu;
 	u_map_each_state st;
 	char users[512];
+	int ch;
 
 	u_log(LG_DEBUG, "ts_lose(%C)", c);
 
-	/* TODO: calculate mode difference? */
+	/* clear all modes */
+	for (ch=0; ch<128; ch++) {
+		m->info = &cmode_infotab[ch];
+		if (!m->info->ch)
+			continue;
+
+		switch (m->info->type) {
+		case MODE_EXTERNAL:
+			/* XXX: using "*" here is not portable */
+			m->info->arg.fn(m, 0, "*");
+			break;
+
+		case MODE_FLAG:
+			if (c->mode & m->info->arg.data)
+				m->stacker->put_flag(m, 0);
+			break;
+
+		default:
+			/* status cleared in next step */
+			/* lists only ever merged, I guess */
+			break;
+		}
+	}
 	c->mode = 0;
 
 	/* remove all statuses from local users */
@@ -223,9 +246,6 @@ static void ts_lose(u_sourceinfo *si, u_chan *c, u_modes *m, u_msg *msg)
 
 		get_status(cu, 0, m, NULL);
 		cu->flags = 0;
-
-		/* this is a terrible way to do this */
-		u_user_num(u, RPL_CHANNELMODEIS, c, "+");
 	}
 
 	apply_modes(si, c, m, msg);
