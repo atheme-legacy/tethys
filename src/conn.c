@@ -147,7 +147,7 @@ u_conn *u_conn_by_name(char *s)
 {
 	if (strchr(s, '.')) {
 		u_server *sv = u_server_by_name(s);
-		return sv ? sv->conn : NULL;
+		return sv ? sv->link : NULL;
 	} else {
 		u_user *u = u_user_by_nick(s);
 		return u ? u->link : NULL;

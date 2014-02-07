@@ -176,7 +176,7 @@ void u_server_make_sreg(u_conn *conn, char *sid)
 		return;
 
 	conn->priv = sv = malloc(sizeof(*sv));
-	sv->conn = conn;
+	sv->link = conn;
 	sv->flags = SERVER_IS_BURSTING;
 
 	u_strlcpy(sv->sid, sid, 4);
@@ -184,7 +184,7 @@ void u_server_make_sreg(u_conn *conn, char *sid)
 
 	sv->name[0] = '\0';
 	sv->desc[0] = '\0';
-	sv->conn = conn;
+	sv->link = conn;
 	sv->capab = 0;
 
 	sv->hops = 1;
@@ -207,7 +207,7 @@ u_server *u_server_new_remote(u_server *parent, char *sid,
 
 	sv = malloc(sizeof(*sv));
 
-	sv->conn = parent->conn;
+	sv->link = parent->link;
 	if (sid)
 		u_strlcpy(sv->sid, sid, 4);
 	else
@@ -246,10 +246,10 @@ void u_server_unlink(u_server *sv)
 	u_log(LG_INFO, "Unlinking server sid=%s (%S)", sv->sid, sv);
 
 	if (IS_SERVER_LOCAL(sv)) {
-		u_conn *conn = sv->conn;
+		u_conn *conn = sv->link;
 		conn->priv = NULL;
 		u_conn_shutdown(conn);
-		sv->conn = NULL;
+		sv->link = NULL;
 	}
 
 	sv->parent->nlinks--;
@@ -364,7 +364,7 @@ static int burst_chan(const char *key, void *_c, void *_conn)
 
 void u_server_burst_1(u_server *sv, u_link *link)
 {
-	u_conn *conn = sv->conn;
+	u_conn *conn = sv->link;
 	char buf[512];
 
 	if (conn == NULL) {
@@ -387,7 +387,7 @@ void u_server_burst_2(u_server *sv, u_link *link)
 {
 	mowgli_patricia_iteration_state_t state;
 	u_server *tsv;
-	u_conn *conn = sv->conn;
+	u_conn *conn = sv->link;
 
 	if (conn == NULL) {
 		u_log(LG_ERROR, "Attempted to burst to %S, which has no conn!", sv);
@@ -450,7 +450,7 @@ int init_server(void)
 	servers_by_name = mowgli_patricia_create(ascii_canonize);
 
 	/* default settings! */
-	me.conn = NULL;
+	me.link = NULL;
 	strcpy(me.sid, "22U");
 	u_strlcpy(me.name, "tethys.irc", MAXSERVNAME+1);
 	u_strlcpy(me.desc, "The Tiny IRC Server", MAXSERVDESC+1);

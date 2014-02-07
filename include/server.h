@@ -38,7 +38,7 @@
 typedef struct u_server u_server;
 
 struct u_server {
-	u_conn *conn;
+	u_conn *link; /* only NULL for &me */
 	ulong flags;
 
 	char sid[4]; /* if empty, this server is a TS5 */

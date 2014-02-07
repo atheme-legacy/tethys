@@ -34,7 +34,7 @@ static bool hunted(u_sourceinfo *si, u_msg *msg)
 		}
 	}
 
-	u_conn_f(sv->conn, ":%I %s %S", si, msg->command, sv);
+	u_conn_f(sv->link, ":%I %s %S", si, msg->command, sv);
 	return false;
 }
 

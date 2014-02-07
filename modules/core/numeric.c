@@ -53,7 +53,7 @@ static int c_s_num(u_sourceinfo *si, u_msg *msg)
 	case 3:
 		if (!(sv = u_server_by_sid(tgtid)))
 			goto badtgt;
-		u_conn_f(sv->conn, ":%I %03d %S%s", si, num, sv, buf);
+		u_conn_f(sv->link, ":%I %03d %S%s", si, num, sv, buf);
 		break;
 
 	case 9:

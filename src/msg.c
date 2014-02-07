@@ -177,7 +177,7 @@ static void *on_module_unload(void *unused, void *m)
 static void fill_source_server(u_sourceinfo *si, u_server *s)
 {
 	si->s = s;
-	si->link = si->s->conn;
+	si->link = si->s->link;
 	si->local = NULL;
 	if (IS_SERVER_LOCAL(si->s)) {
 		si->local = si->link;
@@ -515,9 +515,9 @@ propagate:
 	u_sendto_start();
 	u_sendto_skip(si->source);
 	MOWGLI_PATRICIA_FOREACH(sv, &state, servers_by_sid) {
-		if (!matchcase(mask, sv->name) || !sv->conn)
+		if (!matchcase(mask, sv->name) || !sv->link)
 			continue;
-		u_sendto(sv->conn, line);
+		u_sendto(sv->link, line);
 	}
 
 	return true;

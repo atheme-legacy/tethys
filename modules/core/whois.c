@@ -70,7 +70,7 @@ static int c_u_whois(u_sourceinfo *si, u_msg *msg)
 	}
 
 	if (sv != NULL && sv != &me) {
-		u_conn_f(sv->conn, ":%I WHOIS %S %s", si, sv, nick);
+		u_conn_f(sv->link, ":%I WHOIS %S %s", si, sv, nick);
 		return 0;
 	}
 

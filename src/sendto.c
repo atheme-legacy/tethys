@@ -266,12 +266,12 @@ next_conn:
 		return false;
 	mowgli_patricia_foreach_next(servers_by_sid, &state->pstate);
 
-	if (!IS_SERVER_LOCAL(sv) || !sv->conn)
+	if (!IS_SERVER_LOCAL(sv) || !sv->link)
 		goto next_conn;
-	if (!u_cookie_cmp(&sv->conn->ck_sendto, &ck_sendto))
+	if (!u_cookie_cmp(&sv->link->ck_sendto, &ck_sendto))
 		goto next_conn;
 
-	*conn_ret = sv->conn;
+	*conn_ret = sv->link;
 	return true;
 }
 

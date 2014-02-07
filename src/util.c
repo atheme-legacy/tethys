@@ -268,7 +268,7 @@ u_conn *ref_link(u_conn *ctx, char *ref)
 			return u ? u->link : NULL;
 		} else {
 			u_server *sv = u_server_by_sid(ref);
-			return sv ? sv->conn : NULL;
+			return sv ? sv->link : NULL;
 		}
 	} else {
 		if (!strchr(ref, '.')) {
@@ -276,7 +276,7 @@ u_conn *ref_link(u_conn *ctx, char *ref)
 			return u ? u->link : NULL;
 		} else {
 			u_server *sv = u_server_by_name(ref);
-			return sv ? sv->conn : NULL;
+			return sv ? sv->link : NULL;
 		}
 	}
 }

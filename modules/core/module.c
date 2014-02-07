@@ -55,7 +55,7 @@ static int c_o_modlist(u_sourceinfo *si, u_msg *msg)
 		}
 
 		if (sv != &me) {
-			u_conn_f(sv->conn, ":%I MODLIST %s", si, sv->name);
+			u_conn_f(sv->link, ":%I MODLIST %s", si, sv->name);
 			return 0;
 		}
 	}

@@ -41,10 +41,10 @@ static int c_a_ping(u_sourceinfo *si, u_msg *msg)
 		return 0;
 	}
 
-	if (sv->conn == si->source)
+	if (sv->link == si->source)
 		return u_log(LG_ERROR, "%G sent PING for wrong subtree", conn);
 
-	u_conn_f(sv->conn, ":%s PING %s :%s", si->id, si->name, sv->sid);
+	u_conn_f(sv->link, ":%s PING %s :%s", si->id, si->name, sv->sid);
 
 	return 0;
 }
