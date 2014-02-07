@@ -1,0 +1,12 @@
+PRIVMSG <nick|channel> :<message>
+
+PRIVMSG sends a message to a channel or user. If it is sent
+to a channel, depending on the channel settings, it will be
+seen by some or all of the channel users (exceptions
+below).
+
+When users won't see messages:
+Users will not see messages if the following are in effect:
+- The sender is quieted or banned and not invexed
+- The channel is +m and the sender is not +v (unless
+  moderation is in effect - then +o can see it)

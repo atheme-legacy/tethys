@@ -1,0 +1,54 @@
+MODE <channel> <+|-><modes> [parameters]
+
+Channel modes affect certain aspects of channels such as
+the ability to join, the ability to talk, who may change
+the topic, and what may be said.
+
+Note this list may not be comprehensive.
+
+Modes without parameters:
+
+Mode | Description
+-----+-----------------------------------------------------
+i    | Invite only (must be invited or be on the +I list)
+-----+-----------------------------------------------------
+n    | No external messages (users must join to message)
+-----+-----------------------------------------------------
+t    | Only ops may change the topic
+-----+-----------------------------------------------------
+s    | Secret - channel will not show up in /list or in a
+     | user's WHOIS.
+-----+-----------------------------------------------------
+p    | Private - disables using /knock to request an invite
+-----+-----------------------------------------------------
+m    | Moderated - only voiced users may speak
+-----+-----------------------------------------------------
+g    | Anyone may /invite anyone else. Only ops can add
+     | +I entries.
+-----+-----------------------------------------------------
+r    | Registered users only
+-----+-----------------------------------------------------
+
+Modes taking a parameter (excluding modes taking a mask or
+extban):
+
+Mode | Description
+-----+-----------------------------------------------------
+k    | Channel key - users must join with the given key
+-----+-----------------------------------------------------
+l    | Maximum users that can join the channel
+-----+-----------------------------------------------------
+
+Modes taking a mask or extban as a param. For more
+information on extbans, see /help extban:
+
+Mode | Description
+-----+-----------------------------------------------------
+b    | Ban a given mask
+-----+-----------------------------------------------------
+e    | Allow a given mask to be exempt from +b
+-----+-----------------------------------------------------
+I    | Allow a given mask to be exempt from +i
+-----+-----------------------------------------------------
+q    | Quiet a user without banning them
+-----+-----------------------------------------------------

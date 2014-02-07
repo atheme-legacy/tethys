@@ -1,0 +1,15 @@
+MODE <channel> <+|-><b|q|e|I> $[~]<type>[:<data>]
+
+Extbans (EXTended BANS) allow extended checking beyond the
+usual masks. they are of the format $type:data. Use $~type
+to negate the match (that is, the opposite).
+
+Type | Description
+-----+-----------------------------------------------------
+a    | Match the given account name (login name with
+     | services)
+-----+-----------------------------------------------------
+o    | Match opers (useful with +eI)
+-----+-----------------------------------------------------
+z    | Match all SSL users
+-----+-----------------------------------------------------
