@@ -91,9 +91,6 @@ static int do_mode_status(u_modes *m, int on, char *param)
 			    m->info->arg.data);
 	}
 
-	u_log(LG_INFO, "%I %s status on %s", m->setter,
-	      on ? "set" : "cleared", param);
-
 	return 1;
 }
 
@@ -122,9 +119,6 @@ static int do_mode_flag(u_modes *m, int on)
 		if (m->ctx->reset_flag_bits)
 			m->ctx->reset_flag_bits(m, flag);
 	}
-
-	u_log(LG_INFO, "%I %s 0x%x", m->setter,
-	      on ? "set" : "cleared", flag);
 
 	return 0;
 }
