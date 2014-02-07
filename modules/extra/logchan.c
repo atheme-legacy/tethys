@@ -27,6 +27,7 @@ static void logchanf(const char *fmt, ...)
 static int m_logchan(u_sourceinfo *si, u_msg *msg)
 {
 	logchanf("This command currently does nothing");
+	return 0;
 }
 
 u_cmd c_logchan[] = {
