@@ -63,7 +63,9 @@ typedef struct
 
 
 /* Functions */
+void u_ratelimit_init(u_user *user);
 bool u_ratelimit_allow(u_user *user, u_ratelimit_cmd_t *deduct, const char *cmd);
 void u_ratelimit_who_credit(u_user *user);
+void u_ratelimit_who_deduct(u_user *user);
 
 #endif

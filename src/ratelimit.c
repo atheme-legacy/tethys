@@ -21,7 +21,7 @@ bool u_ratelimit_allow(u_user *user, u_ratelimit_cmd_t *deduct, const char *cmd)
 	if ((strcasecmp(cmd, "WHO") == 0) && (user->limit.whotokens > 0))
 	{
 		/* Compensate for WHO */
-		user->limit.whotokens--;
+		u_ratelimit_who_deduct(user);
 		return true;
 	}
 
@@ -55,4 +55,11 @@ bool u_ratelimit_allow(u_user *user, u_ratelimit_cmd_t *deduct, const char *cmd)
 void u_ratelimit_who_credit(u_user *user)
 {
 	user->limit.whotokens++;
+}
+
+/* Deduct a user for part */
+void u_ratelimit_who_deduct(u_user *user)
+{
+	if (user->limit.whotokens > 0)
+		user->limit.whotokens--;
 }

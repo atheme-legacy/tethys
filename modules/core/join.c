@@ -58,6 +58,9 @@ static int try_local_join_chan(u_sourceinfo *si, char *chan, char *key)
 		}
 	}
 
+	/* Credit them */
+	u_ratelimit_who_credit(si->u);
+
 	u_chan_send_topic(c, si->u);
 	u_chan_send_names(c, si->u);
 

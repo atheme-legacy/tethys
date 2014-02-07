@@ -112,6 +112,8 @@ static u_user *create_user(char *uid, size_t sz)
 	u->channels = u_map_new(0);
 	u->invites = u_map_new(0);
 
+	u_ratelimit_init(u);
+
 	return u;
 }
 
