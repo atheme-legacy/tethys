@@ -28,12 +28,15 @@ static int c_s_euid(u_sourceinfo *si, u_msg *msg)
 		u_strlcpy(u->acct, msg->argv[9], MAXACCOUNT+1);
 
 	/* user modes */
-	/* TODO
-	m.perms = &me;
+	m.ctx = &umodes;
+	m.stacker = NULL;
+	m.setter = si;
 	m.target = u;
-	u_mode_process(&m, umodes, 1, msg->argv + 3);
+	m.access = NULL;
+	m.flags = MODE_FORCE_ALL;
+	u_mode_process(&m, 1, msg->argv + 3);
+
 	u_log(LG_VERBOSE, "%U has user mode %s", u, u_user_modes(u));
-	*/
 
 	msg->propagate = CMD_DO_BROADCAST;
 
