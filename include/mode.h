@@ -33,8 +33,11 @@ typedef enum u_mode_type {
 	MODE_LIST,
 } u_mode_type;
 
-#define MODE_OPER_ONLY         0x0001
-#define MODE_UNSET_ONLY        0x0002
+#define MODE_OPER_ONLY         0x0001 /* need oper to change */
+#define MODE_NO_RESET          0x0002 /* cannot unset the mode */
+#define MODE_NO_SET            0x0004 /* cannot set the mode */
+
+#define MODE_NO_CHANGE  (MODE_NO_RESET | MODE_NO_SET) /* cannot change the mode */
 
 struct u_mode_info {
 	char ch;
@@ -78,9 +81,8 @@ struct u_mode_stacker {
 #define MODE_ERR_UNK_CHAR         0x0001
 #define MODE_ERR_NO_ACCESS        0x0002
 #define MODE_ERR_NOT_OPER         0x0004
-#define MODE_ERR_SET_UNSET_ONLY   0x0008
-#define MODE_ERR_MISSING_PARAM    0x0010
-#define MODE_ERR_LIST_FULL        0x0020
+#define MODE_ERR_MISSING_PARAM    0x0008
+#define MODE_ERR_LIST_FULL        0x0010
 
 struct u_modes {
 	u_mode_ctx *ctx;

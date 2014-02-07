@@ -230,10 +230,11 @@ int u_mode_process(u_modes *m, int parc, char **parv)
 			continue;
 		}
 
-		if ((m->info->flags & MODE_UNSET_ONLY) && on) {
-			m->errors |= MODE_ERR_SET_UNSET_ONLY;
+		if ((m->info->flags & MODE_NO_SET) && on)
 			continue;
-		}
+
+		if ((m->info->flags & MODE_NO_RESET) && !on)
+			continue;
 
 		any++;
 		param = parc > 0 ? *parv : NULL;
