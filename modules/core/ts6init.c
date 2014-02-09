@@ -26,6 +26,23 @@ static int c_us_capab(u_sourceinfo *si, u_msg *msg)
 	return 0;
 }
 
+static u_link *verify_link_block(u_server *sv)
+{
+	u_conn *conn = sv->link;
+	u_link *link;
+
+	if (!(link = u_find_link(sv)))
+		return NULL;
+
+	if (!conn->pass || !streq(conn->pass, link->recvpass))
+		return NULL;
+
+	if (!streq(link->host, conn->ip))
+		return NULL;
+
+	return link;
+}
+
 static int c_us_server(u_sourceinfo *si, u_msg *msg)
 {
 	u_strlcpy(si->s->name, msg->argv[0], MAXSERVNAME+1);
@@ -41,7 +58,7 @@ static int c_us_server(u_sourceinfo *si, u_msg *msg)
 		return 0;
 	}
 
-	if (!(link = u_find_link(si->source))) {
+	if (!(link = verify_link_block(si->s))) {
 		u_conn_fatal(si->source, "No link{} blocks for your host");
 		return 0;
 	}

@@ -20,6 +20,7 @@ typedef struct u_link u_link;
 
 #include "conn.h"
 #include "util.h"
+#include "server.h"
 
 struct u_class {
 	char name[MAXCLASSNAME+1];
@@ -59,7 +60,7 @@ extern u_map *all_links;
 
 extern u_auth *u_find_auth(u_conn*);
 extern u_oper *u_find_oper(u_auth*, char*, char*);
-extern u_link *u_find_link(u_conn*);
+extern u_link *u_find_link(u_server*);
 
 extern int init_auth(void);
 
