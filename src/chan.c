@@ -142,12 +142,12 @@ static int cb_fwd(u_modes *m, int on, char *arg)
 	if (arg == NULL)
 		return 0;
 
-	if (!(tc = u_chan_get(arg))) {
+	if (!(tc = u_chan_get(arg)) && !(m->flags & MODE_FORCE_ALL)) {
 		u_src_num(m->setter, ERR_NOSUCHCHANNEL, arg);
 		return 1;
 	}
 
-	if (m->setter->u && !(m->flags & MODE_FORCE_ALL)) {
+	if (tc && m->setter->u && !(m->flags & MODE_FORCE_ALL)) {
 		tcu = u_chan_user_find(tc, m->setter->u);
 
 		if (tcu == NULL || !(tcu->flags & CU_PFX_OP)) {
