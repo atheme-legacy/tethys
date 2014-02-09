@@ -79,6 +79,7 @@ static void cmode_sync(u_modes *m)
 static int cb_fwd(u_modes*, int, char*);
 static int cb_key(u_modes*, int, char*);
 static int cb_limit(u_modes*, int, char*);
+static int cb_join(u_modes*, int, char*);
 
 u_mode_info cmode_infotab[128] = {
 	['c'] = { 'c', MODE_FLAG, 0, { .data = CMODE_NOCOLOR } },
@@ -94,6 +95,7 @@ u_mode_info cmode_infotab[128] = {
 	['f'] = { 'f', MODE_EXTERNAL, 0, { .fn = cb_fwd } },
 	['k'] = { 'k', MODE_EXTERNAL, 0, { .fn = cb_key } },
 	['l'] = { 'l', MODE_EXTERNAL, 0, { .fn = cb_limit } },
+	['j'] = { 'j', MODE_EXTERNAL, 0, { .fn = cb_join } },
 
 	['b'] = { 'b', MODE_LIST },
 	['q'] = { 'q', MODE_LIST },
@@ -218,6 +220,12 @@ static int cb_limit(u_modes *m, int on, char *arg)
 	snprintf(buf, 128, "%d", lim);
 	u_mode_put(m, 1, buf);
 	return 1;
+}
+
+static int cb_join(u_modes *m, int on, char *arg)
+{
+	/* TODO: +j. temporarily eat arg */
+	return on;
 }
 
 static u_chan *chan_create_real(char *name)
