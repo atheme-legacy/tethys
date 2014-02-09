@@ -183,6 +183,33 @@ static int do_mode_list(u_modes *m, int on, char *param)
 	return 1;
 }
 
+void u_mode_flags(u_mode_ctx *ctx, char *modestr, ulong *set, ulong *reset)
+{
+	int on = 1;
+	u_mode_info *info;
+
+	if (set) *set = 0;
+	if (reset) *reset = 0;
+
+	for (; *modestr; modestr++) {
+		if (*modestr == '+' || *modestr == '-') {
+			on = (*modestr == '+');
+			continue;
+		}
+
+		if (!(info = find_info(ctx->infotab, *modestr)))
+			continue;
+
+		if (info->type != MODE_FLAG)
+			continue;
+
+		if (on && set)
+			*set |= info->arg.data;
+		if (!on && reset)
+			*reset |= info->arg.data;
+	}
+}
+
 int u_mode_process(u_modes *m, int parc, char **parv)
 {
 	int used, any = 0, on = 1;

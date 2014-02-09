@@ -102,6 +102,10 @@ struct u_modes {
 	void *stack; /* private use, by stacker */
 };
 
+/* extracts only the flags from a mode string. no callbacks */
+extern void u_mode_flags(u_mode_ctx*, char*, ulong *set, ulong *reset);
+
+/* processes modes, performing all callbacks */
 extern int u_mode_process(u_modes *m, int parc, char **parv);
 
 static inline void u_mode_put(u_modes *m, int on, char *param)
