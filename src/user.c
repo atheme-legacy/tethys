@@ -133,7 +133,7 @@ u_user *u_user_create_remote(u_server *sv, char *uid)
 		u_log(LG_WARN, "Adding remote user with wrong SID!");
 		u_log(LG_INFO, "     uid=%s, sv->sid=%s", uid, sv->sid);
 	}
-	u = create_user(uid, sv->link, &me);
+	u = create_user(uid, sv->link, sv);
 
 	u_log(LG_VERBOSE, "New remote user, uid=%s", u->uid);
 
