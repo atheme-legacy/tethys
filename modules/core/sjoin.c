@@ -206,12 +206,16 @@ static void ts_lose(u_sourceinfo *si, u_chan *c, u_modes *m, u_msg *msg)
 	u_user *u;
 	u_chanuser *cu;
 	u_map_each_state st;
+	ulong set, bit;
 	char users[512];
 	int ch;
 
 	u_log(LG_DEBUG, "ts_lose(%C)", c);
 
 	/* clear all modes */
+
+	u_mode_flags(&cmodes, msg->argv[2], &set, NULL);
+
 	for (ch=0; ch<128; ch++) {
 		m->info = &cmode_infotab[ch];
 		if (!m->info->ch)
@@ -224,7 +228,8 @@ static void ts_lose(u_sourceinfo *si, u_chan *c, u_modes *m, u_msg *msg)
 			break;
 
 		case MODE_FLAG:
-			if (c->mode & m->info->arg.data)
+			bit = m->info->arg.data;
+			if ((c->mode & bit) && !(set & bit))
 				m->stacker->put_flag(m, 0);
 			break;
 
@@ -234,7 +239,6 @@ static void ts_lose(u_sourceinfo *si, u_chan *c, u_modes *m, u_msg *msg)
 			break;
 		}
 	}
-	c->mode = 0;
 
 	/* remove all statuses from local users */
 	U_MAP_EACH(&st, c->members, &u, &cu) {
