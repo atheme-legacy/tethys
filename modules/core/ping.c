@@ -45,11 +45,12 @@ static int c_a_ping(u_sourceinfo *si, u_msg *msg)
 /* TODO: reimplement this with CMD_PROP_ONE_TO_ONE */
 static int c_s_pong(u_sourceinfo *si, u_msg *msg)
 {
-	char *name, *dest = msg->argv[1];
+	char *name, *id, *dest = msg->argv[1];
 	u_conn *link;
 
 	link = ref_link(si->source, dest);
-	name = ref_to_ref(link, dest);
+	name = ref_to_name(dest);
+	id = ref_to_id(dest);
 
 	if (!link && name) { /* PONG to me */
 		u_log(LG_VERBOSE, "PONG to me");
@@ -64,7 +65,8 @@ static int c_s_pong(u_sourceinfo *si, u_msg *msg)
 		return 0;
 	}
 
-	u_conn_f(link, ":%S PONG %s :%s", si->s, si->s->name, name);
+	u_conn_f(link, ":%S PONG %s :%s", si->s, si->s->name,
+	         link->ctx == CTX_USER ? name : id);
 
 	return 0;
 }
