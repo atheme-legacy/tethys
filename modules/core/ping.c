@@ -19,19 +19,12 @@ static int c_a_ping(u_sourceinfo *si, u_msg *msg)
 	/* I hate this command so much  --aji */
 
 	if (!tgt || !*tgt) {
-		sv = u_server_by_ref(si->source, msg->argv[0]);
-		tgt = sv ? sv->sid : msg->argv[0]; /* idk */
-		u_conn_f(conn, ":%S PONG %s :%s", &me, me.name, tgt);
+		u_conn_f(conn, ":%S PONG %s :%s", &me, me.name, msg->argv[0]);
 		return 0;
 	}
 
 	if (!(sv = u_server_by_ref(conn, tgt))) {
-		if (conn->ctx == CTX_USER) {
-			u_conn_num(conn, ERR_NOSUCHSERVER, tgt);
-		} else {
-			u_log(LG_ERROR, "%S sent PING for nonexistent %s",
-			      si->s, tgt);
-		}
+		u_conn_num(conn, ERR_NOSUCHSERVER, tgt);
 		return 0;
 	}
 
@@ -56,7 +49,7 @@ static int c_s_pong(u_sourceinfo *si, u_msg *msg)
 	u_conn *link;
 
 	link = ref_link(si->source, dest);
-	name = ref_to_ref(si->source, dest);
+	name = ref_to_ref(link, dest);
 
 	if (!link && name) { /* PONG to me */
 		u_log(LG_VERBOSE, "PONG to me");
