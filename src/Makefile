@@ -18,6 +18,7 @@ SRCS = numeric.c \
 	sendto.c \
 	server.c \
 	strop.c \
+	toplev.c \
 	upgrade.c \
 	user.c \
 	util.c \
