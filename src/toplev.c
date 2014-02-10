@@ -146,6 +146,100 @@ void u_toplev_attach(u_conn *conn)
 	conn->sync = toplev_sync;
 }
 
+static void start_rdns(u_conn *conn, struct sockaddr *addr, socklen_t addrlen)
+{
+	struct rdns_query *query;
+	void *addrptr;
+
+	addrptr = NULL;
+	switch (addr->sa_family) {
+	case AF_INET:
+		addrptr = &((struct sockaddr_in*)addr)->sin_addr;
+		break;
+	case AF_INET6:
+		addrptr = &((struct sockaddr_in6*)addr)->sin6_addr;
+		break;
+	}
+	inet_ntop(addr->sa_family, addrptr, conn->ip, sizeof(conn->ip));
+
+	u_conn_f(conn, ":%s NOTICE * :*** Looking up your hostname", me.name);
+	query = malloc(sizeof(*query));
+	query->conn = conn;
+	query->q.ptr = query;
+	query->q.callback = origin_rdns;
+	conn->dnsq = &query->q;
+	mowgli_dns_gethost_byaddr(base_dns, (void*)addr, conn->dnsq);
+}
+
+static void toplev_connect_ready(mowgli_eventloop_t *ev, mowgli_eventloop_io_t *io,
+                                 mowgli_eventloop_io_dir_t dir, void *priv)
+{
+	u_conn *conn = priv;
+	int fd = conn->poll->fd;
+	void (*cb)(u_conn *conn, int error) = conn->priv;
+	socklen_t len;
+	int e;
+
+	toplev_set(conn, false, MOWGLI_EVENTLOOP_IO_WRITE, NULL);
+
+	len = sizeof(e);
+	if (getsockopt(fd, SOL_SOCKET, SO_ERROR, &e, &len) < 0) {
+		cb(conn, errno);
+		u_conn_fatal(conn, "getsockopt() error");
+		return;
+	}
+
+	if (e != 0) {
+		cb(conn, e);
+		u_conn_fatal(conn, "connection error");
+		return;
+	}
+
+	cb(conn, 0);
+}
+
+void u_toplev_connect(mowgli_eventloop_t *ev, struct sockaddr *sa,
+                      socklen_t len, void (*cb)(u_conn*, int))
+{
+	int fd = -1, flags;
+	u_conn *conn;
+
+	if ((fd = socket(sa->sa_family, SOCK_STREAM, 0)) < 0)
+		goto error;
+
+	if ((flags = fcntl(fd, F_GETFL)) < 0)
+		goto error;
+
+	if (fcntl(fd, F_SETFL, flags | O_NONBLOCK) < 0)
+		goto error;
+
+	if (connect(fd, sa, len) < 0) {
+		if (errno != EINPROGRESS)
+			goto error;
+	}
+
+	if (!(conn = u_conn_create(ev, fd))) {
+		/* kind of cheating, with errno here. */
+		errno = EINVAL;
+		goto error;
+	}
+
+	conn->priv = cb;
+	start_rdns(conn, sa, len);
+
+	u_log(LG_VERBOSE, "Connecting to %s", conn->ip);
+
+	toplev_set(conn, true, MOWGLI_EVENTLOOP_IO_WRITE, toplev_connect_ready);
+
+	return;
+
+error:
+	if (fd >= 0)
+		close(fd);
+	cb(NULL, errno);
+	return;
+}
+
 u_toplev_origin *u_toplev_origin_create(mowgli_eventloop_t *ev, u_long addr,
                                     u_short port)
 {
@@ -256,41 +350,23 @@ static void origin_recv(mowgli_eventloop_t *ev, mowgli_eventloop_io_t *io,
                         mowgli_eventloop_io_dir_t dir, void *priv)
 {
 	mowgli_eventloop_pollable_t *poll = mowgli_eventloop_io_pollable(io);
-	struct rdns_query *query;
-	u_conn *conn;
 	struct sockaddr_storage addr;
-	void *addrptr;
-	socklen_t addrlen = sizeof(addr);
+	socklen_t addrlen;
+	u_conn *conn;
 	int fd;
 
 	sync_time();
 
+	addrlen = sizeof(addr);
 	if ((fd = accept(poll->fd, (struct sockaddr*)&addr, &addrlen)) < 0) {
 		u_perror("accept");
 		return;
 	}
 
 	conn = u_conn_create(ev, fd);
+	start_rdns(conn, (struct sockaddr*)&addr, addrlen);
+
 	u_toplev_attach(conn);
-
-	addrptr = NULL;
-	switch (addr.ss_family) {
-	case AF_INET:
-		addrptr = &((struct sockaddr_in*)&addr)->sin_addr;
-		break;
-	case AF_INET6:
-		addrptr = &((struct sockaddr_in6*)&addr)->sin6_addr;
-		break;
-	}
-	inet_ntop(addr.ss_family, addrptr, conn->ip, sizeof(conn->ip));
-
-	u_conn_f(conn, ":%s NOTICE * :*** Looking up your hostname", me.name);
-	query = malloc(sizeof(*query));
-	query->conn = conn;
-	query->q.ptr = query;
-	query->q.callback = origin_rdns;
-	conn->dnsq = &query->q;
-	mowgli_dns_gethost_byaddr(base_dns, (void*)&addr, conn->dnsq);
 
 	u_log(LG_VERBOSE, "Connection from %s", conn->ip);
 }

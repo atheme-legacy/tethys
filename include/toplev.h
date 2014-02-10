@@ -18,6 +18,9 @@ struct u_toplev_origin {
 
 extern void u_toplev_attach(u_conn*);
 
+extern void u_toplev_connect(mowgli_eventloop_t*, struct sockaddr*,
+                             socklen_t len, void (*cb)(u_conn*, int err));
+
 extern u_toplev_origin *u_toplev_origin_create(mowgli_eventloop_t*, ulong addr,
                                                ushort port);
 extern void u_toplev_origin_destroy(u_toplev_origin *orig);
