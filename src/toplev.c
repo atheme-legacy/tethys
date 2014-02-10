@@ -195,6 +195,9 @@ static void toplev_connect_ready(mowgli_eventloop_t *ev, mowgli_eventloop_io_t *
 		return;
 	}
 
+	u_log(LG_VERBOSE, "Connected to %s", conn->ip);
+
+	u_toplev_attach(conn);
 	cb(conn, 0);
 }
 
