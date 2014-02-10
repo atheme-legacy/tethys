@@ -43,6 +43,7 @@ u_conn *u_conn_create(mowgli_eventloop_t *ev, int fd)
 	if (conn->obuf == NULL)
 		abort();
 
+	conn->sync = NULL;
 	conn->shutdown = NULL;
 	conn->error = NULL;
 
