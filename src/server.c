@@ -157,7 +157,7 @@ void server_shutdown(u_conn *conn)
 	u_server *sv = conn->priv;
 	if (sv == NULL)
 		return;
-	if (conn->ctx == CTX_SERVER)
+	if (conn->ctx == CTX_SERVER && (conn->flags & U_CONN_REGISTERED))
 		u_sendto_servers(conn, ":%S SQUIT %S :%s", &me, sv, msg);
 	u_conn_f(conn, "ERROR :%s", msg);
 	u_server_unlink(sv);

@@ -68,7 +68,7 @@ void user_shutdown(u_conn *conn)
 	u_user *u = conn->priv;
 	if (u == NULL)
 		return;
-	if (conn->ctx == CTX_USER) {
+	if (conn->ctx == CTX_USER && (conn->flags & U_CONN_REGISTERED)) {
 		u_sendto_visible(u, ST_USERS, ":%H QUIT :%s", u, msg);
 		u_sendto_servers(NULL, ":%H QUIT :%s", u, msg);
 	}
