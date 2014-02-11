@@ -63,6 +63,7 @@ extern int u_msg_parse(u_msg*, char*);
 #include "conn.h"
 #include "user.h"
 #include "server.h"
+#include "ratelimit.h"
 
 /* Any pointer fields can be NULL. */
 struct u_sourceinfo {

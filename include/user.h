@@ -41,6 +41,7 @@ typedef struct u_user u_user;
 #include "conn.h"
 #include "server.h"
 #include "mode.h"
+#include "ratelimit.h"
 
 struct u_user {
 	char uid[10];

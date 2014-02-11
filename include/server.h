@@ -37,6 +37,8 @@
 
 typedef struct u_server u_server;
 
+#include "conn.h"
+
 struct u_server {
 	u_conn *link; /* only NULL for &me */
 	ulong flags;

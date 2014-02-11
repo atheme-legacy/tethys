@@ -8,8 +8,6 @@
 #ifndef __INC_RATELIMIT_H__
 #define __INC_RATELIMIT_H__
 
-typedef struct u_user u_user;
-
 /* Flood rate tokens */
 #define FLOODTOKENS 30
 
@@ -59,6 +57,7 @@ typedef struct {
 /* For things like WHOIS etc */
 #define U_RATELIMIT_HI { 5, true }
 
+#include "user.h"
 
 /* Functions */
 void u_ratelimit_init(u_user *user);
