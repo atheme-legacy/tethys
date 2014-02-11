@@ -318,8 +318,7 @@ static int c_s_sjoin(u_sourceinfo *si, u_msg *msg)
 	char *channame = msg->argv[1];
 	int ts = atoi(msg->argv[0]);
 
-	if ((c = u_chan_get(channame)) == NULL)
-	{
+	if ((c = u_chan_get(channame)) == NULL) {
 		c = u_chan_create(channame);
 		c->ts = ts;
 	}
