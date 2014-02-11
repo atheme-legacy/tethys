@@ -318,12 +318,13 @@ static int c_s_sjoin(u_sourceinfo *si, u_msg *msg)
 	char *channame = msg->argv[1];
 	int ts = atoi(msg->argv[0]);
 
-	if ((c = u_chan_get(channame)) != NULL)
-		return ts_rules(si, c, ts, msg);
+	if ((c = u_chan_get(channame)) == NULL)
+	{
+		c = u_chan_create(channame);
+		c->ts = ts;
+	}
 
-	c = u_chan_create(channame);
-	c->ts = ts;
-	ts_rules(si, c, c->ts, msg);
+	return ts_rules(si, c, ts, msg);
 }
 
 static u_cmd sjoin_cmdtab[] = {
