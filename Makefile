@@ -10,3 +10,4 @@ DISTCLEAN = extra.mk \
 include buildsys.mk
 
 src modules: $(LIBMOWGLI)
+modules: src
