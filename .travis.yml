@@ -2,17 +2,6 @@ language: c
 compiler:
 - gcc
 - clang
-env:
-  global:
-  - secure: vtwdxOBkDgYqCeXGOGvdmce/p0uT5n1ysAUI3qeqqM1JoNqYHz3uU/VanaPH7lE0F/vozcNgryUP4DS+0TMkCcBgjlnpJFKrGic74xQ1mT4WjHxoJX50mJqvsGapDFgpHT/bA2RPnLnmv/ayYEj0TeADUVvQ5ggelQ3idvgTLIs=
-addons:
-  coverity_scan:
-    project:
-      name: "atheme/tethys"
-      description: "A NEXT-GENERATION IRCD"
-      build_command_prepend: "./configure"
-      build_command: "make -j4"
-      branch_pattern: master
 
 before-install:
 - sudo apt-get update
