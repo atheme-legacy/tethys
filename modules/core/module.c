@@ -81,6 +81,8 @@ static u_cmd module_cmdtab[] = {
 static int module_init(u_module *m)
 {
 	m->flags |= MODULE_PERMANENT;
+
+	return 0;
 }
 
 TETHYS_MODULE_V1(
