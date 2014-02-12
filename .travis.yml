@@ -18,4 +18,4 @@ addons:
       description: A NEXT-GENERATION IRCD
       build_command_prepend: "./configure"
       build_command: "make -j4"
-      branch_pattern: coverity_scan
+      branch_pattern: master
