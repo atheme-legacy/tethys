@@ -261,17 +261,17 @@ u_toplev_origin *u_toplev_origin_create(mowgli_eventloop_t *ev, u_long addr,
 
 	if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one)) < 0) {
 		u_perror("setsockopt");
-		goto out;
+		goto out_close;
 	}
 
 	if (bind(fd, (struct sockaddr*)&sa, sizeof(sa)) < 0) {
 		u_perror("bind");
-		goto out;
+		goto out_close;
 	}
 
 	if (listen(fd, 5) < 0) {
 		u_perror("listen");
-		goto out;
+		goto out_close;
 	}
 
 	if (!(orig = malloc(sizeof(*orig))))
