@@ -15,7 +15,7 @@ static int c_a_kick(u_sourceinfo *si, u_msg *msg)
 
 	if (!(c = u_chan_get(msg->argv[0])))
 		return u_src_num(si, ERR_NOSUCHCHANNEL, msg->argv[0]);
-	if (!(tu = u_user_by_ref(msg->argv[1])))
+	if (!(tu = u_user_by_ref(si->source, msg->argv[1])))
 		return u_src_num(si, ERR_NOSUCHNICK, msg->argv[1]);
 	if (SRC_IS_LOCAL_USER(si)) {
 		if (!(cu = u_chan_user_find(c, si->u)))

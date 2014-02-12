@@ -2,8 +2,10 @@ MODULE = core
 
 SRCS = \
 	away.c \
+	bmask.c \
 	cap.c \
 	euid.c \
+	help.c \
 	hunted.c \
 	invite.c \
 	join.c \
@@ -24,7 +26,11 @@ SRCS = \
 	ping.c \
 	quit.c \
 	sid.c \
+	sjoin.c \
+	squit.c \
 	stats.c \
+	su.c \
+	tb.c \
 	ts6init.c \
 	topic.c \
 	user.c \

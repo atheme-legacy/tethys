@@ -1,0 +1,16 @@
+MODE <nick> <+|-><modes>
+
+User modes are settable on oneself (not on other users) and
+may change certain behaviour.
+
+Modes are always a single-character and may be combined.
+
+Mode | Description
+-----+-----------------------------------------------------
+i    | Invisible - nobody can see what channels you are in
+     | unless you are in the same channels.
+-----+-----------------------------------------------------
+x/h  | Host is cloaked
+-----+-----------------------------------------------------
+w    | Can see wallops
+-----+-----------------------------------------------------

@@ -111,6 +111,9 @@ static int reg_one(u_cmd *cmd)
 
 	cmd->owner = u_module_loading();
 
+	cmd->runs = 0;
+	cmd->usecs = 0;
+
 	/* TODO: check mutual exclusivity */
 
 	at = mowgli_patricia_retrieve(all_commands, cmd->name);
@@ -174,7 +177,7 @@ static void *on_module_unload(void *unused, void *m)
 static void fill_source_server(u_sourceinfo *si, u_server *s)
 {
 	si->s = s;
-	si->link = si->s->conn;
+	si->link = si->s->link;
 	si->local = NULL;
 	if (IS_SERVER_LOCAL(si->s)) {
 		si->local = si->link;
@@ -187,7 +190,7 @@ static void fill_source_server(u_sourceinfo *si, u_server *s)
 static void fill_source_user(u_sourceinfo *si, u_user *u)
 {
 	si->u = u;
-	si->link = u_user_conn(si->u);
+	si->link = si->u->link;
 	if (IS_LOCAL_USER(si->u)) {
 		si->local = si->link;
 		si->mask &= SRC_LOCAL_USER;
@@ -356,7 +359,7 @@ static void fill_source(u_sourceinfo *si, u_conn *conn, u_msg *msg)
 	}
 
 	if (SRC_IS_USER(si)) {
-		if (!si->u || !(si->u->flags & UMODE_OPER))
+		if (!si->u || !(si->u->mode & UMODE_OPER))
 			si->mask &= SRC_UNPRIVILEGED;
 		else
 			si->mask &= SRC_OPER;
@@ -422,7 +425,7 @@ static void report_failure(u_sourceinfo *si, u_msg *msg, ulong bits_tested)
 
 static void propagate_message(u_sourceinfo *si, u_msg *msg, u_cmd *cmd, char *line)
 {
-	switch (cmd->propagation) {
+	switch (cmd->flags & CMD_PROP_MASK) {
 	case CMD_PROP_NONE:
 		break;
 
@@ -443,9 +446,81 @@ static void propagate_message(u_sourceinfo *si, u_msg *msg, u_cmd *cmd, char *li
 
 	default:
 		u_log(LG_WARN, "%s has unknown propagation type %d",
-		      cmd->name, cmd->propagation);
+		      cmd->name, cmd->flags & CMD_PROP_MASK);
 		break;
 	}
+}
+
+static bool run_command(u_cmd *cmd, u_sourceinfo *si, u_msg *msg)
+{
+	struct timeval start, end, diff;
+
+	/* Rate limiting */
+	if (cmd->rate.deduction > 0 && si->u != NULL &&
+	    !u_ratelimit_allow(si->u, &cmd->rate, cmd->name))
+	{
+		return false;
+	}
+
+	if (cmd->nargs && msg->argc < cmd->nargs) {
+		u_conn_num(si->source, ERR_NEEDMOREPARAMS, cmd->name);
+		return false;
+	}
+
+	msg->flags = 0;
+	msg->propagate = NULL;
+
+	gettimeofday(&start, NULL);
+	cmd->cb(si, msg);
+	gettimeofday(&end, NULL);
+	timersub(&end, &start, &diff);
+
+	cmd->runs++;
+	cmd->usecs += diff.tv_sec * 1000000 + diff.tv_usec;
+
+	return true;
+}
+
+static bool invoke_encap(u_sourceinfo *si, u_msg *msg, char *line)
+{
+	mowgli_patricia_iteration_state_t state;
+	u_server *sv;
+	char *mask, *subcmd;
+	ulong bits, bits_tested;
+	u_cmd *cmd;
+
+	if (msg->argc < 2) {
+		u_conn_num(si->source, ERR_NEEDMOREPARAMS, "ENCAP");
+		return false;
+	}
+
+	mask = msg->argv[0];
+	subcmd = msg->argv[1];
+
+	if (!streq(mask, "*") && !streq(mask, me.name)
+	    && !matchcase(mask, me.name)) {
+		goto propagate;
+	}
+
+	bits = si->u ? SRC_ENCAP_USER : SRC_ENCAP_SERVER;
+
+	if ((cmd = find_command(subcmd, bits, &bits_tested))) {
+		u_log(LG_FINE, "%I INVOKE ENCAP %s [%p]", si, subcmd);
+		run_command(cmd, si, msg);
+	} else {
+		u_log(LG_VERBOSE, "%I used unknown ENCAP %s", si, subcmd);
+	}
+
+propagate:
+	u_sendto_start();
+	u_sendto_skip(si->source);
+	MOWGLI_PATRICIA_FOREACH(sv, &state, servers_by_sid) {
+		if (!matchcase(mask, sv->name) || !sv->link)
+			continue;
+		u_sendto(sv->link, line);
+	}
+
+	return true;
 }
 
 void u_cmd_invoke(u_conn *conn, u_msg *msg, char *line)
@@ -460,6 +535,11 @@ again:
 	fill_source(&si, conn, msg);
 	u_log(LG_FINE, "source mask = 0x%x", si.mask);
 
+	if (conn->ctx == CTX_SERVER && streq(msg->command, "ENCAP")) {
+		invoke_encap(&si, msg, line);
+		return;
+	}
+
 	if (!(cmd = find_command(msg->command, si.mask, &bits_tested))) {
 		report_failure(&si, msg, bits_tested);
 		return;
@@ -473,17 +553,11 @@ again:
 	}
 	last_cmd = cmd;
 
-	if (cmd->nargs && msg->argc < cmd->nargs) {
-		u_conn_num(conn, ERR_NEEDMOREPARAMS, cmd->name);
+	if (!run_command(cmd, &si, msg))
 		return;
-	}
 
-	msg->flags = 0;
-	msg->propagate = NULL;
-
-	cmd->cb(&si, msg);
-
-	if (msg->propagate && cmd->propagation && conn->ctx == CTX_SERVER)
+	if (msg->propagate && (cmd->flags & CMD_PROP_MASK)
+	    && conn->ctx == CTX_SERVER)
 		propagate_message(&si, msg, cmd, line);
 
 	if (msg->flags & MSG_REPEAT)

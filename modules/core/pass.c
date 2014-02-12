@@ -18,7 +18,7 @@ static int c_first_pass(u_sourceinfo *si, u_msg *msg)
 
 	if (!is_valid_sid(msg->argv[3])) {
 		u_conn_fatal(si->source, "Invalid SID");
-		return;
+		return 0;
 	}
 
 	return u_repeat_as_server(si, msg, msg->argv[3]);
@@ -29,6 +29,8 @@ static int c_uu_pass(u_sourceinfo *si, u_msg *msg)
 	if (si->source->pass != NULL)
 		free(si->source->pass);
 	si->source->pass = strdup(msg->argv[0]);
+
+	return 0;
 }
 
 static u_cmd pass_cmdtab[] = {

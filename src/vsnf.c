@@ -97,7 +97,6 @@ int vsnf(int type, char *s, uint size, const char *fmt, va_list va)
 	u_chan *chan;
 	u_server *server;
 	u_conn *conn;
-	u_entity *e;
 	u_sourceinfo *si;
 
 	struct buffer buf;
@@ -159,16 +158,6 @@ top:
 
 	switch (*fmt) {
 	/* useful IRC formats */
-	case 'T': /* timestamp */
-		if (type == FMT_LOG) {
-			character(&buf, '(');
-			string(&buf, ctime(&NOW.tv_sec), 24, &spec);
-			character(&buf, ')');
-		} else {
-			integer(&buf, NOW.tv_sec, 0, 10, &spec);
-		}
-		break;
-
 	case 'U': /* user */
 		user = va_arg(va, u_user*);
 		if (type == FMT_SERVER) {
@@ -178,7 +167,7 @@ top:
 			q = (user && user->nick[0]) ? user->nick : "*";
 			string(&buf, q, -1, &spec);
 			if (debug) {
-				integer(&buf, (int)user, 0, 16, NULL);
+				integer(&buf, (size_t)user, 0, 16, NULL);
 				character(&buf, ']');
 			}
 		}
@@ -196,7 +185,7 @@ top:
 			string(&buf, user->host, -1, NULL);
 			if (debug) {
 				character(&buf, '[');
-				integer(&buf, (int)user, 0, 16, NULL);
+				integer(&buf, (size_t)user, 0, 16, NULL);
 				character(&buf, ']');
 			}
 		}
@@ -207,7 +196,7 @@ top:
 		string(&buf, chan?chan->name:"*", -1, &spec);
 		if (debug) {
 			character(&buf, '[');
-			integer(&buf, (int)chan, 0, 16, NULL);
+			integer(&buf, (size_t)chan, 0, 16, NULL);
 			character(&buf, ']');
 		}
 		break;
@@ -220,7 +209,7 @@ top:
 			string(&buf, server->name, -1, &spec);
 			if (debug) {
 				character(&buf, '[');
-				integer(&buf, (int)server, 0, 16, NULL);
+				integer(&buf, (size_t)server, 0, 16, NULL);
 				character(&buf, ']');
 			}
 		}
@@ -229,7 +218,7 @@ top:
 	case 'G': /* generic connection */
 		conn = va_arg(va, u_conn*);
 
-		switch (conn ? conn->ctx : -1) {
+		switch ((conn && conn->priv) ? conn->ctx : -1) {
 		case CTX_USER:
 			user = conn->priv;
 			s_arg = (type == FMT_SERVER ? user->uid : user->nick);
@@ -245,16 +234,6 @@ top:
 		}
 
 		string(&buf, (s_arg && s_arg[0]) ? s_arg : "*", -1, &spec);
-		break;
-
-	case 'E': /* entity */
-		s_arg = "(none)"; 
-		if ((e = va_arg(va, u_entity*))) {
-			s_arg = e->name;
-			if (type == FMT_SERVER)
-				s_arg = e->id;
-		}
-		string(&buf, s_arg, -1, &spec);
 		break;
 
 	case 'I': /* sourceinfo */

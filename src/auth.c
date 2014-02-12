@@ -74,7 +74,7 @@ u_oper *u_find_oper(u_auth *auth, char *name, char *pass)
 
 	if (oper->auth == NULL && oper->authname[0]) {
 		oper->auth = u_map_get(all_auths, oper->authname);
-		if (auth->cls == NULL) {
+		if (auth && auth->cls == NULL) {
 			u_log(LG_WARN, msg_authnotfound,
 			      oper->name, oper->authname);
 		}
@@ -89,39 +89,14 @@ u_oper *u_find_oper(u_auth *auth, char *name, char *pass)
 	return oper;
 }
 
-u_link *u_find_link(u_conn *conn)
+u_link *u_find_link(u_server *sv)
 {
-	mowgli_node_t *n;
-	u_link *link;
-
 	if (mowgli_list_size(&link_list) == 0) {
 		u_log(LG_WARN, msg_nolinkblocks);
 		return NULL;
 	}
 
-	MOWGLI_LIST_FOREACH(n, link_list.head) {
-		link = n->data;
-
-		if (!streq(link->host, conn->ip))
-			continue;
-		if (link->recvpass[0]) {
-			if (!conn->pass || !streq(link->recvpass, conn->pass))
-				continue;
-		}
-
-		if (link->cls == NULL) {
-			link->cls = u_map_get(all_classes, link->classname);
-			if (link->cls == NULL) {
-				u_log(LG_WARN, msg_classnotfound,
-				      "Link", link->name, link->classname);
-				link->cls = &class_default;
-			}
-		}
-
-		return link;
-	}
-
-	return NULL;
+	return u_map_get(all_links, sv->name);
 }
 
 static u_class *cur_class = NULL;

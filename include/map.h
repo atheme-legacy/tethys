@@ -10,10 +10,10 @@
 typedef struct u_map u_map;
 typedef struct u_map_n u_map_n; /* defined internally */
 
-#define MAP_TRAVERSING  1
-#define MAP_STRING_KEYS 2
+#define MAP_STRING_KEYS 1
 
 struct u_map {
+	int iterdepth;
 	uint flags;
 	u_map_n *root;
 	uint size;

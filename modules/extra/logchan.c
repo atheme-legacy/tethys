@@ -27,6 +27,7 @@ static void logchanf(const char *fmt, ...)
 static int m_logchan(u_sourceinfo *si, u_msg *msg)
 {
 	logchanf("This command currently does nothing");
+	return 0;
 }
 
 u_cmd c_logchan[] = {
@@ -38,8 +39,10 @@ static void *on_log(void *unused, void *_log)
 {
 	struct hook_log *log = _log;
 	if (log->level > LG_VERBOSE)
-		return;
+		return NULL;
 	logchanf("%s", log->line);
+
+	return NULL;
 }
 
 static int logchan_init(u_module *m)

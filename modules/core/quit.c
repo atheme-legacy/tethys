@@ -6,7 +6,7 @@
 
 #include "ircd.h"
 
-static c_u_quit(u_sourceinfo *si, u_msg *msg)
+static int c_u_quit(u_sourceinfo *si, u_msg *msg)
 {
 	char *r1 = "", *r2 = msg->argc > 0 ? msg->argv[0] : "";
 

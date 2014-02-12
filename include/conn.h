@@ -7,10 +7,6 @@
 #ifndef __INC_CONN_H__
 #define __INC_CONN_H__
 
-#include "ircd.h"
-#include "linebuf.h"
-#include "cookie.h"
-
 #define U_CONN_OBUFSIZE 32768
 #define U_CONN_HOSTSIZE 256
 
@@ -27,7 +23,6 @@
 #define CTX_SERVER      2
 
 typedef struct u_conn u_conn;
-typedef struct u_conn_origin u_conn_origin;
 
 #include "auth.h"
 
@@ -53,13 +48,9 @@ struct u_conn {
 	int obuflen, obufsize;
 	u_cookie ck_sendto;
 
+	void (*sync)(u_conn*);
 	void (*shutdown)(u_conn*);
 	char *error;
-};
-
-struct u_conn_origin {
-	mowgli_eventloop_pollable_t *poll;
-	mowgli_node_t n;
 };
 
 extern u_conn *u_conn_create(mowgli_eventloop_t *ev, int fd);
@@ -77,10 +68,6 @@ extern void u_conn_f(u_conn *conn, char *fmt, ...);
 
 extern void u_conn_vnum(u_conn*, const char *tgt, int num, va_list);
 extern int u_conn_num(u_conn *conn, int num, ...);
-
-extern u_conn_origin *u_conn_origin_create(mowgli_eventloop_t*, ulong addr,
-                                           ushort port);
-extern void u_conn_origin_destroy(u_conn_origin *orig);
 
 extern void u_conn_check_ping_all(void*);
 

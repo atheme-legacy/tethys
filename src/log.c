@@ -6,6 +6,8 @@
 
 #include "ircd.h"
 
+static u_hook *log_hook = NULL;
+
 int default_handler(int level, char *tm, char *line)
 {
 	static char *prefix[] =
@@ -52,7 +54,9 @@ int u_log(int level, char* fmt, ...)
 	hook.level = level;
 	hook.time = tmbuf;
 	hook.line = buf;
-	u_hook_call(HOOK_LOG, &hook);
+	if (log_hook == NULL)
+		log_hook = u_hook_get(HOOK_LOG);
+	u_hook_call(log_hook, &hook);
 
 	logging = false;
 

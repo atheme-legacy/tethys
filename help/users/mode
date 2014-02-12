@@ -1,0 +1,4 @@
+MODE <nick|channel> <+|-><modes>
+
+MODE is a command used on either channels or on oneself.
+For more information, consult /help umode or /help cmode.

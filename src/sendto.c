@@ -11,14 +11,14 @@ static u_cookie ck_sendto;
 static char *ln_user, buf_user[1024];
 static char *ln_serv, buf_serv[1024];
 
-static void st_start(void)
+void u_sendto_start(void)
 {
 	u_cookie_inc(&ck_sendto);
 	ln_user = NULL;
 	ln_serv = NULL;
 }
 
-static void st_exclude(u_conn *conn)
+void u_sendto_skip(u_conn *conn)
 {
 	if (!conn)
 		return;
@@ -104,11 +104,10 @@ void u_sendto_visible(u_user *u, uint type, char *fmt, ...)
 {
 	u_sendto_state st;
 	u_conn *conn;
-	u_conn *exclude = u_user_conn(u);
 	va_list va;
 
 	va_start(va, fmt);
-	U_SENDTO_VISIBLE(&st, u, exclude, type, &conn)
+	U_SENDTO_VISIBLE(&st, u, u->link, type, &conn)
 		u_sendto(conn, "%s", ln(conn, fmt, va));
 	va_end(va);
 }
@@ -130,9 +129,9 @@ void u_sendto_list(mowgli_list_t *list, u_conn *exclude, char *fmt, ...)
 	mowgli_node_t *n;
 	va_list va;
 
-	st_start();
+	u_sendto_start();
 	if (exclude != NULL)
-		st_exclude(exclude);
+		u_sendto_skip(exclude);
 
 	va_start(va, fmt);
 	MOWGLI_LIST_FOREACH(n, list->head) {
@@ -148,9 +147,9 @@ void u_sendto_map(u_map *map, u_conn *exclude, char *fmt, ...)
 	u_conn *conn;
 	va_list va;
 
-	st_start();
+	u_sendto_start();
 	if (exclude != NULL)
-		st_exclude(exclude);
+		u_sendto_skip(exclude);
 
 	va_start(va, fmt);
 	U_MAP_EACH(&state, map, NULL, &conn)
@@ -166,10 +165,10 @@ void u_sendto_chan_start(u_sendto_state *state, u_chan *c,
 		return;
 	}
 
-	st_start();
+	u_sendto_start();
 
 	if (exclude != NULL)
-		st_exclude(exclude);
+		u_sendto_skip(exclude);
 
 	state->type = type;
 
@@ -178,26 +177,22 @@ void u_sendto_chan_start(u_sendto_state *state, u_chan *c,
 
 bool u_sendto_chan_next(u_sendto_state *state, u_conn **conn_ret)
 {
-	u_conn *conn;
 	u_user *u;
 	u_chanuser *cu;
 
 	if (state->type == ST_STOP)
 		return false;
 
-	conn = NULL;
 next_conn:
 	if (!u_map_each_next(&state->members, (void**)&u, (void**)&cu))
 		return false;
 
-	if (!(conn = u_user_conn(u)))
+	if (!want_send(state->type, u->link))
 		goto next_conn;
-	if (!want_send(state->type, conn))
-		goto next_conn;
-	if (!u_cookie_cmp(&conn->ck_sendto, &ck_sendto))
+	if (!u_cookie_cmp(&u->link->ck_sendto, &ck_sendto))
 		goto next_conn;
 
-	*conn_ret = conn;
+	*conn_ret = u->link;
 	return true;
 }
 
@@ -209,10 +204,10 @@ void u_sendto_visible_start(u_sendto_state *state, u_user *u,
 		return;
 	}
 
-	st_start();
+	u_sendto_start();
 
 	if (exclude != NULL)
-		st_exclude(exclude);
+		u_sendto_skip(exclude);
 
 	state->type = type;
 
@@ -222,14 +217,12 @@ void u_sendto_visible_start(u_sendto_state *state, u_user *u,
 
 bool u_sendto_visible_next(u_sendto_state *state, u_conn **conn_ret)
 {
-	u_conn *conn;
 	u_user *u;
 	u_chanuser *cu;
 
 	if (state->type == ST_STOP)
 		return false;
 
-	conn = NULL;
 next_conn:
 	if (!state->c) {
 		if (!u_map_each_next(&state->chans, (void**)&state->c, NULL))
@@ -244,23 +237,21 @@ next_conn:
 		goto next_conn;
 	}
 
-	if (!(conn = u_user_conn(u)))
+	if (!u_cookie_cmp(&u->link->ck_sendto, &ck_sendto))
 		goto next_conn;
-	if (!u_cookie_cmp(&conn->ck_sendto, &ck_sendto))
-		goto next_conn;
-	if (!want_send(state->type, conn))
+	if (!want_send(state->type, u->link))
 		goto next_conn;
 
-	*conn_ret = conn;
+	*conn_ret = u->link;
 	return true;
 }
 
 void u_sendto_servers_start(u_sendto_state *state, u_conn *exclude)
 {
-	st_start();
+	u_sendto_start();
 
 	if (exclude != NULL)
-		st_exclude(exclude);
+		u_sendto_skip(exclude);
 
 	mowgli_patricia_foreach_start(servers_by_sid, &state->pstate);
 }
@@ -275,12 +266,12 @@ next_conn:
 		return false;
 	mowgli_patricia_foreach_next(servers_by_sid, &state->pstate);
 
-	if (!IS_SERVER_LOCAL(sv) || !sv->conn)
+	if (!IS_SERVER_LOCAL(sv) || !sv->link)
 		goto next_conn;
-	if (!u_cookie_cmp(&sv->conn->ck_sendto, &ck_sendto))
+	if (!u_cookie_cmp(&sv->link->ck_sendto, &ck_sendto))
 		goto next_conn;
 
-	*conn_ret = sv->conn;
+	*conn_ret = sv->link;
 	return true;
 }
 

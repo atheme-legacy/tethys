@@ -197,41 +197,6 @@ char *cut(char **p, char *delim)
 	return s;
 }
 
-/* example usage:
-   char *s, buf[51];
-   int i;
-   s = buf;
-   for (i=0; i<parc; ) {
-           if (!wrap(buf, &s, 50, parv[i])) {
-                   puts(buf);
-                   continue;
-           }
-           i++;
-   }
-   if (s != buf)
-           puts(buf);
- */
-int wrap(char *base, char **p, uint w, char *str)
-{
-	uint len = strlen(str) + (base != *p);
-
-	if (*p + len > base + w) {
-		*p = base;
-		return 0;
-	}
-
-	if (base != *p) {
-		*(*p)++ = ' ';
-		len--;
-	}
-
-	memcpy(*p, str, len);
-	*p += len;
-	**p = '\0';
-
-	return 1;
-}
-
 void null_canonize(char *s)
 {
 }
@@ -290,23 +255,28 @@ bool exists(const char *path)
 	return stat(path, &st) == 0;
 }
 
-u_conn *ref_link(char *ref)
+char *ref_to_ref(u_conn *ctx, char *ref)
 {
-	if (isdigit(ref[0])) {
+	return ctx->ctx == CTX_SERVER ? ref_to_id(ref) : ref_to_name(ref);
+}
+
+u_conn *ref_link(u_conn *ctx, char *ref)
+{
+	if (ctx && ctx->ctx == CTX_SERVER && isdigit(ref[0])) {
 		if (ref[3]) {
 			u_user *u = u_user_by_uid(ref);
-			return u ? u_user_conn(u) : NULL;
+			return u ? u->link : NULL;
 		} else {
 			u_server *sv = u_server_by_sid(ref);
-			return sv ? sv->conn : NULL;
+			return sv ? sv->link : NULL;
 		}
 	} else {
 		if (!strchr(ref, '.')) {
 			u_user *u = u_user_by_nick(ref);
-			return u ? u_user_conn(u) : NULL;
+			return u ? u->link : NULL;
 		} else {
 			u_server *sv = u_server_by_name(ref);
-			return sv ? sv->conn : NULL;
+			return sv ? sv->link : NULL;
 		}
 	}
 }
@@ -317,7 +287,7 @@ char *conn_name(u_conn *conn)
 
 	switch (conn->ctx) {
 	case CTX_USER:
-		name = USER(conn->priv)->nick;
+		name = ((u_user*)conn->priv)->nick;
 		break;
 	case CTX_SERVER:
 		name = SERVER(conn->priv)->name;
@@ -333,7 +303,7 @@ char *conn_id(u_conn *conn)
 
 	switch (conn->ctx) {
 	case CTX_USER:
-		id = USER(conn->priv)->uid;
+		id = ((u_user*)conn->priv)->uid;
 		break;
 	case CTX_SERVER:
 		id = SERVER(conn->priv)->sid;
@@ -401,3 +371,4 @@ int init_util(void)
 
 	return 0;
 }
+

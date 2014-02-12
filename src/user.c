@@ -29,79 +29,38 @@ char *id_next(void)
 	return id_buf;
 }
 
-static void cb_oper();
-static void cb_flag();
+static ulong umode_get_flag_bits(u_modes *m)
+{
+	return ((u_user*) m->target)->mode;
+}
 
-static u_umode_info __umodes[32] = {
-	{ 'o', UMODE_OPER,      cb_oper         },
-	{ 'i', UMODE_INVISIBLE, cb_flag         },
-	{ 0 }
+static bool umode_set_flag_bits(u_modes *m, ulong fl)
+{
+	((u_user*) m->target)->mode |= fl;
+	return true;
+}
+
+static bool umode_reset_flag_bits(u_modes *m, ulong fl)
+{
+	((u_user*) m->target)->mode &= ~fl;
+	return true;
+}
+
+u_mode_info umode_infotab[128] = {
+	['o'] = { 'o', MODE_FLAG, MODE_NO_SET,    { .data = UMODE_OPER } },
+	['i'] = { 'i', MODE_FLAG, 0,              { .data = UMODE_INVISIBLE } },
+	['S'] = { 'S', MODE_FLAG, MODE_NO_CHANGE, { .data = UMODE_SERVICE } },
 };
 
-u_umode_info *umodes = __umodes;
+u_mode_ctx umodes = {
+	.infotab             = umode_infotab,
+
+	.get_flag_bits       = umode_get_flag_bits,
+	.set_flag_bits       = umode_set_flag_bits,
+	.reset_flag_bits     = umode_reset_flag_bits,
+};
+
 uint umode_default = 0;
-
-static int um_on;
-static char *um_buf_p, um_buf[128];
-
-void u_user_m_start(u_user *u)
-{
-	um_on = -1;
-	um_buf_p = um_buf;
-}
-
-void u_user_m_end(u_user *u)
-{
-	*um_buf_p = '\0';
-	if (um_buf_p != um_buf) {
-		u_conn_f(u_user_conn(u), ":%U MODE %U :%s", u, u, um_buf);
-		u_sendto_servers(NULL, ":%U MODE %U :%s", u, u, um_buf);
-	} else if (um_on < 0) {
-		u_user_num(u, ERR_UMODEUNKNOWNFLAG);
-	}
-}
-
-static void um_put(int on, char ch)
-{
-	if (on != um_on) {
-		um_on = on;
-		*um_buf_p++ = on ? '+' : '-';
-	}
-	*um_buf_p++ = ch;
-}
-
-static void cb_oper(u_umode_info *info, u_user *u, int on)
-{
-	if (on)
-		return;
-
-	u->flags &= ~info->mask;
-	um_put(on, info->ch);
-}
-
-static void cb_flag(u_umode_info *info, u_user *u, int on)
-{
-	uint oldm = u->flags;
-	if (on)
-		u->flags |= info->mask;
-	else
-		u->flags &= ~info->mask;
-	if (oldm != u->flags)
-		um_put(on, info->ch);
-}
-
-void u_user_mode(u_user *u, char ch, int on)
-{
-	u_umode_info *info = umodes;
-
-	while (info->ch && info->ch != ch)
-		info++;
-
-	if (!info->ch)
-		return;
-
-	info->cb(info, u, on);
-}
 
 void user_shutdown(u_conn *conn)
 {
@@ -109,7 +68,7 @@ void user_shutdown(u_conn *conn)
 	u_user *u = conn->priv;
 	if (u == NULL)
 		return;
-	if (conn->ctx == CTX_USER) {
+	if (conn->ctx == CTX_USER && (conn->flags & U_CONN_REGISTERED)) {
 		u_sendto_visible(u, ST_USERS, ":%H QUIT :%s", u, msg);
 		u_sendto_servers(NULL, ":%H QUIT :%s", u, msg);
 	}
@@ -117,11 +76,11 @@ void user_shutdown(u_conn *conn)
 	u_user_destroy(u);
 }
 
-static u_user *create_user(char *uid, size_t sz)
+static u_user *create_user(char *uid, u_conn *link, u_server *sv)
 {
 	u_user *u;
 
-	if (!(u = calloc(1, sz))) {
+	if (!(u = calloc(1, sizeof(*u)))) {
 		u_log(LG_SEVERE, "calloc() failed");
 		abort();
 	}
@@ -131,6 +90,14 @@ static u_user *create_user(char *uid, size_t sz)
 
 	u->channels = u_map_new(0);
 	u->invites = u_map_new(0);
+
+	u_ratelimit_init(u);
+
+	u->link = link;
+	u->oper = NULL;
+	u->sv = sv;
+
+	u->sv->nusers++;
 
 	return u;
 }
@@ -144,16 +111,15 @@ u_user *u_user_create_local(u_conn *conn)
 		return NULL;
 
 	snprintf(uid, 10, "%s%s", me.sid, id_next());
-	u = create_user(uid, sizeof(u_user_local));
+	u = create_user(uid, conn, &me);
 
-	u->flags = umode_default | USER_IS_LOCAL;
+	u->mode = umode_default;
+	u->flags = USER_IS_LOCAL;
 
-	USER_LOCAL(u)->conn = conn;
 	conn->ctx = CTX_USER;
 	conn->priv = u;
 	conn->shutdown = user_shutdown;
 
-	me.nusers++;
 	u_log(LG_VERBOSE, "New local user, uid=%s", u->uid);
 
 	return u;
@@ -167,10 +133,7 @@ u_user *u_user_create_remote(u_server *sv, char *uid)
 		u_log(LG_WARN, "Adding remote user with wrong SID!");
 		u_log(LG_INFO, "     uid=%s, sv->sid=%s", uid, sv->sid);
 	}
-	u = create_user(uid, sizeof(u_user_remote));
-
-	USER_REMOTE(u)->server = sv;
-	sv->nusers++;
+	u = create_user(uid, sv->link, sv);
 
 	u_log(LG_VERBOSE, "New remote user, uid=%s", u->uid);
 
@@ -184,16 +147,13 @@ void user_destroy_cb(u_map *map, u_chan *c, u_chanuser *cu, void *priv)
 
 void u_user_destroy(u_user *u)
 {
-	u_server *sv = u_user_server(u);
-
 	u_log(LG_VERBOSE, "Destroying user uid=%s (%U)", u->uid, u);
 
 	if (IS_LOCAL_USER(u)) {
-		u_user_local *ul = USER_LOCAL(u);
-		if (ul->conn) {
-			ul->conn->priv = NULL;
-			u_conn_shutdown(ul->conn);
-			ul->conn = NULL;
+		if (u->link) {
+			u->link->priv = NULL;
+			u_conn_shutdown(u->link);
+			u->link = NULL;
 		}
 	}
 
@@ -207,25 +167,20 @@ void u_user_destroy(u_user *u)
 		mowgli_patricia_delete(users_by_nick, u->nick);
 	mowgli_patricia_delete(users_by_uid, u->uid);
 
-	if (sv != NULL)
-		sv->nusers--;
+	u->sv->nusers--;
 
 	free(u);
 }
 
 void u_user_try_register(u_user *u)
 {
-	u_user_local *ul;
-	u_conn *conn;
-
 	if (!IS_LOCAL_USER(u))
 		return;
-	ul = USER_LOCAL(u);
-	conn = ul->conn;
-	if (!conn || (conn->flags & U_CONN_REGISTERED))
+
+	if (!u->link || (u->link->flags & U_CONN_REGISTERED))
 		return;
 
-	if (!conn->host[0])
+	if (!u->link->host[0])
 		return;
 
 	if (!u->nick[0] || !u->ident[0])
@@ -234,31 +189,16 @@ void u_user_try_register(u_user *u)
 	if (u->flags & USER_MASK_WAIT)
 		return;
 
-	conn->flags |= U_CONN_REGISTERED;
-	u_strlcpy(u->ip, conn->ip, INET_ADDRSTRLEN);
-	u_strlcpy(u->realhost, conn->host, MAXHOST+1);
-	u_strlcpy(u->host, conn->host, MAXHOST+1);
-	u_user_welcome(ul);
-}
+	if (!(u->link->auth = u_find_auth(u->link))) {
+		u_conn_fatal(u->link, "No auth blocks for your host");
+		return;
+	}
 
-u_conn *u_user_conn(u_user *u)
-{
-	if (u == NULL)
-		return NULL;
-	if (IS_LOCAL_USER(u))
-		return USER_LOCAL(u)->conn;
-	else
-		return USER_REMOTE(u)->server->conn;
-}
-
-u_server *u_user_server(u_user *u)
-{
-	if (u == NULL)
-		return NULL;
-	if (IS_LOCAL_USER(u))
-		return &me;
-	else
-		return USER_REMOTE(u)->server;
+	u->link->flags |= U_CONN_REGISTERED;
+	u_strlcpy(u->ip, u->link->ip, INET_ADDRSTRLEN);
+	u_strlcpy(u->realhost, u->link->host, MAXHOST+1);
+	u_strlcpy(u->host, u->link->host, MAXHOST+1);
+	u_user_welcome(u);
 }
 
 u_user *u_user_by_nick(char *nick)
@@ -269,6 +209,31 @@ u_user *u_user_by_nick(char *nick)
 u_user *u_user_by_uid(char *uid)
 {
 	return mowgli_patricia_retrieve(users_by_uid, uid);
+}
+
+char *u_user_modes(u_user *u)
+{
+	static char buf[512];
+	char *s = buf;
+
+	*s++ = '+';
+	/*
+	for (info=umodes; info->ch; info++) {
+		if (info->cb == cb_flag && (u->mode & info->data))
+			*s++ = info->ch;
+	}
+	*/
+
+	if (u->mode & UMODE_INVISIBLE)
+		*s++ = 'i';
+	if (u->mode & UMODE_OPER)
+		*s++ = 'o';
+	if (u->mode & UMODE_SERVICE)
+		*s++ = 'S';
+
+	*s = '\0';
+
+	return buf;
 }
 
 void u_user_set_nick(u_user *u, char *nick, uint ts)
@@ -283,7 +248,6 @@ void u_user_set_nick(u_user *u, char *nick, uint ts)
 
 void u_user_vnum(u_user *u, int num, va_list va)
 {
-	u_conn *conn;
 	char *tgt;
 
 	if (!IS_LOCAL_USER(u)) {
@@ -294,8 +258,7 @@ void u_user_vnum(u_user *u, int num, va_list va)
 			tgt = "*";
 	}
 
-	conn = u_user_conn(u);
-	u_conn_vnum(conn, tgt, num, va);
+	u_conn_vnum(u->link, tgt, num, va);
 }
 
 int u_user_num(u_user *u, int num, ...)
@@ -337,12 +300,11 @@ void u_user_send_isupport(u_user *u)
 	/* :host.irc 005 nick ... :are supported by this server
 	   *        *****    *   *....*....*....*....*....*.... = 37 */
 	struct isupport *cur;
-	char *s, *p, buf[512], tmp[512];
-	int w;
+	u_strop_wrap wrap;
+	char *s, *p, tmp[512];
 
-	w = 475 - strlen(me.name) - strlen(u->nick);
+	u_strop_wrap_start(&wrap, 510 - 37 - strlen(me.name) - strlen(u->nick));
 
-	s = buf;
 	for (cur=isupport; cur->name; cur++) {
 		p = tmp;
 		if (cur->s) {
@@ -353,14 +315,11 @@ void u_user_send_isupport(u_user *u)
 			p = cur->name;
 		}
 
-again:
-		if (!wrap(buf, &s, w, p)) {
-			u_user_num(u, RPL_ISUPPORT, buf);
-			goto again;
-		}
+		while ((s = u_strop_wrap_word(&wrap, p)) != NULL)
+			u_user_num(u, RPL_ISUPPORT, s);
 	}
-	if (s != buf)
-		u_user_num(u, RPL_ISUPPORT, buf);
+	if ((s = u_strop_wrap_word(&wrap, NULL)) != NULL)
+		u_user_num(u, RPL_ISUPPORT, s);
 }
 
 void u_user_send_motd(u_user *u)
@@ -378,9 +337,8 @@ void u_user_send_motd(u_user *u)
 	u_user_num(u, RPL_ENDOFMOTD);
 }
 
-void u_user_welcome(u_user_local *ul)
+void u_user_welcome(u_user *u)
 {
-	u_user *u = USER(ul);
 	char buf[512];
 
 	u_log(LG_DEBUG, "user: welcoming %s", u->nick);
@@ -398,7 +356,7 @@ void u_user_welcome(u_user_local *ul)
 static int is_in_list(char *host, mowgli_list_t *list)
 {
 	mowgli_node_t *n;
-	u_chanban *ban;
+	u_listent *ban;
 
 	if (!host || !list)
 		return 0;
@@ -421,14 +379,12 @@ int u_user_in_list(u_user *u, mowgli_list_t *list)
 
 void u_user_make_euid(u_user *u, char *buf)
 {
-	u_server *sv = u_user_server(u);
-
 	/* still ridiculous...              nick  nickts   host  uid   acct
                                                hops  modes    ip    rlhost gecos
                                                         ident                    */
 	snf(FMT_SERVER, buf, 512, ":%S EUID %s %d %u %s %s %s %s %s %s %s :%s",
-	    sv, u->nick, sv->hops + 1, u->nickts,
-	    "+", /* TODO: this */
+	    u->sv, u->nick, u->sv->hops + 1, u->nickts,
+	    u_user_modes(u),
 	    u->ident, u->host, u->ip, u->uid, u->realhost,
 	    u->acct[0] ? u->acct : "*", u->gecos);
 }

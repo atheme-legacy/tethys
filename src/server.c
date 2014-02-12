@@ -157,9 +157,8 @@ void server_shutdown(u_conn *conn)
 	u_server *sv = conn->priv;
 	if (sv == NULL)
 		return;
-	if (conn->ctx == CTX_SERVER) {
-		/* TODO: send SQUIT or something */
-	}
+	if (conn->ctx == CTX_SERVER && (conn->flags & U_CONN_REGISTERED))
+		u_sendto_servers(conn, ":%S SQUIT %S :%s", &me, sv, msg);
 	u_conn_f(conn, "ERROR :%s", msg);
 	u_server_unlink(sv);
 }
@@ -177,7 +176,7 @@ void u_server_make_sreg(u_conn *conn, char *sid)
 		return;
 
 	conn->priv = sv = malloc(sizeof(*sv));
-	sv->conn = conn;
+	sv->link = conn;
 	sv->flags = SERVER_IS_BURSTING;
 
 	u_strlcpy(sv->sid, sid, 4);
@@ -185,7 +184,7 @@ void u_server_make_sreg(u_conn *conn, char *sid)
 
 	sv->name[0] = '\0';
 	sv->desc[0] = '\0';
-	sv->conn = conn;
+	sv->link = conn;
 	sv->capab = 0;
 
 	sv->hops = 1;
@@ -208,7 +207,7 @@ u_server *u_server_new_remote(u_server *parent, char *sid,
 
 	sv = malloc(sizeof(*sv));
 
-	sv->conn = parent->conn;
+	sv->link = parent->link;
 	if (sid)
 		u_strlcpy(sv->sid, sid, 4);
 	else
@@ -247,10 +246,10 @@ void u_server_unlink(u_server *sv)
 	u_log(LG_INFO, "Unlinking server sid=%s (%S)", sv->sid, sv);
 
 	if (IS_SERVER_LOCAL(sv)) {
-		u_conn *conn = sv->conn;
+		u_conn *conn = sv->link;
 		conn->priv = NULL;
 		u_conn_shutdown(conn);
-		sv->conn = NULL;
+		sv->link = NULL;
 	}
 
 	sv->parent->nlinks--;
@@ -299,7 +298,6 @@ static int burst_uid(const char *key, void *value, void *priv)
 {
 	u_user *u = value;
 	u_conn *conn = priv;
-	u_server *sv = u_user_server(u);
 
 	/* NOTE: this is legacy, but I'm keeping it around anyway */
 
@@ -307,8 +305,8 @@ static int burst_uid(const char *key, void *value, void *priv)
                                    hops     ident    uid
                                       nickts   host     gecos    */
 	u_conn_f(conn, ":%S UID %s %d %u %s %s %s %s %s :%s",
-	         sv,
-	         u->nick, sv->hops + 1, u->nickts,
+	         u->sv,
+	         u->nick, u->sv->hops + 1, u->nickts,
 	         "+", u->ident, u->host,
 	         u->ip, u->uid, u->gecos);
 
@@ -322,38 +320,15 @@ static int burst_uid(const char *key, void *value, void *priv)
 	return 0;
 }
 
-struct burst_chan_priv {
-	u_chan *c;
-	u_conn *conn;
-	char *rest, *s, buf[512];
-	uint w;
-};
-
-static void burst_chan_cb(u_map *map, u_user *u, u_chanuser *cu,
-                          struct burst_chan_priv *priv)
-{
-	char *p, nbuf[12];
-
-	p = nbuf;
-	if (cu->flags & CU_PFX_OP)
-		*p++ = '@';
-	if (cu->flags & CU_PFX_VOICE)
-		*p++ = '+';
-	strcpy(p, u->uid);
-
-try_again:
-	if (!wrap(priv->buf, &priv->s, priv->w, nbuf)) {
-		u_conn_f(priv->conn, "%s%s", priv->rest, priv->buf);
-		goto try_again;
-	}
-}
-
 static int burst_chan(const char *key, void *_c, void *_conn)
 {
 	u_chan *c = _c;
 	u_conn *conn = _conn;
-	struct burst_chan_priv priv;
-	char buf[512];
+	u_user *u;
+	u_chanuser *cu;
+	u_map_each_state st;
+	u_strop_wrap wrap;
+	char *s, buf[512];
 	int sz;
 
 	if (c->flags & CHAN_LOCAL)
@@ -362,22 +337,34 @@ static int burst_chan(const char *key, void *_c, void *_conn)
 	sz = snf(FMT_SERVER, buf, 512, ":%S SJOIN %u %s %s :",
 	         &me, c->ts, c->name, u_chan_modes(c, 1));
 
-	priv.c = c;
-	priv.conn = conn;
-	priv.rest = buf;
-	priv.s = priv.buf;
-	priv.w = 512 - sz;
+	u_strop_wrap_start(&wrap, 510 - sz);
+	U_MAP_EACH(&st, c->members, &u, &cu) {
+		char *p, nbuf[12];
 
-	u_map_each(c->members, (u_map_cb_t*)burst_chan_cb, &priv);
-	if (priv.s != priv.buf)
-		u_conn_f(conn, "%s%s", buf, priv.buf);
+		p = nbuf;
+		if (cu->flags & CU_PFX_OP)
+			*p++ = '@';
+		if (cu->flags & CU_PFX_VOICE)
+			*p++ = '+';
+		strcpy(p, u->uid);
+
+		while ((s = u_strop_wrap_word(&wrap, nbuf)) != NULL)
+			u_conn_f(conn, "%s%s", buf, s);
+	}
+	if ((s = u_strop_wrap_word(&wrap, NULL)) != NULL)
+		u_conn_f(conn, "%s%s", buf, s);
+
+	if (c->topic[0]) {
+		u_conn_f(conn, ":%S TB %C %u %s :%s", &me, c,
+		         c->topic_time, c->topic_setter, c->topic);
+	}
 
 	return 0;
 }
 
 void u_server_burst_1(u_server *sv, u_link *link)
 {
-	u_conn *conn = sv->conn;
+	u_conn *conn = sv->link;
 	char buf[512];
 
 	if (conn == NULL) {
@@ -400,7 +387,7 @@ void u_server_burst_2(u_server *sv, u_link *link)
 {
 	mowgli_patricia_iteration_state_t state;
 	u_server *tsv;
-	u_conn *conn = sv->conn;
+	u_conn *conn = sv->link;
 
 	if (conn == NULL) {
 		u_log(LG_ERROR, "Attempted to burst to %S, which has no conn!", sv);
@@ -463,7 +450,7 @@ int init_server(void)
 	servers_by_name = mowgli_patricia_create(ascii_canonize);
 
 	/* default settings! */
-	me.conn = NULL;
+	me.link = NULL;
 	strcpy(me.sid, "22U");
 	u_strlcpy(me.name, "tethys.irc", MAXSERVNAME+1);
 	u_strlcpy(me.desc, "The Tiny IRC Server", MAXSERVDESC+1);

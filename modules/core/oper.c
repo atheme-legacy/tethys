@@ -13,11 +13,13 @@ static int c_lu_oper(u_sourceinfo *si, u_msg *msg)
 	if (!(oper = u_find_oper(si->source->auth, msg->argv[0], msg->argv[1])))
 		return u_user_num(si->u, ERR_NOOPERHOST);
 
-	USER_LOCAL(si->u)->oper = oper;
-	si->u->flags |= UMODE_OPER;
+	si->u->oper = oper;
+	si->u->mode |= UMODE_OPER;
 	u_conn_f(si->source, ":%U MODE %U :+o", si->u, si->u);
 	u_sendto_servers(NULL, ":%U MODE %U :+o", si->u, si->u);
 	u_user_num(si->u, RPL_YOUREOPER);
+	u_log(LG_VERBOSE, "%U now has user mode %s",
+	      si->u, u_user_modes(si->u));
 
 	return 0;
 }

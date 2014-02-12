@@ -91,20 +91,21 @@ void u_hook_delete(const char *name, u_hook_fn_t *fn, void *priv)
 		delete_hook(hook);
 }
 
+u_hook *u_hook_get(const char *name)
+{
+	return add_hook(name);
+}
+
 /* This method simply calls all the callbacks associated with the particular
    hook. The return value is ignored */
-void u_hook_call(const char *name, void *arg)
+void u_hook_call(u_hook *hook, void *arg)
 {
-	u_hook *hook;
 	mowgli_node_t *n, *tn;
 
-	u_log(LG_DEBUG, "HOOK:CALL: %s", name);
-
-	if (!all_hooks)
+	if (!hook)
 		return;
 
-	if ((hook = mowgli_patricia_retrieve(all_hooks, name)) == NULL)
-		return;
+	u_log(LG_DEBUG, "HOOK:CALL: %s", hook->name);
 
 	MOWGLI_LIST_FOREACH_SAFE(n, tn, hook->callbacks.head) {
 		u_hook_cb *cb = n->data;
@@ -115,19 +116,15 @@ void u_hook_call(const char *name, void *arg)
 
 /* This method calls each hook in the order it was added, finding the first
    one to return non-NULL. This value is returned */
-void *u_hook_first(const char *name, void *arg)
+void *u_hook_first(u_hook *hook, void *arg)
 {
-	u_hook *hook;
 	mowgli_node_t *n, *tn;
 	void *p;
 
-	u_log(LG_DEBUG, "HOOK:FIRST: %s", name);
-
-	if (!all_hooks)
+	if (!hook)
 		return NULL;
 
-	if ((hook = mowgli_patricia_retrieve(all_hooks, name)) == NULL)
-		return NULL;
+	u_log(LG_DEBUG, "HOOK:FIRST: %s", hook->name);
 
 	MOWGLI_LIST_FOREACH_SAFE(n, tn, hook->callbacks.head) {
 		u_hook_cb *cb = n->data;
@@ -142,22 +139,18 @@ void *u_hook_first(const char *name, void *arg)
 /* This method calls each hook in the order it was added. If the return
    value is non-NULL, it is added to the list. This list is returned. The
    caller should pass the list to u_hook_all_cleanup when finished. */
-mowgli_list_t *u_hook_all(const char *name, void *arg)
+mowgli_list_t *u_hook_all(u_hook *hook, void *arg)
 {
-	u_hook *hook;
 	mowgli_node_t *n, *tn;
 	mowgli_list_t *list;
 	void *p;
 
-	u_log(LG_DEBUG, "HOOK:ALL: %s", name);
-
 	list = mowgli_list_create();
 
-	if (!all_hooks)
+	if (!hook)
 		return list;
 
-	if ((hook = mowgli_patricia_retrieve(all_hooks, name)) == NULL)
-		return list;
+	u_log(LG_DEBUG, "HOOK:ALL: %s", hook->name);
 
 	MOWGLI_LIST_FOREACH_SAFE(n, tn, hook->callbacks.head) {
 		u_hook_cb *cb = n->data;

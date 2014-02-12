@@ -7,7 +7,6 @@ SRCS = numeric.c \
 	conn.c \
 	cookie.c \
 	crypto.c \
-	entity.c \
 	hook.c \
 	linebuf.c \
 	log.c \
@@ -15,8 +14,11 @@ SRCS = numeric.c \
 	mode.c \
 	module.c \
 	msg.c \
+	ratelimit.c \
 	sendto.c \
 	server.c \
+	strop.c \
+	toplev.c \
 	upgrade.c \
 	user.c \
 	util.c \

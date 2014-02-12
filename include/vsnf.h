@@ -32,10 +32,6 @@ extern int snf(int, char*, uint, char*, ...);
                    These behave exactly as their printf counterparts
                    for all format types.
 
-   %T              This takes no argument and simply inserts a timestamp
-                   into the output string. For USER and SERVER, this is
-                   just NOW.tv_sec. For LOG, this is ctime(NOW.tv_sec).
-
    %U, u_user*     Prints a nickname for USER and LOG, and a UID for
                    SERVER.
 
@@ -45,7 +41,7 @@ extern int snf(int, char*, uint, char*, ...);
    %S, u_server*   Prints the server name for USER and LOG, and a SID
                    for SERVER.
 
-   %C, u_char*     Prints the channel name in all cases.
+   %C, u_chan*     Prints the channel name in all cases.
 
    Only a limited subset of format specifier parameters (width, etc.) are
    supported. These go between % and the letter. I don't know how to

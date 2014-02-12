@@ -60,7 +60,7 @@ RPL_NOWAWAY	306	":You have been marked as being away"
 
 RPL_WHOISUSER	311	"%s %s %s * :%s"
 RPL_WHOISSERVER	312	"%s %s :%s"
-RPL_WHOISOPERATOR	313	"%s :is an IRC operator"
+RPL_WHOISOPERATOR	313	"%s :is %s"
 
 RPL_WHOWASUSER	314
 RPL_ENDOFWHO	315	"%s :End of /WHO list."
@@ -75,6 +75,9 @@ RPL_LISTEND	323	":End of /LIST"
 
 RPL_CHANNELMODEIS	324	"%C %s"
 RPL_CHANNELMLOCK	325
+
+RPL_WHOISLOGGEDIN	330	"%s %s :is logged in as"
+
 RPL_NOTOPIC	331	"%C :No topic is set"
 RPL_TOPIC	332	"%C :%s"
 RPL_TOPICWHOTIME	333	"%C %s %u"
@@ -177,9 +180,11 @@ ERR_NOOPERHOST	491	":No O-lines for your host"
 ERR_UMODEUNKNOWNFLAG	501	":Unknown MODE flag"
 ERR_USERSDONTMATCH	502	":Can't change mode for other users"
 
-RPL_HELPSTART	704
-RPL_HELPTXT	705
-RPL_ENDOFHELP	706
+ERR_HELPNOTFOUND	524	"%s :Help not found"
+
+RPL_HELPSTART	704	"%s :%s"
+RPL_HELPTXT	705	"%s :%s"
+RPL_ENDOFHELP	706	"%s :End of /HELP."
 
 RPL_QUIETLIST	728	"%C q %s %s %u"
 RPL_ENDOFQUIETLIST	729	"%C q :End of Channel Quiet List"

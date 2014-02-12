@@ -71,6 +71,7 @@ static void stats_u(u_sourceinfo *si, struct stats_info *info)
 static void do_command(u_sourceinfo *si, u_cmd *cmd)
 {
 	char mask[15], *prop;
+	char usecs[15];
 	int i;
 
 	for (i=0; i<12; i++)
@@ -79,15 +80,20 @@ static void do_command(u_sourceinfo *si, u_cmd *cmd)
 	mask[14] = '\0';
 
 	prop = "???";
-	switch (cmd->propagation) {
+	switch (cmd->flags & CMD_PROP_MASK) {
 	case CMD_PROP_NONE:        prop = "   "; break;
 	case CMD_PROP_BROADCAST:   prop = "brd"; break;
 	case CMD_PROP_ONE_TO_ONE:  prop = "1-1"; break;
 	case CMD_PROP_HUNTED:      prop = "hnt"; break;
 	}
 
-	notice(si, "%16s  %s  %2d  %s  module %s", cmd->name, mask,
-	       cmd->nargs, prop,
+	usecs[0] = '-';
+	usecs[1] = '\0';
+	if (cmd->runs > 0)
+		snprintf(usecs, 15, "%d,%dus", cmd->runs, cmd->usecs / cmd->runs);
+
+	notice(si, "%16s  %s  %2d  %s  %15s  module %s", cmd->name, mask,
+	       cmd->nargs, prop, usecs,
 	       cmd->owner ? cmd->owner->info->name : "(none)");
 }
 
@@ -166,12 +172,12 @@ static int c_u_stats(u_sourceinfo *si, u_msg *msg)
 		return u_src_num(si, ERR_NEEDMOREPARAMS, "STATS");
 
 	if (msg->argc > 1) {
-		if (!(sv = u_server_by_ref(msg->argv[1])))
+		if (!(sv = u_server_by_ref(si->source, msg->argv[1])))
 			return u_src_num(si, ERR_NOSUCHSERVER, msg->argv[1]);
 
 		if (sv != &me) {
-			u_conn_f(sv->conn, ":%I STATS %s %S", si, name, sv);
-			return;
+			u_conn_f(sv->link, ":%I STATS %s %S", si, name, sv);
+			return 0;
 		}
 	}
 
@@ -186,7 +192,7 @@ static int c_u_stats(u_sourceinfo *si, u_msg *msg)
 				continue;
 		}
 
-		if ((info->need & NEED_OPER) && !(si->u->flags & UMODE_OPER)) {
+		if ((info->need & NEED_OPER) && !(si->u->mode & UMODE_OPER)) {
 			u_src_num(si, ERR_NOPRIVILEGES);
 			break;
 		}

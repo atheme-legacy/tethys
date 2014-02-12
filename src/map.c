@@ -88,6 +88,7 @@ u_map *u_map_new(int string_keys)
 	if (map == NULL)
 		return NULL;
 
+	map->iterdepth = 0;
 	map->flags = string_keys ? MAP_STRING_KEYS : 0;
 	map->root = NULL;
 	map->size = 0;
@@ -150,18 +151,15 @@ static void u_map_each_n(u_map *map, u_map_n *n, u_map_cb_t *cb, void *priv)
 
 void u_map_each(u_map *map, u_map_cb_t *cb, void *priv)
 {
-	if (map->flags & MAP_TRAVERSING) {
-		u_log(LG_ERROR, "Map traversals cannot be nested");
-		abort();
-	}
-
-	map->flags |= MAP_TRAVERSING;
-	clear_pending(map);
+	if (!map->iterdepth)
+		clear_pending(map);
+	map->iterdepth++;
 
 	u_map_each_n(map, map->root, cb, priv);
 
-	map->flags &= ~MAP_TRAVERSING;
-	delete_pending(map);
+	map->iterdepth--;
+	if (!map->iterdepth)
+		delete_pending(map);
 }
 
 /* dumb functions are just standard binary search tree operations that
@@ -316,7 +314,7 @@ void u_map_set(u_map *map, void *key, void *data)
 {
 	u_map_n *n = dumb_fetch(map, key);
 
-	if (map->flags & MAP_TRAVERSING)
+	if (map->iterdepth)
 		abort();
 
 	if (n != NULL) {
@@ -351,7 +349,7 @@ void *u_map_del(u_map *map, void *key)
 	data = n->data;
 	n->data = NULL;
 
-	if (map->flags & MAP_TRAVERSING) {
+	if (map->iterdepth) {
 		add_pending(map, key);
 	} else {
 		map->root = aa_delete(map, map->root, key);
@@ -422,16 +420,12 @@ static u_map_n *try_dequeue(u_map_each_state *state)
 
 void u_map_each_start(u_map_each_state *state, u_map *map)
 {
-	if (map->flags & MAP_TRAVERSING) {
-		u_log(LG_ERROR, "Map traversals cannot be nested");
-		abort();
-	}
-
 	state->map = map;
 	mowgli_list_init(&state->list);
 
-	map->flags |= MAP_TRAVERSING;
-	clear_pending(map);
+	if (!map->iterdepth)
+		clear_pending(map);
+	map->iterdepth++;
 
 	try_queue(state, map->root);
 }
@@ -441,8 +435,9 @@ bool u_map_each_next(u_map_each_state *state, void **k, void **v)
 	u_map_n *n;
 
 	if ((n = try_dequeue(state)) == NULL) {
-		state->map->flags &= ~MAP_TRAVERSING;
-		delete_pending(state->map);
+		state->map->iterdepth--;
+		if (!state->map->iterdepth)
+			delete_pending(state->map);
 		return false;
 	}
 

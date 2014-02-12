@@ -12,7 +12,7 @@ static int c_a_kill(u_sourceinfo *si, u_msg *msg)
 	char *reason = msg->argv[1];
 	char buf[512];
 
-	if (!(tu = u_user_by_ref(msg->argv[0])))
+	if (!(tu = u_user_by_ref(si->source, msg->argv[0])))
 		return u_src_num(si, ERR_NOSUCHNICK, msg->argv[0]);
 
 	if (SRC_IS_LOCAL_USER(si)) {
@@ -30,7 +30,7 @@ static int c_a_kill(u_sourceinfo *si, u_msg *msg)
 	u_sendto_servers(si->source, ":%I KILL %U%s", si, tu, buf);
 
 	if (IS_LOCAL_USER(tu))
-		u_conn_f(u_user_conn(tu), ":%H QUIT :Killed (%s)", tu, buf + 2);
+		u_conn_f(tu->link, ":%H QUIT :Killed (%s)", tu, buf + 2);
 	u_user_destroy(tu);
 
 	return 0;

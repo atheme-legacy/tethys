@@ -39,7 +39,6 @@ extern void u_ntop(struct in_addr*, char*);
 extern void u_aton(char*, struct in_addr*);
 
 extern char *cut(char **p, char *delim);
-extern int wrap(char *base, char **p, uint w, char *str);
 
 extern void null_canonize();
 extern void rfc1459_canonize();
@@ -54,7 +53,8 @@ extern bool exists(const char *path);
 
 #include "conn.h"
 
-extern u_conn *ref_link(char *ref);
+extern char *ref_to_ref(u_conn *ctx, char *ref);
+extern u_conn *ref_link(u_conn *ctx, char *ref);
 
 extern char *conn_name(u_conn*);
 extern char *conn_id(u_conn*);
@@ -88,6 +88,33 @@ static inline void *mowgli_list_delete(mowgli_node_t *n, mowgli_list_t *list)
 static inline int mowgli_list_size(mowgli_list_t *list)
 {
 	return list->count;
+}
+
+static inline bool str_transform(char *ch, int (*filter)(int))
+{
+	char *c;
+	bool pass = true;
+
+	for (c = ch; *c; ++c)
+	{
+		char nc = filter(*c);
+		if (nc == '\0')
+			pass = false;
+		else
+			*c = nc;
+	}
+
+	return pass;
+}
+
+static inline void str_lower(char *ch)
+{
+	str_transform(ch, &tolower);
+}
+
+static inline void str_upper(char *ch)
+{
+	str_transform(ch, &toupper);
 }
 
 #endif

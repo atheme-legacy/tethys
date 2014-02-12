@@ -7,10 +7,14 @@
 #ifndef __INC_MSG_H__
 #define __INC_MSG_H__
 
+typedef struct u_msg u_msg;
+typedef struct u_cmd u_cmd;
+typedef struct u_sourceinfo u_sourceinfo;
+
+#include "module.h"
+
 /* from jilles' ts6.txt */
 #define U_MSG_MAXARGS 15
-
-typedef struct u_msg u_msg;
 
 #define MSG_REPEAT 0x0001
 
@@ -56,7 +60,10 @@ extern int u_msg_parse(u_msg*, char*);
 #define SRC_C2S (SRC_LOCAL_USER)
 #define SRC_S2S (SRC_REMOTE_USER | SRC_SERVER)
 
-typedef struct u_sourceinfo u_sourceinfo;
+#include "conn.h"
+#include "user.h"
+#include "server.h"
+#include "ratelimit.h"
 
 /* Any pointer fields can be NULL. */
 struct u_sourceinfo {
@@ -91,14 +98,14 @@ extern void u_src_f(u_sourceinfo *si, const char *fmt, ...);
 
 #define MAXCOMMANDLEN 16
 
-#define CMD_PROP_NONE          0
-#define CMD_PROP_BROADCAST     1
-#define CMD_PROP_ONE_TO_ONE    2
-#define CMD_PROP_HUNTED        3
+/* command flags */
+#define CMD_PROP_MASK          0x0003
+#define CMD_PROP_NONE          0x0000
+#define CMD_PROP_BROADCAST     0x0001
+#define CMD_PROP_ONE_TO_ONE    0x0002
+#define CMD_PROP_HUNTED        0x0003
 
 #define CMD_DO_BROADCAST ((void*)1)
-
-typedef struct u_cmd u_cmd;
 
 struct u_cmd {
 	char name[MAXCOMMANDLEN+1];
@@ -114,13 +121,16 @@ struct u_cmd {
 
 	int nargs;
 
-	int propagation;
+	ulong flags;
+
+	u_ratelimit_cmd_t rate;
 
 	/* users should not initialize the rest of this struct to
 	   anything */
 	u_module *owner;
 	bool loaded;
 	struct u_cmd *next, *prev;
+	int runs, usecs;
 };
 
 extern mowgli_patricia_t *all_commands;

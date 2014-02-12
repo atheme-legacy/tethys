@@ -9,6 +9,7 @@
 int hello_init(u_module *m)
 {
 	u_log(LG_DEBUG, "%s initalizing", m->info->name);
+	return 0;
 }
 
 void hello_deinit(u_module *m)

@@ -17,40 +17,36 @@
 
 #define MAXAWAY 256
 
-/* all users */
-#define USER_MASK_UMODE        0x000000ff
 #define UMODE_OPER             0x00000001
 #define UMODE_INVISIBLE        0x00000002
 #define UMODE_WALLOPS          0x00000004
 #define UMODE_CLOAKED          0x00000008
+#define UMODE_SERVICE          0x00000010
 
-#define USER_MASK_FLAGS        0x0000ff00
-#define USER_IS_LOCAL          0x00000100
+/* all users */
+#define USER_MASK_FLAGS        0x000000ff
+#define USER_IS_LOCAL          0x00000001
 
 /* local */
-#define USER_MASK_CAP          0x00ff0000
-#define CAP_MULTI_PREFIX       0x00010000
-#define CAP_AWAY_NOTIFY        0x00020000
+#define USER_MASK_CAP          0x0000ff00
+#define CAP_MULTI_PREFIX       0x00000100
+#define CAP_AWAY_NOTIFY        0x00000200
 
 /* registration postpone */
-#define USER_MASK_WAIT         0xff000000
-#define USER_WAIT_CAPS         0x01000000
+#define USER_MASK_WAIT         0x00ff0000
+#define USER_WAIT_CAPS         0x00010000
 
-typedef struct u_umode_info u_umode_info;
 typedef struct u_user u_user;
-typedef struct u_user_local u_user_local;
-typedef struct u_user_remote u_user_remote;
 
-struct u_umode_info {
-	char ch;
-	uint mask;
-	void (*cb)(u_umode_info*, u_user*, int on);
-};
+#include "conn.h"
+#include "server.h"
+#include "mode.h"
+#include "ratelimit.h"
 
 struct u_user {
 	char uid[10];
 
-	uint flags;
+	uint mode, flags;
 	u_map *channels;
 	u_map *invites;
 
@@ -67,34 +63,22 @@ struct u_user {
 	char gecos[MAXGECOS+1];
 
 	char away[MAXAWAY+1];
+
+	u_ratelimit_t limit;
+
+	u_conn *link; /* never null, except when shutting down */
+	u_oper *oper; /* local opers only */
+	u_server *sv; /* never null */
 };
 
-struct u_user_local {
-	u_user user;
-	u_conn *conn;
-	u_oper *oper;
-};
-
-struct u_user_remote {
-	u_user user;
-	u_server *server;
-};
-
-#define USER(U) ((u_user*)(U))
-#define USER_LOCAL(U) ((u_user_local*)(U))
-#define USER_REMOTE(U) ((u_user_remote*)(U))
-
-#define IS_LOCAL_USER(u) ((USER(u)->flags & USER_IS_LOCAL) != 0)
+#define IS_LOCAL_USER(u) ((u->flags & USER_IS_LOCAL) != 0)
 
 extern mowgli_patricia_t *users_by_nick;
 extern mowgli_patricia_t *users_by_uid;
 
-extern u_umode_info *umodes;
+extern u_mode_info umode_infotab[128];
+extern u_mode_ctx umodes;
 extern uint umode_default;
-
-extern void u_user_m_start(u_user*);
-extern void u_user_m_end(u_user*);
-extern void u_user_mode(u_user*, char ch, int on);
 
 extern u_user *u_user_create_local(u_conn *conn);
 extern u_user *u_user_create_remote(u_server*, char *uid);
@@ -102,17 +86,17 @@ extern void u_user_destroy(u_user*);
 
 extern void u_user_try_register(u_user*);
 
-extern u_conn *u_user_conn(u_user*);
-extern u_server *u_user_server(u_user*);
-
 extern u_user *u_user_by_nick(char*);
 extern u_user *u_user_by_uid(char*);
 
-static inline u_user *u_user_by_ref(char *ref)
+static inline u_user *u_user_by_ref(u_conn *conn, char *ref)
 {
 	if (!ref) return NULL;
-	return isdigit(*ref) ? u_user_by_uid(ref) : u_user_by_nick(ref);
+	return (conn && conn->ctx == CTX_SERVER && isdigit(*ref)) ?
+	        u_user_by_uid(ref) : u_user_by_nick(ref);
 }
+
+extern char *u_user_modes(u_user*);
 
 extern void u_user_set_nick(u_user*, char*, uint);
 
@@ -122,7 +106,7 @@ extern int u_user_num(u_user*, int num, ...);
 extern void u_user_send_isupport(u_user*);
 extern void u_user_send_motd(u_user*);
 
-extern void u_user_welcome(u_user_local*);
+extern void u_user_welcome(u_user*);
 
 extern void u_user_make_euid(u_user*, char *buf); /* sizeof(buf) > 512 */
 

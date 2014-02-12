@@ -47,11 +47,11 @@ bool u_conf_read(const char *path)
 	if (cf == NULL)
 		return false;
 
-	u_hook_call(HOOK_CONF_START, cf);
+	u_hook_call(u_hook_get(HOOK_CONF_START), cf);
 
 	u_conf_traverse(cf, cf->entries, u_conf_handlers);
 
-	u_hook_call(HOOK_CONF_END, cf);
+	u_hook_call(u_hook_get(HOOK_CONF_END), cf);
 
 	mowgli_config_file_free(cf);
 
