@@ -2,20 +2,21 @@ language: c
 compiler:
 - gcc
 - clang
-before-install:
-- sudo apt-get update
-- git submodule --init --recursive
-install:
-- sudo apt-get install build-essential libssl-dev
-script: "./configure && make"
 env:
   global:
   - secure: vtwdxOBkDgYqCeXGOGvdmce/p0uT5n1ysAUI3qeqqM1JoNqYHz3uU/VanaPH7lE0F/vozcNgryUP4DS+0TMkCcBgjlnpJFKrGic74xQ1mT4WjHxoJX50mJqvsGapDFgpHT/bA2RPnLnmv/ayYEj0TeADUVvQ5ggelQ3idvgTLIs=
 addons:
   coverity_scan:
     project:
-      name: atheme/tethys
-      description: A NEXT-GENERATION IRCD
+      name: "atheme/tethys"
+      description: "A NEXT-GENERATION IRCD"
       build_command_prepend: "./configure"
       build_command: "make -j4"
       branch_pattern: master
+
+before-install:
+- sudo apt-get update
+- git submodule --init --recursive
+install:
+- sudo apt-get install build-essential libssl-dev
+script: "./configure && make"
