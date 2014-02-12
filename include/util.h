@@ -33,8 +33,8 @@ extern int mapcmp(char *s1, char *s2, char *map);
 extern int casecmp(char *s1, char *s2);
 extern int irccmp(char *s1, char *s2);
 
-extern ulong u_strlcpy(char *dest, char *src, ulong n);
-extern void u_strlcat(char *dest, char *src, ulong n);
+#define u_strlcpy mowgli_strlcpy
+#define u_strlcat mowgli_strlcat
 extern void u_ntop(struct in_addr*, char*);
 extern void u_aton(char*, struct in_addr*);
 

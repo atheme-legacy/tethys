@@ -145,27 +145,6 @@ int irccmp(char *s1, char *s2)
 	return mapcmp(s1, s2, rfc1459_casemap);
 }
 
-ulong u_strlcpy(char *dest, char *src, ulong n)
-{
-	int len;
-	n--;
-
-	len = strlen(src);
-	if (n > len)
-		n = len;
-
-	memcpy(dest, src, n);
-	dest[n] = '\0';
-
-	return n;
-}
-
-void u_strlcat(char *dest, char *src, ulong n)
-{
-	int len = strlen(dest);
-	u_strlcpy(dest+len, src, n-len);
-}
-
 void u_ntop(struct in_addr *in, char *s)
 {
 	u_strlcpy(s, inet_ntoa(*in), INET_ADDRSTRLEN);
