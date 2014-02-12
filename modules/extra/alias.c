@@ -51,7 +51,7 @@ static void add_alias(char *from, char *target)
 	struct alias *to;
 
 	if (mowgli_patricia_retrieve(aliases, from)) {
-		u_log(LG_ERROR, "Alias %s=%s is a duplicate", from, to);
+		u_log(LG_ERROR, "Alias %s=%s is a duplicate", from, target);
 		return;
 	}
 
