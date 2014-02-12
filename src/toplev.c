@@ -255,6 +255,7 @@ u_toplev_origin *u_toplev_origin_create(mowgli_eventloop_t *ev, u_long addr,
 		goto out;
 	}
 
+	memset(&sa, 0, sizeof(sa));
 	sa.sin_family = AF_INET;
 	sa.sin_port = htons(port);
 	sa.sin_addr.s_addr = addr;
