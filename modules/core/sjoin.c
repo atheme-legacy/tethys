@@ -321,6 +321,7 @@ static int c_s_sjoin(u_sourceinfo *si, u_msg *msg)
 	if ((c = u_chan_get(channame)) == NULL) {
 		c = u_chan_create(channame);
 		c->ts = ts;
+		c->mode = 0;
 	}
 
 	return ts_rules(si, c, ts, msg);
