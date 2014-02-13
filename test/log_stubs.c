@@ -9,6 +9,8 @@
 #include <time.h>
 #include <sys/time.h>
 #include <stdarg.h>
+#include <string.h>
+#include <errno.h>
 
 int default_handler(int level, char *tm, char *line)
 {
@@ -50,4 +52,12 @@ int u_log(int level, char* fmt, ...)
 	    tm->tm_hour, tm->tm_min, tm->tm_sec);
 
 	return u_log_handler(level, tmbuf, buf);
+}
+
+void u_perror_real(const char *func, const char *s)
+{
+	int x = errno;
+	char *error = strerror(x);
+
+	u_log(LG_ERROR, "%s: %s: %s", func, s, error);
 }
