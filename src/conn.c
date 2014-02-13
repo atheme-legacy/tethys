@@ -85,6 +85,9 @@ static void final_cleanup(u_conn *conn)
 
 	mowgli_pollable_destroy(ev, conn->poll);
 	close(fd);
+
+	mowgli_node_delete(&conn->n, &awaiting_cleanup);
+
 	free(conn);
 }
 
@@ -472,7 +475,6 @@ void u_conn_run(mowgli_eventloop_t *ev)
 		MOWGLI_LIST_FOREACH_SAFE(n, tn, awaiting_cleanup.head) {
 			u_conn *conn = n->data;
 			final_cleanup(conn);
-			mowgli_node_delete(n, &awaiting_cleanup);
 		}
 	}
 }
