@@ -197,7 +197,7 @@ static int c_a_mode(u_sourceinfo *si, u_msg *msg)
 					  u_chan_modes(c, !!cu));
 		}
 
-		if (cu->flags & CU_PFX_OP)
+		if (cu && (cu->flags & CU_PFX_OP))
 			m.access = cu;
 
 	} else { /* source is local server or remote user/server */
