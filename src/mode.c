@@ -25,7 +25,7 @@ static char *fix_hostmask(char *mask)
 
 	if (*mask == '$') {
 		/* extbans are untouched */
-		strcpy(buf, mask);
+		u_strlcpy(buf, mask, 512);
 		return buf;
 	}
 
