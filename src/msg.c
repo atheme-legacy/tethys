@@ -394,7 +394,15 @@ static void report_failure(u_sourceinfo *si, u_msg *msg, ulong bits_tested)
 {
 	/* TODO: make this function smarter */
 
-	if (si->source && si->source->ctx == CTX_SERVER) {
+	if (!si->source) {
+		/* this was pointed out by Coverity. how needed is this? not
+		   very. i'm not proud of being bossed around by static
+		   analysis tools, trust me */
+		u_log(LG_SEVERE, "Highly improbable condition in report_failure!");
+		return;
+	}
+
+	if (si->source->ctx == CTX_SERVER) {
 		u_log(LG_SEVERE, "%G invocation of %s failed!",
 		      si->source, msg->command);
 		return;
