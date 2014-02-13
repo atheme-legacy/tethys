@@ -160,7 +160,15 @@ static void start_rdns(u_conn *conn, struct sockaddr *addr, socklen_t addrlen)
 		addrptr = &((struct sockaddr_in6*)addr)->sin6_addr;
 		break;
 	}
-	inet_ntop(addr->sa_family, addrptr, conn->ip, sizeof(conn->ip));
+
+	/* also highly improbable that addr is neither AF_INET nor AF_INET6,
+	   but we want to be 100% CERTAIN, so that the static analysis
+	   tools will leave us alone. let's pretend they are connecting from
+	   localhost --aji */
+	if (addrptr != NULL)
+		inet_ntop(addr->sa_family, addrptr, conn->ip, sizeof(conn->ip));
+	else
+		u_strlcpy(conn->ip, "127.0.0.1", INET6_ADDRSTRLEN);
 
 	u_conn_f(conn, ":%s NOTICE * :*** Looking up your hostname", me.name);
 	query = malloc(sizeof(*query));
