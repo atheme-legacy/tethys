@@ -20,7 +20,7 @@ static int try_local_join_chan(u_sourceinfo *si, char *chan, char *key)
 		return u_user_num(si->u, ERR_NOSUCHCHANNEL, chan);
 	created = c->ts == NOW.tv_sec; /* is this ok? */
 
-	if ((cu = u_chan_user_find(c, si->u)) != NULL)
+	if (u_chan_user_find(c, si->u))
 		return 0;
 
 	if ((num = u_entry_blocked(c, si->u, key)) != 0) {
