@@ -33,7 +33,7 @@ static void stats_o(u_sourceinfo *si, struct stats_info *info)
 {
 	u_map_each_state state;
 	char *k;
-	u_oper *o;
+	u_oper_block *o;
 	char *auth;
 
 	U_MAP_EACH(&state, all_opers, &k, &o) {
@@ -47,7 +47,7 @@ static void stats_i(u_sourceinfo *si, struct stats_info *info)
 	u_map_each_state state;
 	char buf[CIDR_ADDRSTRLEN];
 	char *k;
-	u_auth *v;
+	u_auth_block *v;
 
 	U_MAP_EACH(&state, all_auths, &k, &v) {
 		u_cidr_to_str(&v->cidr, buf);

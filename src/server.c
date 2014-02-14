@@ -362,7 +362,7 @@ static int burst_chan(const char *key, void *_c, void *_conn)
 	return 0;
 }
 
-void u_server_burst_1(u_server *sv, u_link *link)
+void u_server_burst_1(u_server *sv, u_link_block *link)
 {
 	u_conn *conn = sv->link;
 	char buf[512];
@@ -383,7 +383,7 @@ void u_server_burst_1(u_server *sv, u_link *link)
 	u_conn_f(conn, "SERVER %s 1 :%s", me.name, me.desc);
 }
 
-void u_server_burst_2(u_server *sv, u_link *link)
+void u_server_burst_2(u_server *sv, u_link_block *link)
 {
 	mowgli_patricia_iteration_state_t state;
 	u_server *tsv;

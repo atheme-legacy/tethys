@@ -26,10 +26,10 @@ static int c_us_capab(u_sourceinfo *si, u_msg *msg)
 	return 0;
 }
 
-static u_link *verify_link_block(u_server *sv)
+static u_link_block *verify_link_block(u_server *sv)
 {
 	u_conn *conn = sv->link;
-	u_link *link;
+	u_link_block *link;
 
 	if (!(link = u_find_link(sv)))
 		return NULL;
@@ -49,7 +49,7 @@ static int c_us_server(u_sourceinfo *si, u_msg *msg)
 	u_strlcpy(si->s->desc, msg->argv[2], MAXSERVDESC+1);
 
 	/* attempt server registration */
-	u_link *link;
+	u_link_block *link;
 	uint capab_need = CAPAB_QS | CAPAB_EX | CAPAB_IE
 	                | CAPAB_EUID | CAPAB_ENCAP;
 

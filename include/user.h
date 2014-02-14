@@ -67,7 +67,7 @@ struct u_user {
 	u_ratelimit_t limit;
 
 	u_conn *link; /* never null, except when shutting down */
-	u_oper *oper; /* local opers only */
+	u_oper_block *oper; /* local opers only */
 	u_server *sv; /* never null */
 };
 

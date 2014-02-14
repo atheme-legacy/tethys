@@ -14,9 +14,9 @@
 #define MAXSERVERNAME 128
 
 typedef struct u_class u_class;
-typedef struct u_auth u_auth;
-typedef struct u_oper u_oper;
-typedef struct u_link u_link;
+typedef struct u_auth_block u_auth;
+typedef struct u_oper_block u_oper;
+typedef struct u_link_block u_link;
 
 #include "conn.h"
 #include "util.h"
@@ -27,7 +27,7 @@ struct u_class {
 	int timeout;
 };
 
-struct u_auth {
+struct u_auth_block {
 	char name[MAXAUTHNAME+1];
 	char classname[MAXCLASSNAME+1];
 	u_class *cls;
@@ -36,14 +36,14 @@ struct u_auth {
 	mowgli_node_t n;
 };
 
-struct u_oper {
+struct u_oper_block {
 	char name[MAXOPERNAME+1];
 	char pass[MAXPASSWORD+1];
 	char authname[MAXAUTHNAME+1];
-	u_auth *auth;
+	u_auth_block *auth;
 };
 
-struct u_link {
+struct u_link_block {
 	char name[MAXSERVERNAME+1];
 	char host[INET_ADDRSTRLEN];
 	char recvpass[MAXPASSWORD+1];
@@ -58,9 +58,9 @@ extern u_map *all_auths;
 extern u_map *all_opers;
 extern u_map *all_links;
 
-extern u_auth *u_find_auth(u_conn*);
-extern u_oper *u_find_oper(u_auth*, char*, char*);
-extern u_link *u_find_link(u_server*);
+extern u_auth_block *u_find_auth(u_conn*);
+extern u_oper_block *u_find_oper(u_auth_block*, char*, char*);
+extern u_link_block *u_find_link(u_server*);
 
 extern int init_auth(void);
 

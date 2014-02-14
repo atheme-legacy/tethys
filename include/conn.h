@@ -1,5 +1,5 @@
 /* Tethys, conn.h -- stream connection management
-   Copyright (C) 2013 Alex Iadicicco
+   Copyright (C) 2014 Alex Iadicicco
 
    This file is protected under the terms contained
    in the COPYING file in the project root */
