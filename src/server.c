@@ -218,7 +218,7 @@ u_server *u_server_new_remote(u_server *parent, char *sid,
 	return sv;
 }
 
-void u_server_unlink(u_server *sv)
+void u_server_destroy(u_server *sv)
 {
 	mowgli_patricia_iteration_state_t state;
 	u_user *u;
@@ -252,7 +252,7 @@ void u_server_unlink(u_server *sv)
 	/* delete any servers linked to this one */
 	MOWGLI_PATRICIA_FOREACH(tsv, &state, servers_by_sid) {
 		if (tsv->parent == sv)
-			u_server_unlink(tsv);
+			u_server_destroy(tsv);
 	}
 
 	free(sv);

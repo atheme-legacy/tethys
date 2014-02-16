@@ -161,7 +161,7 @@ static void exceptional_quit(u_link *link, char *msg, ...)
 
 	case LINK_SERVER:
 		u_sendto_servers(NULL, ":%S SQUIT %S :%s", &me, link->priv, buf);
-		u_server_unlink(link->priv);
+		u_server_destroy(link->priv);
 		break;
 
 	default:
