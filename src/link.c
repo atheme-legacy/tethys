@@ -402,6 +402,8 @@ static void accept_ready(mowgli_eventloop_t *ev, mowgli_eventloop_io_t *io,
 	u_conn *conn;
 	u_link *link;
 
+	sync_time();
+
 	link = link_create();
 
 	if (!(conn = u_conn_accept(ev, &u_link_conn_ctx, link, 0, poll->fd))) {

@@ -235,6 +235,8 @@ static void rdns_callback(mowgli_dns_reply_t *reply, int reason, void *vptr)
 	u_conn *conn = q->conn;
 	const char *rstr = "Unknown error";
 
+	sync_time();
+
 	if (reply && reply->addr.addr.ss_family != AF_INET) {
 		/* XXX: but why? */
 		reply = NULL;
@@ -395,6 +397,8 @@ static void connect_end(mowgli_eventloop_t *ev, mowgli_eventloop_io_t *io,
 	void (*cb)(u_conn *conn, int err);
 	int e;
 
+	sync_time();
+
 	cb = null_connect_finish;
 	if (conn->ctx->connect_finish != NULL)
 		cb = conn->ctx->connect_finish;
@@ -425,6 +429,8 @@ static void recv_ready(mowgli_eventloop_t *ev, mowgli_eventloop_io_t *io,
 {
 	u_conn *conn = priv;
 
+	sync_time();
+
 	if (conn->ctx->data_ready != NULL)
 		conn->ctx->data_ready(conn);
 }
@@ -434,6 +440,8 @@ static void send_ready(mowgli_eventloop_t *ev, mowgli_eventloop_io_t *io,
 {
 	u_conn *conn = priv;
 	ssize_t sz;
+
+	sync_time();
 
 	sz = write(conn->poll->fd, conn->obuf, conn->obuflen);
 
