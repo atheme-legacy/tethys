@@ -19,9 +19,8 @@ static int try_local_join_chan(u_sourceinfo *si, char *chan, char *key)
 
 	/* verify entry */
 
-	if (!(c = u_chan_get_or_create(chan)))
+	if (!(c = u_chan_get_or_create(chan, &created)))
 		return u_user_num(si->u, ERR_NOSUCHCHANNEL, chan);
-	created = c->ts == NOW.tv_sec; /* is this ok? */
 
 	if (u_chan_user_find(c, si->u))
 		return 0;

@@ -275,9 +275,11 @@ u_chan *u_chan_create(char *name)
 	return chan_create_real(name);
 }
 
-u_chan *u_chan_get_or_create(char *name)
+u_chan *u_chan_get_or_create(char *name, bool *created)
 {
 	u_chan *chan;
+
+	*created = false;
 
 	chan = u_chan_get(name);
 	if (chan != NULL)
@@ -285,6 +287,8 @@ u_chan *u_chan_get_or_create(char *name)
 
 	if (name[0] != '#') /* TODO: hnggg!!! */
 		return NULL;
+
+	*created = true;
 
 	return chan_create_real(name);
 }
