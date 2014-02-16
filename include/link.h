@@ -49,8 +49,6 @@ struct u_link {
 
 extern u_conn_ctx u_link_conn_ctx;
 
-extern void u_link_detach(u_conn *conn);
-
 extern void u_link_fatal(u_link *link, const char *msg);
 
 extern void u_link_vf(u_link *link, const char *fmt, va_list va);

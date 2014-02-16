@@ -51,8 +51,11 @@ static void on_fatal_error(u_conn *conn, const char *msg, int err)
 static void on_cleanup(u_conn *conn)
 {
 	u_log(LG_VERBOSE, "link: being cleaned up");
-	u_link_detach(conn);
-	conn->priv = NULL;
+
+	if (conn->priv) {
+		link_destroy(conn->priv);
+		conn->priv = NULL;
+	}
 }
 
 static void on_excess_flood(u_conn *conn)
@@ -211,16 +214,6 @@ static void dispatch_lines(u_link *link)
 
 /* user API */
 /* -------- */
-
-void u_link_detach(u_conn *conn)
-{
-	if (!conn || !conn->priv)
-		return;
-
-	link_destroy(conn->priv);
-	conn->ctx = NULL;
-	conn->priv = NULL;
-}
 
 void u_link_fatal(u_link *link, const char *msg)
 {
