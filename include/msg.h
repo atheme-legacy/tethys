@@ -64,15 +64,16 @@ extern int u_msg_parse(u_msg*, char*);
 #include "user.h"
 #include "server.h"
 #include "ratelimit.h"
+#include "link.h"
 
 /* Any pointer fields can be NULL. */
 struct u_sourceinfo {
 	/* source = connection message came from,
 	   link = link to reach source. should be equal to source.
 	   local = local link for source, if any */
-	u_conn *source;
-	u_conn *link;
-	u_conn *local;
+	u_link *source;
+	u_link *link;
+	u_link *local;
 
 	/* source mask bits */
 	ulong mask;
@@ -138,7 +139,7 @@ extern mowgli_patricia_t *all_commands;
 extern int u_cmds_reg(u_cmd*); /* terminated with empty name */
 extern int u_cmd_reg(u_cmd*); /* single command */
 extern void u_cmd_unreg(u_cmd*);
-extern void u_cmd_invoke(u_conn*, u_msg*, char *line);
+extern void u_cmd_invoke(u_link*, u_msg*, char *line);
 
 extern int u_repeat_as_user(u_sourceinfo *si, u_msg *msg);
 extern int u_repeat_as_server(u_sourceinfo *si, u_msg *msg, char *sid);

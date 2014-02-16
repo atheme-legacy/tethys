@@ -81,6 +81,7 @@ typedef unsigned long u_ts_t;
 #include "chan.h"
 #include "conn.h"
 #include "hook.h"
+#include "link.h"
 #include "mode.h"
 #include "module.h"
 #include "msg.h"
