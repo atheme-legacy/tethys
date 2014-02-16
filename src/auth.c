@@ -30,7 +30,7 @@ static mowgli_patricia_t *u_conf_class_handlers = NULL;
 static mowgli_patricia_t *u_conf_oper_handlers = NULL;
 static mowgli_patricia_t *u_conf_link_handlers = NULL;
 
-u_auth_block *u_find_auth(u_conn *conn)
+u_auth_block *u_find_auth(u_link *link)
 {
 	mowgli_node_t *n;
 	u_auth_block *auth;
@@ -42,10 +42,10 @@ u_auth_block *u_find_auth(u_conn *conn)
 
 	MOWGLI_LIST_FOREACH(n, auth_list.head) {
 		auth = n->data;
-		if (!u_cidr_match(&auth->cidr, conn->ip))
+		if (!u_cidr_match(&auth->cidr, link->conn->ip))
 			continue;
 		if (auth->pass[0]) {
-			if (!conn->pass || !matchhash(auth->pass, conn->pass))
+			if (!link->pass || !matchhash(auth->pass, link->pass))
 				continue;
 		}
 

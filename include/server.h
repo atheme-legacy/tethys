@@ -38,9 +38,10 @@
 typedef struct u_server u_server;
 
 #include "conn.h"
+#include "link.h"
 
 struct u_server {
-	u_conn *link; /* only NULL for &me */
+	u_link *link; /* only NULL for &me */
 	ulong flags;
 
 	char sid[4]; /* if empty, this server is a TS5 */
@@ -72,17 +73,17 @@ extern u_server *u_server_by_sid(char *sid);
 extern u_server *u_server_by_name(char *name);
 extern u_server *u_server_find(char *str);
 
-static inline u_server *u_server_by_ref(u_conn *conn, char *ref)
+static inline u_server *u_server_by_ref(u_link *link, char *ref)
 {
 	if (!ref) return NULL;
-	return (conn && conn->ctx == CTX_SERVER && isdigit(*ref)) ?
+	return (link && link->type== LINK_SERVER && isdigit(*ref)) ?
 	        u_server_by_sid(ref) : u_server_by_name(ref);
 }
 
 extern void u_server_add_capabs(u_server*, char *caps);
 extern void u_my_capabs(char *buf);
 
-extern void u_server_make_sreg(u_conn*, char *sid);
+extern void u_server_make_sreg(u_link*, char *sid);
 extern u_server *u_server_new_remote(u_server *parent, char *sid,
                                      char *name, char *desc);
 extern void u_server_unlink(u_server*);

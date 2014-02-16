@@ -66,7 +66,7 @@ struct u_user {
 
 	u_ratelimit_t limit;
 
-	u_conn *link; /* never null, except when shutting down */
+	u_link *link; /* never null, except when shutting down */
 	u_oper_block *oper; /* local opers only */
 	u_server *sv; /* never null */
 };
@@ -80,7 +80,7 @@ extern u_mode_info umode_infotab[128];
 extern u_mode_ctx umodes;
 extern uint umode_default;
 
-extern u_user *u_user_create_local(u_conn *conn);
+extern u_user *u_user_create_local(u_link *link);
 extern u_user *u_user_create_remote(u_server*, char *uid);
 extern void u_user_destroy(u_user*);
 
@@ -89,10 +89,10 @@ extern void u_user_try_register(u_user*);
 extern u_user *u_user_by_nick(char*);
 extern u_user *u_user_by_uid(char*);
 
-static inline u_user *u_user_by_ref(u_conn *conn, char *ref)
+static inline u_user *u_user_by_ref(u_link *link, char *ref)
 {
 	if (!ref) return NULL;
-	return (conn && conn->ctx == CTX_SERVER && isdigit(*ref)) ?
+	return (link && link->type == LINK_SERVER && isdigit(*ref)) ?
 	        u_user_by_uid(ref) : u_user_by_nick(ref);
 }
 

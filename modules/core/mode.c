@@ -28,7 +28,7 @@ static int mode_user(u_sourceinfo *si, char *s)
 
 	if (stack.on != -1) {
 		if (IS_LOCAL_USER(si->u)) {
-			u_conn_f(si->link, ":%U MODE %U %s%s",
+			u_link_f(si->link, ":%U MODE %U %s%s",
 			         si->u, si->u, stack.cbuf, stack.dbuf);
 		}
 

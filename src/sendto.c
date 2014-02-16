@@ -18,16 +18,16 @@ void u_sendto_start(void)
 	ln_serv = NULL;
 }
 
-void u_sendto_skip(u_conn *conn)
+void u_sendto_skip(u_link *link)
 {
-	if (!conn)
+	if (!link)
 		return;
 
-	if (u_cookie_cmp(&conn->ck_sendto, &ck_sendto) < 0)
-		u_cookie_cpy(&conn->ck_sendto, &ck_sendto);
+	if (u_cookie_cmp(&link->ck_sendto, &ck_sendto) < 0)
+		u_cookie_cpy(&link->ck_sendto, &ck_sendto);
 }
 
-static int want_send(uint type, u_conn *conn)
+static int want_send(uint type, u_link *link)
 {
 	switch (type) {
 	case ST_ALL:
@@ -35,12 +35,12 @@ static int want_send(uint type, u_conn *conn)
 
 	case ST_USERS:
 	case ST_SERVERS:
-		switch (conn->ctx) {
-		case CTX_NONE:
-		case CTX_USER:
+		switch (link->type) {
+		case LINK_NONE:
+		case LINK_USER:
 			return type == ST_USERS;
 
-		case CTX_SERVER:
+		case LINK_SERVER:
 			return type == ST_SERVERS;
 		}
 		return 0;
@@ -49,13 +49,13 @@ static int want_send(uint type, u_conn *conn)
 	return 0;
 }
 
-static char *ln(u_conn *conn, char *fmt, va_list va_orig)
+static char *ln(u_link *link, char *fmt, va_list va_orig)
 {
 	va_list va;
 
-	switch (conn->ctx) {
-	case CTX_NONE:
-	case CTX_USER:
+	switch (link->type) {
+	case LINK_NONE:
+	case LINK_USER:
 		if (ln_user != NULL)
 			return ln_user;
 		ln_user = buf_user;
@@ -64,7 +64,7 @@ static char *ln(u_conn *conn, char *fmt, va_list va_orig)
 		va_end(va);
 		return ln_user;
 
-	case CTX_SERVER:
+	case LINK_SERVER:
 		if (ln_serv != NULL)
 			return ln_serv;
 		ln_serv = buf_serv;
@@ -77,54 +77,54 @@ static char *ln(u_conn *conn, char *fmt, va_list va_orig)
 	return NULL;
 }
 
-void u_sendto(u_conn *conn, char *fmt, ...)
+void u_sendto(u_link *link, char *fmt, ...)
 {
 	va_list va;
-	if (!u_cookie_cmp(&conn->ck_sendto, &ck_sendto))
+	if (!u_cookie_cmp(&link->ck_sendto, &ck_sendto))
 		return;
-	u_cookie_cpy(&conn->ck_sendto, &ck_sendto);
+	u_cookie_cpy(&link->ck_sendto, &ck_sendto);
 	va_start(va, fmt);
-	u_conn_vf(conn, fmt, va);
+	u_link_vf(link, fmt, va);
 	va_end(va);
 }
 
-void u_sendto_chan(u_chan *c, u_conn *exclude, uint type, char *fmt, ...)
+void u_sendto_chan(u_chan *c, u_link *exclude, uint type, char *fmt, ...)
 {
 	u_sendto_state st;
-	u_conn *conn;
+	u_link *link;
 	va_list va;
 
 	va_start(va, fmt);
-	U_SENDTO_CHAN(&st, c, exclude, type, &conn)
-		u_sendto(conn, "%s", ln(conn, fmt, va));
+	U_SENDTO_CHAN(&st, c, exclude, type, &link)
+		u_sendto(link, "%s", ln(link, fmt, va));
 	va_end(va);
 }
 
 void u_sendto_visible(u_user *u, uint type, char *fmt, ...)
 {
 	u_sendto_state st;
-	u_conn *conn;
+	u_link *link;
 	va_list va;
 
 	va_start(va, fmt);
-	U_SENDTO_VISIBLE(&st, u, u->link, type, &conn)
-		u_sendto(conn, "%s", ln(conn, fmt, va));
+	U_SENDTO_VISIBLE(&st, u, u->link, type, &link)
+		u_sendto(link, "%s", ln(link, fmt, va));
 	va_end(va);
 }
 
-void u_sendto_servers(u_conn *exclude, char *fmt, ...)
+void u_sendto_servers(u_link *exclude, char *fmt, ...)
 {
 	u_sendto_state st;
-	u_conn *conn;
+	u_link *link;
 	va_list va;
 
 	va_start(va, fmt);
-	U_SENDTO_SERVERS(&st, exclude, &conn)
-		u_sendto(conn, "%s", ln(conn, fmt, va));
+	U_SENDTO_SERVERS(&st, exclude, &link)
+		u_sendto(link, "%s", ln(link, fmt, va));
 	va_end(va);
 }
 
-void u_sendto_list(mowgli_list_t *list, u_conn *exclude, char *fmt, ...)
+void u_sendto_list(mowgli_list_t *list, u_link *exclude, char *fmt, ...)
 {
 	mowgli_node_t *n;
 	va_list va;
@@ -135,16 +135,16 @@ void u_sendto_list(mowgli_list_t *list, u_conn *exclude, char *fmt, ...)
 
 	va_start(va, fmt);
 	MOWGLI_LIST_FOREACH(n, list->head) {
-		u_conn *conn = n->data;
-		u_sendto(conn, "%s", ln(conn, fmt, va));
+		u_link *link = n->data;
+		u_sendto(link, "%s", ln(link, fmt, va));
 	}
 	va_end(va);
 }
 
-void u_sendto_map(u_map *map, u_conn *exclude, char *fmt, ...)
+void u_sendto_map(u_map *map, u_link *exclude, char *fmt, ...)
 {
 	u_map_each_state state;
-	u_conn *conn;
+	u_link *link;
 	va_list va;
 
 	u_sendto_start();
@@ -152,13 +152,13 @@ void u_sendto_map(u_map *map, u_conn *exclude, char *fmt, ...)
 		u_sendto_skip(exclude);
 
 	va_start(va, fmt);
-	U_MAP_EACH(&state, map, NULL, &conn)
-		u_sendto(conn, "%s", ln(conn, fmt, va));
+	U_MAP_EACH(&state, map, NULL, &link)
+		u_sendto(link, "%s", ln(link, fmt, va));
 	va_end(va);
 }
 
 void u_sendto_chan_start(u_sendto_state *state, u_chan *c,
-                         u_conn *exclude, uint type)
+                         u_link *exclude, uint type)
 {
 	if (c == NULL) {
 		state->type = ST_STOP;
@@ -175,7 +175,7 @@ void u_sendto_chan_start(u_sendto_state *state, u_chan *c,
 	u_map_each_start(&state->members, c->members);
 }
 
-bool u_sendto_chan_next(u_sendto_state *state, u_conn **conn_ret)
+bool u_sendto_chan_next(u_sendto_state *state, u_link **link_ret)
 {
 	u_user *u;
 	u_chanuser *cu;
@@ -183,21 +183,21 @@ bool u_sendto_chan_next(u_sendto_state *state, u_conn **conn_ret)
 	if (state->type == ST_STOP)
 		return false;
 
-next_conn:
+next_link:
 	if (!u_map_each_next(&state->members, (void**)&u, (void**)&cu))
 		return false;
 
 	if (!want_send(state->type, u->link))
-		goto next_conn;
+		goto next_link;
 	if (!u_cookie_cmp(&u->link->ck_sendto, &ck_sendto))
-		goto next_conn;
+		goto next_link;
 
-	*conn_ret = u->link;
+	*link_ret = u->link;
 	return true;
 }
 
 void u_sendto_visible_start(u_sendto_state *state, u_user *u,
-                            u_conn *exclude, uint type)
+                            u_link *exclude, uint type)
 {
 	if (u == NULL) {
 		state->type = ST_STOP;
@@ -215,7 +215,7 @@ void u_sendto_visible_start(u_sendto_state *state, u_user *u,
 	state->c = NULL;
 }
 
-bool u_sendto_visible_next(u_sendto_state *state, u_conn **conn_ret)
+bool u_sendto_visible_next(u_sendto_state *state, u_link **link_ret)
 {
 	u_user *u;
 	u_chanuser *cu;
@@ -223,7 +223,7 @@ bool u_sendto_visible_next(u_sendto_state *state, u_conn **conn_ret)
 	if (state->type == ST_STOP)
 		return false;
 
-next_conn:
+next_link:
 	if (!state->c) {
 		if (!u_map_each_next(&state->chans, (void**)&state->c, NULL))
 			return false;
@@ -234,19 +234,19 @@ next_conn:
 
 	if (!u_map_each_next(&state->members, (void**)&u, (void**)&cu)) {
 		state->c = NULL;
-		goto next_conn;
+		goto next_link;
 	}
 
 	if (!u_cookie_cmp(&u->link->ck_sendto, &ck_sendto))
-		goto next_conn;
+		goto next_link;
 	if (!want_send(state->type, u->link))
-		goto next_conn;
+		goto next_link;
 
-	*conn_ret = u->link;
+	*link_ret = u->link;
 	return true;
 }
 
-void u_sendto_servers_start(u_sendto_state *state, u_conn *exclude)
+void u_sendto_servers_start(u_sendto_state *state, u_link *exclude)
 {
 	u_sendto_start();
 
@@ -256,22 +256,22 @@ void u_sendto_servers_start(u_sendto_state *state, u_conn *exclude)
 	mowgli_patricia_foreach_start(servers_by_sid, &state->pstate);
 }
 
-bool u_sendto_servers_next(u_sendto_state *state, u_conn **conn_ret)
+bool u_sendto_servers_next(u_sendto_state *state, u_link **link_ret)
 {
 	u_server *sv;
 
-next_conn:
+next_link:
 	sv = mowgli_patricia_foreach_cur(servers_by_sid, &state->pstate);
 	if (sv == NULL)
 		return false;
 	mowgli_patricia_foreach_next(servers_by_sid, &state->pstate);
 
 	if (!IS_SERVER_LOCAL(sv) || !sv->link)
-		goto next_conn;
+		goto next_link;
 	if (!u_cookie_cmp(&sv->link->ck_sendto, &ck_sendto))
-		goto next_conn;
+		goto next_link;
 
-	*conn_ret = sv->link;
+	*link_ret = sv->link;
 	return true;
 }
 

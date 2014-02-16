@@ -15,7 +15,7 @@ static int c_lu_oper(u_sourceinfo *si, u_msg *msg)
 
 	si->u->oper = oper;
 	si->u->mode |= UMODE_OPER;
-	u_conn_f(si->source, ":%U MODE %U :+o", si->u, si->u);
+	u_link_f(si->source, ":%U MODE %U :+o", si->u, si->u);
 	u_sendto_servers(NULL, ":%U MODE %U :+o", si->u, si->u);
 	u_user_num(si->u, RPL_YOUREOPER);
 	u_log(LG_VERBOSE, "%U now has user mode %s",

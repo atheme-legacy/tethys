@@ -211,11 +211,18 @@ void u_link_detach(u_conn *conn)
 	conn->priv = NULL;
 }
 
-void u_link_f(u_link *link, const char *fmt, ...)
+void u_link_fatal(u_link *link, const char *msg)
+{
+	exceptional_quit(link, "Fatal error: %s", msg);
+	u_link_f(link, "ERROR :%s", msg);
+
+	u_conn_shut_down(link->conn);
+}
+
+void u_link_vf(u_link *link, const char *fmt, va_list va)
 {
 	uchar *buf;
 	size_t sz;
-	va_list va;
 	int type;
 
 	buf = u_conn_get_send_buffer(link->conn, 514);
@@ -229,12 +236,57 @@ void u_link_f(u_link *link, const char *fmt, ...)
 	if (link->type == LINK_SERVER)
 		type = FMT_SERVER;
 
-	va_start(va, fmt);
 	sz = vsnf(type, (char*)buf, 512, fmt, va);
-	va_end(va);
 
 	buf[sz++] = '\r';
 	buf[sz++] = '\n';
 
 	u_conn_end_send_buffer(link->conn, sz);
+}
+
+void u_link_f(u_link *link, const char *fmt, ...)
+{
+	va_list va;
+
+	va_start(va, fmt);
+	u_link_vf(link, fmt, va);
+	va_end(va);
+}
+
+void u_link_vnum(u_link *link, const char *tgt, int num, va_list va)
+{
+	char buf[4096];
+	char *fmt;
+
+	fmt = u_numeric_fmt[num];
+
+	if (fmt == NULL) {
+		u_log(LG_SEVERE, "Attempted to use NULL numeric %d", num);
+		return;
+	}
+
+	/* numerics are ALWAYS FMT_USER */
+	vsnf(FMT_USER, buf, 4096, fmt, va);
+
+	u_link_f(link, ":%S %03d %s %s", &me, num, tgt, buf);
+}
+
+int u_link_num(u_link *link, int num, ...)
+{
+	va_list va;
+
+	va_start(va, num);
+	switch (link->type) {
+	case LINK_NONE:
+		u_link_vnum(link, "*", num, va);
+		break;
+	case LINK_USER:
+		u_user_vnum(link->priv, num, va);
+		break;
+	default:
+		u_log(LG_SEVERE, "Can't use u_link_num on type %d!", link->type);
+	}
+	va_end(va);
+
+	return 0;
 }

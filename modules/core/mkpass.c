@@ -13,7 +13,7 @@ static int c_lu_mkpass(u_sourceinfo *si, u_msg *msg)
 	u_crypto_gen_salt(salt);
 	u_crypto_hash(buf, msg->argv[0], salt);
 
-	u_conn_f(si->link, ":%S NOTICE %U :%s", &me, si->u, buf);
+	u_link_f(si->link, ":%S NOTICE %U :%s", &me, si->u, buf);
 
 	return 0;
 }

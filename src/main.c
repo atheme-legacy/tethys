@@ -56,14 +56,15 @@ int init(void)
 	INIT(init_server);
 	INIT(init_chan);
 	INIT(init_sendto);
-	INIT(init_toplev);
 
 	u_module_load_directory("modules/core");
 
-	mowgli_timer_add(base_ev, "ping", u_conn_check_ping_all, base_ev, 10);
+	/* LINK TODO: add ping timer */
 
+	/* LINK TODO
 	if (opt_port != -1 && !u_toplev_origin_create(base_ev, INADDR_ANY, opt_port))
 		return -1;
+	*/
 
 	if (!u_conf_read("etc/tethys.conf")) {
 		u_log(LG_SEVERE, "Could not find etc/tethys.conf!");

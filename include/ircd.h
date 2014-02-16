@@ -88,7 +88,6 @@ typedef unsigned long u_ts_t;
 #include "ratelimit.h"
 #include "sendto.h"
 #include "server.h"
-#include "toplev.h"
 #include "user.h"
 #include "util.h"
 

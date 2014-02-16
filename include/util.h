@@ -52,12 +52,13 @@ extern char *ref_to_id(char *ref);
 extern bool exists(const char *path);
 
 #include "conn.h"
+#include "link.h"
 
-extern char *ref_to_ref(u_conn *ctx, char *ref);
-extern u_conn *ref_link(u_conn *ctx, char *ref);
+extern char *ref_to_ref(u_link *ctx, char *ref);
+extern u_link *ref_link(u_link *ctx, char *ref);
 
-extern char *conn_name(u_conn*);
-extern char *conn_id(u_conn*);
+extern char *link_name(u_link*);
+extern char *link_id(u_link*);
 
 extern int is_valid_nick();
 extern int is_valid_ident();

@@ -18,7 +18,7 @@ static void notice(u_sourceinfo *si, const char *fmt, ...)
 	vsnf(FMT_USER, buf, 512, fmt, va);
 	va_end(va);
 
-	u_conn_f(si->link, ":%S NOTICE %U :%s", &me, si->u, buf);
+	u_link_f(si->link, ":%S NOTICE %U :%s", &me, si->u, buf);
 }
 
 #define NEED_OPER   0x01
@@ -176,7 +176,7 @@ static int c_u_stats(u_sourceinfo *si, u_msg *msg)
 			return u_src_num(si, ERR_NOSUCHSERVER, msg->argv[1]);
 
 		if (sv != &me) {
-			u_conn_f(sv->link, ":%I STATS %s %S", si, name, sv);
+			u_link_f(sv->link, ":%I STATS %s %S", si, name, sv);
 			return 0;
 		}
 	}

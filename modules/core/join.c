@@ -44,7 +44,7 @@ static int try_local_join_chan(u_sourceinfo *si, char *chan, char *key)
 	modes = u_chan_modes(c, 1);
 	if (created) {
 		u_log(LG_VERBOSE, "Channel %C %s created by %U", c, modes, si->u);
-		u_conn_f(si->link, ":%S MODE %C %s", &me, c, modes);
+		u_link_f(si->link, ":%S MODE %C %s", &me, c, modes);
 	}
 
 	if (!(c->flags & CHAN_LOCAL)) {

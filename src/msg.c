@@ -70,10 +70,10 @@ int u_src_num(u_sourceinfo *si, int num, ...)
 
 	va_start(va, num);
 
-	tgt = si->link->ctx == CTX_SERVER ? si->id : si->name;
+	tgt = si->link->type == LINK_SERVER ? si->id : si->name;
 	tgt = tgt ? tgt : "*";
 
-	u_conn_vnum(si->link, tgt, num, va);
+	u_link_vnum(si->link, tgt, num, va);
 
 	va_end(va);
 
@@ -90,7 +90,7 @@ void u_src_f(u_sourceinfo *si, const char *fmt, ...)
 	}
 
 	va_start(va, fmt);
-	u_conn_vf(si->link, fmt, va);
+	u_link_vf(si->link, fmt, va);
 	va_end(va);
 }
 
@@ -199,7 +199,7 @@ static void fill_source_user(u_sourceinfo *si, u_user *u)
 	}
 }
 
-static bool fill_source_by_id(u_sourceinfo *si, u_conn *conn, char *src)
+static bool fill_source_by_id(u_sourceinfo *si, u_link *link, char *src)
 {
 	int n;
 
@@ -231,7 +231,7 @@ static bool fill_source_by_id(u_sourceinfo *si, u_conn *conn, char *src)
 	return true;
 }
 
-static bool fill_source_by_name(u_sourceinfo *si, u_conn *conn, char *src)
+static bool fill_source_by_name(u_sourceinfo *si, u_link *link, char *src)
 {
 	if (strchr(src, '.')) {
 		si->s = u_server_by_name(src);
@@ -248,7 +248,7 @@ static bool fill_source_by_name(u_sourceinfo *si, u_conn *conn, char *src)
 	return true;
 }
 
-static bool fill_source_by_unk_id(u_sourceinfo *si, u_conn *conn, char *src)
+static bool fill_source_by_unk_id(u_sourceinfo *si, u_link *link, char *src)
 {
 	int n;
 
@@ -282,29 +282,29 @@ static bool fill_source_by_unk_id(u_sourceinfo *si, u_conn *conn, char *src)
 	return true;
 }
 
-static void fill_source(u_sourceinfo *si, u_conn *conn, u_msg *msg)
+static void fill_source(u_sourceinfo *si, u_link *link, u_msg *msg)
 {
 	memset(si, 0, sizeof(*si));
 
-	si->source = conn;
+	si->source = link;
 
 	si->mask = (ulong) -1; /* all 1's */
 
-	if (!(conn->flags & U_CONN_REGISTERED)) {
-		si->link = si->local = conn;
+	if (!(link->flags & U_LINK_REGISTERED)) {
+		si->link = si->local = link;
 
-		switch (conn->ctx) {
-		case CTX_NONE:
+		switch (link->type) {
+		case LINK_NONE:
 			si->mask &= SRC_FIRST;
 			break;
-		case CTX_USER:
+		case LINK_USER:
 			si->mask &= SRC_UNREGISTERED_USER;
-			si->u = conn->priv;
+			si->u = link->priv;
 			si->id = si->u->uid;
 			break;
-		case CTX_SERVER:
+		case LINK_SERVER:
 			si->mask &= SRC_UNREGISTERED_SERVER;
-			si->s = conn->priv;
+			si->s = link->priv;
 			si->id = si->s->sid;
 			break;
 		default:
@@ -315,26 +315,26 @@ static void fill_source(u_sourceinfo *si, u_conn *conn, u_msg *msg)
 		return;
 	}
 
-	switch (conn->ctx) {
-	case CTX_USER:
+	switch (link->type) {
+	case LINK_USER:
 		si->mask &= SRC_LOCAL_USER;
-		si->u = conn->priv;
-		si->link = si->local = conn;
+		si->u = link->priv;
+		si->link = si->local = link;
 		break;
 
-	case CTX_SERVER:
+	case LINK_SERVER:
 		if (!msg->srcstr || !*msg->srcstr) {
 			si->mask &= SRC_LOCAL_SERVER;
-			si->s = conn->priv;
-			si->link = si->local = conn;
+			si->s = link->priv;
+			si->link = si->local = link;
 			break;
 		}
 
-		if (!fill_source_by_id(si, conn, msg->srcstr) &&
-		    !fill_source_by_name(si, conn, msg->srcstr) &&
-		    !fill_source_by_unk_id(si, conn, msg->srcstr)) {
+		if (!fill_source_by_id(si, link, msg->srcstr) &&
+		    !fill_source_by_name(si, link, msg->srcstr) &&
+		    !fill_source_by_unk_id(si, link, msg->srcstr)) {
 			u_log(LG_WARN, "%G sent source we can't use: %s",
-			      conn->priv, msg->srcstr);
+			      link, msg->srcstr);
 		}
 		break;
 
@@ -402,33 +402,33 @@ static void report_failure(u_sourceinfo *si, u_msg *msg, ulong bits_tested)
 		return;
 	}
 
-	if (si->source->ctx == CTX_SERVER) {
+	if (si->source->type == LINK_SERVER) {
 		u_log(LG_SEVERE, "%G invocation of %s failed!",
 		      si->source, msg->command);
 		return;
 	}
 
 	if (bits_tested == 0) {
-		u_conn_num(si->source, ERR_UNKNOWNCOMMAND, msg->command);
+		u_link_num(si->source, ERR_UNKNOWNCOMMAND, msg->command);
 		return;
 	}
 
 	if ((bits_tested & SRC_USER) && !(si->mask & SRC_USER)) {
-		u_conn_num(si->source, ERR_NOTREGISTERED);
+		u_link_num(si->source, ERR_NOTREGISTERED);
 		return;
 	}
 
 	if ((bits_tested & SRC_UNREGISTERED) && !(si->mask & SRC_UNREGISTERED)) {
-		u_conn_num(si->source, ERR_ALREADYREGISTERED);
+		u_link_num(si->source, ERR_ALREADYREGISTERED);
 		return;
 	}
 
 	if ((bits_tested & SRC_OPER) && !(si->mask & SRC_OPER)) {
-		u_conn_num(si->source, ERR_NOPRIVILEGES);
+		u_link_num(si->source, ERR_NOPRIVILEGES);
 		return;
 	}
 
-	u_conn_num(si->source, ERR_UNKNOWNCOMMAND, msg->command);
+	u_link_num(si->source, ERR_UNKNOWNCOMMAND, msg->command);
 }
 
 static void propagate_message(u_sourceinfo *si, u_msg *msg, u_cmd *cmd, char *line)
@@ -444,7 +444,7 @@ static void propagate_message(u_sourceinfo *si, u_msg *msg, u_cmd *cmd, char *li
 	case CMD_PROP_ONE_TO_ONE:
 		/* TODO: fix this when we decide what to do with u_entity
 		if (u_entity_from_ref(&e, msg->propagate) && e.link)
-			u_conn_f(e.link, "%s", line); */
+			u_link_f(e.link, "%s", line); */
 		break;
 
 	case CMD_PROP_HUNTED:
@@ -471,7 +471,7 @@ static bool run_command(u_cmd *cmd, u_sourceinfo *si, u_msg *msg)
 	}
 
 	if (cmd->nargs && msg->argc < cmd->nargs) {
-		u_conn_num(si->source, ERR_NEEDMOREPARAMS, cmd->name);
+		u_link_num(si->source, ERR_NEEDMOREPARAMS, cmd->name);
 		return false;
 	}
 
@@ -498,7 +498,7 @@ static bool invoke_encap(u_sourceinfo *si, u_msg *msg, char *line)
 	u_cmd *cmd;
 
 	if (msg->argc < 2) {
-		u_conn_num(si->source, ERR_NEEDMOREPARAMS, "ENCAP");
+		u_link_num(si->source, ERR_NEEDMOREPARAMS, "ENCAP");
 		return false;
 	}
 
@@ -531,7 +531,7 @@ propagate:
 	return true;
 }
 
-void u_cmd_invoke(u_conn *conn, u_msg *msg, char *line)
+void u_cmd_invoke(u_link *link, u_msg *msg, char *line)
 {
 	u_cmd *cmd, *last_cmd;
 	u_sourceinfo si;
@@ -540,10 +540,10 @@ void u_cmd_invoke(u_conn *conn, u_msg *msg, char *line)
 	last_cmd = NULL;
 
 again:
-	fill_source(&si, conn, msg);
+	fill_source(&si, link, msg);
 	u_log(LG_FINE, "source mask = 0x%x", si.mask);
 
-	if (conn->ctx == CTX_SERVER && streq(msg->command, "ENCAP")) {
+	if (link->type == LINK_SERVER && streq(msg->command, "ENCAP")) {
 		invoke_encap(&si, msg, line);
 		return;
 	}
@@ -565,7 +565,7 @@ again:
 		return;
 
 	if (msg->propagate && (cmd->flags & CMD_PROP_MASK)
-	    && conn->ctx == CTX_SERVER)
+	    && link->type == LINK_SERVER)
 		propagate_message(&si, msg, cmd, line);
 
 	if (msg->flags & MSG_REPEAT)

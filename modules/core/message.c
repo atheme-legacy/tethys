@@ -31,7 +31,7 @@ static int message_chan(u_sourceinfo *si, u_msg *msg)
 	if (!(tgt = u_chan_get(msg->argv[0])))
 		return u_user_num(si->u, ERR_NOSUCHCHANNEL, msg->argv[0]);
 
-	if (si->source->ctx == CTX_USER && message_blocked(tgt, si->u))
+	if (si->source->type == LINK_USER && message_blocked(tgt, si->u))
 		return 0;
 
 	if (SRC_IS_USER(si)) {
@@ -58,10 +58,10 @@ static int message_user(u_sourceinfo *si, u_msg *msg)
 	}
 
 	if (SRC_IS_USER(si)) {
-		u_conn_f(tu->link, ":%H %s %U :%s", si->u, msg->command,
+		u_link_f(tu->link, ":%H %s %U :%s", si->u, msg->command,
 		         tu, msg->argv[1]);
 	} else {
-		u_conn_f(tu->link, ":%S NOTICE %U :%s", si->s,
+		u_link_f(tu->link, ":%S NOTICE %U :%s", si->s,
 		         tu, msg->argv[1]);
 	}
 

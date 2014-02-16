@@ -9,7 +9,7 @@
 /* TODO: reimplement this with CMD_PROP_ONE_TO_ONE */
 static int c_a_ping(u_sourceinfo *si, u_msg *msg)
 {
-	u_conn *conn = si->source;
+	u_link *link = si->source;
 	u_server *sv;
 	char *tgt = msg->argv[1];
 
@@ -19,25 +19,25 @@ static int c_a_ping(u_sourceinfo *si, u_msg *msg)
 	/* I hate this command so much  --aji */
 
 	if (!tgt || !*tgt) {
-		u_conn_f(conn, ":%S PONG %s :%s", &me, me.name, msg->argv[0]);
+		u_link_f(link, ":%S PONG %s :%s", &me, me.name, msg->argv[0]);
 		return 0;
 	}
 
-	if (!(sv = u_server_by_ref(conn, tgt))) {
-		u_conn_num(conn, ERR_NOSUCHSERVER, tgt);
+	if (!(sv = u_server_by_ref(link, tgt))) {
+		u_link_num(link, ERR_NOSUCHSERVER, tgt);
 		return 0;
 	}
 
 	if (sv == &me) {
-		u_conn_f(conn, ":%S PONG %s :%s", &me, me.name,
+		u_link_f(link, ":%S PONG %s :%s", &me, me.name,
 		         SRC_IS_LOCAL_USER(si) ? si->name : si->id);
 		return 0;
 	}
 
 	if (sv->link == si->source)
-		return u_log(LG_ERROR, "%G sent PING for wrong subtree", conn);
+		return u_log(LG_ERROR, "%G sent PING for wrong subtree", link);
 
-	u_conn_f(sv->link, ":%s PING %s :%s", si->id, si->name, sv->sid);
+	u_link_f(sv->link, ":%s PING %s :%s", si->id, si->name, sv->sid);
 
 	return 0;
 }
@@ -46,7 +46,7 @@ static int c_a_ping(u_sourceinfo *si, u_msg *msg)
 static int c_s_pong(u_sourceinfo *si, u_msg *msg)
 {
 	char *name, *id, *dest = msg->argv[1];
-	u_conn *link;
+	u_link *link;
 
 	link = ref_link(si->source, dest);
 	name = ref_to_name(dest);
@@ -65,8 +65,8 @@ static int c_s_pong(u_sourceinfo *si, u_msg *msg)
 		return 0;
 	}
 
-	u_conn_f(link, ":%S PONG %s :%s", si->s, si->s->name,
-	         link->ctx == CTX_USER ? name : id);
+	u_link_f(link, ":%S PONG %s :%s", si->s, si->s->name,
+	         link->type == LINK_USER ? name : id);
 
 	return 0;
 }

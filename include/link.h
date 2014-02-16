@@ -13,7 +13,7 @@ typedef enum u_link_type u_link_type;
 #include "conn.h"
 
 enum u_link_type {
-	LINK_UNREG,
+	LINK_NONE,
 	LINK_USER,
 	LINK_SERVER,
 };
@@ -26,6 +26,7 @@ enum u_link_type {
 #define U_LINK_WAIT              0x000f
 
 #define U_LINK_SENT_QUIT         0x0010
+#define U_LINK_REGISTERED        0x0020
 
 #define IBUFSIZE 2048
 
@@ -50,6 +51,12 @@ extern u_conn_ctx u_link_conn_ctx;
 extern void u_link_attach(u_conn *conn);
 extern void u_link_detach(u_conn *conn);
 
+extern void u_link_fatal(u_link *link, const char *msg);
+
+extern void u_link_vf(u_link *link, const char *fmt, va_list va);
 extern void u_link_f(u_link *link, const char *fmt, ...);
+
+extern void u_link_vnum(u_link *link, const char *tgt, int num, va_list va);
+extern int u_link_num(u_link *link, int num, ...);
 
 #endif

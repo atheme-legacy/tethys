@@ -62,21 +62,7 @@ u_mode_ctx umodes = {
 
 uint umode_default = 0;
 
-void user_shutdown(u_conn *conn)
-{
-	char *msg = conn->error ? conn->error : "conn shutdown";
-	u_user *u = conn->priv;
-	if (u == NULL)
-		return;
-	if (conn->ctx == CTX_USER && (conn->flags & U_CONN_REGISTERED)) {
-		u_sendto_visible(u, ST_USERS, ":%H QUIT :%s", u, msg);
-		u_sendto_servers(NULL, ":%H QUIT :%s", u, msg);
-	}
-	u_conn_f(conn, "ERROR :%s", msg);
-	u_user_destroy(u);
-}
-
-static u_user *create_user(char *uid, u_conn *link, u_server *sv)
+static u_user *create_user(char *uid, u_link *link, u_server *sv)
 {
 	u_user *u;
 
@@ -102,23 +88,22 @@ static u_user *create_user(char *uid, u_conn *link, u_server *sv)
 	return u;
 }
 
-u_user *u_user_create_local(u_conn *conn)
+u_user *u_user_create_local(u_link *link)
 {
 	char uid[10];
 	u_user *u;
 
-	if (!conn || conn->priv || conn->ctx != CTX_NONE)
+	if (!link || link->priv || link->type != LINK_NONE)
 		return NULL;
 
 	snprintf(uid, 10, "%s%s", me.sid, id_next());
-	u = create_user(uid, conn, &me);
+	u = create_user(uid, link, &me);
 
 	u->mode = umode_default;
 	u->flags = USER_IS_LOCAL;
 
-	conn->ctx = CTX_USER;
-	conn->priv = u;
-	conn->shutdown = user_shutdown;
+	link->type = LINK_USER;
+	link->priv = u;
 
 	u_log(LG_VERBOSE, "New local user, uid=%s", u->uid);
 
@@ -150,11 +135,7 @@ void u_user_destroy(u_user *u)
 	u_log(LG_VERBOSE, "Destroying user uid=%s (%U)", u->uid, u);
 
 	if (IS_LOCAL_USER(u)) {
-		if (u->link) {
-			u->link->priv = NULL;
-			u_conn_shutdown(u->link);
-			u->link = NULL;
-		}
+		/* LINK TODO */
 	}
 
 	u_clr_invites_user(u);
@@ -177,10 +158,10 @@ void u_user_try_register(u_user *u)
 	if (!IS_LOCAL_USER(u))
 		return;
 
-	if (!u->link || (u->link->flags & U_CONN_REGISTERED))
+	if (!u->link || (u->link->flags & U_LINK_REGISTERED))
 		return;
 
-	if (!u->link->host[0])
+	if (!u->link->conn->host[0])
 		return;
 
 	if (!u->nick[0] || !u->ident[0])
@@ -190,14 +171,14 @@ void u_user_try_register(u_user *u)
 		return;
 
 	if (!(u->link->auth = u_find_auth(u->link))) {
-		u_conn_fatal(u->link, "No auth blocks for your host");
+		u_link_fatal(u->link, "No auth blocks for your host");
 		return;
 	}
 
-	u->link->flags |= U_CONN_REGISTERED;
-	u_strlcpy(u->ip, u->link->ip, INET_ADDRSTRLEN);
-	u_strlcpy(u->realhost, u->link->host, MAXHOST+1);
-	u_strlcpy(u->host, u->link->host, MAXHOST+1);
+	u->link->flags |= U_LINK_REGISTERED;
+	u_strlcpy(u->ip, u->link->conn->ip, INET_ADDRSTRLEN);
+	u_strlcpy(u->realhost, u->link->conn->host, MAXHOST+1);
+	u_strlcpy(u->host, u->link->conn->host, MAXHOST+1);
 	u_user_welcome(u);
 }
 
@@ -258,7 +239,7 @@ void u_user_vnum(u_user *u, int num, va_list va)
 			tgt = "*";
 	}
 
-	u_conn_vnum(u->link, tgt, num, va);
+	u_link_vnum(u->link, tgt, num, va);
 }
 
 int u_user_num(u_user *u, int num, ...)

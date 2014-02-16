@@ -67,10 +67,6 @@ struct u_conn {
 	void *priv;
 };
 
-#define CTX_UNREG    NULL
-#define CTX_SERVER   NULL
-#define CTX_USER     NULL
-
 extern u_conn *u_conn_accept(mowgli_eventloop_t*, u_conn_ctx*, void*,
                              ulong flags, int listener);
 

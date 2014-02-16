@@ -32,7 +32,7 @@ static int c_lo_module(u_sourceinfo *si, u_msg *msg)
 		return 0;
 	}
 
-	u_conn_f(si->link,
+	u_link_f(si->link,
 	         success
 	            ? ":%S NOTICE %U :\2%s\2 %sloaded successfully"
 	            : ":%S NOTICE %U :\2%s\2 failed to %sload",
@@ -55,15 +55,15 @@ static int c_o_modlist(u_sourceinfo *si, u_msg *msg)
 		}
 
 		if (sv != &me) {
-			u_conn_f(sv->link, ":%I MODLIST %s", si, sv->name);
+			u_link_f(sv->link, ":%I MODLIST %s", si, sv->name);
 			return 0;
 		}
 	}
 
-	u_conn_f(si->link, ":%S NOTICE %U :Loaded modules:", &me, si->u);
+	u_link_f(si->link, ":%S NOTICE %U :Loaded modules:", &me, si->u);
 
 	MOWGLI_PATRICIA_FOREACH(m, &state, u_modules) {
-		u_conn_f(si->link, ":%S NOTICE %U : - \2%s\2 (%s)", &me,
+		u_link_f(si->link, ":%S NOTICE %U : - \2%s\2 (%s)", &me,
 			 si->u, m->info->name, m->info->description);
 	}
 

@@ -12,12 +12,12 @@ static int c_first_pass(u_sourceinfo *si, u_msg *msg)
 		return u_repeat_as_user(si, msg);
 
 	if (msg->argc < 4) {
-		u_conn_num(si->source, ERR_NEEDMOREPARAMS, "PASS");
+		u_link_num(si->source, ERR_NEEDMOREPARAMS, "PASS");
 		return 0;
 	}
 
 	if (!is_valid_sid(msg->argv[3])) {
-		u_conn_fatal(si->source, "Invalid SID");
+		u_link_fatal(si->source, "Invalid SID");
 		return 0;
 	}
 
