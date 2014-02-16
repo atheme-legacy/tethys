@@ -76,7 +76,7 @@ static void on_sendq_full(u_conn *conn)
 static void on_data_ready(u_conn *conn)
 {
 	u_link *link = conn->priv;
-	size_t sz;
+	ssize_t sz;
 
 	if (link->ibuflen == IBUFSIZE) {
 		on_excess_flood(conn);
