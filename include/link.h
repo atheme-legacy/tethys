@@ -7,8 +7,9 @@
 #ifndef __INC_LINK_H__
 #define __INC_LINK_H__
 
-typedef struct u_link u_link;
 typedef enum u_link_type u_link_type;
+typedef struct u_link u_link;
+typedef struct u_link_origin u_link_origin;
 
 #include "conn.h"
 
@@ -48,7 +49,6 @@ struct u_link {
 
 extern u_conn_ctx u_link_conn_ctx;
 
-extern void u_link_attach(u_conn *conn);
 extern void u_link_detach(u_conn *conn);
 
 extern void u_link_fatal(u_link *link, const char *msg);
@@ -58,5 +58,9 @@ extern void u_link_f(u_link *link, const char *fmt, ...);
 
 extern void u_link_vnum(u_link *link, const char *tgt, int num, va_list va);
 extern int u_link_num(u_link *link, int num, ...);
+
+extern u_link_origin *u_link_origin_create(mowgli_eventloop_t*, short);
+
+extern int init_link(void);
 
 #endif

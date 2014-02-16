@@ -68,6 +68,9 @@ static u_conn *conn_create(mowgli_eventloop_t *ev, u_conn_ctx *ctx,
 	conn->ctx = ctx;
 	conn->priv = priv;
 
+	if (conn->ctx->attach)
+		conn->ctx->attach(conn);
+
 	return conn;
 }
 

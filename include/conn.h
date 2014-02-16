@@ -14,6 +14,8 @@ typedef enum u_conn_state u_conn_state;
 typedef struct u_conn u_conn;
 
 struct u_conn_ctx {
+	void (*attach)(u_conn*);
+
 	/* connect_finish: leaving CONNECTING.
 	   fatal_error: entering AWAIT_CLEANUP directly from ACTIVE.
 	   cleanup: leaving AWAIT_CLEANUP, deleting connection. */

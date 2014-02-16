@@ -6,12 +6,11 @@
 
 #include "ircd.h"
 
-static u_link *link_create(u_conn *conn)
+static u_link *link_create(void)
 {
 	u_link *link;
 
 	link = calloc(1, sizeof(*link));
-	link->conn = conn;
 
 	return link;
 }
@@ -24,10 +23,20 @@ static void link_destroy(u_link *link)
 	free(link);
 }
 
+/* conn interaction */
+/* ---------------- */
+
 #define RECV_SIZE (16 << 10)
 
 static void exceptional_quit(u_link *link, char *msg, ...);
 static void dispatch_lines(u_link*);
+
+static void on_attach(u_conn *conn)
+{
+	u_link *link = conn->priv;
+
+	link->conn = conn;
+}
 
 static void on_connect_finish(u_conn *conn, int err)
 {
@@ -42,7 +51,7 @@ static void on_fatal_error(u_conn *conn, const char *msg, int err)
 static void on_cleanup(u_conn *conn)
 {
 	u_log(LG_VERBOSE, "link: being cleaned up");
-	u_link_detach(conn->priv);
+	u_link_detach(conn);
 	conn->priv = NULL;
 }
 
@@ -113,6 +122,8 @@ static void on_rdns_finish(u_conn *conn, const char *msg)
 }
 
 u_conn_ctx u_link_conn_ctx = {
+	.attach           = on_attach,
+
 	.connect_finish   = on_connect_finish,
 	.fatal_error      = on_fatal_error,
 	.cleanup          = on_cleanup,
@@ -198,14 +209,14 @@ static void dispatch_lines(u_link *link)
 	link->ibuflen = buflen;
 }
 
-void u_link_attach(u_conn *conn)
-{
-	conn->ctx = &u_link_conn_ctx;
-	conn->priv = link_create(conn);
-}
+/* user API */
+/* -------- */
 
 void u_link_detach(u_conn *conn)
 {
+	if (!conn || !conn->priv)
+		return;
+
 	link_destroy(conn->priv);
 	conn->ctx = NULL;
 	conn->priv = NULL;
@@ -287,6 +298,165 @@ int u_link_num(u_link *link, int num, ...)
 		u_log(LG_SEVERE, "Can't use u_link_num on type %d!", link->type);
 	}
 	va_end(va);
+
+	return 0;
+}
+
+/* listeners */
+/* --------- */
+
+struct u_link_origin {
+	mowgli_eventloop_pollable_t *poll;
+	mowgli_node_t n;
+};
+
+static mowgli_list_t all_origins;
+static mowgli_patricia_t *u_conf_listen_handlers = NULL;
+
+static void accept_ready(mowgli_eventloop_t *ev, mowgli_eventloop_io_t *io,
+                         mowgli_eventloop_io_dir_t dir, void *priv);
+
+u_link_origin *u_link_origin_create(mowgli_eventloop_t *ev, short port)
+{
+	const char *operation;
+	int opt, fd = -1;
+	u_link_origin *origin = NULL;
+	struct sockaddr_in addr;
+
+	operation = "create socket";
+	if ((fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+		goto error;
+
+	memset(&addr, 0, sizeof(addr));
+	addr.sin_family = AF_INET;
+	addr.sin_addr.s_addr = INADDR_ANY;
+	addr.sin_port = htons(port);
+
+	opt = 1;
+	operation = "set SO_REUSEADDR";
+	if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0)
+		goto error;
+
+	operation = "bind socket";
+	if (bind(fd, (struct sockaddr*)&addr, sizeof(addr)) < 0)
+		goto error;
+
+	operation = "listen";
+	if (listen(fd, 5) < 0)
+		goto error;
+
+	origin = malloc(sizeof(*origin));
+
+	operation = "create pollable";
+	if (!(origin->poll = mowgli_pollable_create(ev, fd, origin))) {
+		errno = -EINVAL; /* XXX */
+		goto error;
+	}
+
+	mowgli_node_add(origin, &origin->n, &all_origins);
+	mowgli_pollable_setselect(ev, origin->poll, MOWGLI_EVENTLOOP_IO_READ,
+	                          accept_ready);
+
+	return origin;
+
+error:
+	u_perror(operation);
+	if (origin)
+		free(origin);
+	if (fd > 0)
+		close(fd);
+	return NULL;
+}
+
+static void accept_ready(mowgli_eventloop_t *ev, mowgli_eventloop_io_t *io,
+                         mowgli_eventloop_io_dir_t dir, void *priv)
+{
+	mowgli_eventloop_pollable_t *poll = mowgli_eventloop_io_pollable(io);
+	u_conn *conn;
+	u_link *link;
+
+	link = link_create();
+
+	if (!(conn = u_conn_accept(ev, &u_link_conn_ctx, link, 0, poll->fd))) {
+		link_destroy(link);
+		/* TODO: close listener, maybe? */
+		return;
+	}
+
+	u_log(LG_VERBOSE, "new connection from %s", conn->ip);
+}
+
+static void *conf_end(void *unused, void *unused2)
+{
+	if (all_origins.count != 0)
+		return NULL;
+
+	u_log(LG_WARN, "No listeners! Opening one on 6667");
+	u_link_origin_create(base_ev, 6667);
+
+	return NULL;
+}
+
+static void conf_listen(mowgli_config_file_t *cf, mowgli_config_file_entry_t *ce)
+{
+	u_conf_traverse(cf, ce->entries, u_conf_listen_handlers);
+}
+
+static void conf_listen_port(mowgli_config_file_t *cf,
+                             mowgli_config_file_entry_t *ce)
+{
+	ushort low, hi;
+	char buf[512];
+	char *s, *lows, *his;
+
+	mowgli_strlcpy(buf, ce->vardata, sizeof buf);
+
+	lows = buf;
+	his = NULL;
+
+	if ((s = strstr(buf, "..")) || (s = strstr(buf, "-"))) {
+		*s++ = '\0';
+		while (*s && !isdigit(*s))
+			s++;
+		his = s;
+	}
+
+	low = atoi(lows);
+	hi = (his && *his) ? atoi(his) : low;
+
+	if (low == 0 || hi == 0) {
+		u_log(LG_ERROR, "%s: invalid listen range string", ce->vardata);
+		return;
+	}
+
+	if (hi < low) {
+		u_log(LG_ERROR, "%u-%u: invalid listen range", low, hi);
+		return;
+	}
+
+	if (hi - low > 20) {
+		u_log(LG_ERROR, "%u-%u: listener range too large", low, hi);
+		return;
+	}
+
+	for (; low <= hi; low++) {
+		u_log(LG_DEBUG, "Listening on %u", low);
+		u_link_origin_create(base_ev, low);
+	}
+}
+
+/* main() API */
+/* ---------- */
+
+int init_link(void)
+{
+	mowgli_list_init(&all_origins);
+
+	u_hook_add(HOOK_CONF_END, conf_end, NULL);
+	u_conf_add_handler("listen", conf_listen, NULL);
+
+	u_conf_listen_handlers = mowgli_patricia_create(ascii_canonize);
+	u_conf_add_handler("port", conf_listen_port, u_conf_listen_handlers);
 
 	return 0;
 }

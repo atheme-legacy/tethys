@@ -56,15 +56,14 @@ int init(void)
 	INIT(init_server);
 	INIT(init_chan);
 	INIT(init_sendto);
+	INIT(init_link);
 
 	u_module_load_directory("modules/core");
 
 	/* LINK TODO: add ping timer */
 
-	/* LINK TODO
-	if (opt_port != -1 && !u_toplev_origin_create(base_ev, INADDR_ANY, opt_port))
+	if (opt_port != -1 && !u_link_origin_create(base_ev, opt_port))
 		return -1;
-	*/
 
 	if (!u_conf_read("etc/tethys.conf")) {
 		u_log(LG_SEVERE, "Could not find etc/tethys.conf!");
