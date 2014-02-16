@@ -14,9 +14,9 @@
 #define MAXSERVERNAME 128
 
 typedef struct u_class u_class;
-typedef struct u_auth_block u_auth;
-typedef struct u_oper_block u_oper;
-typedef struct u_link_block u_link;
+typedef struct u_auth_block u_auth_block;
+typedef struct u_oper_block u_oper_block;
+typedef struct u_link_block u_link_block;
 
 #include "conn.h"
 #include "util.h"
