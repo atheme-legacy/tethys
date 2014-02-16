@@ -82,6 +82,10 @@ extern void u_conn_shut_down(u_conn*);
 extern ssize_t u_conn_recv(u_conn*, uchar*, size_t sz);
 extern ssize_t u_conn_send(u_conn*, const uchar*, size_t sz);
 
+/* to allow vsnf, sprintf, etc. directly into the send queue */
+extern uchar *u_conn_get_send_buffer(u_conn*, size_t sz);
+extern size_t u_conn_end_send_buffer(u_conn*, size_t sz);
+
 extern void u_conn_run(mowgli_eventloop_t *ev);
 
 extern int init_conn(void);

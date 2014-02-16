@@ -68,7 +68,6 @@ typedef unsigned long u_ts_t;
 #include "conf.h"
 #include "cookie.h"
 #include "crypto.h"
-#include "linebuf.h"
 #include "map.h"
 #include "strop.h"
 #include "upgrade.h"

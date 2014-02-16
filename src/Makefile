@@ -8,7 +8,6 @@ SRCS = numeric.c \
 	cookie.c \
 	crypto.c \
 	hook.c \
-	linebuf.c \
 	log.c \
 	map.c \
 	mode.c \

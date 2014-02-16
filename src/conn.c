@@ -346,6 +346,32 @@ ssize_t u_conn_send(u_conn *conn, const uchar *data, size_t sz)
 	return sz;
 }
 
+uchar *u_conn_get_send_buffer(u_conn *conn, size_t sz)
+{
+	if (!send_permitted(conn))
+		return NULL;
+
+	if (conn->obuflen + sz > conn->obufsize)
+		return NULL;
+
+	return conn->obuf + conn->obuflen;
+}
+
+size_t u_conn_end_send_buffer(u_conn *conn, size_t sz)
+{
+	if (conn->obuflen + sz > conn->obufsize) {
+		u_log(LG_WARN, "conn: potential heap corruption!");
+		/* lalala, i can't hear you! */
+		sz = conn->obufsize - conn->obuflen;
+	}
+
+	conn->obuflen += sz;
+
+	sync_on_update(conn);
+
+	return sz;
+}
+
 /* mowgli eventloop callbacks */
 /* -------------------------- */
 
