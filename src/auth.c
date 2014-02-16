@@ -14,7 +14,7 @@ static char *msg_timeouttooshort = "Timeout of %d seconds for class %s too short
 
 static u_class class_default =
 	{ "default", 300 };
-static u_auth auth_default =
+static u_auth_block auth_default =
 	{ "default", "default", &class_default, { 0, 0 }, "" };
 
 u_map *all_classes;
@@ -30,10 +30,10 @@ static mowgli_patricia_t *u_conf_class_handlers = NULL;
 static mowgli_patricia_t *u_conf_oper_handlers = NULL;
 static mowgli_patricia_t *u_conf_link_handlers = NULL;
 
-u_auth *u_find_auth(u_conn *conn)
+u_auth_block *u_find_auth(u_link *link)
 {
 	mowgli_node_t *n;
-	u_auth *auth;
+	u_auth_block *auth;
 
 	if (mowgli_list_size(&auth_list) == 0) {
 		u_log(LG_WARN, msg_noauthblocks);
@@ -42,10 +42,10 @@ u_auth *u_find_auth(u_conn *conn)
 
 	MOWGLI_LIST_FOREACH(n, auth_list.head) {
 		auth = n->data;
-		if (!u_cidr_match(&auth->cidr, conn->ip))
+		if (!u_cidr_match(&auth->cidr, link->conn->ip))
 			continue;
 		if (auth->pass[0]) {
-			if (!conn->pass || !matchhash(auth->pass, conn->pass))
+			if (!link->pass || !matchhash(auth->pass, link->pass))
 				continue;
 		}
 
@@ -64,9 +64,9 @@ u_auth *u_find_auth(u_conn *conn)
 	return NULL;
 }
 
-u_oper *u_find_oper(u_auth *auth, char *name, char *pass)
+u_oper_block *u_find_oper(u_auth_block *auth, char *name, char *pass)
 {
-	u_oper *oper;
+	u_oper_block *oper;
 
 	oper = u_map_get(all_opers, name);
 	if (oper == NULL)
@@ -89,7 +89,7 @@ u_oper *u_find_oper(u_auth *auth, char *name, char *pass)
 	return oper;
 }
 
-u_link *u_find_link(u_server *sv)
+u_link_block *u_find_link(u_server *sv)
 {
 	if (mowgli_list_size(&link_list) == 0) {
 		u_log(LG_WARN, msg_nolinkblocks);
@@ -123,7 +123,7 @@ void conf_class_timeout(mowgli_config_file_t *cf, mowgli_config_file_entry_t *ce
 	}
 }
 
-static u_auth *cur_auth = NULL;
+static u_auth_block *cur_auth = NULL;
 
 void conf_auth(mowgli_config_file_t *cf, mowgli_config_file_entry_t *ce)
 {
@@ -153,7 +153,7 @@ void conf_auth_password(mowgli_config_file_t *cf, mowgli_config_file_entry_t *ce
 	u_strlcpy(cur_auth->pass, ce->vardata, MAXPASSWORD+1);
 }
 
-static u_oper *cur_oper = NULL;
+static u_oper_block *cur_oper = NULL;
 
 void conf_oper(mowgli_config_file_t *cf, mowgli_config_file_entry_t *ce)
 {
@@ -179,7 +179,7 @@ void conf_oper_auth(mowgli_config_file_t *cf, mowgli_config_file_entry_t *ce)
 	u_strlcpy(cur_oper->authname, ce->vardata, MAXAUTHNAME+1);
 }
 
-static u_link *cur_link = NULL;
+static u_link_block *cur_link = NULL;
 
 void conf_link(mowgli_config_file_t *cf, mowgli_config_file_entry_t *ce)
 {

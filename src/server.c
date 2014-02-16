@@ -151,32 +151,20 @@ void u_my_capabs(char *buf)
 	capab_to_str(me.capab, buf);
 }
 
-void server_shutdown(u_conn *conn)
-{
-	char *msg = conn->error ? conn->error : "conn shutdown";
-	u_server *sv = conn->priv;
-	if (sv == NULL)
-		return;
-	if (conn->ctx == CTX_SERVER && (conn->flags & U_CONN_REGISTERED))
-		u_sendto_servers(conn, ":%S SQUIT %S :%s", &me, sv, msg);
-	u_conn_f(conn, "ERROR :%s", msg);
-	u_server_unlink(sv);
-}
-
-void u_server_make_sreg(u_conn *conn, char *sid)
+void u_server_make_sreg(u_link *link, char *sid)
 {
 	u_server *sv;
 
-	if (conn->ctx != CTX_NONE && conn->ctx != CTX_SERVER)
+	if (link->type != LINK_NONE && link->type != LINK_SERVER)
 		return;
 
-	conn->ctx = CTX_SERVER;
+	link->type = LINK_SERVER;
 
-	if (conn->priv != NULL)
+	if (link->priv != NULL)
 		return;
 
-	conn->priv = sv = malloc(sizeof(*sv));
-	sv->link = conn;
+	link->priv = sv = malloc(sizeof(*sv));
+	sv->link = link;
 	sv->flags = SERVER_IS_BURSTING;
 
 	u_strlcpy(sv->sid, sid, 4);
@@ -184,7 +172,7 @@ void u_server_make_sreg(u_conn *conn, char *sid)
 
 	sv->name[0] = '\0';
 	sv->desc[0] = '\0';
-	sv->link = conn;
+	sv->link = link;
 	sv->capab = 0;
 
 	sv->hops = 1;
@@ -192,8 +180,6 @@ void u_server_make_sreg(u_conn *conn, char *sid)
 
 	sv->nusers = 0;
 	sv->nlinks = 0;
-
-	conn->shutdown = server_shutdown;
 
 	u_log(LG_INFO, "New local server sid=%s", sv->sid);
 
@@ -245,13 +231,6 @@ void u_server_unlink(u_server *sv)
 
 	u_log(LG_INFO, "Unlinking server sid=%s (%S)", sv->sid, sv);
 
-	if (IS_SERVER_LOCAL(sv)) {
-		u_conn *conn = sv->link;
-		conn->priv = NULL;
-		u_conn_shutdown(conn);
-		sv->link = NULL;
-	}
-
 	sv->parent->nlinks--;
 
 	/* delete all users */
@@ -282,14 +261,14 @@ void u_server_unlink(u_server *sv)
 static int burst_euid(const char *key, void *value, void *priv)
 {
 	u_user *u = value;
-	u_conn *conn = priv;
+	u_link *link = priv;
 	char buf[512];
 
 	u_user_make_euid(u, buf);
-	u_conn_f(conn, "%s", buf);
+	u_link_f(link, "%s", buf);
 
 	if (u->away[0])
-		u_conn_f(conn, ":%U AWAY :%s", u, u->away);
+		u_link_f(link, ":%U AWAY :%s", u, u->away);
 
 	return 0;
 }
@@ -297,33 +276,33 @@ static int burst_euid(const char *key, void *value, void *priv)
 static int burst_uid(const char *key, void *value, void *priv)
 {
 	u_user *u = value;
-	u_conn *conn = priv;
+	u_link *link = priv;
 
 	/* NOTE: this is legacy, but I'm keeping it around anyway */
 
 	/* EQUALLY RIDICULOUS!  nick     modes    ip
                                    hops     ident    uid
                                       nickts   host     gecos    */
-	u_conn_f(conn, ":%S UID %s %d %u %s %s %s %s %s :%s",
+	u_link_f(link, ":%S UID %s %d %u %s %s %s %s %s :%s",
 	         u->sv,
 	         u->nick, u->sv->hops + 1, u->nickts,
 	         "+", u->ident, u->host,
 	         u->ip, u->uid, u->gecos);
 
-	u_conn_f(conn, ":%U ENCAP * REALHOST :%s", u, u->realhost);
+	u_link_f(link, ":%U ENCAP * REALHOST :%s", u, u->realhost);
 
 	if (u->acct[0])
-		u_conn_f(conn, ":%U ENCAP * LOGIN :%s", u, u->acct);
+		u_link_f(link, ":%U ENCAP * LOGIN :%s", u, u->acct);
 
-	u_conn_f(conn, ":%U AWAY :%s", u, u->away);
+	u_link_f(link, ":%U AWAY :%s", u, u->away);
 
 	return 0;
 }
 
-static int burst_chan(const char *key, void *_c, void *_conn)
+static int burst_chan(const char *key, void *_c, void *_link)
 {
 	u_chan *c = _c;
-	u_conn *conn = _conn;
+	u_link *link = _link;
 	u_user *u;
 	u_chanuser *cu;
 	u_map_each_state st;
@@ -349,26 +328,26 @@ static int burst_chan(const char *key, void *_c, void *_conn)
 		strcpy(p, u->uid);
 
 		while ((s = u_strop_wrap_word(&wrap, nbuf)) != NULL)
-			u_conn_f(conn, "%s%s", buf, s);
+			u_link_f(link, "%s%s", buf, s);
 	}
 	if ((s = u_strop_wrap_word(&wrap, NULL)) != NULL)
-		u_conn_f(conn, "%s%s", buf, s);
+		u_link_f(link, "%s%s", buf, s);
 
 	if (c->topic[0]) {
-		u_conn_f(conn, ":%S TB %C %u %s :%s", &me, c,
+		u_link_f(link, ":%S TB %C %u %s :%s", &me, c,
 		         c->topic_time, c->topic_setter, c->topic);
 	}
 
 	return 0;
 }
 
-void u_server_burst_1(u_server *sv, u_link *link)
+void u_server_burst_1(u_server *sv, u_link_block *block)
 {
-	u_conn *conn = sv->link;
+	u_link *link = sv->link;
 	char buf[512];
 
-	if (conn == NULL) {
-		u_log(LG_ERROR, "Attempted to burst to %S, which has no conn!", sv);
+	if (link == NULL) {
+		u_log(LG_ERROR, "Attempted to burst to %S, which has no link!", sv);
 		return;
 	}
 
@@ -377,20 +356,20 @@ void u_server_burst_1(u_server *sv, u_link *link)
 		return;
 	}
 
-	u_conn_f(conn, "PASS %s TS 6 :%s", link->sendpass, me.sid);
+	u_link_f(link, "PASS %s TS 6 :%s", block->sendpass, me.sid);
 	u_my_capabs(buf);
-	u_conn_f(conn, "CAPAB :%s", buf);
-	u_conn_f(conn, "SERVER %s 1 :%s", me.name, me.desc);
+	u_link_f(link, "CAPAB :%s", buf);
+	u_link_f(link, "SERVER %s 1 :%s", me.name, me.desc);
 }
 
-void u_server_burst_2(u_server *sv, u_link *link)
+void u_server_burst_2(u_server *sv, u_link_block *block)
 {
 	mowgli_patricia_iteration_state_t state;
 	u_server *tsv;
-	u_conn *conn = sv->link;
+	u_link *link = sv->link;
 
-	if (conn == NULL) {
-		u_log(LG_ERROR, "Attempted to burst to %S, which has no conn!", sv);
+	if (link == NULL) {
+		u_log(LG_ERROR, "Attempted to burst to %S, which has no link!", sv);
 		return;
 	}
 
@@ -399,17 +378,17 @@ void u_server_burst_2(u_server *sv, u_link *link)
 		return;
 	}
 
-	u_conn_f(conn, "SVINFO 6 6 0 :%u", NOW.tv_sec);
+	u_link_f(link, "SVINFO 6 6 0 :%u", NOW.tv_sec);
 
 	MOWGLI_PATRICIA_FOREACH(tsv, &state, servers_by_name) {
 		if (tsv == &me)
 			continue;
 
 		if (tsv->sid[0]) {
-			u_conn_f(conn, ":%S SID %s %d %s :%s", tsv->parent,
+			u_link_f(link, ":%S SID %s %d %s :%s", tsv->parent,
 			         tsv->name, tsv->hops, tsv->sid, tsv->desc);
 		} else {
-			u_conn_f(conn, ":%S SERVER %s %d :%s", tsv->parent,
+			u_link_f(link, ":%S SERVER %s %d :%s", tsv->parent,
 			         tsv->name, tsv->hops, tsv->desc);
 		}
 	}
@@ -419,15 +398,15 @@ void u_server_burst_2(u_server *sv, u_link *link)
 	/* TODO: "EUID for all known users (possibly followed by ENCAP
 	   REALHOST, ENCAP LOGIN, and/or AWAY)" */
 	if (sv->capab & CAPAB_EUID)
-		mowgli_patricia_foreach(users_by_uid, burst_euid, conn);
+		mowgli_patricia_foreach(users_by_uid, burst_euid, link);
 	else
-		mowgli_patricia_foreach(users_by_uid, burst_uid, conn);
+		mowgli_patricia_foreach(users_by_uid, burst_uid, link);
 
 	/* TODO: "and SJOIN messages for all known channels (possibly followed
 	   by BMASK and/or TB)" */
-	mowgli_patricia_foreach(all_chans, burst_chan, conn);
+	mowgli_patricia_foreach(all_chans, burst_chan, link);
 
-	u_conn_f(conn, ":%S PING %s %s", &me, me.name, sv->name);
+	u_link_f(link, ":%S PING %s %s", &me, me.name, sv->name);
 
 	u_log(LG_DEBUG, "Adding %s to servers_by_name", sv->name);
 	mowgli_patricia_add(servers_by_name, sv->name, sv);

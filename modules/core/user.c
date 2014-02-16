@@ -13,7 +13,7 @@ static int c_uu_user(u_sourceinfo *si, u_msg *msg)
 	u_strlcpy(buf, msg->argv[0], MAXIDENT+1); /* truncate */
 
 	if (!is_valid_ident(buf))
-		return u_conn_num(si->source, ERR_GENERIC, "Invalid username");
+		return u_link_num(si->source, ERR_GENERIC, "Invalid username");
 
 	u_strlcpy(si->u->ident, buf, MAXIDENT+1);
 	u_strlcpy(si->u->gecos, msg->argv[3], MAXGECOS+1);

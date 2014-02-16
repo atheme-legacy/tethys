@@ -36,7 +36,6 @@ static int c_s_num(u_sourceinfo *si, u_msg *msg)
 	char buf[512];
 	u_server *sv;
 	u_user *u;
-	u_conn *conn;
 
 	irccat(buf, 512, msg->argc - 1, msg->argv + 1);
 
@@ -53,13 +52,13 @@ static int c_s_num(u_sourceinfo *si, u_msg *msg)
 	case 3:
 		if (!(sv = u_server_by_sid(tgtid)))
 			goto badtgt;
-		u_conn_f(sv->link, ":%I %03d %S%s", si, num, sv, buf);
+		u_link_f(sv->link, ":%I %03d %S%s", si, num, sv, buf);
 		break;
 
 	case 9:
 		if (!(u = u_user_by_uid(tgtid)))
 			goto badtgt;
-		u_conn_f(u->link, ":%I %03d %U%s", si, num, u, buf);
+		u_link_f(u->link, ":%I %03d %U%s", si, num, u, buf);
 		break;
 
 	default:

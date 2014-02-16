@@ -96,7 +96,7 @@ int vsnf(int type, char *s, uint size, const char *fmt, va_list va)
 	u_user *user;
 	u_chan *chan;
 	u_server *server;
-	u_conn *conn;
+	u_link *link;
 	u_sourceinfo *si;
 
 	struct buffer buf;
@@ -215,17 +215,17 @@ top:
 		}
 		break;
 
-	case 'G': /* generic connection */
-		conn = va_arg(va, u_conn*);
+	case 'G': /* generic link */
+		link = va_arg(va, u_link*);
 
-		switch ((conn && conn->priv) ? conn->ctx : -1) {
-		case CTX_USER:
-			user = conn->priv;
+		switch ((link && link->priv) ? link->type : -1) {
+		case LINK_USER:
+			user = link->priv;
 			s_arg = (type == FMT_SERVER ? user->uid : user->nick);
 			break;
 
-		case CTX_SERVER:
-			server = conn->priv;
+		case LINK_SERVER:
+			server = link->priv;
 			s_arg = (type == FMT_SERVER ? server->sid : server->name);
 			break;
 

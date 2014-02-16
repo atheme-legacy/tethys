@@ -31,7 +31,7 @@ static int c_a_squit(u_sourceinfo *si, u_msg *msg)
 	is_local = false;
 	if (sv == &me || sv == si->source->priv) {
 		if (sv == &me && SRC_IS_LOCAL_USER(si)) {
-			u_conn_f(si->source, ":%S NOTICE %U :%s",
+			u_link_f(si->source, ":%S NOTICE %U :%s",
 				 &me, si->u, "you are trying to squit me");
 			return 0;
 		}
@@ -53,6 +53,8 @@ static int c_a_squit(u_sourceinfo *si, u_msg *msg)
 	}
 
 	u_server_unlink(sv);
+	if (SERVER_IS_LOCAL(sv))
+		u_link_close(sv->link);
 
 	return 0;
 }

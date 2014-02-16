@@ -60,7 +60,7 @@ static int c_lu_cap(u_sourceinfo *si, u_msg *msg)
 		}
 
 		si->u->flags |= USER_WAIT_CAPS;
-		u_conn_f(si->link, ":%S CAP %U LS :%s", &me, si->u, caps_str);
+		u_link_f(si->link, ":%S CAP %U LS :%s", &me, si->u, caps_str);
 
 	} else if (streq(subcmd, "REQ")) {
 		int ack = 1;
@@ -83,7 +83,7 @@ static int c_lu_cap(u_sourceinfo *si, u_msg *msg)
 		u_log(LG_FINE, "%U flags: %x", si->u, si->u->flags);
 
 		si->u->flags |= USER_WAIT_CAPS;
-		u_conn_f(si->link, ":%S CAP %U %s :%s", &me, si->u,
+		u_link_f(si->link, ":%S CAP %U %s :%s", &me, si->u,
 		         ack ? "ACK" : "NAK", msg->argv[1]);
 
 	} else if (streq(msg->argv[0], "END")) {
@@ -98,7 +98,7 @@ static int c_lu_cap(u_sourceinfo *si, u_msg *msg)
 				p += sprintf(p, " %s", cur->name);
 		}
 
-		u_conn_f(si->link, ":%S CAP %U LIST :%s", &me, si->u, buf + 1);
+		u_link_f(si->link, ":%S CAP %U LIST :%s", &me, si->u, buf + 1);
 	}
 
 	/* harmless if already registered */

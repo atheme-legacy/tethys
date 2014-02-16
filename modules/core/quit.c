@@ -19,10 +19,12 @@ static int c_u_quit(u_sourceinfo *si, u_msg *msg)
 		r1 = msg->argc > 0 ? "Quit: " : "Client Quit";
 
 	u_sendto_visible(si->u, ST_USERS, ":%H QUIT :%s%s", si->u, r1, r2);
-	u_conn_f(si->local, ":%H QUIT :%s%s", si->u, r1, r2);
+	u_link_f(si->local, ":%H QUIT :%s%s", si->u, r1, r2);
 	u_sendto_servers(si->source, ":%H QUIT :%s%s", si->u, r1, r2);
 
 	u_user_destroy(si->u);
+	if (IS_LOCAL_USER(si->u))
+		u_link_close(si->u->link);
 
 	return 0;
 }

@@ -9,7 +9,7 @@
 static int c_us_pass(u_sourceinfo *si, u_msg *msg)
 {
 	if (!streq(msg->argv[1], "TS") || !streq(msg->argv[2], "6")) {
-		u_conn_fatal(si->source, "Invalid TS version");
+		u_link_fatal(si->source, "Invalid TS version");
 		return 0;
 	}
 
@@ -26,21 +26,21 @@ static int c_us_capab(u_sourceinfo *si, u_msg *msg)
 	return 0;
 }
 
-static u_link *verify_link_block(u_server *sv)
+static u_link_block *verify_link_block(u_server *sv)
 {
-	u_conn *conn = sv->link;
-	u_link *link;
+	u_link *link = sv->link;
+	u_link_block *block;
 
-	if (!(link = u_find_link(sv)))
+	if (!(block = u_find_link(sv)))
 		return NULL;
 
-	if (!conn->pass || !streq(conn->pass, link->recvpass))
+	if (!link->pass || !streq(link->pass, block->recvpass))
 		return NULL;
 
-	if (!streq(link->host, conn->ip))
+	if (!streq(block->host, link->conn->ip))
 		return NULL;
 
-	return link;
+	return block;
 }
 
 static int c_us_server(u_sourceinfo *si, u_msg *msg)
@@ -49,27 +49,27 @@ static int c_us_server(u_sourceinfo *si, u_msg *msg)
 	u_strlcpy(si->s->desc, msg->argv[2], MAXSERVDESC+1);
 
 	/* attempt server registration */
-	u_link *link;
+	u_link_block *block;
 	uint capab_need = CAPAB_QS | CAPAB_EX | CAPAB_IE
 	                | CAPAB_EUID | CAPAB_ENCAP;
 
 	if ((si->s->capab & capab_need) != capab_need) {
-		u_conn_fatal(si->source, "Don't have all needed CAPABs!");
+		u_link_fatal(si->source, "Don't have all needed CAPABs!");
 		return 0;
 	}
 
-	if (!(link = verify_link_block(si->s))) {
-		u_conn_fatal(si->source, "No link{} blocks for your host");
+	if (!(block = verify_link_block(si->s))) {
+		u_link_fatal(si->source, "No link{} blocks for your host");
 		return 0;
 	}
 
-	si->source->flags |= U_CONN_REGISTERED;
+	si->source->flags |= U_LINK_REGISTERED;
 
 	u_sendto_servers(si->source, ":%S SID %s %d %s :%s", &me,
 	                 si->s->name, si->s->hops, si->s->sid, si->s->desc);
 
-	u_server_burst_1(si->s, link);
-	u_server_burst_2(si->s, link);
+	u_server_burst_1(si->s, block);
+	u_server_burst_2(si->s, block);
 
 	return 0;
 }
@@ -83,7 +83,7 @@ static int c_ls_svinfo(u_sourceinfo *si, u_msg *msg)
 	   and never any other time. */
 
 	if (atoi(msg->argv[0]) < 6) {
-		u_conn_fatal(si->source, "Max TS version less than 6!");
+		u_link_fatal(si->source, "Max TS version less than 6!");
 		return 0;
 	}
 
@@ -96,7 +96,7 @@ static int c_ls_svinfo(u_sourceinfo *si, u_msg *msg)
 
 	if (tsdelta > 60) {
 		u_log(LG_ERROR, "%S has excessive TS delta, killing", si->s);
-		u_conn_fatal(si->source, "Excessive TS delta");
+		u_link_fatal(si->source, "Excessive TS delta");
 		return 0;
 	}
 

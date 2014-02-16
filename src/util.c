@@ -234,14 +234,14 @@ bool exists(const char *path)
 	return stat(path, &st) == 0;
 }
 
-char *ref_to_ref(u_conn *ctx, char *ref)
+char *ref_to_ref(u_link *ctx, char *ref)
 {
-	return ctx->ctx == CTX_SERVER ? ref_to_id(ref) : ref_to_name(ref);
+	return ctx->type == LINK_SERVER ? ref_to_id(ref) : ref_to_name(ref);
 }
 
-u_conn *ref_link(u_conn *ctx, char *ref)
+u_link *ref_link(u_link *ctx, char *ref)
 {
-	if (ctx && ctx->ctx == CTX_SERVER && isdigit(ref[0])) {
+	if (ctx && ctx->type == LINK_SERVER && isdigit(ref[0])) {
 		if (ref[3]) {
 			u_user *u = u_user_by_uid(ref);
 			return u ? u->link : NULL;
@@ -260,32 +260,35 @@ u_conn *ref_link(u_conn *ctx, char *ref)
 	}
 }
 
-char *conn_name(u_conn *conn)
+char *link_name(u_link *link)
 {
 	char *name = NULL;
 
-	switch (conn->ctx) {
-	case CTX_USER:
-		name = ((u_user*)conn->priv)->nick;
+	switch (link->type) {
+	case LINK_USER:
+		name = ((u_user*)link->priv)->nick;
 		break;
-	case CTX_SERVER:
-		name = SERVER(conn->priv)->name;
+	case LINK_SERVER:
+		name = SERVER(link->priv)->name;
+		break;
+	default:
 		break;
 	}
 
 	return (name && name[0]) ? name : "*";
 }
 
-char *conn_id(u_conn *conn)
+char *link_id(u_link *link)
 {
 	char *id = NULL;
 
-	switch (conn->ctx) {
-	case CTX_USER:
-		id = ((u_user*)conn->priv)->uid;
+	switch (link->type) {
+	case LINK_USER:
+		id = ((u_user*)link->priv)->uid;
 		break;
-	case CTX_SERVER:
-		id = SERVER(conn->priv)->sid;
+	case LINK_SERVER:
+		id = SERVER(link->priv)->sid;
+	default:
 		break;
 	}
 

@@ -8,7 +8,7 @@ SRCS = numeric.c \
 	cookie.c \
 	crypto.c \
 	hook.c \
-	linebuf.c \
+	link.c \
 	log.c \
 	map.c \
 	mode.c \
@@ -18,7 +18,6 @@ SRCS = numeric.c \
 	sendto.c \
 	server.c \
 	strop.c \
-	toplev.c \
 	upgrade.c \
 	user.c \
 	util.c \

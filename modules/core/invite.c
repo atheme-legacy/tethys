@@ -37,9 +37,9 @@ static int c_u_invite(u_sourceinfo *si, u_msg *msg)
 
 	if (IS_LOCAL_USER(tu)) {
 		u_add_invite(c, tu);
-		u_conn_f(tu->link, ":%I INVITE %U :%C", si, tu, c);
+		u_link_f(tu->link, ":%I INVITE %U :%C", si, tu, c);
 	} else {
-		u_conn_f(tu->link, ":%I INVITE %U %C :%u", si, tu, c, c->ts);
+		u_link_f(tu->link, ":%I INVITE %U %C :%u", si, tu, c, c->ts);
 	}
 
 	if (SRC_IS_LOCAL_USER(si))

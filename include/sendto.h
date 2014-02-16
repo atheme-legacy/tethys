@@ -20,22 +20,22 @@
    still use u_sendto to send messages, or risk duplication */
 
 extern void u_sendto_start(void);
-extern void u_sendto_skip(u_conn*);
+extern void u_sendto_skip(u_link*);
 
-extern void u_sendto(u_conn*, char*, ...);
+extern void u_sendto(u_link*, char*, ...);
 
 /* sends message to the various places. these implementations are based
    on the sendto iterators below, but are careful not to repeat format
    evaluation more times than necessary.
 
-   the u_conn* arguments are a connection to skip over, e.g. when
+   the u_link* arguments are a connection to skip over, e.g. when
    propagating a server message */
 
-extern void u_sendto_chan(u_chan*, u_conn*, uint, char*, ...);
+extern void u_sendto_chan(u_chan*, u_link*, uint, char*, ...);
 extern void u_sendto_visible(u_user*, uint, char*, ...);
-extern void u_sendto_servers(u_conn*, char*, ...);
-extern void u_sendto_list(mowgli_list_t *list, u_conn*, char*, ...);
-extern void u_sendto_map(u_map *map, u_conn*, char*, ...); /* to values */
+extern void u_sendto_servers(u_link*, char*, ...);
+extern void u_sendto_list(mowgli_list_t *list, u_link*, char*, ...);
+extern void u_sendto_map(u_map *map, u_link*, char*, ...); /* to values */
 
 typedef struct u_sendto_state u_sendto_state;
 
@@ -47,22 +47,22 @@ struct u_sendto_state {
 	mowgli_patricia_iteration_state_t pstate;
 };
 
-extern void u_sendto_chan_start(u_sendto_state*, u_chan*, u_conn*, uint);
-extern bool u_sendto_chan_next(u_sendto_state*, u_conn**);
+extern void u_sendto_chan_start(u_sendto_state*, u_chan*, u_link*, uint);
+extern bool u_sendto_chan_next(u_sendto_state*, u_link**);
 
 #define U_SENDTO_CHAN(STATE, CHAN, EXCLUDE, TYPE, CONN) \
 	for (u_sendto_chan_start((STATE), (CHAN), (EXCLUDE), (TYPE)); \
 	     u_sendto_chan_next((STATE), (CONN)); )
 
-extern void u_sendto_visible_start(u_sendto_state*, u_user*, u_conn*, uint);
-extern bool u_sendto_visible_next(u_sendto_state*, u_conn**);
+extern void u_sendto_visible_start(u_sendto_state*, u_user*, u_link*, uint);
+extern bool u_sendto_visible_next(u_sendto_state*, u_link**);
 
 #define U_SENDTO_VISIBLE(STATE, USER, EXCLUDE, TYPE, CONN) \
 	for (u_sendto_visible_start((STATE), (USER), (EXCLUDE), (TYPE)); \
 	     u_sendto_visible_next((STATE), (CONN)); )
 
-extern void u_sendto_servers_start(u_sendto_state*, u_conn*);
-extern bool u_sendto_servers_next(u_sendto_state*, u_conn**);
+extern void u_sendto_servers_start(u_sendto_state*, u_link*);
+extern bool u_sendto_servers_next(u_sendto_state*, u_link**);
 
 #define U_SENDTO_SERVERS(STATE, EXCLUDE, CONN) \
 	for (u_sendto_servers_start((STATE), (EXCLUDE)); \

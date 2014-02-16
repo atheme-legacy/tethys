@@ -13,12 +13,12 @@ static int c_uu_nick(u_sourceinfo *si, u_msg *msg)
 	u_strlcpy(buf, msg->argv[0], MAXNICKLEN+1); /* truncate */
 
 	if (!is_valid_nick(buf)) {
-		u_conn_num(si->source, ERR_ERRONEOUSNICKNAME, buf);
+		u_link_num(si->source, ERR_ERRONEOUSNICKNAME, buf);
 		return 0;
 	}
 
 	if (u_user_by_nick(buf)) {
-		u_conn_num(si->source, ERR_NICKNAMEINUSE, buf);
+		u_link_num(si->source, ERR_NICKNAMEINUSE, buf);
 		return 0;
 	}
 
@@ -57,7 +57,7 @@ static int c_lu_nick(u_sourceinfo *si, u_msg *msg)
 	/* Send these BEFORE clobbered --Elizabeth */
 	u_sendto_visible(si->u, ST_USERS, ":%H NICK :%s", si->u, newnick);
 	u_sendto_servers(NULL, ":%H NICK %s %u", si->u, newnick, NOW.tv_sec);
-	u_conn_f(si->source, ":%H NICK :%s", si->u, newnick);
+	u_link_f(si->source, ":%H NICK :%s", si->u, newnick);
 
 	u_user_set_nick(si->u, newnick, NOW.tv_sec);
 
