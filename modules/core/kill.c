@@ -29,8 +29,10 @@ static int c_a_kill(u_sourceinfo *si, u_msg *msg)
 	u_sendto_visible(tu, ST_USERS, ":%H QUIT :Killed (%s)", tu, buf + 2);
 	u_sendto_servers(si->source, ":%I KILL %U%s", si, tu, buf);
 
-	if (IS_LOCAL_USER(tu))
+	if (IS_LOCAL_USER(tu)) {
 		u_link_f(tu->link, ":%H QUIT :Killed (%s)", tu, buf + 2);
+		u_link_close(tu->link);
+	}
 	u_user_destroy(tu);
 
 	return 0;

@@ -53,6 +53,8 @@ static int c_a_squit(u_sourceinfo *si, u_msg *msg)
 	}
 
 	u_server_unlink(sv);
+	if (SERVER_IS_LOCAL(sv))
+		u_link_close(sv->link);
 
 	return 0;
 }

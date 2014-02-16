@@ -231,10 +231,6 @@ void u_server_unlink(u_server *sv)
 
 	u_log(LG_INFO, "Unlinking server sid=%s (%S)", sv->sid, sv);
 
-	if (IS_SERVER_LOCAL(sv)) {
-		/* LINK TODO */
-	}
-
 	sv->parent->nlinks--;
 
 	/* delete all users */

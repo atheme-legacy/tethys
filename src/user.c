@@ -134,10 +134,6 @@ void u_user_destroy(u_user *u)
 {
 	u_log(LG_VERBOSE, "Destroying user uid=%s (%U)", u->uid, u);
 
-	if (IS_LOCAL_USER(u)) {
-		/* LINK TODO */
-	}
-
 	u_clr_invites_user(u);
 
 	/* part from all channels */

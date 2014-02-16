@@ -149,9 +149,24 @@ static void exceptional_quit(u_link *link, char *msg, ...)
 	vsnprintf(buf, 512, msg, va);
 	va_end(va);
 
-	/* TODO: send QUIT or SQUIT */
-
 	link->flags |= U_LINK_SENT_QUIT;
+
+	switch (link->type) {
+	case LINK_USER:
+		u_sendto_visible(link->priv, ST_USERS, ":%H QUIT :%s",
+		                 link->priv, buf);
+		u_sendto_servers(NULL, ":%H QUIT :%s", link->priv, buf);
+		u_user_destroy(link->priv);
+		break;
+
+	case LINK_SERVER:
+		u_sendto_servers(NULL, ":%S SQUIT %S :%s", &me, link->priv, buf);
+		u_server_unlink(link->priv);
+		break;
+
+	default:
+		break;
+	}
 }
 
 static void dispatch_lines(u_link *link)
@@ -214,6 +229,11 @@ static void dispatch_lines(u_link *link)
 
 /* user API */
 /* -------- */
+
+void u_link_close(u_link *link)
+{
+	u_conn_shut_down(link->conn);
+}
 
 void u_link_fatal(u_link *link, const char *msg)
 {

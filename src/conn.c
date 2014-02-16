@@ -196,6 +196,9 @@ void u_conn_shut_down(u_conn *conn)
 
 static void mark_for_cleanup(u_conn *conn)
 {
+	if (conn->state == U_CONN_AWAIT_CLEANUP)
+		return;
+
 	conn->state = U_CONN_AWAIT_CLEANUP;
 
 	set_recv(conn, NULL);
