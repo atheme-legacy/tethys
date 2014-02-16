@@ -325,6 +325,15 @@ int is_valid_sid(char *s)
 	return 1;
 }
 
+int is_valid_chan(char *s)
+{
+	if (!s || !strchr(CHANTYPES, *s))
+		return 0;
+	if (strchr(s, ' '))
+		return 0;
+	return 1;
+}
+
 int init_util(void)
 {
 	int i;

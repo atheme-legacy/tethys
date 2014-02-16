@@ -59,9 +59,10 @@ extern u_conn *ref_link(u_conn *ctx, char *ref);
 extern char *conn_name(u_conn*);
 extern char *conn_id(u_conn*);
 
-extern int is_valid_nick();
-extern int is_valid_ident();
-extern int is_valid_sid();
+extern int is_valid_nick(char *s);
+extern int is_valid_ident(char *s);
+extern int is_valid_sid(char *s);
+extern int is_valid_chan(char *s);
 
 extern int init_util();
 

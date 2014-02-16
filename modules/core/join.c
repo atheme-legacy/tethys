@@ -14,6 +14,9 @@ static int try_local_join_chan(u_sourceinfo *si, char *chan, char *key)
 	int num;
 	char *modes;
 
+	if (!is_valid_chan(chan))
+		return u_src_num(si, ERR_BADCHANNAME, chan);
+
 	/* verify entry */
 
 	if (!(c = u_chan_get_or_create(chan)))
