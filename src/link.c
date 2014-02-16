@@ -217,6 +217,7 @@ static void dispatch_lines(u_link *link)
 		   describe the rest of the buffer */
 
 		/* dispatch the line */
+		u_log(LG_DEBUG, "[%G] -> %s", link, s);
 		if (u_msg_parse(&msg, (char*)s) < 0)
 			continue;
 		u_cmd_invoke(link, &msg, (char*)s);
@@ -249,6 +250,9 @@ void u_link_vf(u_link *link, const char *fmt, va_list va)
 	size_t sz;
 	int type;
 
+	if (!link)
+		return;
+
 	buf = u_conn_get_send_buffer(link->conn, 514);
 
 	if (buf == NULL) {
@@ -261,6 +265,10 @@ void u_link_vf(u_link *link, const char *fmt, va_list va)
 		type = FMT_SERVER;
 
 	sz = vsnf(type, (char*)buf, 512, fmt, va);
+
+	buf[sz] = '\0';
+
+	u_log(LG_DEBUG, "[%G] <- %s", link, buf);
 
 	buf[sz++] = '\r';
 	buf[sz++] = '\n';
@@ -282,6 +290,9 @@ void u_link_vnum(u_link *link, const char *tgt, int num, va_list va)
 	char buf[4096];
 	char *fmt;
 
+	if (!link)
+		return;
+
 	fmt = u_numeric_fmt[num];
 
 	if (fmt == NULL) {
@@ -298,6 +309,9 @@ void u_link_vnum(u_link *link, const char *tgt, int num, va_list va)
 int u_link_num(u_link *link, int num, ...)
 {
 	va_list va;
+
+	if (!link)
+		return 0;
 
 	va_start(va, num);
 	switch (link->type) {
