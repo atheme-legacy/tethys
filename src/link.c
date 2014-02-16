@@ -256,7 +256,7 @@ void u_link_vf(u_link *link, const char *fmt, va_list va)
 	buf = u_conn_get_send_buffer(link->conn, 514);
 
 	if (buf == NULL) {
-		on_sendq_full(link->priv);
+		on_sendq_full(link->conn);
 		return;
 	}
 
