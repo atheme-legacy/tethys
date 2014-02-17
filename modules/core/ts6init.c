@@ -31,7 +31,7 @@ static u_link_block *verify_link_block(u_server *sv)
 	u_link *link = sv->link;
 	u_link_block *block;
 
-	if (!(block = u_find_link(sv)))
+	if (!(block = u_find_link(sv->name)))
 		return NULL;
 
 	if (!link->pass || !streq(link->pass, block->recvpass))

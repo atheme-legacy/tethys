@@ -96,7 +96,7 @@ u_oper_block *u_find_oper(u_auth_block *auth, char *name, char *pass)
 	return oper;
 }
 
-u_link_block *u_find_link(u_server *sv)
+u_link_block *u_find_link(char *name)
 {
 	u_link_block *link;
 
@@ -105,7 +105,7 @@ u_link_block *u_find_link(u_server *sv)
 		return NULL;
 	}
 
-	link = u_map_get(all_links, sv->name);
+	link = u_map_get(all_links, name);
 
 	if (link == NULL)
 		return NULL;
@@ -124,7 +124,7 @@ u_link_block *u_find_link(u_server *sv)
 		}
 	}
 
-	return u_map_get(all_links, sv->name);
+	return u_map_get(all_links, name);
 }
 
 static u_class_block *cur_class = NULL;

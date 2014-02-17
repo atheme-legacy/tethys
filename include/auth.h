@@ -61,7 +61,7 @@ extern u_map *all_links;
 
 extern u_auth_block *u_find_auth(u_link*);
 extern u_oper_block *u_find_oper(u_auth_block*, char*, char*);
-extern u_link_block *u_find_link(u_server*);
+extern u_link_block *u_find_link(char *name);
 
 extern int init_auth(void);
 
