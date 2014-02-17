@@ -82,6 +82,36 @@ void u_sendq_clear(u_sendq *q)
 /* buffer interaction */
 /* ------------------ */
 
+static u_sendq_chunk *sendq_append_chunk(u_sendq *q)
+{
+	u_sendq_chunk *chunk;
+
+	chunk = chunk_new();
+
+	if (q->tail != NULL)
+		q->tail->next = chunk;
+
+	if (q->head == NULL)
+		q->head = chunk;
+
+	q->tail = chunk;
+
+	return chunk;
+}
+
+static void sendq_delete_chunk(u_sendq *q, u_sendq_chunk *chunk)
+{
+	if (q->head != chunk)
+		abort();
+
+	q->head = chunk->next;
+
+	if (q->head == NULL)
+		q->tail = NULL;
+
+	chunk_free(chunk);
+}
+
 uchar *u_sendq_get_buffer(u_sendq *q, size_t sz)
 {
 	u_sendq_chunk *chunk;
@@ -93,17 +123,8 @@ uchar *u_sendq_get_buffer(u_sendq *q, size_t sz)
 
 	chunk = q->tail;
 
-	if (!chunk || sz > (SENDQ_CHUNK_SIZE - chunk->end)) {
-		chunk = chunk_new();
-
-		if (q->tail != NULL)
-			q->tail->next = chunk;
-
-		if (q->head == NULL)
-			q->head = chunk;
-
-		q->tail = chunk;
-	}
+	if (!chunk || sz > (SENDQ_CHUNK_SIZE - chunk->end))
+		chunk = sendq_append_chunk(q);
 
 	return chunk->data + chunk->end;
 }
@@ -140,7 +161,7 @@ int u_sendq_write(u_sendq *q, int fd)
 	for (; iovcnt < NUM_IOVECS && ch; iovcnt++, ch = ch->next) {
 		iov[iovcnt].iov_base = ch->data + ch->start;
 		iov[iovcnt].iov_len = ch->end - ch->start;
-		u_log(LG_DEBUG, "ch %p %04d-%04d -> iov %p +%04u",
+		u_log(LG_FINE, "  sendq: ch %p %04d-%04d -> iov %p +%04u",
 		      ch->data, ch->start, ch->end,
 		      iov[iovcnt].iov_base, iov[iovcnt].iov_len);
 	}
@@ -152,7 +173,7 @@ int u_sendq_write(u_sendq *q, int fd)
 
 	q->size -= sz;
 
-	for (ch = q->head; ch; ch = ch->next) {
+	while ((ch = q->head) != NULL) {
 		int chsz = ch->end - ch->start;
 
 		if (chsz > sz) {
@@ -163,10 +184,7 @@ int u_sendq_write(u_sendq *q, int fd)
 
 		sz -= chsz;
 
-		q->head = ch->next;
-		if (q->tail == ch)
-			q->tail = NULL;
-		chunk_free(ch);
+		sendq_delete_chunk(q, ch);
 	}
 
 	return 0;
