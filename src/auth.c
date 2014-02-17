@@ -12,7 +12,7 @@ static char *msg_classnotfound = "%s block %s asks for class %s, but no such cla
 static char *msg_classmissing = "%s block %s missing class! Using default class";
 static char *msg_authnotfound = "Oper block %s asks for auth %s, but no such auth exists! Ignoring auth setting";
 static char *msg_timeouttooshort = "Timeout of %d seconds for class %s too short. Setting to %d seconds";
-static char *msg_sendqtoosmall = "SendQ size of %d bytes for class %s too short. Setting to %d bytes";
+static char *msg_sendqtoosmall = "SendQ size of %d bytes for class %s too small. Setting to %d bytes";
 
 static u_class_block class_default =
 	{ "<default>", 300, 32<<10 };
