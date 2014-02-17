@@ -13,7 +13,7 @@
 #define MAXOPERNAME 64
 #define MAXSERVERNAME 128
 
-typedef struct u_class u_class;
+typedef struct u_class_block u_class_block;
 typedef struct u_auth_block u_auth_block;
 typedef struct u_oper_block u_oper_block;
 typedef struct u_link_block u_link_block;
@@ -22,7 +22,7 @@ typedef struct u_link_block u_link_block;
 #include "util.h"
 #include "server.h"
 
-struct u_class {
+struct u_class_block {
 	char name[MAXCLASSNAME+1];
 	int timeout;
 };
@@ -30,7 +30,7 @@ struct u_class {
 struct u_auth_block {
 	char name[MAXAUTHNAME+1];
 	char classname[MAXCLASSNAME+1];
-	u_class *cls;
+	u_class_block *cls;
 	u_cidr cidr;
 	char pass[MAXPASSWORD+1];
 	mowgli_node_t n;
@@ -49,7 +49,7 @@ struct u_link_block {
 	char recvpass[MAXPASSWORD+1];
 	char sendpass[MAXPASSWORD+1];
 	char classname[MAXCLASSNAME+1];
-	u_class *cls;
+	u_class_block *cls;
 	mowgli_node_t n;
 };
 

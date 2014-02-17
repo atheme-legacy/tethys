@@ -12,7 +12,7 @@ static char *msg_classnotfound = "%s block %s asks for class %s, but no such cla
 static char *msg_authnotfound = "Oper block %s asks for auth %s, but no such auth exists! Ignoring auth setting";
 static char *msg_timeouttooshort = "Timeout of %d seconds for class %s too short. Setting to %d seconds";
 
-static u_class class_default =
+static u_class_block class_default =
 	{ "default", 300 };
 static u_auth_block auth_default =
 	{ "default", "default", &class_default, { 0, 0 }, "" };
@@ -99,7 +99,7 @@ u_link_block *u_find_link(u_server *sv)
 	return u_map_get(all_links, sv->name);
 }
 
-static u_class *cur_class = NULL;
+static u_class_block *cur_class = NULL;
 
 void conf_class(mowgli_config_file_t *cf, mowgli_config_file_entry_t *ce)
 {
