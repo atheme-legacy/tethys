@@ -251,7 +251,7 @@ void u_link_vf(u_link *link, const char *fmt, va_list va)
 	if (!link)
 		return;
 
-	buf = u_conn_get_send_buffer(link->conn, 514);
+	buf = u_conn_get_send_buffer(link->conn, 512);
 
 	if (buf == NULL) {
 		on_sendq_full(link->conn);
@@ -262,7 +262,7 @@ void u_link_vf(u_link *link, const char *fmt, va_list va)
 	if (link->type == LINK_SERVER)
 		type = FMT_SERVER;
 
-	sz = vsnf(type, (char*)buf, 512, fmt, va);
+	sz = vsnf(type, (char*)buf, 510, fmt, va);
 
 	buf[sz] = '\0';
 
