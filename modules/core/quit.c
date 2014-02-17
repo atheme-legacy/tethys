@@ -22,9 +22,9 @@ static int c_u_quit(u_sourceinfo *si, u_msg *msg)
 	u_link_f(si->local, ":%H QUIT :%s%s", si->u, r1, r2);
 	u_sendto_servers(si->source, ":%H QUIT :%s%s", si->u, r1, r2);
 
-	u_user_destroy(si->u);
 	if (IS_LOCAL_USER(si->u))
 		u_link_close(si->u->link);
+	u_user_destroy(si->u);
 
 	return 0;
 }
