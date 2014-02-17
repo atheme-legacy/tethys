@@ -53,6 +53,26 @@ int u_cidr_match(u_cidr *cidr, char *s)
 	return (addr | mask) == (cidr->addr | mask);
 }
 
+unsigned long parse_size(char *s)
+{
+	unsigned long n;
+	char *mul;
+
+	n = strtoul(s, &mul, 0);
+
+	switch (tolower(*mul)) {
+	/* mind the fallthrough */
+	case 't': n <<= 10;
+	case 'g': n <<= 10;
+	case 'm': n <<= 10;
+	case 'k': n <<= 10;
+	default:
+		break;
+	}
+
+	return n;
+}
+
 #define CT_NICK   001
 #define CT_IDENT  002
 #define CT_SID    004

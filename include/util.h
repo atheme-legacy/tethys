@@ -20,6 +20,8 @@ extern void u_cidr_to_str(u_cidr*, char*);
 extern void u_str_to_cidr(char*, u_cidr*);
 extern int u_cidr_match(u_cidr*, char*);
 
+extern unsigned long parse_size(char*);
+
 extern int matchmap(char *pat, char *string, char *map);
 extern int match(char *pattern, char *string);
 extern int matchirc(char*, char*); /* rfc1459 casemapping */
