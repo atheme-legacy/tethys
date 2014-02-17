@@ -13,6 +13,7 @@ static char *msg_classmissing = "%s block %s missing class! Using default class"
 static char *msg_authnotfound = "Oper block %s asks for auth %s, but no such auth exists! Ignoring auth setting";
 static char *msg_timeouttooshort = "Timeout of %d seconds for class %s too short. Setting to %d seconds";
 static char *msg_sendqtoosmall = "SendQ size of %d bytes for class %s too small. Setting to %d bytes";
+static char *msg_portinvalid = "Port %d for link %s invalid. Using %d";
 
 static u_class_block class_default =
 	{ "<default>", 300, 32<<10 };
@@ -226,6 +227,7 @@ void conf_link(mowgli_config_file_t *cf, mowgli_config_file_entry_t *ce)
 
 	memset(cur_link, 0, sizeof(*cur_link));
 	u_strlcpy(cur_link->name, ce->vardata, MAXSERVERNAME+1);
+	cur_link->port = 6667;
 
 	u_map_set(all_links, cur_link->name, cur_link);
 	mowgli_node_add(cur_link, &cur_link->n, &link_list);
@@ -236,6 +238,16 @@ void conf_link(mowgli_config_file_t *cf, mowgli_config_file_entry_t *ce)
 void conf_link_host(mowgli_config_file_t *cf, mowgli_config_file_entry_t *ce)
 {
 	u_strlcpy(cur_link->host, ce->vardata, INET_ADDRSTRLEN);
+}
+
+void conf_link_port(mowgli_config_file_t *cf, mowgli_config_file_entry_t *ce)
+{
+	cur_link->port = atoi(ce->vardata);
+	if (cur_link->port <= 0 || cur_link->port >= 65536) {
+		u_log(LG_WARN, msg_portinvalid, cur_link->port,
+		      cur_link->name, 6667);
+		cur_link->port = 6667;
+	}
 }
 
 void conf_link_sendpass(mowgli_config_file_t *cf, mowgli_config_file_entry_t *ce)

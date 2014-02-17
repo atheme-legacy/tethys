@@ -110,6 +110,9 @@ link svc.ajitek.net {
 	# or to make connections to
 	host = "127.0.0.1";
 
+	# the port to make connections to
+	port = 6667;
+
 	# the password to send when connecting,
 	# and to expect when accepting
 	sendpass = "morality";

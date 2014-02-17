@@ -47,6 +47,7 @@ struct u_oper_block {
 struct u_link_block {
 	char name[MAXSERVERNAME+1];
 	char host[INET_ADDRSTRLEN];
+	int port;
 	char recvpass[MAXPASSWORD+1];
 	char sendpass[MAXPASSWORD+1];
 	char classname[MAXCLASSNAME+1];
