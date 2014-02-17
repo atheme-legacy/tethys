@@ -153,7 +153,7 @@ void conf_class_timeout(mowgli_config_file_t *cf, mowgli_config_file_entry_t *ce
 
 void conf_class_sendq(mowgli_config_file_t *cf, mowgli_config_file_entry_t *ce)
 {
-	cur_class->sendq = atoi(ce->vardata);
+	cur_class->sendq = parse_size(ce->vardata);
 	if (cur_class->sendq < 1024) {
 		u_log(LG_WARN, msg_sendqtoosmall, cur_class->sendq,
 		      cur_class->name, 1024);
