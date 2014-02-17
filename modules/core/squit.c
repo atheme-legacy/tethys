@@ -52,9 +52,9 @@ static int c_a_squit(u_sourceinfo *si, u_msg *msg)
 		                 si, sv, s, reason);
 	}
 
-	u_server_destroy(sv);
-	if (SERVER_IS_LOCAL(sv))
+	if (IS_SERVER_LOCAL(sv))
 		u_link_close(sv->link);
+	u_server_destroy(sv);
 
 	return 0;
 }
