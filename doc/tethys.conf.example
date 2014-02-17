@@ -52,10 +52,13 @@ listen {
 class users {
 	# ping timeout, in seconds
 	timeout = 300;
+	# send queue size, in bytes
+	sendq = 65536;
 };
 
 class server {
 	timeout = 900;
+	sendq = 4194304;
 };
 
 
