@@ -301,6 +301,7 @@ int init_auth(void)
 
 	u_conf_add_handler("link", conf_link, NULL);
 	u_conf_add_handler("host", conf_link_host, u_conf_link_handlers);
+	u_conf_add_handler("port", conf_link_port, u_conf_link_handlers);
 	u_conf_add_handler("sendpass", conf_link_sendpass, u_conf_link_handlers);
 	u_conf_add_handler("recvpass", conf_link_recvpass, u_conf_link_handlers);
 	u_conf_add_handler("class", conf_link_class, u_conf_link_handlers);
