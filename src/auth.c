@@ -9,14 +9,15 @@
 static char *msg_noauthblocks = "No auth{} blocks; using default auth settings";
 static char *msg_nolinkblocks = "Attempted to find link{} block, but no such blocks! Unexpected server connect attempt?";
 static char *msg_classnotfound = "%s block %s asks for class %s, but no such class exists! Using default class";
+static char *msg_classmissing = "%s block %s missing class! Using default class";
 static char *msg_authnotfound = "Oper block %s asks for auth %s, but no such auth exists! Ignoring auth setting";
 static char *msg_timeouttooshort = "Timeout of %d seconds for class %s too short. Setting to %d seconds";
 static char *msg_sendqtoosmall = "SendQ size of %d bytes for class %s too short. Setting to %d bytes";
 
 static u_class_block class_default =
-	{ "default", 300, 32<<10 };
+	{ "<default>", 300, 32<<10 };
 static u_auth_block auth_default =
-	{ "default", "default", &class_default, { 0, 0 }, "" };
+	{ "<default>", "default", NULL, { 0, 0 }, "" };
 
 u_map *all_classes;
 u_map *all_auths;
@@ -53,8 +54,13 @@ u_auth_block *u_find_auth(u_link *link)
 		if (auth->cls == NULL) {
 			auth->cls = u_map_get(all_classes, auth->classname);
 			if (auth->cls == NULL) {
-				u_log(LG_WARN, msg_classnotfound,
-				      "Auth", auth->name, auth->classname);
+				if (!auth->classname[0]) {
+					u_log(LG_WARN, msg_classmissing,
+					      "Auth", auth->name);
+				} else {
+					u_log(LG_WARN, msg_classnotfound,
+					      "Auth", auth->name, auth->classname);
+				}
 				auth->cls = &class_default;
 			}
 		}
@@ -92,9 +98,30 @@ u_oper_block *u_find_oper(u_auth_block *auth, char *name, char *pass)
 
 u_link_block *u_find_link(u_server *sv)
 {
+	u_link_block *link;
+
 	if (mowgli_list_size(&link_list) == 0) {
 		u_log(LG_WARN, msg_nolinkblocks);
 		return NULL;
+	}
+
+	link = u_map_get(all_links, sv->name);
+
+	if (link == NULL)
+		return NULL;
+
+	if (link->cls == NULL) {
+		link->cls = u_map_get(all_classes, link->classname);
+		if (link->cls == NULL) {
+			if (!link->classname[0]) {
+				u_log(LG_WARN, msg_classmissing,
+				      "Link", link->name);
+			} else {
+				u_log(LG_WARN, msg_classnotfound,
+				      "Link", link->name, link->classname);
+			}
+			link->cls = &class_default;
+		}
 	}
 
 	return u_map_get(all_links, sv->name);
@@ -142,6 +169,7 @@ void conf_auth(mowgli_config_file_t *cf, mowgli_config_file_entry_t *ce)
 
 	memcpy(cur_auth, &auth_default, sizeof(*cur_auth));
 	u_strlcpy(cur_auth->name, ce->vardata, MAXAUTHNAME+1);
+	cur_auth->classname[0] = '\0';
 
 	u_map_set(all_auths, cur_auth->name, cur_auth);
 	mowgli_node_add(cur_auth, &cur_auth->n, &auth_list);
