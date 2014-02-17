@@ -366,6 +366,11 @@ size_t u_conn_end_send_buffer(u_conn *conn, size_t sz)
 	return sz;
 }
 
+void u_conn_sendq_clear(u_conn *conn)
+{
+	u_sendq_clear(&conn->sendq);
+}
+
 /* mowgli eventloop callbacks */
 /* -------------------------- */
 

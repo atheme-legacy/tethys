@@ -68,6 +68,7 @@ static void on_sendq_full(u_conn *conn)
 {
 	exceptional_quit(conn->priv, "SendQ full");
 
+	u_conn_sendq_clear(conn);
 	u_conn_shut_down(conn);
 }
 

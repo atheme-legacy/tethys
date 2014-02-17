@@ -83,6 +83,8 @@ extern ssize_t u_conn_send(u_conn*, const uchar*, size_t sz);
 extern uchar *u_conn_get_send_buffer(u_conn*, size_t sz);
 extern size_t u_conn_end_send_buffer(u_conn*, size_t sz);
 
+extern void u_conn_sendq_clear(u_conn*);
+
 extern void u_conn_run(mowgli_eventloop_t *ev);
 
 extern int init_conn(void);
