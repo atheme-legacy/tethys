@@ -62,8 +62,7 @@ struct u_conn {
 	char host[U_CONN_HOSTSIZE];
 	mowgli_dns_query_t *dnsq;
 
-	uchar *obuf;
-	size_t obuflen, obufsize;
+	u_sendq sendq;
 
 	u_conn_ctx *ctx;
 	void *priv;

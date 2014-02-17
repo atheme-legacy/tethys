@@ -70,6 +70,7 @@ typedef unsigned long u_ts_t;
 #include "crypto.h"
 #include "map.h"
 #include "strop.h"
+#include "sendq.h"
 #include "upgrade.h"
 #include "version.h"
 #include "vsnf.h"

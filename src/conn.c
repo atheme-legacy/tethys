@@ -62,8 +62,7 @@ static u_conn *conn_create(mowgli_eventloop_t *ev, u_conn_ctx *ctx,
 		u_strlcpy(conn->ip, "127.0.0.1", sizeof(conn->ip));
 	}
 
-	conn->obufsize = 32 << 10;
-	conn->obuf = malloc(conn->obufsize);
+	u_sendq_init(&conn->sendq);
 
 	conn->ctx = ctx;
 	conn->priv = priv;
@@ -84,7 +83,8 @@ static void final_cleanup(u_conn *conn)
 
 	if (conn->dnsq)
 		mowgli_dns_delete_query(base_dns, conn->dnsq);
-	free(conn->obuf);
+
+	u_sendq_clear(&conn->sendq);
 
 	mowgli_pollable_destroy(ev, conn->poll);
 	close(fd);
@@ -343,11 +343,9 @@ ssize_t u_conn_send(u_conn *conn, const uchar *data, size_t sz)
 	if (!send_permitted(conn))
 		return 0;
 
-	if (conn->obuflen + sz > conn->obufsize)
-		sz = conn->obufsize - conn->obuflen;
+	/* TODO */
 
-	memcpy(conn->obuf + conn->obuflen, data, sz);
-	conn->obuflen += sz;
+	return 0;
 
 	sync_on_update(conn);
 
@@ -356,24 +354,12 @@ ssize_t u_conn_send(u_conn *conn, const uchar *data, size_t sz)
 
 uchar *u_conn_get_send_buffer(u_conn *conn, size_t sz)
 {
-	if (!send_permitted(conn))
-		return NULL;
-
-	if (conn->obuflen + sz > conn->obufsize)
-		return NULL;
-
-	return conn->obuf + conn->obuflen;
+	return u_sendq_get_buffer(&conn->sendq, sz);
 }
 
 size_t u_conn_end_send_buffer(u_conn *conn, size_t sz)
 {
-	if (conn->obuflen + sz > conn->obufsize) {
-		u_log(LG_WARN, "conn: potential heap corruption!");
-		/* lalala, i can't hear you! */
-		sz = conn->obufsize - conn->obuflen;
-	}
-
-	conn->obuflen += sz;
+	sz = u_sendq_end_buffer(&conn->sendq, sz);
 
 	sync_on_update(conn);
 
@@ -443,7 +429,7 @@ static void send_ready(mowgli_eventloop_t *ev, mowgli_eventloop_io_t *io,
 
 	sync_time();
 
-	sz = write(conn->poll->fd, conn->obuf, conn->obuflen);
+	sz = u_sendq_write(&conn->sendq, conn->poll->fd);
 
 	if (sz < 0) {
 		int e = errno;
@@ -453,11 +439,6 @@ static void send_ready(mowgli_eventloop_t *ev, mowgli_eventloop_io_t *io,
 
 		fatal_error(conn, "Write error", e);
 		return;
-	}
-
-	if (sz > 0) {
-		memmove(conn->obuf, conn->obuf + sz, conn->obufsize - sz);
-		conn->obuflen -= sz;
 	}
 
 	sync_on_update(conn);
@@ -482,11 +463,11 @@ static void sync_on_update(u_conn *conn)
 	switch (conn->state) {
 	case U_CONN_ACTIVE:
 		use_recv = true;
-		set_send(conn, conn->obuflen > 0 ? send_ready : NULL);
+		set_send(conn, conn->sendq.size > 0 ? send_ready : NULL);
 		break;
 
 	case U_CONN_SHUTTING_DOWN:
-		if (conn->obuflen == 0) {
+		if (conn->sendq.size == 0) {
 			set_send(conn, NULL);
 			mark_for_cleanup(conn);
 		}

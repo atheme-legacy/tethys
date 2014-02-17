@@ -16,6 +16,7 @@ SRCS = numeric.c \
 	msg.c \
 	ratelimit.c \
 	sendto.c \
+	sendq.c \
 	server.c \
 	strop.c \
 	upgrade.c \
