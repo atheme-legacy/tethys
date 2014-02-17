@@ -390,7 +390,7 @@ error:
 	u_perror(operation);
 	if (origin)
 		free(origin);
-	if (fd > 0)
+	if (fd >= 0)
 		close(fd);
 	return NULL;
 }
