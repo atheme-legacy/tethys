@@ -34,6 +34,7 @@ static u_sendq_chunk *chunk_new(void)
 		chunk = free_chunks;
 		free_chunks = chunk->next;
 	} else {
+		u_log(LG_DEBUG, "sendq chunk: malloc()");
 		chunk = malloc(sizeof(*chunk));
 	}
 
@@ -49,6 +50,7 @@ static void chunk_free(u_sendq_chunk *chunk)
 		return;
 
 	if (num_free_chunks >= SENDQ_CHUNK_BACKLOG_MAX) {
+		u_log(LG_DEBUG, "sendq chunk: free()");
 		free(chunk);
 		return;
 	}
@@ -103,7 +105,7 @@ uchar *u_sendq_get_buffer(u_sendq *q, size_t sz)
 		q->tail = chunk;
 	}
 
-	return chunk->data + chunk->start;
+	return chunk->data + chunk->end;
 }
 
 size_t u_sendq_end_buffer(u_sendq *q, size_t sz)
@@ -138,6 +140,9 @@ int u_sendq_write(u_sendq *q, int fd)
 	for (; iovcnt < NUM_IOVECS && ch; iovcnt++, ch = ch->next) {
 		iov[iovcnt].iov_base = ch->data + ch->start;
 		iov[iovcnt].iov_len = ch->end - ch->start;
+		u_log(LG_DEBUG, "ch %p %04d-%04d -> iov %p +%04u",
+		      ch->data, ch->start, ch->end,
+		      iov[iovcnt].iov_base, iov[iovcnt].iov_len);
 	}
 
 	sz = writev(fd, iov, iovcnt);
