@@ -53,12 +53,12 @@ class users {
 	# ping timeout, in seconds
 	timeout = 300;
 	# send queue size, in bytes
-	sendq = 65536;
+	sendq = 64k;
 };
 
 class server {
 	timeout = 900;
-	sendq = 4194304;
+	sendq = 4M;
 };
 
 
