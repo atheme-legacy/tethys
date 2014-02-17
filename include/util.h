@@ -40,6 +40,8 @@ extern int irccmp(char *s1, char *s2);
 extern void u_ntop(struct in_addr*, char*);
 extern void u_aton(char*, struct in_addr*);
 
+extern void u_pton(const char*, struct sockaddr_storage *ss);
+
 extern char *cut(char **p, char *delim);
 
 extern void null_canonize();

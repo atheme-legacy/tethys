@@ -175,6 +175,26 @@ void u_aton(char *s, struct in_addr *in)
 	in->s_addr = inet_addr(s);
 }
 
+void u_pton(const char *src, struct sockaddr_storage *ss)
+{
+	void *v4, *v6;
+
+	memset(ss, 0, sizeof(*ss));
+
+	v4 = &((struct sockaddr_in*) ss)->sin_addr;
+	v6 = &((struct sockaddr_in6*)ss)->sin6_addr;
+
+	if (!(inet_pton(AF_INET6, src, v6) < 0)) {
+		ss->ss_family = AF_INET6;
+		return;
+	}
+
+	if (!(inet_pton(AF_INET, src, v4) < 0)) {
+		ss->ss_family = AF_INET;
+		return;
+	}
+}
+
 char *cut(char **p, char *delim)
 {
 	char *s = *p;
