@@ -26,8 +26,6 @@ static void link_destroy(u_link *link)
 /* conn interaction */
 /* ---------------- */
 
-#define RECV_SIZE (16 << 10)
-
 static void exceptional_quit(u_link *link, char *msg, ...);
 static void dispatch_lines(u_link*);
 
