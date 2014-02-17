@@ -251,6 +251,12 @@ void u_link_vf(u_link *link, const char *fmt, va_list va)
 	if (!link)
 		return;
 
+	if (link->auth && link->auth->cls &&
+	    link->conn->sendq.size + 512 > link->auth->cls->sendq) {
+		on_sendq_full(link->conn);
+		return;
+	}
+
 	buf = u_conn_get_send_buffer(link->conn, 512);
 
 	if (buf == NULL) {
