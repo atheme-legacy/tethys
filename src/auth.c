@@ -106,9 +106,8 @@ void conf_class(mowgli_config_file_t *cf, mowgli_config_file_entry_t *ce)
 {
 	cur_class = malloc(sizeof(*cur_class));
 
+	memcpy(cur_class, &class_default, sizeof(*cur_class));
 	u_strlcpy(cur_class->name, ce->vardata, MAXCLASSNAME+1);
-	cur_class->timeout = 300;
-	cur_class->sendq = 32<<10;
 
 	u_map_set(all_classes, cur_class->name, cur_class);
 
@@ -141,7 +140,7 @@ void conf_auth(mowgli_config_file_t *cf, mowgli_config_file_entry_t *ce)
 {
 	cur_auth = malloc(sizeof(*cur_auth));
 
-	memset(cur_auth, 0, sizeof(*cur_auth));
+	memcpy(cur_auth, &auth_default, sizeof(*cur_auth));
 	u_strlcpy(cur_auth->name, ce->vardata, MAXAUTHNAME+1);
 
 	u_map_set(all_auths, cur_auth->name, cur_auth);
