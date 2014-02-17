@@ -318,7 +318,8 @@ void u_user_welcome(u_user *u)
 {
 	char buf[512];
 
-	u_log(LG_DEBUG, "user: welcoming %s", u->nick);
+	u_log(LG_DEBUG, "user: welcoming %s (auth=%s, class=%s)", u->nick,
+	      u->link->auth->name, u->link->auth->cls->name);
 
 	u_user_num(u, RPL_WELCOME, my_net_name, u->nick);
 	u_user_num(u, RPL_YOURHOST, me.name, PACKAGE_FULLNAME);

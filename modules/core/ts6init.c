@@ -68,6 +68,9 @@ static int c_us_server(u_sourceinfo *si, u_msg *msg)
 	u_sendto_servers(si->source, ":%S SID %s %d %s :%s", &me,
 	                 si->s->name, si->s->hops, si->s->sid, si->s->desc);
 
+	u_log(LG_VERBOSE, "ts6init: burst to %s (link=%s, class=%s)",
+	      si->s->name, block->name, block->cls->name);
+
 	u_server_burst_1(si->s, block);
 	u_server_burst_2(si->s, block);
 
