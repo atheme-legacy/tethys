@@ -25,6 +25,7 @@ typedef struct u_link_block u_link_block;
 struct u_class_block {
 	char name[MAXCLASSNAME+1];
 	int timeout;
+	int sendq;
 };
 
 struct u_auth_block {

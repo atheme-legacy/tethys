@@ -11,9 +11,10 @@ static char *msg_nolinkblocks = "Attempted to find link{} block, but no such blo
 static char *msg_classnotfound = "%s block %s asks for class %s, but no such class exists! Using default class";
 static char *msg_authnotfound = "Oper block %s asks for auth %s, but no such auth exists! Ignoring auth setting";
 static char *msg_timeouttooshort = "Timeout of %d seconds for class %s too short. Setting to %d seconds";
+static char *msg_sendqtoosmall = "SendQ size of %d bytes for class %s too short. Setting to %d bytes";
 
 static u_class_block class_default =
-	{ "default", 300 };
+	{ "default", 300, 32<<10 };
 static u_auth_block auth_default =
 	{ "default", "default", &class_default, { 0, 0 }, "" };
 
@@ -107,6 +108,7 @@ void conf_class(mowgli_config_file_t *cf, mowgli_config_file_entry_t *ce)
 
 	u_strlcpy(cur_class->name, ce->vardata, MAXCLASSNAME+1);
 	cur_class->timeout = 300;
+	cur_class->sendq = 32<<10;
 
 	u_map_set(all_classes, cur_class->name, cur_class);
 
@@ -120,6 +122,16 @@ void conf_class_timeout(mowgli_config_file_t *cf, mowgli_config_file_entry_t *ce
 		u_log(LG_WARN, msg_timeouttooshort, cur_class->timeout,
 		      cur_class->name, 15);
 		cur_class->timeout = 15;
+	}
+}
+
+void conf_class_sendq(mowgli_config_file_t *cf, mowgli_config_file_entry_t *ce)
+{
+	cur_class->sendq = atoi(ce->vardata);
+	if (cur_class->sendq < 1024) {
+		u_log(LG_WARN, msg_sendqtoosmall, cur_class->sendq,
+		      cur_class->name, 1024);
+		cur_class->sendq = 1024;
 	}
 }
 
@@ -231,6 +243,7 @@ int init_auth(void)
 
 	u_conf_add_handler("class", conf_class, NULL);
 	u_conf_add_handler("timeout", conf_class_timeout, u_conf_class_handlers);
+	u_conf_add_handler("sendq", conf_class_sendq, u_conf_class_handlers);
 
 	u_conf_auth_handlers = mowgli_patricia_create(ascii_canonize);
 
