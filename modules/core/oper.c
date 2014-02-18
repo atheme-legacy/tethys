@@ -10,7 +10,8 @@ static int c_lu_oper(u_sourceinfo *si, u_msg *msg)
 {
 	u_oper_block *oper;
 
-	if (!(oper = u_find_oper(si->source->auth, msg->argv[0], msg->argv[1])))
+	if (!(oper = u_find_oper(si->source->conf.auth,
+	                         msg->argv[0], msg->argv[1])))
 		return u_user_num(si->u, ERR_NOOPERHOST);
 
 	si->u->oper = oper;

@@ -38,7 +38,12 @@ static void on_attach(u_conn *conn)
 
 static void on_connect_finish(u_conn *conn, int err)
 {
+	u_link *link = conn->priv;
+	u_link_block *block = link->conf.link;
+
 	u_log(LG_VERBOSE, "link: connect finished");
+
+	u_server_burst_1(link, block);
 }
 
 static void on_fatal_error(u_conn *conn, const char *msg, int err)
@@ -230,6 +235,27 @@ static void dispatch_lines(u_link *link)
 /* user API */
 /* -------- */
 
+u_link *u_link_connect(mowgli_eventloop_t *ev, u_link_block *block,
+                       const struct sockaddr *addr, socklen_t addrlen)
+{
+	u_link *link;
+	u_conn *conn;
+
+	link = link_create();
+
+	if (!(conn = u_conn_connect(ev, &u_link_conn_ctx, link, 0,
+	                            addr, addrlen))) {
+		link_destroy(link);
+		return NULL;
+	}
+
+	link->conf.link = block;
+
+	u_log(LG_VERBOSE, "connecting to %s", conn->ip);
+
+	return link;
+}
+
 void u_link_close(u_link *link)
 {
 	u_conn_shut_down(link->conn);
@@ -252,8 +278,7 @@ void u_link_vf(u_link *link, const char *fmt, va_list va)
 	if (!link)
 		return;
 
-	if (link->auth && link->auth->cls &&
-	    link->conn->sendq.size + 512 > link->auth->cls->sendq) {
+	if (link->sendq > 0 && link->conn->sendq.size + 512 > link->sendq) {
 		on_sendq_full(link->conn);
 		return;
 	}

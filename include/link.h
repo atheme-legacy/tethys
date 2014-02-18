@@ -28,6 +28,7 @@ enum u_link_type {
 
 #define U_LINK_SENT_QUIT         0x0010
 #define U_LINK_REGISTERED        0x0020
+#define U_LINK_SENT_PASS         0x0040
 
 #define IBUFSIZE 2048
 
@@ -39,7 +40,11 @@ struct u_link {
 	void *priv;
 
 	char *pass;
-	u_auth_block *auth;
+	union {
+		u_auth_block *auth;
+		u_link_block *link;
+	} conf;
+	int sendq;
 
 	uchar ibuf[IBUFSIZE+1];
 	size_t ibuflen;
@@ -49,6 +54,8 @@ struct u_link {
 
 extern u_conn_ctx u_link_conn_ctx;
 
+extern u_link *u_link_connect(mowgli_eventloop_t*, u_link_block*,
+                              const struct sockaddr*, socklen_t);
 extern void u_link_close(u_link *link);
 extern void u_link_fatal(u_link *link, const char *msg);
 

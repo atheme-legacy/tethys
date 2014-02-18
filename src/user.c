@@ -166,10 +166,11 @@ void u_user_try_register(u_user *u)
 	if (u->flags & USER_MASK_WAIT)
 		return;
 
-	if (!(u->link->auth = u_find_auth(u->link))) {
+	if (!(u->link->conf.auth = u_find_auth(u->link))) {
 		u_link_fatal(u->link, "No auth blocks for your host");
 		return;
 	}
+	u->link->sendq = u->link->conf.auth->cls->sendq;
 
 	u->link->flags |= U_LINK_REGISTERED;
 	u_strlcpy(u->ip, u->link->conn->ip, INET_ADDRSTRLEN);
@@ -319,7 +320,7 @@ void u_user_welcome(u_user *u)
 	char buf[512];
 
 	u_log(LG_DEBUG, "user: welcoming %s (auth=%s, class=%s)", u->nick,
-	      u->link->auth->name, u->link->auth->cls->name);
+	      u->link->conf.auth->name, u->link->conf.auth->cls->name);
 
 	u_user_num(u, RPL_WELCOME, my_net_name, u->nick);
 	u_user_num(u, RPL_YOURHOST, me.name, PACKAGE_FULLNAME);

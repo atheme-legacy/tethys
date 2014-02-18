@@ -4,6 +4,7 @@ SRCS = \
 	away.c \
 	bmask.c \
 	cap.c \
+	connect.c \
 	euid.c \
 	help.c \
 	hunted.c \

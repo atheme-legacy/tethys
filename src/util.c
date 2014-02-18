@@ -184,13 +184,13 @@ void u_pton(const char *src, struct sockaddr_storage *ss)
 	v4 = &((struct sockaddr_in*) ss)->sin_addr;
 	v6 = &((struct sockaddr_in6*)ss)->sin6_addr;
 
-	if (!(inet_pton(AF_INET6, src, v6) < 0)) {
-		ss->ss_family = AF_INET6;
+	if (!(inet_pton(AF_INET, src, v4) < 0)) {
+		ss->ss_family = AF_INET;
 		return;
 	}
 
-	if (!(inet_pton(AF_INET, src, v4) < 0)) {
-		ss->ss_family = AF_INET;
+	if (!(inet_pton(AF_INET6, src, v6) < 0)) {
+		ss->ss_family = AF_INET6;
 		return;
 	}
 }

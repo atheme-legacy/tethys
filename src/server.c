@@ -341,20 +341,17 @@ static int burst_chan(const char *key, void *_c, void *_link)
 	return 0;
 }
 
-void u_server_burst_1(u_server *sv, u_link_block *block)
+void u_server_burst_1(u_link *link, u_link_block *block)
 {
-	u_link *link = sv->link;
 	char buf[512];
 
-	if (link == NULL) {
-		u_log(LG_ERROR, "Attempted to burst to %S, which has no link!", sv);
+	if (!link)
 		return;
-	}
 
-	if (sv->hops != 1) {
-		u_log(LG_ERROR, "Attempted to burst to %S, which is not local!", sv);
+	if (link->flags & U_LINK_SENT_PASS)
 		return;
-	}
+
+	link->flags |= U_LINK_SENT_PASS;
 
 	u_link_f(link, "PASS %s TS 6 :%s", block->sendpass, me.sid);
 	u_my_capabs(buf);
