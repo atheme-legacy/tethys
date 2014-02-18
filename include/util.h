@@ -20,6 +20,12 @@ extern void u_cidr_to_str(u_cidr*, char*);
 extern void u_str_to_cidr(char*, u_cidr*);
 extern int u_cidr_match(u_cidr*, char*);
 
+typedef unsigned long u_bitmask_set;
+extern void u_bitmask_reset(u_bitmask_set*);
+extern void u_bitmask_used(u_bitmask_set*, unsigned long);
+extern unsigned long u_bitmask_alloc(u_bitmask_set*);
+extern void u_bitmask_free(u_bitmask_set*, unsigned long);
+
 extern unsigned long parse_size(char*);
 
 extern int matchmap(char *pat, char *string, char *map);

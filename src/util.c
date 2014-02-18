@@ -53,6 +53,36 @@ int u_cidr_match(u_cidr *cidr, char *s)
 	return (addr | mask) == (cidr->addr | mask);
 }
 
+void u_bitmask_reset(u_bitmask_set *bm)
+{
+	*bm = 0;
+}
+
+void u_bitmask_used(u_bitmask_set *bm, unsigned long v)
+{
+	*bm |= v;
+}
+
+unsigned long u_bitmask_alloc(u_bitmask_set *bm)
+{
+	unsigned long v = *bm;
+
+	                   /* find first unset bit */
+	                   /* eg,      v = 00011100 11101111 */
+	v = v ^ (v + 1);   /*      v + 1 = 00011100 11110000 */
+	                   /*    v = xor = 00000000 00011111 */
+	v = v ^ (v >> 1);  /*     v >> 1 = 00000000 00001111 */
+	                   /*    v = xor = 00000000 00010000 */
+	*bm |= v;
+
+	return v;
+}
+
+void u_bitmask_free(u_bitmask_set *bm, unsigned long v)
+{
+	*bm &= ~v;
+}
+
 unsigned long parse_size(char *s)
 {
 	unsigned long n;
