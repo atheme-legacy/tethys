@@ -402,6 +402,12 @@ void u_chan_mode_unregister(u_mode_info *info)
 	if (info->ch < 0 || info->ch > 128) /* invalid char */
 		return;
 
+	if (tbl->type == MODE_FLAG)
+		u_bitmask_free(&cmode_flags, tbl->arg.data);
+
+	if (tbl->type == MODE_STATUS)
+		u_bitmask_free(&cmode_cu_flags, tbl->arg.data);
+
 	memset(tbl, 0, sizeof(*tbl));
 }
 
