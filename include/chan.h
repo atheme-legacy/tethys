@@ -70,6 +70,7 @@ extern mowgli_patricia_t *all_chans;
 
 extern u_mode_info cmode_infotab[128];
 extern u_mode_ctx cmodes;
+extern u_bitmask_set cmode_flags;
 extern uint cmode_default;
 
 extern u_chan *u_chan_get(char*);

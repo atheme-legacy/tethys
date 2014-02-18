@@ -122,6 +122,8 @@ u_mode_ctx cmodes = {
 	.sync                = cmode_sync,
 };
 
+u_bitmask_set cmode_flags;
+
 uint cmode_default = CMODE_TOPIC | CMODE_NOEXTERNAL;
 
 static int cb_fwd(u_modes *m, int on, char *arg)
@@ -685,8 +687,18 @@ int u_is_muted(u_chanuser *cu)
 
 int init_chan(void)
 {
+	int i;
+
 	if (!(all_chans = mowgli_patricia_create(ascii_canonize)))
 		return -1;
+
+	u_bitmask_reset(&cmode_flags);
+	for (i=0; i<128; i++) {
+		u_mode_info *info = cmode_infotab + i;
+		if (!info->ch || info->type != MODE_FLAG)
+			continue;
+		u_bitmask_used(&cmode_flags, info->arg.data);
+	}
 
 	return 0;
 }
