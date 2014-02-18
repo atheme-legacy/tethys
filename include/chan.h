@@ -37,6 +37,8 @@
 
 #define CU_MUTED           0x00010000
 
+#define CU_FLAGS_USED      0x00010003
+
 typedef struct u_chan u_chan;
 typedef struct u_chanuser u_chanuser;
 
@@ -79,6 +81,9 @@ extern u_chan *u_chan_get_or_create(char*, bool *created);
 extern void u_chan_drop(u_chan*);
 
 extern char *u_chan_modes(u_chan*, int un_chan);
+
+extern int u_chan_mode_register(u_mode_info*, ulong *mask);
+extern void u_chan_mode_unregister(u_mode_info*);
 
 extern int u_chan_send_topic(u_chan*, u_user*);
 extern int u_chan_send_names(u_chan*, u_user*);

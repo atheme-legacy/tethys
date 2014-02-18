@@ -123,6 +123,7 @@ u_mode_ctx cmodes = {
 };
 
 u_bitmask_set cmode_flags;
+u_bitmask_set cmode_cu_flags;
 
 uint cmode_default = CMODE_TOPIC | CMODE_NOEXTERNAL;
 
@@ -361,6 +362,47 @@ char *u_chan_modes(u_chan *c, int on_chan)
 
 	sprintf(buf, "%s%s", chs, args);
 	return buf;
+}
+
+int u_chan_mode_register(u_mode_info *info, ulong *flag_ret)
+{
+	u_mode_info *tbl = cmode_infotab + info->ch;
+	ulong flag;
+
+	if (info->ch < 0 || info->ch > 128) /* invalid char */
+		return -1;
+
+	if (tbl->ch) /* char in use */
+		return -1;
+
+	if (info->type == MODE_FLAG &&
+	    !(flag = u_bitmask_alloc(&cmode_flags)))
+		return -1;
+
+	if (info->type == MODE_STATUS &&
+	    !(flag = u_bitmask_alloc(&cmode_cu_flags)))
+		return -1;
+
+	memcpy(tbl, info, sizeof(*tbl));
+
+	if (tbl->type == MODE_FLAG ||
+	    tbl->type == MODE_STATUS)
+		tbl->arg.data = flag;
+
+	if (flag_ret != NULL)
+		*flag_ret = flag;
+
+	return 0;
+}
+
+void u_chan_mode_unregister(u_mode_info *info)
+{
+	u_mode_info *tbl = cmode_infotab + info->ch;
+
+	if (info->ch < 0 || info->ch > 128) /* invalid char */
+		return;
+
+	memset(tbl, 0, sizeof(*tbl));
 }
 
 int u_chan_send_topic(u_chan *c, u_user *u)
@@ -699,6 +741,9 @@ int init_chan(void)
 			continue;
 		u_bitmask_used(&cmode_flags, info->arg.data);
 	}
+
+	u_bitmask_reset(&cmode_cu_flags);
+	u_bitmask_used(&cmode_cu_flags, CU_FLAGS_USED);
 
 	return 0;
 }
