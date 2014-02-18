@@ -72,8 +72,14 @@ badtgt:
 	return 0;
 }
 
+static int c_ignore(u_sourceinfo *si, u_msg *msg)
+{
+	return 0;
+}
+
 static u_cmd numeric_cmdtab[] = {
 	{ "###", SRC_SERVER, c_s_num, 1 },
+	{ "###", SRC_UNREGISTERED, c_ignore },
 	{ }
 };
 
