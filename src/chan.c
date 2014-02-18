@@ -101,9 +101,6 @@ u_mode_info cmode_infotab[128] = {
 	['q'] = { 'q', MODE_LIST },
 	['e'] = { 'e', MODE_LIST },
 	['I'] = { 'I', MODE_LIST },
-
-	['o'] = { 'o', MODE_STATUS, 0, { .data = CU_PFX_OP } },
-	['v'] = { 'v', MODE_STATUS, 0, { .data = CU_PFX_VOICE } },
 };
 
 u_mode_ctx cmodes = {
@@ -126,6 +123,11 @@ u_bitmask_set cmode_flags;
 u_bitmask_set cmode_cu_flags;
 
 uint cmode_default = CMODE_TOPIC | CMODE_NOEXTERNAL;
+
+mowgli_list_t cu_pfx_list;
+
+u_cu_pfx *cu_pfx_op;
+u_cu_pfx *cu_pfx_voice;
 
 static int cb_fwd(u_modes *m, int on, char *arg)
 {
@@ -411,6 +413,29 @@ void u_chan_mode_unregister(u_mode_info *info)
 	memset(tbl, 0, sizeof(*tbl));
 }
 
+u_cu_pfx *u_chan_status_add(char ch, char prefix)
+{
+	u_mode_info info;
+	u_cu_pfx *cs;
+	ulong mask;
+
+	memset(&info, 0, sizeof(info));
+	info.ch = ch;
+	info.type = MODE_STATUS;
+
+	if (u_chan_mode_register(&info, &mask) < 0)
+		return NULL;
+
+	cs = calloc(1, sizeof(*cs));
+	cs->info = cmode_infotab + ch;
+	cs->prefix = prefix;
+	cs->mask = mask;
+
+	mowgli_node_add(cs, &cs->n, &cu_pfx_list);
+
+	return cs;
+}
+
 int u_chan_send_topic(u_chan *c, u_user *u)
 {
 	if (c->topic[0]) {
@@ -432,6 +457,7 @@ int u_chan_send_names(u_chan *c, u_user *u)
 	u_strop_wrap wrap;
 	u_user *tu;
 	u_chanuser *cu;
+	mowgli_node_t *n;
 	char *s, pfx;
 	int sz;
 
@@ -445,11 +471,12 @@ int u_chan_send_names(u_chan *c, u_user *u)
 		char *p, nbuf[MAXNICKLEN+3];
 
 		p = nbuf;
-		if (cu->flags & CU_PFX_OP)
-			*p++ = '@';
-		if ((cu->flags & CU_PFX_VOICE)
-		    && (p == nbuf || u->flags & CAP_MULTI_PREFIX))
-			*p++ = '+';
+		MOWGLI_LIST_FOREACH(n, cu_pfx_list.head) {
+			u_cu_pfx *cs = n->data;
+			if ((cu->flags & cs->mask) &&
+			    (p == nbuf || u->flags & CAP_MULTI_PREFIX))
+				*p++ = cs->prefix;
+		}
 		strcpy(p, tu->nick);
 
 		while ((s = u_strop_wrap_word(&wrap, nbuf)) != NULL)
@@ -750,6 +777,11 @@ int init_chan(void)
 
 	u_bitmask_reset(&cmode_cu_flags);
 	u_bitmask_used(&cmode_cu_flags, CU_FLAGS_USED);
+
+	mowgli_list_init(&cu_pfx_list);
+
+	cu_pfx_op    = u_chan_status_add('o', '@');
+	cu_pfx_voice = u_chan_status_add('v', '+');
 
 	return 0;
 }

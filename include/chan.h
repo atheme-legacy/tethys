@@ -32,15 +32,13 @@
 #define CM_DENY   0x01
 
 /* prefixes */
-#define CU_PFX_OP          0x00000001
-#define CU_PFX_VOICE       0x00000002
-
 #define CU_MUTED           0x00010000
 
-#define CU_FLAGS_USED      0x00010003
+#define CU_FLAGS_USED      0x00010000
 
 typedef struct u_chan u_chan;
 typedef struct u_chanuser u_chanuser;
+typedef struct u_cu_pfx u_cu_pfx;
 
 #include "chan.h"
 #include "user.h"
@@ -68,12 +66,27 @@ struct u_chanuser {
 	u_user *u;
 };
 
+struct u_cu_pfx {
+	mowgli_node_t n;
+
+	u_mode_info *info;
+	ulong mask;
+	char prefix;
+};
+
 extern mowgli_patricia_t *all_chans;
 
 extern u_mode_info cmode_infotab[128];
 extern u_mode_ctx cmodes;
 extern u_bitmask_set cmode_flags;
+extern u_bitmask_set cmode_cu_flags;
 extern uint cmode_default;
+
+extern mowgli_list_t cu_pfx_list;
+extern u_cu_pfx *cu_pfx_op;
+extern u_cu_pfx *cu_pfx_voice;
+#define CU_PFX_OP (cu_pfx_op->mask)
+#define CU_PFX_VOICE (cu_pfx_voice->mask)
 
 extern u_chan *u_chan_get(char*);
 extern u_chan *u_chan_create(char*);
@@ -84,6 +97,7 @@ extern char *u_chan_modes(u_chan*, int un_chan);
 
 extern int u_chan_mode_register(u_mode_info*, ulong *mask);
 extern void u_chan_mode_unregister(u_mode_info*);
+extern u_cu_pfx *u_chan_status_add(char mode, char prefix);
 
 extern int u_chan_send_topic(u_chan*, u_user*);
 extern int u_chan_send_names(u_chan*, u_user*);

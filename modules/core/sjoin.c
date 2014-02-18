@@ -101,14 +101,16 @@ static u_mode_stacker sjoin_stacker = {
 
 static void get_status(u_chanuser *cu, int on, u_modes *m, char **p)
 {
-	if (cu->flags & CU_PFX_OP) {
-		sjoin_stacker_put(m, on, 'o', cu->u->nick);
-		if (p) *(*p)++ = '@';
-	}
+	mowgli_node_t *n;
 
-	if (cu->flags & CU_PFX_VOICE) {
-		sjoin_stacker_put(m, on, 'v', cu->u->nick);
-		if (p) *(*p)++ = '+';
+	MOWGLI_LIST_FOREACH(n, cu_pfx_list.head) {
+		u_cu_pfx *cs = n->data;
+
+		if (!(cu->flags & cs->mask))
+			continue;
+
+		sjoin_stacker_put(m, on, cs->info->ch, cu->u->nick);
+		if (p) *(*p)++ = cs->prefix;
 	}
 
 	if (p) *(*p) = '\0';
@@ -118,14 +120,20 @@ static uint parse_status(u_sourceinfo *si, char **sptr)
 {
 	char *s = *sptr;
 	uint flags = 0;
+	mowgli_node_t *n;
 
 	for (; *s && !isdigit(*s); s++) {
-		switch (*s) {
-		case '@':  flags |= CU_PFX_OP;    break;
-		case '+':  flags |= CU_PFX_VOICE; break;
-		default:
-			u_log(LG_SEVERE, "%I used unk. prefix %c", si, *s);
+		MOWGLI_LIST_FOREACH(n, cu_pfx_list.head) {
+			u_cu_pfx *cs = n->data;
+
+			if (*s == cs->prefix) {
+				flags |= cs->mask;
+				break;
+			}
 		}
+
+		if (n == NULL)
+			u_log(LG_SEVERE, "%I used unk. prefix %c", si, *s);
 	}
 
 	*sptr = s;

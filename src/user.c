@@ -255,7 +255,7 @@ struct isupport {
 	char *s;
 	int i;
 } isupport[] = {
-	{ "PREFIX",       "(ov)@+"                },
+	{ "PREFIX",                               },
 	{ "CHANTYPES",    CHANTYPES               },
 	{ "CHANMODES",    "beIq,k,fl,cgimnpstz"   },
 	{ "MODES",        NULL, 4                 },
@@ -280,12 +280,26 @@ void u_user_send_isupport(u_user *u)
 	struct isupport *cur;
 	u_strop_wrap wrap;
 	char *s, *p, tmp[512];
+	mowgli_node_t *n;
 
 	u_strop_wrap_start(&wrap, 510 - 37 - strlen(me.name) - strlen(u->nick));
 
 	for (cur=isupport; cur->name; cur++) {
 		p = tmp;
-		if (cur->s) {
+		if (streq(cur->name, "PREFIX")) {
+			s = tmp + sprintf(tmp, "PREFIX=");
+			*s++ = '(';
+			MOWGLI_LIST_FOREACH(n, cu_pfx_list.head) {
+				u_cu_pfx *cs = n->data;
+				*s++ = cs->info->ch;
+			}
+			*s++ = ')';
+			MOWGLI_LIST_FOREACH(n, cu_pfx_list.head) {
+				u_cu_pfx *cs = n->data;
+				*s++ = cs->prefix;
+			}
+			*s++ = '\0';
+		} else if (cur->s) {
 			sprintf(tmp, "%s=%s", cur->name, cur->s);
 		} else if (cur->i) {
 			sprintf(tmp, "%s=%d", cur->name, cur->i);

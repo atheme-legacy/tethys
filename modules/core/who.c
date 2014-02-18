@@ -10,6 +10,7 @@ static void who_reply(u_sourceinfo *si, u_user *u, u_chan *c, u_chanuser *cu)
 {
 	u_server *sv;
 	char *s, buf[6];
+	mowgli_node_t *n;
 
 	if (c == NULL) {
 		/* oh god this is so bad */
@@ -29,10 +30,11 @@ static void who_reply(u_sourceinfo *si, u_user *u, u_chan *c, u_chanuser *cu)
 	*s++ = u->away[0] ? 'G' : 'H';
 	if (u->mode & UMODE_OPER)
 		*s++ = '*';
-	if (cu && (cu->flags & CU_PFX_OP))
-		*s++ = '@';
-	if (cu && (cu->flags & CU_PFX_VOICE))
-		*s++ = '+';
+	MOWGLI_LIST_FOREACH(n, cu_pfx_list.head) {
+		u_cu_pfx *cs = n->data;
+		if (cu && (cu->flags & cs->mask))
+			*s++ = cs->prefix;
+	}
 	*s = '\0';
 
 	u_src_num(si, RPL_WHOREPLY, c, u->ident, u->host, u->sv->name,

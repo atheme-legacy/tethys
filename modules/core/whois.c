@@ -11,6 +11,7 @@ static void whois_channels(u_sourceinfo *si, u_user *tu)
 	u_map_each_state state;
 	u_chan *c; u_chanuser *cu;
 	u_strop_wrap wrap;
+	mowgli_node_t *n;
 	char *s;
 
 	u_strop_wrap_start(&wrap,
@@ -25,10 +26,11 @@ static void whois_channels(u_sourceinfo *si, u_user *tu)
 			continue;
 
 		p = cbuf;
-		if (cu->flags & CU_PFX_OP)
-			*p++ = '@';
-		if (cu->flags & CU_PFX_VOICE)
-			*p++ = '+';
+		MOWGLI_LIST_FOREACH(n, cu_pfx_list.head) {
+			u_cu_pfx *cs = n->data;
+			if (cu->flags & cs->mask)
+				*p++ = cs->prefix;
+		}
 		strcpy(p, c->name);
 
 		while ((s = u_strop_wrap_word(&wrap, cbuf)))

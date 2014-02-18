@@ -307,6 +307,7 @@ static int burst_chan(const char *key, void *_c, void *_link)
 	u_chanuser *cu;
 	u_map_each_state st;
 	u_strop_wrap wrap;
+	mowgli_node_t *n;
 	char *s, buf[512];
 	int sz;
 
@@ -321,10 +322,11 @@ static int burst_chan(const char *key, void *_c, void *_link)
 		char *p, nbuf[12];
 
 		p = nbuf;
-		if (cu->flags & CU_PFX_OP)
-			*p++ = '@';
-		if (cu->flags & CU_PFX_VOICE)
-			*p++ = '+';
+		MOWGLI_LIST_FOREACH(n, cu_pfx_list.head) {
+			u_cu_pfx *cs = n->data;
+			if (cu->flags & cs->mask)
+				*p++ = cs->prefix;
+		}
 		strcpy(p, u->uid);
 
 		while ((s = u_strop_wrap_word(&wrap, nbuf)) != NULL)
