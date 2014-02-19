@@ -17,5 +17,7 @@ extern void u_cookie_reset(u_cookie*);
 extern void u_cookie_inc(u_cookie*);
 extern void u_cookie_cpy(u_cookie *A, u_cookie *B);
 extern int u_cookie_cmp(u_cookie*, u_cookie*);
+extern mowgli_json_t *u_cookie_to_json(u_cookie*);
+extern int u_cookie_from_json(mowgli_json_t *, u_cookie*);
 
 #endif

@@ -95,10 +95,10 @@ extern void u_user_destroy(u_user*);
 
 extern void u_user_try_register(u_user*);
 
-extern u_user *u_user_by_nick_raw(char*);
-extern u_user *u_user_by_nick(char*);
-extern u_user *u_user_by_uid_raw(char*);
-extern u_user *u_user_by_uid(char*);
+extern u_user *u_user_by_nick_raw(const char*);
+extern u_user *u_user_by_nick(const char*);
+extern u_user *u_user_by_uid_raw(const char*);
+extern u_user *u_user_by_uid(const char*);
 
 static inline u_user *u_user_by_ref(u_link *link, char *ref)
 {
@@ -123,6 +123,10 @@ extern void u_user_welcome(u_user*);
 
 extern void u_user_make_euid(u_user*, char *buf); /* sizeof(buf) > 512 */
 
+extern void u_user_flush_inputs(void);
+
 extern int init_user(void);
+extern int dump_user(void);
+extern int restore_user(void);
 
 #endif

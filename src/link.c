@@ -220,6 +220,12 @@ static void dispatch_lines(u_link *link)
 		/* s now points to the current line, and buf and buflen
 		   describe the rest of the buffer */
 
+		/* If executing this command causes an upgrade, u_cmd_invoke will not
+		 * return. Indicate the length of the current message to the dump function
+		 * so that it won't be serialized and re-execute after upgrade.
+		 */
+		link->ibufskip = (p - link->ibuf);
+
 		/* dispatch the line */
 		u_log(LG_DEBUG, "[%G] -> %s", link, s);
 		if (u_msg_parse(&msg, (char*)s) < 0)
@@ -230,6 +236,11 @@ static void dispatch_lines(u_link *link)
 	/* move remaining buffer contents to the start of the in buffer */
 	memmove(link->ibuf, link->ibuf + link->ibuflen - buflen, buflen);
 	link->ibuflen = buflen;
+	link->ibufskip = 0;
+}
+
+void u_link_flush_input(u_link *link) {
+	dispatch_lines(link);
 }
 
 /* user API */
@@ -373,6 +384,40 @@ static mowgli_patricia_t *u_conf_listen_handlers = NULL;
 static void accept_ready(mowgli_eventloop_t *ev, mowgli_eventloop_io_t *io,
                          mowgli_eventloop_io_dir_t dir, void *priv);
 
+u_link_origin *u_link_origin_create_from_fd(mowgli_eventloop_t *ev, int fd)
+{
+	const char *operation;
+	u_link_origin *origin = NULL;
+
+	/* Set the fd to be close-on-exec. All listening sockets will be closed when
+	 * we upgrade. This may cause some slight disturbance for users currently
+	 * connecting, but this is acceptable.
+	 */
+	operation = "set close-on-exec";
+	if (set_cloexec(fd) < 0)
+		goto error;
+
+	u_log(LG_DEBUG, "u_link_origin_create_from_fd: %d", fd);
+
+	origin = malloc(sizeof(*origin));
+
+	operation = "create pollable";
+	if (!(origin->poll = mowgli_pollable_create(ev, fd, origin))) {
+		errno = -EINVAL; /* XXX */
+		goto error;
+	}
+
+	mowgli_node_add(origin, &origin->n, &all_origins);
+	mowgli_pollable_setselect(ev, origin->poll, MOWGLI_EVENTLOOP_IO_READ,
+	                          accept_ready);
+
+	return origin;
+error:
+	u_perror(operation);
+	free(origin);
+	return NULL;
+}
+
 u_link_origin *u_link_origin_create(mowgli_eventloop_t *ev, short port)
 {
 	const char *operation;
@@ -402,24 +447,13 @@ u_link_origin *u_link_origin_create(mowgli_eventloop_t *ev, short port)
 	if (listen(fd, 5) < 0)
 		goto error;
 
-	origin = malloc(sizeof(*origin));
-
-	operation = "create pollable";
-	if (!(origin->poll = mowgli_pollable_create(ev, fd, origin))) {
-		errno = -EINVAL; /* XXX */
+	if (!(origin = u_link_origin_create_from_fd(ev, fd)))
 		goto error;
-	}
-
-	mowgli_node_add(origin, &origin->n, &all_origins);
-	mowgli_pollable_setselect(ev, origin->poll, MOWGLI_EVENTLOOP_IO_READ,
-	                          accept_ready);
 
 	return origin;
 
 error:
 	u_perror(operation);
-	if (origin)
-		free(origin);
 	if (fd >= 0)
 		close(fd);
 	return NULL;
@@ -519,3 +553,127 @@ int init_link(void)
 
 	return 0;
 }
+
+/* Serialization
+ * -------------
+ */
+mowgli_json_t *u_link_to_json(u_link *link)
+{
+	mowgli_json_t *jl;
+
+	if (!link)
+		return NULL;
+
+	jl = mowgli_json_create_object();
+	json_oseti  (jl, "flags", link->flags);
+	json_oseti  (jl, "type",  link->type);
+	json_osets  (jl, "pass",  link->pass);
+	json_oseti  (jl, "sendq", link->sendq);
+	json_oseto  (jl, "ck_sendto", u_cookie_to_json(&link->ck_sendto));
+	json_oseto  (jl, "conn",  u_conn_to_json(link->conn));
+	json_osetb64(jl, "ibuf",  link->ibuf + link->ibufskip, link->ibuflen - link->ibufskip);
+
+	switch (link->type) {
+		case LINK_USER:
+			/* we can figure this out when we restore */
+			break;
+
+		case LINK_SERVER:
+			json_osets  (jl, "server_link_block_name", link->conf.link->name);
+			break;
+
+		default:
+			u_log(LG_SEVERE, "unexpected link type %d", link->type);
+			abort();
+	}
+
+	return jl;
+}
+
+u_link *u_link_from_json(mowgli_json_t *jl)
+{
+	u_link *link;
+	mowgli_json_t *jcookie, *jconn;
+	mowgli_string_t *jpass, *jslinkname;
+	ssize_t sz;
+
+	link = link_create();
+
+	if (json_ogetu(jl, "flags", &link->flags) < 0)
+		goto error;
+	if (json_ogetu(jl, "type", &link->type) < 0)
+		goto error;
+	if (json_ogeti(jl, "sendq", &link->sendq) < 0)
+		goto error;
+
+	if ((sz = json_ogetb64(jl, "ibuf", link->ibuf, IBUFSIZE)) < 0)
+		goto error;
+
+	link->ibuflen = sz;
+	link->ibuf[link->ibuflen] = '\0';
+
+	jpass = json_ogets(jl, "pass");
+	if (jpass) {
+		link->pass = malloc(jpass->pos+1);
+		memcpy(link->pass, jpass->str, jpass->pos);
+		link->pass[jpass->pos] = '\0';
+	}
+
+	jcookie = json_ogeto(jl, "ck_sendto");
+	if (!jcookie)
+		goto error;
+
+	if (u_cookie_from_json(jcookie, &link->ck_sendto) < 0)
+		goto error;
+
+	jconn = json_ogeto(jl, "conn");
+	if (!jconn)
+		goto error;
+
+	link->conn = u_conn_from_json(base_ev, &u_link_conn_ctx, link, jconn);
+	if (!link->conn)
+		goto error;
+
+	link->conn->priv = link;
+
+	/* This must run after the config has been loaded. */
+	switch (link->type) {
+		case LINK_USER:
+			/* If the user is post-registration, re-find his auth block. */
+			if (link->flags & U_LINK_REGISTERED) {
+				/* XXX: Should this be in user.c? */
+				link->conf.auth = u_find_auth(link);
+				if (!link->conf.auth)
+					goto error;
+			}
+
+			break;
+
+		case LINK_SERVER:
+			jslinkname = json_ogets(jl, "server_link_block_name");
+			if (!jslinkname)
+				goto error;
+
+			/* mowgli_string is NULL-terminated. We needn't care about NULLs. */
+			link->conf.link = u_find_link(jslinkname->str);
+			if (!link->conf.link)
+				goto error;
+
+			break;
+
+		default:
+			u_log(LG_SEVERE, "unexpected link type %d", link->type);
+			abort();
+	}
+
+	return link;
+
+error:
+	if (link) {
+		free(link->pass);
+		free(link);
+	}
+	return NULL;
+}
+
+/* vim: set noet: */

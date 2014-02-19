@@ -11,14 +11,14 @@ mowgli_patricia_t *users_by_uid;
 
 char *id_map = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 int id_modulus = 36; /* just strlen(uid_map) */
-int id_digits[6] = {0, 0, 0, 0, 0, 0};
+char id_digits[6] = {0, 0, 0, 0, 0, 0};
 char id_buf[7] = {0, 0, 0, 0, 0, 0, 0};
 
 char *id_next(void)
 {
 	int i;
 	for (i=0; i<6; i++)
-		id_buf[i] = id_map[id_digits[i]];
+		id_buf[i] = id_map[(int)id_digits[i]];
 	for (i=6; i-->0;) {
 		id_digits[i] ++;
 		if (id_digits[i] < id_modulus)
@@ -27,6 +27,23 @@ char *id_next(void)
 	}
 	id_buf[6] = '\0';
 	return id_buf;
+}
+
+static int set_id_next_from_str(const char *id)
+{
+	char d[6] = {};
+	char *x;
+	int i;
+
+	for (i=0;i<6;++i) {
+		x = strchr(id_map, id[i]);
+		if (!x)
+			return -1;
+		d[i] = x - id_map;
+	}
+
+	memcpy(id_digits, d, 6);
+	return 0;
 }
 
 static ulong umode_get_flag_bits(u_modes *m)
@@ -62,7 +79,7 @@ u_mode_ctx umodes = {
 
 uint umode_default = 0;
 
-static u_user *create_user(char *uid, u_link *link, u_server *sv)
+static u_user *create_user(const char *uid, u_link *link, u_server *sv)
 {
 	u_user *u;
 
@@ -179,23 +196,23 @@ void u_user_try_register(u_user *u)
 	u_user_welcome(u);
 }
 
-u_user *u_user_by_nick_raw(char *nick)
+u_user *u_user_by_nick_raw(const char *nick)
 {
 	return mowgli_patricia_retrieve(users_by_nick, nick);
 }
 
-u_user *u_user_by_nick(char *nick)
+u_user *u_user_by_nick(const char *nick)
 {
 	u_user *u = u_user_by_nick_raw(nick);
 	return u && IS_REGISTERED(u) ? u : NULL;
 }
 
-u_user *u_user_by_uid_raw(char *uid)
+u_user *u_user_by_uid_raw(const char *uid)
 {
 	return mowgli_patricia_retrieve(users_by_uid, uid);
 }
 
-u_user *u_user_by_uid(char *nick)
+u_user *u_user_by_uid(const char *nick)
 {
 	u_user *u = u_user_by_uid_raw(nick);
 	return u && IS_REGISTERED(u) ? u : NULL;
@@ -400,8 +417,8 @@ int u_user_in_list(u_user *u, mowgli_list_t *list)
 void u_user_make_euid(u_user *u, char *buf)
 {
 	/* still ridiculous...              nick  nickts   host  uid   acct
-                                               hops  modes    ip    rlhost gecos
-                                                        ident                    */
+	                                             hops  modes    ip    rlhost gecos
+	                                                      ident                    */
 	snf(FMT_SERVER, buf, 512, ":%S EUID %s %d %u %s %s %s %s %s %s %s :%s",
 	    u->sv, u->nick, u->sv->hops + 1, u->nickts,
 	    u_user_modes(u),
@@ -409,6 +426,234 @@ void u_user_make_euid(u_user *u, char *buf)
 	    IS_LOGGED_IN(u) ? u->acct : "*", u->gecos);
 }
 
+void u_user_flush_inputs(void)
+{
+	mowgli_patricia_iteration_state_t state;
+	u_user *u;
+
+	MOWGLI_PATRICIA_FOREACH(u, &state, users_by_uid) {
+		if (u->link)
+			u_link_flush_input(u->link);
+	}
+}
+
+/* Serialization
+ * -------------
+ */
+static int dump_specific_user(u_user *u, mowgli_json_t *j_users)
+{
+	mowgli_json_t *ju;
+
+	if (!u->sv || !u->sv->sid[0]) {
+		u_log(LG_WARN, "User on server without SID, ignoring");
+		return 0;
+	}
+
+	ju = mowgli_json_create_object();
+	json_oseto  (j_users, u->uid, ju);
+
+	json_oseti  (ju, "mode",     u->mode);
+	json_oseti  (ju, "flags",    u->flags);
+	json_osets  (ju, "nick",     u->nick);
+	json_osets  (ju, "acct",     u->acct);
+	json_oseti64(ju, "nickts", u->nickts);
+	json_osets  (ju, "ident",    u->ident);
+	json_osets  (ju, "ip",       u->ip);
+	json_osets  (ju, "realhost", u->realhost);
+	json_osets  (ju, "host",     u->host);
+	json_osets  (ju, "gecos",    u->gecos);
+	json_osets  (ju, "away",     u->away);
+	json_oseto  (ju, "limit",    u_ratelimit_to_json(&u->limit));
+	if (u->sv == &me) {
+		/* Local user. */
+		json_oseto  (ju, "link",     u_link_to_json(u->link));
+	} else {
+		/* Remote user; the link is serialized with the server.
+		 * Reference it by SID. We can't infer this from the UID because our link
+		 * to the user could be via an intermediate server. This is essentially the
+		 * "next hop".
+		 */
+		json_osets  (ju, "link_via", u->sv->sid);
+	}
+
+	return 0;
+}
+
+int dump_user(void)
+{
+	int err;
+	u_user *u;
+	mowgli_patricia_iteration_state_t state;
+
+	id_next();
+	json_oseto(upgrade_json, "next_uid",
+		mowgli_json_create_string_n(id_buf, strlen(id_buf)));
+
+	/* Dump users */
+	mowgli_json_t *j_users = mowgli_json_create_object();
+	json_oseto(upgrade_json, "users", j_users);
+
+	MOWGLI_PATRICIA_FOREACH(u, &state, users_by_uid) {
+	  if ((err = dump_specific_user(u, j_users)) < 0)
+	    return err;
+	}
+
+	return 0;
+}
+
+static int restore_specific_user(const char *uid, mowgli_json_t *ju)
+{
+	int err;
+	u_user *u = NULL;
+	u_link *link;
+	mowgli_json_t *jl, *jlimit;
+	mowgli_string_t
+		*jslvia,
+		*jsnick, *jsacct, *jsident,
+		*jsip, *jsrealhost, *jshost, *jsgecos, *jsaway;
+	u_server *sv, *sv_via;
+	char sid[4];
+
+	/* Get server for UID ------------------------- */
+	if (strlen(uid) != 9)
+		return -1;
+
+	memcpy(sid, uid, 3);
+	sid[3] = '\0';
+
+	sv = u_server_by_sid(sid);
+	if (!sv)
+		return -1;
+
+	/* Create user -------------------------------- */
+	u = create_user(uid, NULL, sv);
+
+	/* Fill in various fields --------------------- */
+	if ((err = json_ogetu(ju, "mode", &u->mode)) < 0)
+		return err;
+
+	if ((err = json_ogetu(ju, "flags", &u->flags)) < 0)
+		return err;
+
+	if ((err = json_ogetu64(ju, "nickts", &u->nickts)) < 0)
+		return err;
+
+	jsnick = json_ogets(ju, "nick");
+	if (!jsnick || jsnick->pos > MAXNICKLEN)
+		return -1;
+	memcpy(u->nick,     jsnick->str,     jsnick->pos);
+
+	jsacct = json_ogets(ju, "acct");
+	if (!jsacct || jsnick->pos > MAXACCOUNT)
+		return -1;
+	memcpy(u->acct,     jsacct->str,     jsacct->pos);
+
+	jsident = json_ogets(ju, "ident");
+	if (!jsident || jsnick->pos > MAXIDENT)
+		return -1;
+	memcpy(u->ident,    jsident->str,    jsident->pos);
+
+	jsip = json_ogets(ju, "ip");
+	if (!jsip || jsip->pos > INET_ADDRSTRLEN)
+		return -1;
+	memcpy(u->ip,       jsip->str,       jsip->pos);
+
+	jsrealhost = json_ogets(ju, "realhost");
+	if (!jsrealhost || jsrealhost->pos > MAXHOST)
+		return -1;
+	memcpy(u->realhost, jsrealhost->str, jsrealhost->pos);
+
+	jshost = json_ogets(ju, "host");
+	if (!jshost || jshost->pos > MAXHOST)
+		return -1;
+	memcpy(u->host,     jshost->str,     jshost->pos);
+
+	jsgecos = json_ogets(ju, "gecos");
+	if (!jsgecos || jsgecos->pos > MAXGECOS)
+		return -1;
+	memcpy(u->gecos,    jsgecos->str,    jsgecos->pos);
+
+	jsaway = json_ogets(ju, "away");
+	if (!jsaway || jsaway->pos > MAXAWAY)
+		return -1;
+	memcpy(u->away,     jsaway->str,     jsaway->pos);
+
+	jlimit = json_ogeto(ju, "limit");
+	if (!jlimit)
+		return -1;
+
+	if ((err = u_ratelimit_from_json(jlimit, &u->limit)) < 0)
+		return err;
+
+	/* Create link -------------------------------- */
+	err = -1;
+	jl     = json_ogeto(ju, "link");
+	jslvia = json_ogets(ju, "link_via");
+	if (!!jl == !!jslvia) /* neither both nor neither */
+		return -1;
+
+	if (jl) {
+		/* Local user */
+		link = u_link_from_json(jl);
+		if (!link)
+			return -1;
+
+		/* Can't fail now */
+		u->link = link;
+		u->link->priv = u;
+	} else {
+		/* Remote user */
+		sv_via = u_server_by_sid(jslvia->str);
+		if (!sv_via)
+			return -1;
+
+		u->link = sv_via->link;
+	}
+
+	mowgli_patricia_add(users_by_nick, u->nick, u);
+
+	return 0;
+}
+
+int restore_user(void)
+{
+	int err;
+	mowgli_json_t *ju, *jusers;
+	mowgli_patricia_iteration_state_t state;
+	mowgli_string_t *jsnextuid;
+	const char *k;
+
+	u_log(LG_DEBUG, "Restoring users...");
+
+	/* Restore UID counter */
+	jsnextuid = json_ogets(upgrade_json, "next_uid");
+	if (!jsnextuid || jsnextuid->pos != 6) {
+		u_log(LG_DEBUG, "no next UID? %u", (jsnextuid ? jsnextuid->pos : 9999));
+		return -1;
+	}
+
+	if ((err = set_id_next_from_str(jsnextuid->str)) < 0)
+		return -1;
+
+	/* Restore users */
+	jusers = json_ogeto_c(upgrade_json, "users");
+	if (!jusers)
+		return -1;
+
+	MOWGLI_PATRICIA_FOREACH(ju, &state, MOWGLI_JSON_OBJECT(jusers)) {
+		k = mowgli_patricia_elem_get_key(state.pspare[0]); /* XXX */
+		if ((err = restore_specific_user(k, ju)) < 0)
+			return err;
+	}
+
+	/* Done */
+	u_log(LG_DEBUG, "Done restoring users");
+	return 0;
+}
+
+/* Initialization
+ * --------------
+ */
 int init_user(void)
 {
 	users_by_nick = mowgli_patricia_create(rfc1459_canonize);
@@ -419,3 +664,5 @@ int init_user(void)
 
 	return 0;
 }
+
+/* vim: set noet: */

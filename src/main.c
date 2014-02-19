@@ -20,6 +20,8 @@ char startedstr[256];
 
 short opt_port = -1;
 
+char *main_argv0;
+
 int usage(char *argv0, int code)
 {
 	printf("Usage: %s [OPTIONS]\n", argv0);
@@ -44,16 +46,16 @@ int init(void)
 	base_ev = mowgli_eventloop_create();
 	base_dns = mowgli_dns_create(base_ev, MOWGLI_DNS_TYPE_ASYNC);
 
+	INIT(init_upgrade);
 	INIT(init_util);
 	INIT(init_module);
 	INIT(init_hook);
 	INIT(init_conf);
 	INIT(init_conn);
-	INIT(init_upgrade);
 	INIT(init_auth);
+	INIT(init_server);
 	INIT(init_user);
 	INIT(init_cmd);
-	INIT(init_server);
 	INIT(init_chan);
 	INIT(init_sendto);
 	INIT(init_link);
@@ -70,6 +72,17 @@ int init(void)
 		return -1;
 	}
 
+	/* Upgrade */
+	if (upgrade_json) {
+		INIT(restore_server);
+		INIT(restore_user);
+		INIT(restore_chan);
+		finish_upgrade();
+		u_server_flush_inputs();
+		u_user_flush_inputs();
+	}
+	/* Any upgrade is now complete. */
+
 	return 0;
 }
 
@@ -78,13 +91,15 @@ int main(int argc, char **argv)
 {
 	int c;
 
+	main_argv0 = argv[0];
+
 	gettimeofday(&NOW, NULL);
 	started = NOW.tv_sec;
 	strftime(startedstr, 256, "%a %b %d at %T UTC", gmtime((time_t*) &started));
 
 	u_log(LG_INFO, "%s starting...", PACKAGE_FULLNAME);
 
-	while ((c = getopt(argc, argv, "vhp:")) != -1) {
+	while ((c = getopt(argc, argv, "vhp:U:")) != -1) {
 		switch(c) {
 		case 'v':
 			if (u_log_level < LG_FINE)
@@ -98,6 +113,9 @@ int main(int argc, char **argv)
 			      " config file to specify listeners");
 			opt_port = atoi(optarg);
 			break;
+		case 'U':
+			opt_upgrade = optarg;
+			break;
 		case '?':
 			usage(argv[0], 1);
 			break;
@@ -106,6 +124,7 @@ int main(int argc, char **argv)
 
 	if (init() < 0) {
 		u_log(LG_ERROR, "Initialization failed");
+		abort_upgrade();
 		return 1;
 	}
 

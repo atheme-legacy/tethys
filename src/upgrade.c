@@ -4,96 +4,221 @@
    This file is protected under the terms contained
    in the COPYING file in the project root */
 
-#define UDB_LINE_SIZE 4096
-
 #include "ircd.h"
 
-struct u_udb {
-	int reading;
+const char *opt_upgrade;
+mowgli_json_t *upgrade_json;
 
-	FILE *f;
-
-	char line[UDB_LINE_SIZE];
-	char buf[UDB_LINE_SIZE];
-	char *p;
-	ulong sz;
-};
-
-mowgli_list_t *u_udb_save_hooks;
-mowgli_patricia_t *u_udb_load_hooks;
-
-void u_udb_row_start(u_udb *db, char *name)
+static int
+_form_phoenix_args(const char *upgrade_fn, const char ***argv)
 {
-	if (db->reading) {
-		u_log(LG_ERROR, "Tried to start row while reading database!");
-		return;
+	static const char *_args[8];
+	static char _verbosity[16] = "-";
+	static char _port[6];
+
+	int i = 0;
+	int level = LG_INFO;
+	char *vflag = _verbosity + 1;
+
+	_args[i++] = main_argv0;
+
+	if (level < u_log_level) {
+		while (level++ < u_log_level)
+			*vflag++ = 'v';
+		*vflag++ = 0;
+		_args[i++] = _verbosity;
 	}
 
-	db->sz = snf(FMT_LOG, db->line, UDB_LINE_SIZE, "%s", name);
-}
-
-void u_udb_row_end(u_udb *db)
-{
-	fprintf(db->f, "%s\n", db->line);
-}
-
-void u_udb_put_s(u_udb *db, char *s)
-{
-	char *p = db->buf;
-
-	while (*s) {
-		switch (*s) {
-		case ' ':
-		case '\\':
-			*p++ = '\\';
-		default:
-			*p++ = *s++;
-		}
+	if (opt_port >= 0) {
+		sprintf(_port, "%d", opt_port);
+		_args[i++] = "-p";
+		_args[i++] = _port;
 	}
 
-	db->sz += snf(FMT_LOG, db->line + db->sz,
-	              UDB_LINE_SIZE - db->sz, " %s", s);
-}
-
-void u_udb_put_i(u_udb *db, long n)
-{
-	char buf[512];
-
-	snf(FMT_LOG, buf, 512, "%d", n);
-	u_udb_put_s(db, buf);
-}
-
-char *u_udb_get_s(u_udb *db)
-{
-	char *s = db->buf;
-
-	if (!db->reading) {
-		u_log(LG_ERROR, "Tried to read word while writing database!");
-		return NULL;
+	if (upgrade_fn) {
+		_args[i++] = "-U";
+		_args[i++] = upgrade_fn;
 	}
 
-	while (*db->p != ' ' && *db->p) {
-		if (*db->p == '\\')
-			db->p++;
-		*s++ = *db->p++;
-	}
-	*s = '\0';
+	_args[i++] = NULL;
 
-	return db->buf;
-}
-
-long u_udb_get_i(u_udb *db)
-{
-	char *s = u_udb_get_s(db);
-	if (s != NULL)
-		return atoi(s);
-	return -1;
-}
-
-int init_upgrade(void)
-{
-	u_udb_save_hooks = mowgli_list_create();
-	u_udb_load_hooks = mowgli_patricia_create(NULL);
-
+	*argv = _args;
 	return 0;
 }
+
+/* begin_upgrade
+ * -------------
+ * Called to begin an upgrade. Re-execs. Does not return on success.
+ */
+
+static void
+_json_append(mowgli_json_output_t *out, const char *str, size_t len)
+{
+	FILE *f = out->priv;
+	if (fwrite(str, len, 1, f) != 1) {
+		/* XXX */
+		abort();
+	}
+}
+
+static void
+_json_append_char(mowgli_json_output_t *out, const char c)
+{
+	_json_append(out, &c, sizeof(c));
+}
+
+int
+begin_upgrade(void)
+{
+	int err;
+	const char **argv;
+	FILE *f;
+	mowgli_json_output_t json_out = {};
+	u_hook *h_dump;
+
+	/* Make sure the file doesn't currently exist. */
+	if (unlink(UPGRADE_FILENAME) < 0 && errno != ENOENT)
+		return -1;
+
+	f = fopen(UPGRADE_FILENAME, "wb");
+	if (!f)
+		return -1;
+
+	/* Open database */
+	upgrade_json = mowgli_json_create_object();
+
+	/* Call each unit and give it an opportunity to dump information */
+#define DUMP(fn) if ((err = (fn)()) < 0) goto error
+	DUMP(dump_user);
+	DUMP(dump_server);
+	DUMP(dump_chan);
+
+	h_dump = u_hook_get(HOOK_UPGRADE_DUMP);
+	if (u_hook_first(h_dump, NULL)) {
+		/* return non-NULL to abort */
+		return -1;
+	}
+
+	json_out.priv        = f;
+	json_out.append      = _json_append;
+	json_out.append_char = _json_append_char;
+
+	mowgli_json_serialize(upgrade_json, &json_out, 1 /* DEBUG PRETTY */);
+
+	mowgli_json_decref(upgrade_json);
+	upgrade_json = NULL;
+
+	fclose(f);
+
+	/* Launch successor */
+	if ((err = _form_phoenix_args(UPGRADE_FILENAME, &argv)) < 0)
+		goto error;
+
+	return execvp(argv[0], (char**)argv);
+
+error:
+	if (upgrade_json) {
+		mowgli_json_decref(upgrade_json);
+		upgrade_json = NULL;
+	}
+	return err;
+}
+
+/* finish_upgrade
+ * --------------
+ * Called when all modules are initialized and have had a chance to make use of
+ * upgrade data.
+ */
+int
+finish_upgrade(void)
+{
+	if (upgrade_json) {
+		u_hook *h_restore = u_hook_get(HOOK_UPGRADE_RESTORE);
+		if (u_hook_first(h_restore, NULL)) {
+			/* return non-NULL to abort */
+			return -1;
+		}
+
+		mowgli_json_decref(upgrade_json);
+		upgrade_json = NULL;
+		//unlink(opt_upgrade);
+	}
+	opt_upgrade = NULL;
+	return 0;
+}
+
+/* abort_upgrade
+ * -------------
+ * In the event that restore fails, we re-execute ourself in non-upgrade mode.
+ * One could design the restore system to be transactional, but that creates a
+ * much greater degree of complexity. The objective of this system is to be
+ * simple and maintainable. Strange though double-exec may be, it's a simple
+ * and effective failsafe. Since the upgrade dump is written and read by (more
+ * or less) the same code, failures really shouldn't happen. But in the
+ * unlikely event that that does happen, we can at least continue operation
+ * and accept new connections rather than simply crash.
+ *
+ * This means that the restore_ functions leak memory and result in undefined
+ * state on failure. The program must exit when this occurs. This is comparable
+ * to the init_ functions, so it matches the style of Tethys.
+ *
+ * Proper error handling is retained for the '_from_json' functions at this
+ * time, since there is no clear motive to remove it.
+ */
+static void
+_closefrom(int fd)
+{
+	int maxfd;
+
+	/* This is POSIX and should be portable. */
+	maxfd = (int)sysconf(_SC_OPEN_MAX);
+	if (maxfd < 0)
+		maxfd = 256; /* arbitrary */
+
+	for (; fd<maxfd; ++fd)
+		close(fd);
+}
+
+void
+abort_upgrade(void)
+{
+	int err;
+	const char **argv;
+
+	if (!opt_upgrade)
+		return;
+
+	/* We have to close all fds before we exec. BSD has closefrom(3) which
+	 * suffices, but Linux doesn't.
+	 */
+	_closefrom(3);
+
+	if ((err = _form_phoenix_args(NULL, &argv)) < 0)
+		abort();
+
+	execvp(argv[0], (char**)argv);
+	abort();
+}
+
+/* init_upgrade
+ * ------------
+ * Called on executable image bootup.
+ */
+int
+init_upgrade(void)
+{
+	/* We have been executed to resume an upgrade (-U upgrade.db) */
+	if (opt_upgrade) {
+		/* The different units will load in their init functions when
+		 * opt_upgrade != NULL.
+		 */
+		upgrade_json = mowgli_json_parse_file(opt_upgrade);
+		if (!upgrade_json)
+			return -1;
+	}
+
+	/* Not upgrading. */
+	return 0;
+}
+
+/* vim: set noet: */

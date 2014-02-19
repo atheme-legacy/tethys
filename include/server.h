@@ -69,8 +69,8 @@ extern mowgli_list_t my_motd;
 extern mowgli_list_t my_admininfo;
 extern char my_net_name[MAXNETNAME+1];
 
-extern u_server *u_server_by_sid(char *sid);
-extern u_server *u_server_by_name(char *name);
+extern u_server *u_server_by_sid(const char *sid);
+extern u_server *u_server_by_name(const char *name);
 extern u_server *u_server_find(char *str);
 
 static inline u_server *u_server_by_ref(u_link *link, char *ref)
@@ -92,6 +92,10 @@ extern void u_server_burst_1(u_link*, u_link_block*);
 extern void u_server_burst_2(u_server*, u_link_block*);
 extern void u_server_eob(u_server*);
 
+extern void u_server_flush_inputs(void);
+
 extern int init_server(void);
+extern int dump_server(void);
+extern int restore_server(void);
 
 #endif

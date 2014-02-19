@@ -78,12 +78,12 @@ static void admin_conf(mowgli_config_file_t *cf, mowgli_config_file_entry_t *ce)
 	}
 }
 
-u_server *u_server_by_sid(char *sid)
+u_server *u_server_by_sid(const char *sid)
 {
 	return mowgli_patricia_retrieve(servers_by_sid, sid);
 }
 
-u_server *u_server_by_name(char *name)
+u_server *u_server_by_name(const char *name)
 {
 	return mowgli_patricia_retrieve(servers_by_name, name);
 }
@@ -423,10 +423,196 @@ void u_server_eob(u_server *sv)
 	sv->flags &= ~SERVER_IS_BURSTING;
 }
 
+void u_server_flush_inputs(void)
+{
+	mowgli_patricia_iteration_state_t state;
+	u_server *s;
+
+	MOWGLI_PATRICIA_FOREACH(s, &state, servers_by_sid) {
+		if (s->link)
+			u_link_flush_input(s->link);
+	}
+}
+
+/* Serialization
+ * -------------
+ */
+static int dump_specific_server(u_server *s, mowgli_json_t *j_servers)
+{
+	mowgli_json_t *js;
+
+	if (!s->sid[0])
+		/* A server entry is created for juped servers, but with no sid.
+		 * Just ignore it, it'll be recreated from the config file.
+		 */
+		return 0;
+
+	js = mowgli_json_create_object();
+	json_oseto  (j_servers, s->sid, js);
+
+	json_osets  (js, "name", s->name);
+	json_osets  (js, "desc", s->desc);
+	json_oseti  (js, "capab", s->capab);
+	json_oseti  (js, "hops",  s->hops);
+	json_osets  (js, "parent", (s->parent) ? s->parent->sid : NULL);
+	json_oseto  (js, "link", u_link_to_json(s->link));
+	json_osetu  (js, "nlinks", s->nlinks);
+
+	return 0;
+}
+
+int dump_server(void)
+{
+	int err;
+	mowgli_patricia_iteration_state_t state;
+	u_server *s;
+
+	mowgli_json_t *j_servers = mowgli_json_create_object();
+	json_oseto(upgrade_json, "servers", j_servers);
+
+	MOWGLI_PATRICIA_FOREACH(s, &state, servers_by_sid) {
+		if ((err = dump_specific_server(s, j_servers)) < 0)
+			return err;
+	}
+
+	return 0;
+}
+
+static int restore_specific_server(const char *sid, mowgli_json_t *js)
+{
+	static bool _restored_me = false;
+	u_server *s       = NULL;
+	u_server *sparent = NULL;
+	u_link *link      = NULL;
+	char psid[4]      = {};
+	mowgli_string_t *jsparent, *jsname, *jsdesc;
+	mowgli_json_t   *jlink;
+
+	if (strlen(sid) != 3)
+		return -1;
+
+	if (!memcmp(sid, me.sid, 3))
+		s = &me;
+
+	/* We already have this server. But since we've already read the
+	 * configuration file, 'me' will be fully loaded and in the lookup tables.
+	 * So we only read a few fields when s == &me.
+	 */
+	if (u_server_by_sid(sid) && (s != &me || _restored_me))
+		return 0;
+
+	/* Parent ----------------------------- */
+	jsparent = json_ogets(js, "parent");
+	if (jsparent) {
+		if (s == &me || jsparent->pos != 3)
+			return -1;
+
+		memcpy(psid, jsparent->str, 3);
+		sparent = u_server_by_sid(psid);
+
+		/* Come back to this later if our parent isn't added yet. */
+		if (!sparent)
+			return 0;
+	} 
+
+	u_log(LG_DEBUG, "Restoring server [%s]", sid);
+	jlink = json_ogeto(js, "link");
+
+	if (!s)
+		s = calloc(1, sizeof(*s));
+
+	if (json_ogetu(js, "hops", &s->hops) < 0)
+		return -1;
+
+	if (json_ogetu(js, "capab", &s->capab) < 0)
+		return -1;
+
+	if (json_ogetu(js, "nlinks", &s->nlinks) < 0)
+		return -1;
+
+	if (s == &me) {
+		/* name and description must match what is in the
+		 * configuration file for 'me'
+		 */
+		if (jlink)
+			return -1;
+
+		_restored_me = true;
+	} else {
+		if (!jlink)
+			return -1;
+
+		link = u_link_from_json(jlink);
+		if (!link)
+			return -1;
+
+		memcpy(s->sid, sid, 3);
+		s->link = link;
+		s->link->priv = s;
+		s->parent = sparent;
+
+		jsname = json_ogets(js, "name");
+		if (!jsname || jsname->pos > MAXSERVNAME)
+			return -1;
+		memcpy(s->name, jsname->str, jsname->pos);
+
+		jsdesc = json_ogets(js, "desc");
+		if (!jsdesc || jsname->pos > MAXSERVDESC)
+			return -1;
+		memcpy(s->desc, jsdesc->str, jsdesc->pos);
+
+		mowgli_patricia_add(servers_by_sid,  s->sid,  s);
+		mowgli_patricia_add(servers_by_name, s->name, s);
+	}
+
+	return 1;
+}
+
+int restore_server(void)
+{
+	int err;
+	mowgli_json_t *jss, *js;
+	mowgli_patricia_iteration_state_t state;
+	int num_added;
+	const char *k;
+
+	u_log(LG_DEBUG, "Restoring servers...");
+
+	/* Add servers */
+	jss = json_ogeto_c(upgrade_json, "servers");
+	if (!jss)
+		return -1;
+
+	do {
+		num_added = 0;
+		MOWGLI_PATRICIA_FOREACH(js, &state, MOWGLI_JSON_OBJECT(jss)) {
+			k = mowgli_patricia_elem_get_key(state.pspare[0]); /* XXX */
+			err = restore_specific_server(k, js);
+			if (err < 0)
+				return err;
+			if (err > 0)
+				++num_added;
+		}
+	} while (num_added);
+
+	u_log(LG_DEBUG, "Done restoring servers");
+	return 0;
+}
+
+/* Unit Initialization
+ * -------------------
+ */
 int init_server(void)
 {
 	servers_by_sid = mowgli_patricia_create(ascii_canonize);
 	servers_by_name = mowgli_patricia_create(ascii_canonize);
+
+	mowgli_list_init(&my_motd);
+
+	u_strlcpy(my_net_name, "TethysIRC", MAXNETNAME+1);
+
+	u_conf_add_handler("me", server_conf, NULL);
+	u_conf_add_handler("admin", admin_conf, NULL);
 
 	/* default settings! */
 	me.link = NULL;
@@ -446,12 +632,7 @@ int init_server(void)
 	mowgli_patricia_add(servers_by_name, me.name, &me);
 	mowgli_patricia_add(servers_by_sid, me.sid, &me);
 
-	mowgli_list_init(&my_motd);
-
-	u_strlcpy(my_net_name, "TethysIRC", MAXNETNAME+1);
-
-	u_conf_add_handler("me", server_conf, NULL);
-	u_conf_add_handler("admin", admin_conf, NULL);
-
 	return 1;
 }
+
+/* vim: set noet: */

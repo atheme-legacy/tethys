@@ -511,3 +511,129 @@ int init_conn(void)
 
 	return 0;
 }
+
+/* Serialization
+ * -------------
+ */
+static mowgli_json_t *_pollable_to_json(mowgli_eventloop_pollable_t *poll)
+{
+	mowgli_json_t *jp;
+
+	jp = mowgli_json_create_object();
+	json_oseti(jp, "fd", poll->fd);
+
+	return jp;
+}
+
+static mowgli_eventloop_pollable_t *_pollable_from_json(
+		mowgli_eventloop_t *ev,
+		u_conn *conn,
+		mowgli_json_t *jp)
+{
+	int fd = -1;
+	mowgli_eventloop_pollable_t *p;
+
+	if (json_ogeti(jp, "fd", &fd) < 0 || fd < 0)
+		return NULL;
+
+	p = mowgli_pollable_create(ev, fd, conn);
+
+	return p;
+}
+
+mowgli_json_t *u_conn_to_json(u_conn *conn)
+{
+	mowgli_json_t *jc;
+
+	jc = mowgli_json_create_object();
+	json_oseti  (jc, "state", conn->state);
+	json_oseto  (jc, "poll",  _pollable_to_json(conn->poll));
+	json_osets  (jc, "ip",    conn->ip);
+	json_osets  (jc, "host",  conn->host);
+	json_oseto  (jc, "sendq", u_sendq_to_json(&conn->sendq));
+
+	/* If we have dnsq then we are waiting on RDNS, we will reissue it on
+	 * restore.
+	 */
+	json_osetb  (jc, "rdns_pending",  !!conn->dnsq);
+
+	return jc;
+}
+
+u_conn *u_conn_from_json(
+	mowgli_eventloop_t *ev,
+	u_conn_ctx *ctx,
+	void *priv,
+	mowgli_json_t *jc)
+{
+	int fd;
+	u_conn *conn;
+	mowgli_json_t *jpoll, *jsq;
+	mowgli_string_t *jsip, *jshost;
+	struct sockaddr_in  a4;
+	struct sockaddr_in6 a6;
+
+	conn = calloc(1, sizeof(*conn));
+	u_sendq_init(&conn->sendq);
+
+	if (json_ogetu(jc, "state", &conn->state) < 0)
+		goto error;
+
+	jpoll = json_ogeto(jc, "poll");
+	if (!jpoll)
+		goto error;
+	jsq = json_ogeto(jc, "sendq");
+	if (!jsq)
+		goto error;
+
+	jsip   = json_ogets(jc, "ip");
+	if (!jsip || jsip->pos > INET6_ADDRSTRLEN)
+		goto error;
+	memcpy(conn->ip, jsip->str, jsip->pos);
+	conn->ip[jsip->pos] = '\0';
+
+	jshost = json_ogets(jc, "host");
+	if (!jshost || jshost->pos > U_CONN_HOSTSIZE)
+		goto error;
+	memcpy(conn->host, jshost->str, jshost->pos);
+	conn->host[jshost->pos] = '\0';
+
+	conn->poll = _pollable_from_json(ev, conn, jpoll);
+	if (!conn->poll)
+		goto error;
+
+	if (u_sendq_from_json(jsq, &conn->sendq) < 0)
+		goto error;
+
+	conn->ctx  = ctx;
+	conn->priv = priv;
+
+	if (conn->ctx->attach)
+		conn->ctx->attach(conn);
+
+	/* If RDNS was pending, reissue the query. */
+	if (json_ogetb(jc, "rdns_pending")) {
+		/* Parse the IP... */
+		if (inet_pton(AF_INET6, conn->ip, &a6))
+			rdns_start(conn, (struct sockaddr*)&a6, sizeof(a6));
+		else if (inet_pton(AF_INET, conn->ip, &a4))
+			rdns_start(conn, (struct sockaddr*)&a4, sizeof(a4));
+	}
+
+	sync_on_update(conn);
+
+	return conn;
+
+error:
+	u_sendq_clear(&conn->sendq);
+	if (conn->poll) {
+		fd = conn->poll->fd;
+		mowgli_pollable_destroy(ev, conn->poll);
+		close(fd);
+		/* Closing fds means this function fails non-idempotently. */
+	}
+	free(conn);
+	return NULL;
+}
+
+/* vim: set noet: */

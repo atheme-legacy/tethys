@@ -60,6 +60,7 @@ typedef unsigned long u_ts_t;
 
 #define memberp(base, offs) ((void*)((ulong)(base) + (ulong)(offs)))
 #define member(mtype, base, offs) (*((mtype*)memberp(base, offs)))
+#define arraylen(x) (sizeof(x)/sizeof((x)[0]))
 
 #define _stringify(x) #x
 #define stringify(x) _stringify(x)
@@ -102,5 +103,8 @@ extern u_ts_t started;
 extern char startedstr[256];
 
 extern char *crypt(const char*, const char*);
+
+extern char *main_argv0;
+extern short opt_port;
 
 #endif

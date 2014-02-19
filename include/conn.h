@@ -89,4 +89,11 @@ extern void u_conn_run(mowgli_eventloop_t *ev);
 
 extern int init_conn(void);
 
+extern mowgli_json_t *u_conn_to_json(u_conn *conn);
+extern u_conn *u_conn_from_json(
+  mowgli_eventloop_t *ev,
+  u_conn_ctx *ctx,
+  void *priv,
+  mowgli_json_t *jc);
+
 #endif

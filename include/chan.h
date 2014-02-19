@@ -118,5 +118,7 @@ extern u_chan *u_find_forward(u_chan*, u_user*, char *key);
 extern int u_is_muted(u_chanuser*);
 
 extern int init_chan(void);
+extern int dump_chan(void);
+extern int restore_chan(void);
 
 #endif
