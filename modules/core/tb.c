@@ -9,6 +9,7 @@
 static int c_s_tb(u_sourceinfo *si, u_msg *msg)
 {
 	char *chan = msg->argv[0];
+	char *topic = msg->argv[msg->argc - 1];
 	int ts;
 	u_chan *c;
 
@@ -20,7 +21,9 @@ static int c_s_tb(u_sourceinfo *si, u_msg *msg)
 	}
 
 	ts = atoi(msg->argv[1]);
-	/* TODO: TS checking */
+	if (c->topic[0] && ts >= c->topic_time)
+		return 0;
+
 	c->topic_time = ts;
 
 	if (msg->argc > 3) {
@@ -29,7 +32,10 @@ static int c_s_tb(u_sourceinfo *si, u_msg *msg)
 		snf(FMT_USER, c->topic_setter, MAXNICKLEN+1, "%I", si);
 	}
 
-	u_strlcpy(c->topic, msg->argv[msg->argc - 1], MAXTOPICLEN+1);
+	if (streq(topic, c->topic))
+		return 0;
+
+	u_strlcpy(c->topic, topic, MAXTOPICLEN+1);
 
 	u_sendto_chan(c, NULL, ST_USERS, ":%I TOPIC %C :%s", si, c, c->topic);
 
