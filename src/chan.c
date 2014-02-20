@@ -604,7 +604,7 @@ struct extban {
 
 static int ex_oper(extb_t *ex, u_chan *c, u_user *u, char *data)
 {
-	return u->mode & UMODE_OPER;
+	return IS_OPER(u);
 }
 
 static int ex_account(extb_t *ex, u_chan *c, u_user *u, char *data)

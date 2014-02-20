@@ -82,20 +82,20 @@ static int c_u_whois(u_sourceinfo *si, u_msg *msg)
 	sv = tu->sv;
 	u_src_num(si, RPL_WHOISUSER, tu->nick, tu->ident, tu->host, tu->gecos);
 
-	if (!(tu->mode & UMODE_SERVICE))
+	if (!IS_SERVICE(tu))
 		whois_channels(si, tu);
 
 	u_src_num(si, RPL_WHOISSERVER, tu->nick, sv->name, sv->desc);
 
-	if (tu->away[0])
+	if (IS_AWAY(tu))
 		u_src_num(si, RPL_AWAY, tu->nick, tu->away);
 
-	if (tu->mode & UMODE_SERVICE)
+	if (IS_SERVICE(tu))
 		u_src_num(si, RPL_WHOISOPERATOR, tu->nick, "a Network Service");
-	else if (tu->mode & UMODE_OPER)
+	else if (IS_OPER(tu))
 		u_src_num(si, RPL_WHOISOPERATOR, tu->nick, "an IRC operator");
 
-	if (tu->acct[0])
+	if (IS_LOGGED_IN(tu))
 		u_src_num(si, RPL_WHOISLOGGEDIN, tu->nick, tu->acct);
 
 	/* TODO: use long_whois */

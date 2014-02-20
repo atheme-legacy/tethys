@@ -379,7 +379,7 @@ void u_user_make_euid(u_user *u, char *buf)
 	    u->sv, u->nick, u->sv->hops + 1, u->nickts,
 	    u_user_modes(u),
 	    u->ident, u->host, u->ip, u->uid, u->realhost,
-	    u->acct[0] ? u->acct : "*", u->gecos);
+	    IS_LOGGED_IN(u) ? u->acct : "*", u->gecos);
 }
 
 int init_user(void)

@@ -267,7 +267,7 @@ static int burst_euid(const char *key, void *value, void *priv)
 	u_user_make_euid(u, buf);
 	u_link_f(link, "%s", buf);
 
-	if (u->away[0])
+	if (IS_AWAY(u))
 		u_link_f(link, ":%U AWAY :%s", u, u->away);
 
 	return 0;
@@ -291,10 +291,11 @@ static int burst_uid(const char *key, void *value, void *priv)
 
 	u_link_f(link, ":%U ENCAP * REALHOST :%s", u, u->realhost);
 
-	if (u->acct[0])
+	if (IS_LOGGED_IN(u))
 		u_link_f(link, ":%U ENCAP * LOGIN :%s", u, u->acct);
 
-	u_link_f(link, ":%U AWAY :%s", u, u->away);
+	if (IS_AWAY(u))
+		u_link_f(link, ":%U AWAY :%s", u, u->away);
 
 	return 0;
 }

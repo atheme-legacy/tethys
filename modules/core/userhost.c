@@ -23,8 +23,8 @@ static int c_lu_userhost(u_sourceinfo *si, u_msg *msg)
 			continue;
 
 		w = snprintf(data, 512, "%s%s=%c%s@%s", tu->nick,
-		             (tu->mode & UMODE_OPER) ? "*" : "",
-		             (tu->away[0] ? '-' : '+'),
+		             IS_OPER(tu) ? "*" : "",
+		             IS_AWAY(tu) ? '-' : '+',
 		             tu->ident, tu->host);
 
 		if (ptr + w + 1 > buf + max) {

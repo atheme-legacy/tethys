@@ -73,6 +73,12 @@ struct u_user {
 
 #define IS_LOCAL_USER(u) ((u->flags & USER_IS_LOCAL) != 0)
 
+#define IS_OPER(u)       ((u) && (u)->mode & UMODE_OPER)
+#define IS_SERVICE(u)    ((u) && (u)->mode & UMODE_SERVICE)
+
+#define IS_LOGGED_IN(u)  ((u) && (u)->acct[0])
+#define IS_AWAY(u)       ((u) && (u)->away[0])
+
 extern mowgli_patricia_t *users_by_nick;
 extern mowgli_patricia_t *users_by_uid;
 

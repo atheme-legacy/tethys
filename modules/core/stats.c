@@ -192,7 +192,7 @@ static int c_u_stats(u_sourceinfo *si, u_msg *msg)
 				continue;
 		}
 
-		if ((info->need & NEED_OPER) && !(si->u->mode & UMODE_OPER)) {
+		if ((info->need & NEED_OPER) && !IS_OPER(si->u)) {
 			u_src_num(si, ERR_NOPRIVILEGES);
 			break;
 		}

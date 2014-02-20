@@ -359,7 +359,7 @@ static void fill_source(u_sourceinfo *si, u_link *link, u_msg *msg)
 	}
 
 	if (SRC_IS_USER(si)) {
-		if (!si->u || !(si->u->mode & UMODE_OPER))
+		if (!IS_OPER(si->u))
 			si->mask &= SRC_UNPRIVILEGED;
 		else
 			si->mask &= SRC_OPER;

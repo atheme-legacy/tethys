@@ -27,8 +27,8 @@ static void who_reply(u_sourceinfo *si, u_user *u, u_chan *c, u_chanuser *cu)
 		c = NULL;
 
 	s = buf;
-	*s++ = u->away[0] ? 'G' : 'H';
-	if (u->mode & UMODE_OPER)
+	*s++ = IS_AWAY(u) ? 'G' : 'H';
+	if (IS_OPER(u))
 		*s++ = '*';
 	MOWGLI_LIST_FOREACH(n, cu_pfx_list.head) {
 		u_cu_pfx *cs = n->data;
