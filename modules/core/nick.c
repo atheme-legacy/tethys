@@ -67,8 +67,13 @@ static int c_lu_nick(u_sourceinfo *si, u_msg *msg)
 static int c_ru_nick(u_sourceinfo *si, u_msg *msg)
 {
 	char *newnick = msg->argv[0];
+	u_user *tu;
 
-	/* TODO: resolve collisions */
+	tu = u_user_by_nick(newnick);
+	if (tu != NULL && !u_user_try_override(tu)) {
+		/* TODO: perform nick collision */
+		u_log(LG_SEVERE, "Need to perform nick collision!");
+	}
 
 	u_sendto_visible(si->u, ST_USERS, ":%H NICK :%s", si->u, newnick);
 	msg->propagate = CMD_DO_BROADCAST;

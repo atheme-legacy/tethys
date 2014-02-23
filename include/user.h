@@ -79,6 +79,8 @@ struct u_user {
 #define IS_LOGGED_IN(u)  ((u) && (u)->acct[0])
 #define IS_AWAY(u)       ((u) && (u)->away[0])
 
+#define IS_REGISTERED(u) (IS_LOCAL_USER(u) && (u)->link->flags U_LINK_REGISTERED)
+
 extern mowgli_patricia_t *users_by_nick;
 extern mowgli_patricia_t *users_by_uid;
 
@@ -105,6 +107,8 @@ static inline u_user *u_user_by_ref(u_link *link, char *ref)
 extern char *u_user_modes(u_user*);
 
 extern void u_user_set_nick(u_user*, char*, uint);
+
+extern bool u_user_try_override(u_user*);
 
 extern void u_user_vnum(u_user*, int, va_list);
 extern int u_user_num(u_user*, int num, ...);

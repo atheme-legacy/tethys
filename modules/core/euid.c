@@ -8,12 +8,18 @@
 
 static int c_s_euid(u_sourceinfo *si, u_msg *msg)
 {
-	u_user *u;
+	u_user *u, *tu;
 	u_modes m;
 
 	if (!si->s) {
 		u_log(LG_SEVERE, "EUID from unknown server %s", msg->srcstr);
 		return 0;
+	}
+
+	tu = u_user_by_nick(msg->argv[0]);
+	if (tu != NULL && !u_user_try_override(tu)) {
+		/* TODO: perform nick collision */
+		u_log(LG_SEVERE, "Need to perform nick collision!");
 	}
 
 	u = u_user_create_remote(si->s, msg->argv[7]);

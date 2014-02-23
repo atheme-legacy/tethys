@@ -224,6 +224,21 @@ void u_user_set_nick(u_user *u, char *nick, uint ts)
 	u->nickts = ts;
 }
 
+bool u_user_try_override(u_user *u)
+{
+	if (!(IS_LOCAL_USER(u)))
+		return false;
+
+	if (u->link->flags & U_LINK_REGISTERED)
+		return false;
+
+	u_user_num(u, ERR_NICKNAMEINUSE, u->nick);
+	mowgli_patricia_delete(users_by_nick, u->nick);
+	u->nick[0] = '\0';
+
+	return true;
+}
+
 void u_user_vnum(u_user *u, int num, va_list va)
 {
 	char *tgt;
