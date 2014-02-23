@@ -56,7 +56,7 @@ static int c_s_num(u_sourceinfo *si, u_msg *msg)
 		break;
 
 	case 9:
-		if (!(u = u_user_by_uid(tgtid)))
+		if (!(u = u_user_by_uid_raw(tgtid)))
 			goto badtgt;
 		u_link_f(u->link, ":%I %03d %U%s", si, num, u, buf);
 		break;

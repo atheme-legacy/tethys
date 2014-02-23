@@ -69,7 +69,7 @@ static int c_ru_nick(u_sourceinfo *si, u_msg *msg)
 	char *newnick = msg->argv[0];
 	u_user *tu;
 
-	tu = u_user_by_nick(newnick);
+	tu = u_user_by_nick_raw(newnick);
 	if (tu != NULL && !u_user_try_override(tu)) {
 		/* TODO: perform nick collision */
 		u_log(LG_SEVERE, "Need to perform nick collision!");

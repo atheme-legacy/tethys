@@ -79,7 +79,8 @@ struct u_user {
 #define IS_LOGGED_IN(u)  ((u) && (u)->acct[0])
 #define IS_AWAY(u)       ((u) && (u)->away[0])
 
-#define IS_REGISTERED(u) (IS_LOCAL_USER(u) && (u)->link->flags & U_LINK_REGISTERED)
+#define IS_REGISTERED(u) (!IS_LOCAL_USER(u) || \
+                          ((u)->link->flags & U_LINK_REGISTERED) != 0)
 
 extern mowgli_patricia_t *users_by_nick;
 extern mowgli_patricia_t *users_by_uid;
@@ -94,7 +95,9 @@ extern void u_user_destroy(u_user*);
 
 extern void u_user_try_register(u_user*);
 
+extern u_user *u_user_by_nick_raw(char*);
 extern u_user *u_user_by_nick(char*);
+extern u_user *u_user_by_uid_raw(char*);
 extern u_user *u_user_by_uid(char*);
 
 static inline u_user *u_user_by_ref(u_link *link, char *ref)

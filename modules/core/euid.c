@@ -16,7 +16,7 @@ static int c_s_euid(u_sourceinfo *si, u_msg *msg)
 		return 0;
 	}
 
-	tu = u_user_by_nick(msg->argv[0]);
+	tu = u_user_by_nick_raw(msg->argv[0]);
 	if (tu != NULL && !u_user_try_override(tu)) {
 		/* TODO: perform nick collision */
 		u_log(LG_SEVERE, "Need to perform nick collision!");

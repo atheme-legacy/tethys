@@ -179,14 +179,26 @@ void u_user_try_register(u_user *u)
 	u_user_welcome(u);
 }
 
-u_user *u_user_by_nick(char *nick)
+u_user *u_user_by_nick_raw(char *nick)
 {
 	return mowgli_patricia_retrieve(users_by_nick, nick);
 }
 
-u_user *u_user_by_uid(char *uid)
+u_user *u_user_by_nick(char *nick)
+{
+	u_user *u = u_user_by_nick_raw(nick);
+	return u && IS_REGISTERED(u) ? u : NULL;
+}
+
+u_user *u_user_by_uid_raw(char *uid)
 {
 	return mowgli_patricia_retrieve(users_by_uid, uid);
+}
+
+u_user *u_user_by_uid(char *nick)
+{
+	u_user *u = u_user_by_uid_raw(nick);
+	return u && IS_REGISTERED(u) ? u : NULL;
 }
 
 char *u_user_modes(u_user *u)
