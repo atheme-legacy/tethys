@@ -247,7 +247,7 @@ void u_user_vnum(u_user *u, int num, va_list va)
 		tgt = u->uid;
 	} else {
 		tgt = u->nick;
-		if (!*tgt)
+		if (!IS_REGISTERED(u))
 			tgt = "*";
 	}
 

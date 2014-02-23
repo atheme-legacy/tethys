@@ -79,7 +79,7 @@ struct u_user {
 #define IS_LOGGED_IN(u)  ((u) && (u)->acct[0])
 #define IS_AWAY(u)       ((u) && (u)->away[0])
 
-#define IS_REGISTERED(u) (IS_LOCAL_USER(u) && (u)->link->flags U_LINK_REGISTERED)
+#define IS_REGISTERED(u) (IS_LOCAL_USER(u) && (u)->link->flags & U_LINK_REGISTERED)
 
 extern mowgli_patricia_t *users_by_nick;
 extern mowgli_patricia_t *users_by_uid;
