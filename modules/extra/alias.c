@@ -28,7 +28,7 @@ static int m_alias(u_sourceinfo *si, u_msg *msg)
 
 	if (!(tu = u_user_by_nick(to->target)))
 		goto unavailable;
-	if (IS_LOCAL_USER(tu)) /* TODO: check +S instead */
+	if (!IS_SERVICE(tu))
 		goto unavailable;
 
 	len = 0;
