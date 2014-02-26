@@ -43,11 +43,10 @@ The official Tethys support channel is #tethys on irc.staticbox.net.
 
 ## Building
 
-If this source has been obtained via git, the following commands should
+If this source has been obtained via git, the following command should
 be run first:
 
-    $ git submodule init
-    $ git submodule update
+    $ git submodule update --init
 
 You will need to run `git submodule update` for each successive pull.
 Tethys can be then compiled and installed using the typical sequence:
