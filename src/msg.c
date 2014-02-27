@@ -99,9 +99,19 @@ mowgli_patricia_t *all_commands;
 
 static int reg_one(u_cmd *cmd)
 {
-	u_cmd *at;
+	u_cmd *at, *cur;
 
 	u_log(LG_DEBUG, "Registering command %s", cmd->name);
+
+	at = mowgli_patricia_retrieve(all_commands, cmd->name);
+
+	for (cur=at; cur; cur = cur->next) {
+		if (cur->mask & cmd->mask) {
+			u_log(LG_ERROR, "Overlap in source mask in %s!",
+			      cmd->name);
+			return -1;
+		}
+	}
 
 	if (cmd->loaded) {
 		u_log(LG_ERROR, "Command %s already registered!", cmd->name);
@@ -114,9 +124,6 @@ static int reg_one(u_cmd *cmd)
 	cmd->runs = 0;
 	cmd->usecs = 0;
 
-	/* TODO: check mutual exclusivity */
-
-	at = mowgli_patricia_retrieve(all_commands, cmd->name);
 	cmd->next = at;
 	cmd->prev = NULL;
 	if (at != NULL) {
