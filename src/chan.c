@@ -609,8 +609,11 @@ static int ex_oper(extb_t *ex, u_chan *c, u_user *u, char *data)
 
 static int ex_account(extb_t *ex, u_chan *c, u_user *u, char *data)
 {
-	/* TODO: do this, once we have accounts */
-	return 0;
+	if (!IS_LOGGED_IN(u))
+		return 0;
+	if (data == NULL)
+		return 1;
+	return streq(u->acct, data);
 }
 
 static int ex_channel(extb_t *ex, u_chan *c, u_user *u, char *data)
