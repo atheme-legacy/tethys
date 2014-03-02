@@ -71,10 +71,12 @@ void u_sendq_init(u_sendq *q)
 
 void u_sendq_clear(u_sendq *q)
 {
-	u_sendq_chunk *ch;
+	u_sendq_chunk *ch, *nch;
 
-	for (ch = q->head; ch; ch = ch->next)
+	for (ch = q->head; ch; ch = nch) {
+		nch = ch->next;
 		chunk_free(ch);
+	}
 
 	memset(q, 0, sizeof(*q));
 }
