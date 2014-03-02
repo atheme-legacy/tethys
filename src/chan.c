@@ -368,11 +368,13 @@ char *u_chan_modes(u_chan *c, int on_chan)
 
 int u_chan_mode_register(u_mode_info *info, ulong *flag_ret)
 {
-	u_mode_info *tbl = cmode_infotab + info->ch;
+	u_mode_info *tbl;
 	ulong flag = 0;
 
 	if (info->ch < 0 || info->ch > 128) /* invalid char */
 		return -1;
+
+	tbl = cmode_infotab + info->ch;
 
 	if (tbl->ch) /* char in use */
 		return -1;
@@ -399,10 +401,12 @@ int u_chan_mode_register(u_mode_info *info, ulong *flag_ret)
 
 void u_chan_mode_unregister(u_mode_info *info)
 {
-	u_mode_info *tbl = cmode_infotab + info->ch;
+	u_mode_info *tbl;
 
 	if (info->ch < 0 || info->ch > 128) /* invalid char */
 		return;
+
+	tbl = cmode_infotab + info->ch;
 
 	if (tbl->type == MODE_FLAG)
 		u_bitmask_free(&cmode_flags, tbl->arg.data);
