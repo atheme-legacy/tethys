@@ -369,7 +369,7 @@ char *u_chan_modes(u_chan *c, int on_chan)
 int u_chan_mode_register(u_mode_info *info, ulong *flag_ret)
 {
 	u_mode_info *tbl = cmode_infotab + info->ch;
-	ulong flag;
+	ulong flag = 0;
 
 	if (info->ch < 0 || info->ch > 128) /* invalid char */
 		return -1;
