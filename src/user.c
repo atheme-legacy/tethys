@@ -456,7 +456,7 @@ static int dump_specific_user(u_user *u, mowgli_json_t *j_users)
 	json_oseti  (ju, "flags",    u->flags);
 	json_osets  (ju, "nick",     u->nick);
 	json_osets  (ju, "acct",     u->acct);
-	json_oseti64(ju, "nickts", u->nickts);
+	json_osettime(ju, "nickts", u->nickts);
 	json_osets  (ju, "ident",    u->ident);
 	json_osets  (ju, "ip",       u->ip);
 	json_osets  (ju, "realhost", u->realhost);
@@ -535,7 +535,7 @@ static int restore_specific_user(const char *uid, mowgli_json_t *ju)
 	if ((err = json_ogetu(ju, "flags", &u->flags)) < 0)
 		return err;
 
-	if ((err = json_ogetu64(ju, "nickts", &u->nickts)) < 0)
+	if ((err = json_ogettime(ju, "nickts", &u->nickts)) < 0)
 		return err;
 
 	jsnick = json_ogets(ju, "nick");
