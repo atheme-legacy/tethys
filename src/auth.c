@@ -33,6 +33,17 @@ static mowgli_patricia_t *u_conf_class_handlers = NULL;
 static mowgli_patricia_t *u_conf_oper_handlers = NULL;
 static mowgli_patricia_t *u_conf_link_handlers = NULL;
 
+void oper_up(u_sourceinfo *si, u_oper_block *oper)
+{
+	si->u->oper = oper;
+	si->u->mode |= UMODE_OPER;
+	u_link_f(si->source, ":%U MODE %U :+o", si->u, si->u);
+	u_sendto_servers(NULL, ":%U MODE %U :+o", si->u, si->u);
+	u_user_num(si->u, RPL_YOUREOPER);
+	u_log(LG_VERBOSE, "%U now has user mode %s",
+		si->u, u_user_modes(si->u));
+}
+
 u_auth_block *u_find_auth(u_link *link)
 {
 	mowgli_node_t *n;
@@ -72,11 +83,16 @@ u_auth_block *u_find_auth(u_link *link)
 	return NULL;
 }
 
+u_oper_block *u_get_oper_by_name(char *name)
+{
+	return u_map_get(all_opers, name);
+}
+
 u_oper_block *u_find_oper(u_auth_block *auth, char *name, char *pass)
 {
 	u_oper_block *oper;
 
-	oper = u_map_get(all_opers, name);
+	oper = u_get_oper_by_name(name);
 	if (oper == NULL)
 		return NULL;
 
@@ -197,21 +213,21 @@ static u_oper_block *cur_oper = NULL;
 
 void conf_oper(mowgli_config_file_t *cf, mowgli_config_file_entry_t *ce)
 {
-	cur_oper = malloc(sizeof(*cur_oper));
-
+	cur_oper = calloc(1, sizeof(*cur_oper));
+	if (cur_oper == NULL) return;
 	u_strlcpy(cur_oper->name, ce->vardata, MAXOPERNAME+1);
-	cur_oper->pass[0] = '\0';
-	cur_oper->authname[0] = '\0';
-	cur_oper->auth = NULL;
-
 	u_map_set(all_opers, cur_oper->name, cur_oper);
-
 	u_conf_traverse(cf, ce->entries, u_conf_oper_handlers);
 }
 
 void conf_oper_password(mowgli_config_file_t *cf, mowgli_config_file_entry_t *ce)
 {
 	u_strlcpy(cur_oper->pass, ce->vardata, MAXPASSWORD+1);
+}
+
+void conf_oper_pubkey(mowgli_config_file_t *cf, mowgli_config_file_entry_t *ce)
+{
+	u_strlcpy(cur_oper->pubkey, ce->vardata, MAXPUBKEY+1);
 }
 
 void conf_oper_auth(mowgli_config_file_t *cf, mowgli_config_file_entry_t *ce)
@@ -295,6 +311,7 @@ int init_auth(void)
 
 	u_conf_add_handler("oper", conf_oper, NULL);
 	u_conf_add_handler("password", conf_oper_password, u_conf_oper_handlers);
+	u_conf_add_handler("pubkey", conf_oper_pubkey, u_conf_oper_handlers);
 	u_conf_add_handler("auth", conf_oper_auth, u_conf_oper_handlers);
 
 	u_conf_link_handlers = mowgli_patricia_create(ascii_canonize);

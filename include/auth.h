@@ -13,6 +13,9 @@
 #define MAXOPERNAME 64
 #define MAXSERVERNAME 128
 
+#define MAXPUBKEY	PATH_MAX
+#define MAXCHALLENGE	128
+
 typedef struct u_class_block u_class_block;
 typedef struct u_auth_block u_auth_block;
 typedef struct u_oper_block u_oper_block;
@@ -21,6 +24,7 @@ typedef struct u_link_block u_link_block;
 #include "conn.h"
 #include "util.h"
 #include "server.h"
+#include "msg.h"
 
 struct u_class_block {
 	char name[MAXCLASSNAME+1];
@@ -40,6 +44,9 @@ struct u_auth_block {
 struct u_oper_block {
 	char name[MAXOPERNAME+1];
 	char pass[MAXPASSWORD+1];
+	char pubkey[MAXPUBKEY+1];
+	unsigned char challenge[MAXCHALLENGE];
+	time_t challenge_time;
 	char authname[MAXAUTHNAME+1];
 	u_auth_block *auth;
 };
@@ -60,7 +67,10 @@ extern u_map *all_auths;
 extern u_map *all_opers;
 extern u_map *all_links;
 
+extern void oper_up(u_sourceinfo*, u_oper_block*);
+
 extern u_auth_block *u_find_auth(u_link*);
+extern u_oper_block *u_get_oper_by_name(char*);
 extern u_oper_block *u_find_oper(u_auth_block*, char*, char*);
 extern u_link_block *u_find_link(char *name);
 

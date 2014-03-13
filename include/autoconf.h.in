@@ -13,4 +13,7 @@
 /* If crypt() */
 #undef HAVE_CRYPT
 
+/* If EVP_DigestFinal() */
+#undef HAVE_LIBCRYPTO
+
 #endif
