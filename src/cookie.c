@@ -46,8 +46,8 @@ mowgli_json_t *u_cookie_to_json(u_cookie *a)
 	mowgli_json_t *jc;
 
 	jc = mowgli_json_create_object();
-	json_oseti64(jc, "high", a->high);
-	json_oseti64(jc, "low",  a->low);
+	json_osetul(jc, "high", a->high);
+	json_osetul(jc, "low",  a->low);
 
 	return jc;
 }
@@ -56,9 +56,9 @@ int u_cookie_from_json(mowgli_json_t *jc, u_cookie *c)
 {
 	int err;
 
-	if ((err = json_ogetu64(jc, "high", &c->high)) < 0)
+	if ((err = json_ogetul(jc, "high", &c->high)) < 0)
 		return err;
-	if ((err = json_ogetu64(jc, "low",  &c->low)) < 0)
+	if ((err = json_ogetul(jc, "low",  &c->low)) < 0)
 		return err;
 
 	return 0;

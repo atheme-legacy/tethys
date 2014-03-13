@@ -144,8 +144,10 @@ static inline void json_osetb(mowgli_json_t *obj, const char *k, bool v)
 	json_oseto(obj, k, v ? mowgli_json_true : mowgli_json_false);
 }
 
-#define json_osetu   json_oseti /* XXX */
-#define json_oseti64 json_oseti /* XXX */
+#define json_osetu    json_oseti /* XXX */
+#define json_oseti64  json_oseti /* XXX */
+#define json_osettime json_oseti /* XXX */
+#define json_osetul   json_oseti /* XXX */
 
 static inline void json_osets(mowgli_json_t *obj, const char *k, const char *v)
 {
@@ -209,7 +211,7 @@ static inline bool json_ogeti(mowgli_json_t *obj, const char *k, int *v)
 
 static inline bool json_ogeti64(mowgli_json_t *obj, const char *k, int64_t *v)
 {
-	int ok;
+	bool ok;
 	int vv = 0;
 	/* XXX */
 	ok = json_ogeti(obj, k, &vv);
@@ -221,6 +223,26 @@ static inline bool json_ogeti64(mowgli_json_t *obj, const char *k, int64_t *v)
 static inline bool json_ogetu64(mowgli_json_t *obj, const char *k, uint64_t *v)
 {
 	return json_ogeti64(obj, k, (int64_t*)v);
+}
+
+static inline bool json_ogettime(mowgli_json_t *obj, const char *k, u_ts_t *v)
+{
+	bool ok;
+	int64_t vv = 0;
+	ok = json_ogeti64(obj, k, &vv);
+	if (ok)
+		*v = vv;
+	return ok;
+}
+
+static inline bool json_ogetul(mowgli_json_t *obj, const char *k, unsigned long *v)
+{
+	bool ok;
+	int vv = 0;
+	ok = json_ogeti(obj, k, &vv); /* XXX */
+	if (ok)
+		*v = vv;
+	return ok;
 }
 
 static inline bool json_ogetu(mowgli_json_t *obj, const char *k, unsigned *v)
