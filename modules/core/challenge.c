@@ -57,7 +57,9 @@ static int generate_challenge(unsigned char *challenge, int challenge_len)
 
 static int send_challenge(u_sourceinfo *si, u_oper_block *oper)
 {
-	char *challenge_b64 = base64_encode(oper->challenge, sizeof(oper->challenge));
+	char *challenge_b64 = calloc(1, base64_inflate_size(sizeof(oper->challenge)));
+	if (challenge_b64 == NULL) return u_user_num(si->u, ERR_CHALLENGE_GENERATE);
+	base64_encode(oper->challenge, sizeof(oper->challenge), challenge_b64, challenge_b64);
 	u_user_num(si->u, RPL_CHALLENGE_STRING, challenge_b64);
 	memset(challenge_b64, 0, strlen(challenge_b64));
 	free(challenge_b64);
@@ -103,10 +105,13 @@ static int c_lu_challenge(u_sourceinfo *si, u_msg *msg)
 		u_user_num(si->u, ERR_CHALLENGE_EXPIRED);
 		goto cleanup;
 	}
-	if (! (raw_sig = base64_decode(msg->argv[1], &raw_sig_len))) {
+
+	if (! (raw_sig = calloc(1, base64_deflate_size(strlen(msg->argv[1]))))) {
 		u_user_num(si->u, ERR_CHALLENGE_FAILURE);
 		goto cleanup;
 	}
+	raw_sig_len = base64_decode(msg->argv[1], strlen(msg->argv[1]), raw_sig);
+
 	if (! (pubkey_file = fopen(oper->pubkey, "r"))) {
 		u_user_num(si->u, ERR_CHALLENGE_NOPUBKEY);
 		goto cleanup;

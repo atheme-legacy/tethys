@@ -243,7 +243,7 @@ static inline bool json_ogetb(mowgli_json_t *obj, const char *k)
 extern int set_cloexec(int fd);
 
 inline static size_t base64_inflate_size(size_t len) {
-	return 4*((len+2)/3);
+	return (((len+2)/3)*4)+1;
 }
 
 inline static size_t base64_deflate_size(size_t len) {

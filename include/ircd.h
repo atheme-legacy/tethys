@@ -66,7 +66,6 @@ typedef unsigned long u_ts_t;
 #define stringify(x) _stringify(x)
 
 #include "autoconf.h"
-#include "base64.h"
 #include "conf.h"
 #include "cookie.h"
 #include "crypto.h"
