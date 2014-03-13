@@ -34,6 +34,7 @@ SRCS = \
 	tb.c \
 	ts6init.c \
 	topic.c \
+	upgrade.c \
 	user.c \
 	userhost.c \
 	who.c \

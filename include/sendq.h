@@ -26,4 +26,7 @@ extern size_t u_sendq_end_buffer(u_sendq*, size_t sz);
 
 extern int u_sendq_write(u_sendq*, int fd);
 
+extern mowgli_json_t *u_sendq_to_json(u_sendq *sq);
+extern int u_sendq_from_json(mowgli_json_t *sjq, u_sendq *sq);
+
 #endif

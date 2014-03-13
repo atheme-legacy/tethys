@@ -129,4 +129,129 @@ static inline void str_upper(char *ch)
 	str_transform(ch, &toupper);
 }
 
+static inline void json_oseto(mowgli_json_t *obj, const char *k, mowgli_json_t *v)
+{
+	mowgli_json_object_add(obj, k, v ? v : mowgli_json_null);
+}
+
+static inline void json_oseti(mowgli_json_t *obj, const char *k, int v)
+{
+	json_oseto(obj, k, mowgli_json_create_integer(v));
+}
+
+static inline void json_osetb(mowgli_json_t *obj, const char *k, bool v)
+{
+	json_oseto(obj, k, v ? mowgli_json_true : mowgli_json_false);
+}
+
+#define json_osetu   json_oseti /* XXX */
+#define json_oseti64 json_oseti /* XXX */
+
+static inline void json_osets(mowgli_json_t *obj, const char *k, const char *v)
+{
+	json_oseto(obj, k, v ? mowgli_json_create_string(v) : mowgli_json_null);
+}
+
+extern void json_osetb64(mowgli_json_t *obj, const char *k, const void *buf, size_t buf_len);
+extern ssize_t json_ogetb64(mowgli_json_t *obj, const char *k, void *buf, size_t buf_len);
+
+static inline void json_append(mowgli_json_t *arr, mowgli_json_t *v)
+{
+	mowgli_json_array_add(arr, v);
+}
+
+static inline mowgli_json_t *json_ogeto(mowgli_json_t *obj, const char *k)
+{
+	mowgli_json_t *v;
+	if (MOWGLI_JSON_TAG(obj) != MOWGLI_JSON_TAG_OBJECT)
+		return NULL;
+	v = mowgli_json_object_retrieve(obj, k);
+	if (!v || MOWGLI_JSON_TAG(v) == MOWGLI_JSON_TAG_NULL)
+		return NULL;
+	return v;
+}
+
+static inline mowgli_json_t *json_ogeto_c(mowgli_json_t *obj, const char *k)
+{
+	mowgli_json_t *v = json_ogeto(obj, k);
+	if (MOWGLI_JSON_TAG(obj) != MOWGLI_JSON_TAG_OBJECT)
+		return NULL;
+	return v;
+}
+
+static inline mowgli_string_t *json_ogets(mowgli_json_t *obj, const char *k)
+{
+	mowgli_json_t *js;
+	js = json_ogeto(obj, k);
+	if (!js || MOWGLI_JSON_TAG(js) != MOWGLI_JSON_TAG_STRING)
+		return NULL;
+	return MOWGLI_JSON_STRING(js);
+}
+
+static inline mowgli_list_t *json_ogeta(mowgli_json_t *obj, const char *k)
+{
+	mowgli_json_t *js;
+	js = json_ogeto(obj, k);
+	if (!js || MOWGLI_JSON_TAG(js) != MOWGLI_JSON_TAG_ARRAY)
+		return NULL;
+	return MOWGLI_JSON_ARRAY(js);
+}
+
+static inline bool json_ogeti(mowgli_json_t *obj, const char *k, int *v)
+{
+	mowgli_json_t *ji;
+	ji = json_ogeto(obj, k);
+	if (!ji || MOWGLI_JSON_TAG(ji) != MOWGLI_JSON_TAG_INTEGER)
+		return false;
+	*v = MOWGLI_JSON_INTEGER(ji);
+	return true;
+}
+
+static inline bool json_ogeti64(mowgli_json_t *obj, const char *k, int64_t *v)
+{
+	int ok;
+	int vv = 0;
+	/* XXX */
+	ok = json_ogeti(obj, k, &vv);
+	if (ok)
+		*v = vv;
+	return ok;
+}
+
+static inline bool json_ogetu64(mowgli_json_t *obj, const char *k, uint64_t *v)
+{
+	return json_ogeti64(obj, k, (int64_t*)v);
+}
+
+static inline bool json_ogetu(mowgli_json_t *obj, const char *k, unsigned *v)
+{
+	/* XXX */
+	return json_ogeti(obj, k, (int*)v);
+}
+
+static inline bool json_ogetb(mowgli_json_t *obj, const char *k)
+{
+	mowgli_json_t *jb = json_ogeto(obj, k);
+
+	/* strict equality */
+	if (MOWGLI_JSON_TAG(jb) != MOWGLI_JSON_TAG_BOOLEAN)
+		return false;
+
+	return MOWGLI_JSON_BOOLEAN(jb);
+}
+
+extern int set_cloexec(int fd);
+
+inline static size_t base64_inflate_size(size_t len) {
+	return 4*((len+2)/3);
+}
+
+inline static size_t base64_deflate_size(size_t len) {
+	return ((len/4)*3)+3;
+}
+
+extern size_t base64_encode(const void *in_buf, size_t in_buf_len, char *out_buf, char *out_cur);
+extern size_t base64_decode(const char *in_buf, size_t in_buf_len, void *out_buf);
+
+/* vim: set noet: */
 #endif

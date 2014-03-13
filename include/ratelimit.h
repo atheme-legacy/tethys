@@ -64,5 +64,7 @@ void u_ratelimit_init(u_user *user);
 bool u_ratelimit_allow(u_user *user, u_ratelimit_cmd_t *deduct, const char *cmd);
 void u_ratelimit_who_credit(u_user *user);
 void u_ratelimit_who_deduct(u_user *user);
+mowgli_json_t *u_ratelimit_to_json(u_ratelimit_t *limit);
+int u_ratelimit_from_json(mowgli_json_t *jrl, u_ratelimit_t *limit);
 
 #endif

@@ -407,6 +407,198 @@ int is_valid_chan(char *s)
 	return 1;
 }
 
+int set_cloexec(int fd)
+{
+#ifdef FD_CLOEXEC
+	int flags;
+
+	if ((flags = fcntl(fd, F_GETFD)) < 0)
+		return -1;
+
+	if (fcntl(fd, F_SETFD, flags|FD_CLOEXEC) < 0)
+		return -1;
+#endif
+
+	return 0;
+}
+
+/* Base64 Encoder
+ * --------------
+ */
+static const char _table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+size_t
+base64_encode(
+	const void *in_buf, size_t in_buf_len,
+	char *out_buf, char *out_cur)
+{
+	size_t i, j, jsub = 0;
+	uint32_t triple = 0;
+	uint8_t nb = 0;
+	const char *ib = in_buf;
+	uint8_t joinbuf[3] = {};
+
+	if (out_cur >= out_buf + 4 && out_cur[-1] == '=') {
+		/* This is a little odd so I'll explain. Each sendq is split into chunks.
+		 * We have to call base64_encode separately for each chunk. In the worst
+		 * case scenario, each chunk results in two padding characters (==). This
+		 * throws off the worst-case size estimate of base64_inflate_size, which
+		 * assumes a single call and only two padding characters. We want to be
+		 * able to estimate the size of the base64 encoded data so we can allocate
+		 * the entire memory needed up front. We need it all in contiguous memory
+		 * so that it can form a mowgli_string_t and thus form part of the JSON
+		 * tree.
+		 *
+		 * The obvious choice is to make the base64 encoder resumable. For ordinary
+		 * operation, pass out_buf == out_cur. When out_cur > out_buf, the few
+		 * bytes before out_cur are examined to see if there's any padding. If so,
+		 * the base64 "quartet" is decoded, the pointer out_cur adjusted, and we
+		 * naturally join the two streams together. Essentially the state of the
+		 * base64 encoder when previously called is loaded from the buffer itself.
+		 *
+		 * Since base64 outputs in "quartets" of four characters, if out_cur >
+		 * out_buf then out_cur must >= out_buf + 4. We are assuming we have a
+		 * valid base64 stream that we generated ourselves. If this is not the
+		 * case, just generate ordinarily; the concatenation of two base64 streams
+		 * with padding is itself valid base64; in this case, caller beware.
+		 */
+		out_cur -= 4, jsub = 4;
+		nb = (uint8_t)base64_decode(out_cur, 4, joinbuf);
+		/* We know we have padding. Padding is only used to map 1 or 2 bytes to a
+		 * base64 quartet, so nb == 1 or nb == 2. So this is a correct evaluation
+		 * of the main for loop further below for this particular case, only on
+		 * joinbuf, not ib.
+		 */
+		for (i=0; i<nb; ++i)
+			triple = (triple << 8) | joinbuf[i];
+		/* (I was not honestly expecting to convert a non-resumable base64 encoder
+		 * into a resumable base64 encoder in five lines of code. Huh.) */
+	}
+
+	for (i=0,j=0; i<in_buf_len; ++i) {
+		triple = (triple << 8) | ib[i];
+		if (++nb == 3) {
+			out_cur[j++] = _table[(triple >> 3*6) & 0x3F];
+			out_cur[j++] = _table[(triple >> 2*6) & 0x3F];
+			out_cur[j++] = _table[(triple >> 1*6) & 0x3F];
+			out_cur[j++] = _table[(triple >> 0*6) & 0x3F];
+			nb = 0, triple = 0;
+		}
+	}
+
+	switch (nb) {
+		case 2:
+			triple <<= 8;
+			out_cur[j++] = _table[(triple >> 3*6) & 0x3F];
+			out_cur[j++] = _table[(triple >> 2*6) & 0x3F];
+			out_cur[j++] = _table[(triple >> 1*6) & 0x3F];
+			out_cur[j++] = '=';
+			break;
+		case 1:
+			triple <<= 2*8;
+			out_cur[j++] = _table[(triple >> 3*6) & 0x3F];
+			out_cur[j++] = _table[(triple >> 2*6) & 0x3F];
+			out_cur[j++] = '=';
+			out_cur[j++] = '=';
+			break;
+	}
+
+	return j - jsub;
+}
+
+/* Base64 Decoder
+ * --------------
+ */
+static char _dectbl[256] = {};
+
+static void _init_dectbl(void)
+{
+	static bool _done = false;
+	int i;
+
+	if (_done)
+		return;
+
+	for (i=0; i<64; ++i)
+		_dectbl[(uint8_t)_table[i]] = i;
+
+	_done = true;
+}
+
+size_t
+base64_decode(
+	const char *in_buf, size_t in_buf_len,
+	void *out_buf)
+{
+	size_t i, written = 0;
+	uint8_t *ob = out_buf;
+	uint8_t nc = 0, np = 0;
+	uint32_t triple;
+	char c[4];
+
+	_init_dectbl();
+
+	for (i=0;i<in_buf_len;++i) {
+		if (in_buf[i] == '=') {
+			c[nc++] = 0;
+			np = (np+1) % 3;
+		} else {
+			c[nc++] = _dectbl[(uint8_t)in_buf[i]];
+		}
+
+		if (nc == 4) {
+			triple = (c[0] << 3*6) | (c[1] << 2*6) | (c[2] << 1*6) | (c[3] << 0*6);
+			ob[0] = (uint8_t)(triple >> 2*8);
+			ob[1] = (uint8_t)(triple >> 1*8);
+			ob[2] = (uint8_t)(triple >> 0*8);
+			written += 3 - np;
+			ob      += 3 - np;
+			nc = np = 0;
+		}
+	}
+
+	return written;
+}
+
+/* JSON
+ * ----
+ */
+void json_osetb64(mowgli_json_t *obj, const char *k, const void *buf, size_t buf_len)
+{
+	char *b64buf;
+	size_t b64len;
+	size_t written;
+
+	b64len = base64_inflate_size(buf_len);
+	b64buf = malloc(b64len);
+
+	written = base64_encode(buf, buf_len, b64buf, b64buf);
+	b64buf[written] = '\0';
+
+	json_osets(obj, k, b64buf);
+
+	free(b64buf);
+}
+
+ssize_t json_ogetb64(mowgli_json_t *obj, const char *k, void *buf, size_t buf_len)
+{
+	mowgli_string_t *s;
+	size_t len;
+
+	s = json_ogets(obj, k);
+	if (!s)
+		return -1;
+
+	len = base64_deflate_size(s->pos);
+	if (len > buf_len)
+		return -1;
+
+	return base64_decode(s->str, s->pos, buf);
+}
+
+/* Initialization
+ * --------------
+ */
 int init_util(void)
 {
 	int i;
@@ -433,3 +625,4 @@ int init_util(void)
 	return 0;
 }
 
+/* vim: set noet: */

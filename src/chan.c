@@ -233,7 +233,7 @@ static int cb_join(u_modes *m, int on, char *arg)
 	return on;
 }
 
-static u_chan *chan_create_real(char *name)
+static u_chan *chan_create_real(const char *name)
 {
 	u_chan *chan;
 
@@ -767,6 +767,294 @@ int u_is_muted(u_chanuser *cu)
 	return CU_MUTED; /* not 1, to mimic cu->flags & CU_MUTED */
 }
 
+static int restore_specific_chan(const char *name, mowgli_json_t *jch)
+{
+	int err;
+	int i;
+	u_chan *ch = NULL;
+	mowgli_json_t *jmasks, *jckflags, *jmems, *jmem, *jmemckflags, *jiuid;
+	mowgli_list_t *maska, *invites;
+	mowgli_string_t *jstopic, *jstopicsetter, *jsforward, *jskey, *jsmask, *jssetter, *jsiuid;
+	mowgli_json_t *jmask;
+	mowgli_node_t *n;
+	mowgli_patricia_iteration_state_t state;
+	u_listent *le;
+	u_ts_t time = 0;
+	u_user *u;
+	u_chanuser *cu;
+	const char *k;
+	char uid[10] = {};
+
+	if (strlen(name) > MAXCHANNAME)
+		return -1;
+
+	ch = chan_create_real(name);
+
+	jmasks = json_ogeto(jch, "masks");
+	if (!jmasks)
+		return -1;
+
+	if ((err = json_ogetu64(jch, "ts", &ch->ts)) < 0)
+		return err;
+	if ((err = json_ogetu(jch, "flags", &ch->flags)) < 0)
+		return err;
+	if ((err = json_ogeti(jch, "limit", &ch->limit)) < 0)
+		return err;
+	if ((err = json_ogetu(jch, "mode", &ch->mode)) < 0)
+		return err;
+	if ((err = json_ogetu64(jch, "topic_time", &ch->topic_time)) < 0)
+		return err;
+	jckflags = json_ogeto(jch, "ck_flags");
+	if (!jckflags) {
+		err = -1;
+		return err;
+	}
+	if ((err = u_cookie_from_json(jckflags, &ch->ck_flags)) < 0)
+		return err;
+
+	jstopic = json_ogets(jch, "topic");
+	if (!jstopic || jstopic->pos > MAXTOPICLEN)
+		return err;
+	memcpy(ch->topic, jstopic->str, jstopic->pos);
+
+	jstopicsetter = json_ogets(jch, "topic_setter");
+	if (!jstopicsetter || jstopicsetter->pos > MAXNICKLEN)
+		return err;
+	memcpy(ch->topic_setter, jstopicsetter->str, jstopicsetter->pos);
+
+	jsforward = json_ogets(jch, "forward");
+	if (jsforward) {
+		ch->forward = malloc(jsforward->pos + 1);
+		memcpy(ch->forward, jsforward->str, jsforward->pos);
+		ch->forward[jsforward->pos] = '\0';
+	}
+
+	jskey = json_ogets(jch, "key");
+	if (jskey) {
+		ch->key = malloc(jskey->pos + 1);
+		memcpy(ch->key, jskey->str, jskey->pos);
+		ch->key[jskey->pos] = '\0';
+	}
+
+	/* MASKS */
+	struct masklist {
+		mowgli_list_t *list;
+		const char *type;
+	} masklists[] = {
+		{&ch->ban,   "b"},
+		{&ch->quiet, "q"},
+		{&ch->banex, "e"},
+		{&ch->invex, "I"},
+	};
+
+	for (i=0;i<arraylen(masklists);++i) {
+		maska = json_ogeta(jmasks, masklists[i].type);
+		if (!maska)
+			continue;
+
+		MOWGLI_LIST_FOREACH(n, maska->head) {
+			jmask    = n->data;
+			jsmask   = json_ogets  (jmask, "mask");
+			if (!jsmask || jsmask->pos > 255) {
+				err = -1;
+				return err;
+			}
+
+			jssetter = json_ogets  (jmask, "setter");
+			if (!jssetter || jssetter->pos > 255) {
+				err = -1;
+				return err;
+			}
+
+			if ((err = json_ogetu64(jmask, "time", &time)) < 0)
+				return err;
+
+			le = malloc(sizeof(*le));
+			memcpy(le->mask, jsmask->str, jsmask->pos);
+			le->mask[jsmask->pos] = '\0';
+			memcpy(le->setter, jssetter->str, jssetter->pos);
+			le->setter[jssetter->pos] = '\0';
+			le->time = time;
+
+			mowgli_node_add(le, &le->n, masklists[i].list);
+		}
+	}
+
+	jmems = json_ogeto_c(jch, "members");
+	if (!jmems) {
+		err = -1;
+		return err;
+	}
+
+	MOWGLI_PATRICIA_FOREACH(jmem, &state, MOWGLI_JSON_OBJECT(jmems)) {
+		k = mowgli_patricia_elem_get_key(state.pspare[0]);
+		u = u_user_by_uid(k);
+		if (!u) {
+			err = -1;
+			return err;
+		}
+		cu = u_chan_user_add(ch, u);
+		if ((err = json_ogetu(jmem, "flags", &cu->flags)) < 0)
+			return err;
+		jmemckflags = json_ogeto(jmem, "ck_flags");
+		if ((err = u_cookie_from_json(jmemckflags, &cu->ck_flags)) < 0)
+			return err;
+	}
+
+	invites = json_ogeta(jch, "invites");
+	if (!invites) {
+		err = -1;
+		return err;
+	}
+
+	MOWGLI_LIST_FOREACH(n, invites->head) {
+		jiuid = n->data;
+		if (!jiuid || MOWGLI_JSON_TAG(jiuid) != MOWGLI_JSON_TAG_STRING) {
+			err = -1;
+			return err;
+		}
+
+		jsiuid = MOWGLI_JSON_STRING(jiuid);
+		if (jsiuid->pos != 9) {
+			err = -1;
+			return err;
+		}
+
+		memcpy(uid, jsiuid->str, 9);
+
+		u = u_user_by_uid(uid);
+		if (!u) {
+			err = -1;
+			return err;
+		}
+
+		u_add_invite(ch, u);
+	}
+
+	return 0;
+}
+
+int restore_chan(void)
+{
+	int err;
+	mowgli_json_t *jchans = json_ogeto(upgrade_json, "channels");
+	const char *k;
+	mowgli_json_t *jch;
+	mowgli_patricia_iteration_state_t state;
+
+	if (!jchans)
+		return -1;
+
+	u_log(LG_DEBUG, "Restoring channels...");
+	MOWGLI_PATRICIA_FOREACH(jch, &state, MOWGLI_JSON_OBJECT(jchans)) {
+		k = mowgli_patricia_elem_get_key(state.pspare[0]);
+		if ((err = restore_specific_chan(k, jch)) < 0)
+			return err;
+	}
+	u_log(LG_DEBUG, "Done restoring channels");
+
+	return 0;
+}
+
+static int dump_specific_chan(u_chan *ch, mowgli_json_t *j_chans)
+{
+	int i;
+	mowgli_node_t *n;
+	struct u_listent *m;
+	u_map_each_state st;
+	u_user *u;
+	u_chanuser *cu;
+	mowgli_json_t *jch, *jmask, *jmasks, *jmasktype,
+	              *jinvites, *jinvite,
+	              *jmems, *jmem;
+
+	struct masklist {
+		mowgli_list_t *list;
+		const char *type;
+	} masklists[] = {
+		{&ch->ban,   "b"},
+		{&ch->quiet, "q"},
+		{&ch->banex, "e"},
+		{&ch->invex, "I"},
+	};
+
+	jch = mowgli_json_create_object();
+	json_oseto  (j_chans, ch->name, jch);
+
+	json_osets  (jch, "topic",         ch->topic);
+	json_osets  (jch, "topic_setter",  ch->topic_setter);
+	json_oseti64(jch, "topic_time",    ch->topic_time);
+	json_oseti  (jch, "mode",          ch->mode);
+	json_oseti  (jch, "flags",         ch->flags);
+	json_osets  (jch, "forward",       ch->forward);
+	json_osets  (jch, "key",           ch->key);
+	json_oseti  (jch, "limit",         ch->limit);
+	json_oseti64(jch, "ts",            ch->ts);
+	json_oseto  (jch, "ck_flags",      u_cookie_to_json(&ch->ck_flags));
+
+	jmasks = mowgli_json_create_object();
+	json_oseto  (jch, "masks",         jmasks);
+
+	/* MASKS */
+	for (i=0; i<arraylen(masklists); ++i) {
+		jmasktype = mowgli_json_create_array();
+		json_oseto(jmasks, masklists[i].type, jmasktype);
+
+		MOWGLI_LIST_FOREACH(n, masklists[i].list->head) {
+			m = n->data;
+
+			jmask = mowgli_json_create_object();
+			json_append(jmasktype, jmask);
+			json_osets  (jmask, "mask",    m->mask);
+			json_osets  (jmask, "setter",  m->setter);
+			json_oseti64(jmask, "time",    m->time);
+		}
+	}
+
+	/* INVITES */
+	jinvites = mowgli_json_create_array();
+	json_oseto  (jch, "invites",       jinvites);
+
+
+	U_MAP_EACH(&st, ch->invites, &u, &u) {
+		jinvite = mowgli_json_create_string(u->uid);
+		json_append(jinvites, jinvite);
+	}
+
+	/* MEMBERS */
+	jmems = mowgli_json_create_object();
+	json_oseto  (jch, "members",       jmems);
+
+	U_MAP_EACH(&st, ch->members, &u, &cu) {
+		jmem = mowgli_json_create_object();
+		json_oseto(jmems, u->uid, jmem);
+		json_oseti(jmem,  "flags", cu->flags);
+		json_oseto(jmem,  "ck_flags", u_cookie_to_json(&cu->ck_flags));
+	}
+
+	return 0;
+}
+
+int dump_chan(void)
+{
+	int err;
+	u_chan *ch;
+	mowgli_patricia_iteration_state_t state;
+
+	mowgli_json_t *j_chans = mowgli_json_create_object();
+	json_oseto(upgrade_json, "channels", j_chans);
+
+	MOWGLI_PATRICIA_FOREACH(ch, &state, all_chans) {
+		if ((err = dump_specific_chan(ch, j_chans)) < 0)
+			return err;
+	}
+
+	return 0;
+}
+
+/* Initialization
+ * --------------
+ */
 int init_chan(void)
 {
 	int i;
@@ -792,3 +1080,5 @@ int init_chan(void)
 
 	return 0;
 }
+
+/* vim: set noet: */

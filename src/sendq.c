@@ -10,6 +10,7 @@
 /* ------ */
 
 #define SENDQ_CHUNK_SIZE 4000
+#define SENDQ_B64_CHUNK_SIZE 5328 /* corresponds to just under 4000 bytes */
 
 #define CHUNK_IN_USE 0x0001
 
@@ -191,3 +192,75 @@ int u_sendq_write(u_sendq *q, int fd)
 
 	return 0;
 }
+
+/* Serialization
+ * -------------
+ */
+mowgli_json_t *u_sendq_to_json(u_sendq *sq)
+{
+	mowgli_json_t *jsq, *jbuf;
+	u_sendq_chunk *c;
+	char *ocur;
+	char *sqbuf;
+	size_t sqbuf_len;
+
+	if (!sq)
+		return NULL;
+
+	/* Might want to optimize this in the future. */
+	sqbuf_len = base64_inflate_size(sq->size);
+	sqbuf = malloc(sqbuf_len);
+
+	ocur = sqbuf;
+	for (c=sq->head; c; c=c->next) {
+		/* we can assume the chunk is in use */
+		ocur += base64_encode(c->data + c->start, c->end - c->start,
+			sqbuf, ocur);
+		/* invariant: ocur <= sqbuf + sqbuf_len */
+	}
+
+	jsq  = mowgli_json_create_object();
+	jbuf = mowgli_json_create_string_n(sqbuf, ocur - sqbuf);
+	json_oseto(jsq, "buf", jbuf);
+
+	free(sqbuf);
+	return jsq;
+}
+
+int u_sendq_from_json(mowgli_json_t *jsq, u_sendq *sq)
+{
+	mowgli_string_t *jsbuf;
+	size_t len;
+	char *cur, *end, *echunk;
+	void *sqbuf;
+
+	jsbuf = json_ogets(jsq, "buf");
+	if (!jsbuf || jsbuf->pos % 4)
+		return -1;
+
+	cur = jsbuf->str;
+	end = jsbuf->str + jsbuf->pos;
+
+	/* base64 data length must be divisible by 4. */
+	if (jsbuf->pos % 4)
+		return -1;
+
+	/* We choose to decode in blocks of 5328 characters, as this corresponds to
+	 * just under 4000 bytes and is divisible by 4.
+	 */
+	while (cur < end) {
+		echunk = cur + SENDQ_B64_CHUNK_SIZE;
+		if (echunk > end)
+			echunk = end;
+
+		sqbuf = u_sendq_get_buffer(sq, SENDQ_CHUNK_SIZE);
+		len = base64_decode(cur, echunk-cur, sqbuf);
+		u_sendq_end_buffer(sq, len);
+
+		cur = echunk;
+	}
+
+	return 0;
+}
+
+/* vim: set noet: */

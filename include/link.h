@@ -49,6 +49,12 @@ struct u_link {
 	uchar ibuf[IBUFSIZE+1];
 	size_t ibuflen;
 
+	/* This indicates that X bytes should be skipped in ibuf when serializing
+	 * ibuf to do an upgrade. This is necessary to prevent the UPGRADE command
+	 * itself from re-executing after the upgrade.
+	 */
+	size_t ibufskip;
+
 	u_cookie ck_sendto;
 };
 
@@ -64,9 +70,13 @@ extern void u_link_f(u_link *link, const char *fmt, ...);
 
 extern void u_link_vnum(u_link *link, const char *tgt, int num, va_list va);
 extern int u_link_num(u_link *link, int num, ...);
+extern void u_link_flush_input(u_link *link);
 
 extern u_link_origin *u_link_origin_create(mowgli_eventloop_t*, short);
 
 extern int init_link(void);
+
+extern mowgli_json_t *u_link_to_json(u_link *link);
+extern u_link *u_link_from_json(mowgli_json_t *j);
 
 #endif
