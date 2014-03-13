@@ -50,7 +50,7 @@ typedef unsigned int uint;
 typedef unsigned char uchar;
 typedef unsigned short ushort;
 
-typedef unsigned long u_ts_t;
+typedef time_t u_ts_t;
 
 #ifndef offsetof
 #define offsetof(st, m) ((ulong)(&((st *)0)->m))
