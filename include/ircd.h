@@ -50,7 +50,7 @@ typedef unsigned int uint;
 typedef unsigned char uchar;
 typedef unsigned short ushort;
 
-typedef unsigned long u_ts_t;
+typedef time_t u_ts_t;
 
 #ifndef offsetof
 #define offsetof(st, m) ((ulong)(&((st *)0)->m))
@@ -66,7 +66,6 @@ typedef unsigned long u_ts_t;
 #define stringify(x) _stringify(x)
 
 #include "autoconf.h"
-#include "base64.h"
 #include "conf.h"
 #include "cookie.h"
 #include "crypto.h"

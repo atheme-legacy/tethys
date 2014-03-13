@@ -24,7 +24,6 @@ SRCS = numeric.c \
 	util.c \
 	version.c \
 	vsnf.c \
-	base64.c \
 	main.c
 DISTCLEAN = numeric.c numeric.h
 

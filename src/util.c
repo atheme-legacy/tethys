@@ -435,7 +435,7 @@ base64_encode(
 	size_t i, j, jsub = 0;
 	uint32_t triple = 0;
 	uint8_t nb = 0;
-	const char *ib = in_buf;
+	const uint8_t *ib = in_buf;
 	uint8_t joinbuf[3] = {};
 
 	if (out_cur >= out_buf + 4 && out_cur[-1] == '=') {
