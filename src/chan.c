@@ -794,7 +794,7 @@ static int restore_specific_chan(const char *name, mowgli_json_t *jch)
 	if (!jmasks)
 		return -1;
 
-	if ((err = json_ogetu64(jch, "ts", &ch->ts)) < 0)
+	if ((err = json_ogettime(jch, "ts", &ch->ts)) < 0)
 		return err;
 	if ((err = json_ogetu(jch, "flags", &ch->flags)) < 0)
 		return err;
@@ -802,7 +802,7 @@ static int restore_specific_chan(const char *name, mowgli_json_t *jch)
 		return err;
 	if ((err = json_ogetu(jch, "mode", &ch->mode)) < 0)
 		return err;
-	if ((err = json_ogetu64(jch, "topic_time", &ch->topic_time)) < 0)
+	if ((err = json_ogettime(jch, "topic_time", &ch->topic_time)) < 0)
 		return err;
 	jckflags = json_ogeto(jch, "ck_flags");
 	if (!jckflags) {
@@ -866,7 +866,7 @@ static int restore_specific_chan(const char *name, mowgli_json_t *jch)
 				return err;
 			}
 
-			if ((err = json_ogetu64(jmask, "time", &time)) < 0)
+			if ((err = json_ogettime(jmask, "time", &time)) < 0)
 				return err;
 
 			le = malloc(sizeof(*le));
@@ -983,13 +983,13 @@ static int dump_specific_chan(u_chan *ch, mowgli_json_t *j_chans)
 
 	json_osets  (jch, "topic",         ch->topic);
 	json_osets  (jch, "topic_setter",  ch->topic_setter);
-	json_oseti64(jch, "topic_time",    ch->topic_time);
+	json_osettime(jch, "topic_time",    ch->topic_time);
 	json_oseti  (jch, "mode",          ch->mode);
 	json_oseti  (jch, "flags",         ch->flags);
 	json_osets  (jch, "forward",       ch->forward);
 	json_osets  (jch, "key",           ch->key);
 	json_oseti  (jch, "limit",         ch->limit);
-	json_oseti64(jch, "ts",            ch->ts);
+	json_osettime(jch, "ts",            ch->ts);
 	json_oseto  (jch, "ck_flags",      u_cookie_to_json(&ch->ck_flags));
 
 	jmasks = mowgli_json_create_object();
@@ -1007,7 +1007,7 @@ static int dump_specific_chan(u_chan *ch, mowgli_json_t *j_chans)
 			json_append(jmasktype, jmask);
 			json_osets  (jmask, "mask",    m->mask);
 			json_osets  (jmask, "setter",  m->setter);
-			json_oseti64(jmask, "time",    m->time);
+			json_osettime(jmask, "time",    m->time);
 		}
 	}
 

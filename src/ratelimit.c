@@ -67,7 +67,7 @@ mowgli_json_t *u_ratelimit_to_json(u_ratelimit_t *limit)
 	mowgli_json_t *o = mowgli_json_create_object();
 	json_osetu(o, "tokens", limit->tokens);
 	json_osetu(o, "whotokens", limit->tokens);
-	json_oseti64(o, "last", limit->last);
+	json_osettime(o, "last", limit->last);
 
 	return o;
 }
@@ -84,7 +84,7 @@ int u_ratelimit_from_json(mowgli_json_t *jrl, u_ratelimit_t *limit)
 	if ((err = json_ogetu(jrl, "whotokens", &limit->tokens)) < 0)
 		return err;
 
-	if ((err = json_ogeti64(jrl, "last", &limit->last)) < 0)
+	if ((err = json_ogettime(jrl, "last", &limit->last)) < 0)
 		return err;
 
 	return 0;
