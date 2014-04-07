@@ -7,17 +7,15 @@
 #ifndef __INC_UTIL_H__
 #define __INC_UTIL_H__
 
-#define CIDR_ADDRSTRLEN (INET_ADDRSTRLEN+3)
+#define CIDR_ADDRSTRLEN (INET6_ADDRSTRLEN+4)
 
-typedef struct u_cidr u_cidr;
+typedef struct u_cidr {
+	struct sockaddr_storage addr;
+	uint8_t netsize;
+} u_cidr;
 
-struct u_cidr {
-	ulong addr;
-	int netsize;
-};
-
-extern void u_cidr_to_str(u_cidr*, char*);
-extern void u_str_to_cidr(char*, u_cidr*);
+extern char* u_cidr_to_str(u_cidr*, char*);
+extern u_cidr* u_str_to_cidr(char*, u_cidr*);
 extern int u_cidr_match(u_cidr*, char*);
 
 typedef unsigned long u_bitmask_set;
@@ -43,10 +41,8 @@ extern int irccmp(char *s1, char *s2);
 
 #define u_strlcpy mowgli_strlcpy
 #define u_strlcat mowgli_strlcat
-extern void u_ntop(struct in_addr*, char*);
-extern void u_aton(char*, struct in_addr*);
-
-extern void u_pton(const char*, struct sockaddr_storage *ss);
+extern char* u_ntop(struct sockaddr*, char*);
+extern struct sockaddr* u_pton(const char*, struct sockaddr*, socklen_t*);
 
 extern char *cut(char **p, char *delim);
 

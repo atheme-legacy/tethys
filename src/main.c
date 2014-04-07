@@ -18,7 +18,7 @@ mowgli_dns_t *base_dns;
 u_ts_t started;
 char startedstr[256];
 
-short opt_port = -1;
+ushort opt_port = 0;
 
 char *main_argv0;
 
@@ -64,7 +64,7 @@ int init(void)
 
 	/* LINK TODO: add ping timer */
 
-	if (opt_port != -1 && !u_link_origin_create(base_ev, opt_port))
+	if (opt_port != 0 && u_link_origin_create(base_ev, opt_port) < 0)
 		return -1;
 
 	if (!u_conf_read("etc/tethys.conf")) {
@@ -89,7 +89,7 @@ int init(void)
 extern char *optarg;
 int main(int argc, char **argv)
 {
-	int c;
+	int c, i;
 
 	main_argv0 = argv[0];
 
@@ -111,7 +111,12 @@ int main(int argc, char **argv)
 		case 'p':
 			u_log(LG_WARN, "Use of -p is deprecated. Please use the"
 			      " config file to specify listeners");
-			opt_port = atoi(optarg);
+			i = atoi(optarg);
+			if (i < 1 || i > 65535) {
+				u_log(LG_WARN, "-p port invalid");
+				break;
+			}
+			opt_port = (ushort) i;
 			break;
 		case 'U':
 			opt_upgrade = optarg;

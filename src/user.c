@@ -190,7 +190,7 @@ void u_user_try_register(u_user *u)
 	u->link->sendq = u->link->conf.auth->cls->sendq;
 
 	u->link->flags |= U_LINK_REGISTERED;
-	u_strlcpy(u->ip, u->link->conn->ip, INET_ADDRSTRLEN);
+	u_strlcpy(u->ip, u->link->conn->ip, INET6_ADDRSTRLEN);
 	u_strlcpy(u->realhost, u->link->conn->host, MAXHOST+1);
 	u_strlcpy(u->host, u->link->conn->host, MAXHOST+1);
 	u_user_welcome(u);
@@ -554,7 +554,7 @@ static int restore_specific_user(const char *uid, mowgli_json_t *ju)
 	memcpy(u->ident,    jsident->str,    jsident->pos);
 
 	jsip = json_ogets(ju, "ip");
-	if (!jsip || jsip->pos > INET_ADDRSTRLEN)
+	if (!jsip || jsip->pos > INET6_ADDRSTRLEN)
 		return -1;
 	memcpy(u->ip,       jsip->str,       jsip->pos);
 

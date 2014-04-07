@@ -27,7 +27,7 @@ static int c_s_euid(u_sourceinfo *si, u_msg *msg)
 	u_user_set_nick(u, msg->argv[0], atoi(msg->argv[2]));
 	u_strlcpy(u->ident, msg->argv[4], MAXIDENT+1);
 	u_strlcpy(u->host, msg->argv[5], MAXHOST+1);
-	u_strlcpy(u->ip, msg->argv[6], INET_ADDRSTRLEN);
+	u_strlcpy(u->ip, msg->argv[6], INET6_ADDRSTRLEN);
 	u_strlcpy(u->gecos, msg->argv[msg->argc - 1], MAXGECOS+1);
 	u_strlcpy(u->realhost, msg->argv[8], MAXHOST+1);
 	if (msg->argv[9][0] != '*')

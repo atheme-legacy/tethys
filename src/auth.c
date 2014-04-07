@@ -18,7 +18,7 @@ static char *msg_portinvalid = "Port %d for link %s invalid. Using %d";
 static u_class_block class_default =
 	{ "<default>", 300, 32<<10 };
 static u_auth_block auth_default =
-	{ "<default>", "default", NULL, { 0, 0 }, "" };
+	{ "<default>", "default", NULL, { { 0 }, 0 }, "" };
 
 u_map *all_classes;
 u_map *all_auths;
@@ -253,7 +253,7 @@ void conf_link(mowgli_config_file_t *cf, mowgli_config_file_entry_t *ce)
 
 void conf_link_host(mowgli_config_file_t *cf, mowgli_config_file_entry_t *ce)
 {
-	u_strlcpy(cur_link->host, ce->vardata, INET_ADDRSTRLEN);
+	u_strlcpy(cur_link->host, ce->vardata, INET6_ADDRSTRLEN);
 }
 
 void conf_link_port(mowgli_config_file_t *cf, mowgli_config_file_entry_t *ce)

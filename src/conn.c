@@ -31,33 +31,13 @@ static void sync_on_update(u_conn *conn);
 
 static u_conn *conn_create(mowgli_eventloop_t *ev, u_conn_ctx *ctx,
                            void *priv, int fd,
-                           const struct sockaddr *sa, socklen_t alen)
+                           const struct sockaddr *sa, socklen_t salen)
 {
-	u_conn *conn;
-	void *addr;
-
-	conn = calloc(1, sizeof(*conn));
-
+	u_conn *conn = calloc(1, sizeof(u_conn));
 	conn->state = U_CONN_INVALID;
-
 	conn->poll = mowgli_pollable_create(ev, fd, conn);
 
-	switch (sa->sa_family) {
-	case AF_INET:
-		addr = &((struct sockaddr_in*)sa)->sin_addr;
-		break;
-	case AF_INET6:
-		addr = &((struct sockaddr_in6*)sa)->sin6_addr;
-		break;
-	default:
-		addr = NULL;
-		u_log(LG_ERROR, "conn_create: Unk. a.f. %d", sa->sa_family);
-		break;
-	}
-
-	if (addr) {
-		inet_ntop(sa->sa_family, addr, conn->ip, sizeof(conn->ip));
-	} else {
+	if (! u_ntop((struct sockaddr*) sa, conn->ip)) {
 		/* this is not the best thing to do, but whatever */
 		u_strlcpy(conn->ip, "127.0.0.1", sizeof(conn->ip));
 	}
@@ -111,11 +91,11 @@ static int make_nonblocking(int fd)
 	return 0;
 }
 
-static int start_nonblocking_connect(const struct sockaddr *sa, socklen_t alen)
+static int start_nonblocking_connect(const struct sockaddr *sa, socklen_t salen)
 {
 	int fd;
 
-	if ((fd = socket(sa->sa_family, SOCK_STREAM, 0)) < 0) {
+	if ((fd = socket(sa->sa_family, SOCK_STREAM, IPPROTO_TCP)) < 0) {
 		u_perror("socket");
 		return -1;
 	}
@@ -125,7 +105,7 @@ static int start_nonblocking_connect(const struct sockaddr *sa, socklen_t alen)
 		return -1;
 	}
 
-	if (connect(fd, sa, alen) < 0 && errno != EINPROGRESS) {
+	if (connect(fd, sa, salen) < 0 && errno != EINPROGRESS) {
 		u_perror("connect");
 		close(fd);
 		return -1;
@@ -138,14 +118,13 @@ u_conn *u_conn_accept(mowgli_eventloop_t *ev, u_conn_ctx *ctx, void *priv,
                       ulong flags, int listener)
 {
 	int fd;
-	struct sockaddr_storage addr;
-	socklen_t addrlen;
 	u_conn *conn;
 
-	memset(&addr, 0, sizeof(addr));
-	addrlen = sizeof(addr);
+	struct sockaddr_storage addr;
+	socklen_t addrlen = sizeof(addr);
+	memset(&addr, 0, addrlen);
 
-	if ((fd = accept(listener, (struct sockaddr*)&addr, &addrlen)) < 0) {
+	if ((fd = accept(listener, (struct sockaddr*) &addr, &addrlen)) < 0) {
 		u_perror("accept");
 		return NULL;
 	}
@@ -155,31 +134,45 @@ u_conn *u_conn_accept(mowgli_eventloop_t *ev, u_conn_ctx *ctx, void *priv,
 		return NULL;
 	}
 
-	conn = conn_create(ev, ctx, priv, fd, (struct sockaddr*)&addr, addrlen);
+	conn = conn_create(ev, ctx, priv, fd, (const struct sockaddr*) &addr, addrlen);
 	conn->state = U_CONN_ACTIVE;
 
 	set_recv(conn, recv_ready);
 
-	rdns_start(conn, (struct sockaddr*)&addr, addrlen);
+	if (addrlen == sizeof(struct sockaddr_in6)) {
+
+		u_strlcpy(conn->host, conn->ip, U_CONN_HOSTSIZE);
+
+		/*
+		 * We're going to skip DNS resolution of IPv6 hosts for now,
+		 * as it doesn't seem to "work". Therefore, make sure the RDNS
+		 * wait flag is cleared, otherwise the client cannot register.
+		 */
+		u_link* link = conn->priv;
+		link->flags &= ~U_LINK_WAIT_RDNS;
+
+	} else {
+		rdns_start(conn, (struct sockaddr*) &addr, addrlen);
+	}
 
 	return conn;
 }
 
 u_conn *u_conn_connect(mowgli_eventloop_t *ev, u_conn_ctx *ctx, void *priv,
-                       ulong flags, const struct sockaddr *sa, socklen_t alen)
+                       ulong flags, const struct sockaddr *sa, socklen_t salen)
 {
 	int fd;
 	u_conn *conn;
 
-	if ((fd = start_nonblocking_connect(sa, alen)) < 0)
+	if ((fd = start_nonblocking_connect(sa, salen)) < 0)
 		return NULL;
 
-	conn = conn_create(ev, ctx, priv, fd, sa, alen);
+	conn = conn_create(ev, ctx, priv, fd, sa, salen);
 	conn->state = U_CONN_CONNECTING;
 
 	set_send(conn, connect_end);
 
-	rdns_start(conn, sa, alen);
+	rdns_start(conn, sa, salen);
 
 	return conn;
 }
@@ -570,8 +563,6 @@ u_conn *u_conn_from_json(
 	u_conn *conn;
 	mowgli_json_t *jpoll, *jsq;
 	mowgli_string_t *jsip, *jshost;
-	struct sockaddr_in  a4;
-	struct sockaddr_in6 a6;
 
 	conn = calloc(1, sizeof(*conn));
 	u_sendq_init(&conn->sendq);
@@ -612,12 +603,14 @@ u_conn *u_conn_from_json(
 		conn->ctx->attach(conn);
 
 	/* If RDNS was pending, reissue the query. */
+	struct sockaddr_storage addr;
+	socklen_t addrlen = sizeof(addr);
 	if (json_ogetb(jc, "rdns_pending")) {
-		/* Parse the IP... */
-		if (inet_pton(AF_INET6, conn->ip, &a6))
-			rdns_start(conn, (struct sockaddr*)&a6, sizeof(a6));
-		else if (inet_pton(AF_INET, conn->ip, &a4))
-			rdns_start(conn, (struct sockaddr*)&a4, sizeof(a4));
+		if (u_pton(conn->ip, (struct sockaddr*) &addr, &addrlen)) {
+			rdns_start(conn, (struct sockaddr*) &addr, addrlen);
+		} else {
+			u_log(LG_WARN, "restoring client IP [%s] failed", conn->ip);
+		}
 	}
 
 	sync_on_update(conn);

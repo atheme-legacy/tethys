@@ -56,7 +56,7 @@ struct u_user {
 
 	char ident[MAXIDENT+1];
 
-	char ip[INET_ADDRSTRLEN];
+	char ip[INET6_ADDRSTRLEN];
 	char realhost[MAXHOST+1];
 	char host[MAXHOST+1];
 

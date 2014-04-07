@@ -42,6 +42,10 @@
 #define INET_ADDRSTRLEN 16
 #endif
 
+#ifndef INET6_ADDRSTRLEN
+#define INET6_ADDRSTRLEN 46
+#endif
+
 /* size of string buffers allocated on the stack */
 #define BUFSIZE 4096
 
@@ -105,6 +109,6 @@ extern char startedstr[256];
 extern char *crypt(const char*, const char*);
 
 extern char *main_argv0;
-extern short opt_port;
+extern ushort opt_port;
 
 #endif

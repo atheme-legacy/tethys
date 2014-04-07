@@ -249,11 +249,9 @@ void u_link_flush_input(u_link *link) {
 u_link *u_link_connect(mowgli_eventloop_t *ev, u_link_block *block,
                        const struct sockaddr *addr, socklen_t addrlen)
 {
-	u_link *link;
+	u_link *link = link_create();
+
 	u_conn *conn;
-
-	link = link_create();
-
 	if (!(conn = u_conn_connect(ev, &u_link_conn_ctx, link, 0,
 	                            addr, addrlen))) {
 		link_destroy(link);
@@ -418,45 +416,59 @@ error:
 	return NULL;
 }
 
-u_link_origin *u_link_origin_create(mowgli_eventloop_t *ev, short port)
+int u_link_origin_create(mowgli_eventloop_t *ev, ushort port)
 {
-	const char *operation;
-	int opt, fd = -1;
+	int return_code = -1;
+
+	char *host_str = NULL;
+	char port_str[8];
+	snprintf(port_str, sizeof(port_str), "%hu", port);
+
+	struct addrinfo hints, *res = NULL;
+	memset(&hints, 0, sizeof(struct addrinfo));
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_protocol = IPPROTO_TCP;
+	hints.ai_flags = AI_NUMERICSERV | AI_PASSIVE;
+
+	if (getaddrinfo(host_str, port_str, &hints, &res) < 0)
+		goto cleanup;
+
 	u_link_origin *origin = NULL;
-	struct sockaddr_in addr;
+	struct addrinfo *p;
+	int fd, opt = 1;
 
-	operation = "create socket";
-	if ((fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
-		goto error;
+	for (p = res; p != NULL; p = p->ai_next) {
 
-	memset(&addr, 0, sizeof(addr));
-	addr.sin_family = AF_INET;
-	addr.sin_addr.s_addr = INADDR_ANY;
-	addr.sin_port = htons(port);
+		if ((fd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) < 0)
+			continue;
 
-	opt = 1;
-	operation = "set SO_REUSEADDR";
-	if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0)
-		goto error;
+		setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(int));
+		if (p->ai_family == PF_INET6)
+			setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY, &opt, sizeof(int));
 
-	operation = "bind socket";
-	if (bind(fd, (struct sockaddr*)&addr, sizeof(addr)) < 0)
-		goto error;
+		if (bind(fd, p->ai_addr, p->ai_addrlen) < 0) {
+			close(fd);
+			continue;
+		}
+		if (listen(fd, 5) < 0) {
+			close(fd);
+			continue;
+		}
+		if (! (origin = u_link_origin_create_from_fd(ev, fd))) {
+			close(fd);
+			continue;
+		}
 
-	operation = "listen";
-	if (listen(fd, 5) < 0)
-		goto error;
+		return_code = 0;
 
-	if (!(origin = u_link_origin_create_from_fd(ev, fd)))
-		goto error;
+	}
 
-	return origin;
+cleanup:
+	if (res)
+		freeaddrinfo(res);
 
-error:
-	u_perror(operation);
-	if (fd >= 0)
-		close(fd);
-	return NULL;
+	return return_code;
 }
 
 static void accept_ready(mowgli_eventloop_t *ev, mowgli_eventloop_io_t *io,

@@ -72,7 +72,7 @@ extern void u_link_vnum(u_link *link, const char *tgt, int num, va_list va);
 extern int u_link_num(u_link *link, int num, ...);
 extern void u_link_flush_input(u_link *link);
 
-extern u_link_origin *u_link_origin_create(mowgli_eventloop_t*, short);
+extern int u_link_origin_create(mowgli_eventloop_t*, ushort);
 
 extern int init_link(void);
 

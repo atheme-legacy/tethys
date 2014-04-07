@@ -6,51 +6,107 @@
 
 #include "ircd.h"
 
-void u_cidr_to_str(u_cidr *cidr, char *s)
+char* u_cidr_to_str(u_cidr *cidr, char *dst)
 {
-	struct in_addr in;
+	char *out = dst;
+	memset(out, 0, CIDR_ADDRSTRLEN);
+	if (! u_ntop((struct sockaddr*) &(cidr->addr), out))
+		return NULL;
 
-	in.s_addr = htonl(cidr->addr);
-	u_ntop(&in, s);
-	s += strlen(s);
-	sprintf(s, "/%d", cidr->netsize);
+	out += strlen(out);
+	sprintf(out, "/%hu", (ushort) cidr->netsize);
+	return dst;
 }
 
-void u_str_to_cidr(char *s, u_cidr *cidr)
+u_cidr* u_str_to_cidr(char *src, u_cidr *cidr)
 {
-	struct in_addr in;
-	char *p;
+	uint8_t max_netsize;
+	char *p, *v4, *v6;
+	int netsize;
 
-	p = strchr(s, '/');
+	memset(cidr, 0, sizeof(*cidr));
+
+	v4 = strchr(src, '.');
+	v6 = strchr(src, ':');
+	if ((! v4 && ! v6) || (v4 && v6))
+		return NULL;
+
+	if (v4 && ! v6)
+		max_netsize = 32;
+
+	if (! v4 && v6)
+		max_netsize = 128;
+
+	p = strchr(src, '/');
 	if (p == NULL) {
-		cidr->netsize = 32;
+		cidr->netsize = max_netsize;
 	} else {
 		*p++ = '\0';
-		cidr->netsize = atoi(p);
-		if (cidr->netsize < 0)
-			cidr->netsize = 0;
-		else if (cidr->netsize > 32)
-			cidr->netsize = 32;
+		netsize = atoi(p);
+
+		if (netsize < 0)
+			netsize = 0;
+
+		if (netsize > max_netsize)
+			netsize = max_netsize;
+
+		cidr->netsize = (uint8_t) netsize;
 	}
 
-	u_aton(s, &in);
-	cidr->addr = ntohl(in.s_addr);
+	if (! u_pton(src, (struct sockaddr*) &(cidr->addr), NULL))
+		return NULL;
+
+	return cidr;
 }
 
 int u_cidr_match(u_cidr *cidr, char *s)
 {
-	struct in_addr in;
-	ulong mask, addr;
-
+	/* A netmask of zero will match anything */
 	if (cidr->netsize == 0)
-		return 1; /* everything is in /0 */
-	/* 8 becomes 0x00ffffff, 21 becomes 0x000007ff, etc */
-	mask = (1 << (32 - cidr->netsize)) - 1;
+		return 1;
 
-	u_aton(s, &in);
-	addr = ntohl(in.s_addr);
+	/* Copy the 2 addresses into byte arrays. These are guaranteed
+	 * to be in network byte order (big endian), since they are only
+	 * ever set with inet_pton(), which saves them in network byte
+	 * order for transmission on-wire. You can therefore compare
+	 * them byte-by-byte in order.
+	 */
+	uint8_t addr_cidr[16], addr_given[16];
+	switch (cidr->addr.ss_family) {
+		case AF_INET:
+			memcpy(addr_cidr, &(((struct sockaddr_in*) &(cidr->addr))->sin_addr), 4);
+			inet_pton(AF_INET, s, (struct in_addr*) addr_given);
+			break;
+		case AF_INET6:
+			memcpy(addr_cidr, &(((struct sockaddr_in6*) &(cidr->addr))->sin6_addr), 16);
+			inet_pton(AF_INET6, s, (struct in6_addr*) addr_given);
+			break;
+		default:
+			return 0;
+	}
 
-	return (addr | mask) == (cidr->addr | mask);
+	/* A network mask in decimal CIDR form (e.g. /24) is just a nice
+	 * way of representing what a network mask actually is: a sequence
+	 * of bits that all addresses within that network start with (when
+	 * AND-masked). e.g. in a /28 network, all hosts within that network
+	 * start with the same 28 bits.
+	 *
+	 * Therefore, we only need to test the first netmask/8 bytes of
+	 * the address, and if there are any bits left after that division,
+	 * those too.
+	 */
+	uint8_t octs = cidr->netsize / 8;
+	uint8_t bits = cidr->netsize % 8;
+	if (memcmp(addr_cidr, addr_given, octs) == 0) {
+		if (bits == 0)
+			return 1;
+
+		/* You could do -1 << x but it triggers warnings in uints */
+		bits = (1 << (8 - bits)) - 1;
+		if ((addr_cidr[octs] & bits) == (addr_given[octs] & bits))
+			return 1;
+	}
+	return 0;
 }
 
 void u_bitmask_reset(u_bitmask_set *bm)
@@ -195,34 +251,46 @@ int irccmp(char *s1, char *s2)
 	return mapcmp(s1, s2, rfc1459_casemap);
 }
 
-void u_ntop(struct in_addr *in, char *s)
+char* u_ntop(struct sockaddr *sa, char *dst)
 {
-	u_strlcpy(s, inet_ntoa(*in), INET_ADDRSTRLEN);
+	switch (sa->sa_family) {
+		case AF_INET:
+			inet_ntop(AF_INET, &((struct sockaddr_in*) sa)->sin_addr, dst, INET_ADDRSTRLEN);
+			return dst;
+		case AF_INET6:
+			inet_ntop(AF_INET6, &((struct sockaddr_in6*) sa)->sin6_addr, dst, INET6_ADDRSTRLEN);
+			if (dst[0] == ':') {
+				// IP addresses starting with : screws with the IRC packet format. Prepend a 0
+				dst[0] = '0';
+				inet_ntop(AF_INET6, &((struct sockaddr_in6*) sa)->sin6_addr, dst + 1, INET6_ADDRSTRLEN);
+			}
+			return dst;
+	}
+	return NULL;
 }
 
-void u_aton(char *s, struct in_addr *in)
+struct sockaddr* u_pton(const char *src, struct sockaddr *sa, socklen_t *salen)
 {
-	in->s_addr = inet_addr(s);
-}
-
-void u_pton(const char *src, struct sockaddr_storage *ss)
-{
-	void *v4, *v6;
-
-	memset(ss, 0, sizeof(*ss));
-
-	v4 = &((struct sockaddr_in*) ss)->sin_addr;
-	v6 = &((struct sockaddr_in6*)ss)->sin6_addr;
-
-	if (!(inet_pton(AF_INET, src, v4) < 0)) {
-		ss->ss_family = AF_INET;
-		return;
+	if (salen != NULL) {
+		memset(sa, 0, *salen);
+	} else {
+		memset(sa, 0, sizeof(struct sockaddr));
 	}
+	if (strchr(src, '.') && inet_pton(AF_INET, src, &((struct sockaddr_in*) sa)->sin_addr) == 1) {
+		if (salen != NULL)
+			*salen = sizeof(struct sockaddr_in);
 
-	if (!(inet_pton(AF_INET6, src, v6) < 0)) {
-		ss->ss_family = AF_INET6;
-		return;
+		sa->sa_family = AF_INET;
+		return sa;
 	}
+	if (strchr(src, ':') && inet_pton(AF_INET6, src, &((struct sockaddr_in6*) sa)->sin6_addr) == 1) {
+		if (salen != NULL)
+			*salen = sizeof(struct sockaddr_in6);
+
+		sa->sa_family = AF_INET6;
+		return sa;
+	}
+	return NULL;
 }
 
 char *cut(char **p, char *delim)
