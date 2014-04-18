@@ -102,7 +102,7 @@ int u_cidr_match(u_cidr *cidr, char *s)
 			return 1;
 
 		/* You could do -1 << x but it triggers warnings in uints */
-		bits = (1 << (8 - bits)) - 1;
+		bits = ~((1 << (8 - bits)) - 1);
 		if ((addr_cidr[octs] & bits) == (addr_given[octs] & bits))
 			return 1;
 	}
