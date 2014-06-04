@@ -38,7 +38,7 @@ There are a few reasons why it is desirable to replace charybdis:
 
 ## Support
 
-The official Tethys support channel is #tethys on irc.staticbox.net.
+The official Tethys support channel is #tethys on irc.atheme.org.
 
 
 ## Building
