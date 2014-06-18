@@ -497,7 +497,9 @@ int u_chan_send_names(u_chan *c, u_user *u)
 int u_chan_send_list(u_chan *c, u_user *u, mowgli_list_t *list)
 {
 	mowgli_node_t *n;
+	u_chanuser *cu;
 	u_listent *ban;
+	bool opsonly = false;
 	int entry, end;
 
 	if (list == &c->quiet) {
@@ -506,19 +508,29 @@ int u_chan_send_list(u_chan *c, u_user *u, mowgli_list_t *list)
 	} else if (list == &c->invex) {
 		entry = RPL_INVITELIST;
 		end = RPL_ENDOFINVITELIST;
+		opsonly = true;
 	} else if (list == &c->banex) {
 		entry = RPL_EXCEPTLIST;
 		end = RPL_ENDOFEXCEPTLIST;
+		opsonly = true;
 	} else {
 		/* shrug */
 		entry = RPL_BANLIST;
 		end = RPL_ENDOFBANLIST;
 	}
 
+	/* don't send +eI to non-ops */
+	cu = u_chan_user_find(c, u);
+	if (opsonly && (!cu || !(cu->flags & CU_PFX_OP))) {
+		u_user_num(u, ERR_CHANOPRIVSNEEDED, c);
+		return 0;
+	}
+
 	MOWGLI_LIST_FOREACH(n, list->head) {
 		ban = n->data;
 		u_user_num(u, entry, c, ban->mask, ban->setter, ban->time);
 	}
+
 	u_user_num(u, end, c);
 
 	return 0;
