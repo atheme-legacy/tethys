@@ -52,3 +52,12 @@ I    | Allow a given mask to be exempt from +i
 -----+-----------------------------------------------------
 q    | Quiet a user without banning them
 -----+-----------------------------------------------------
+
+Modes that change a user's status in a channel:
+
+Mode | Description
+-----+-----------------------------------------------------
+o    | Designates a channel operator
+-----+-----------------------------------------------------
+v    | Designates a voiced user, able to speak over +mbq
+-----+-----------------------------------------------------
